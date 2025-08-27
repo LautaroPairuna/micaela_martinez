@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/* ───────────────────────────
+   Base
+─────────────────────────── */
+html, body { background: var(--bg); color: var(--fg); }
+html, body {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+h1, h2, h3, .font-display {
+  font-family: var(--font-tanAegean), ui-serif, Georgia, "Times New Roman", Times, serif;
+}
+
+/* Tokens mínimos locales (el resto viene de theme.css) */
+:root{
+  --bg: #ffffff;
+
+  /* Paleta dorada (unificamos) */
+  --gold:     #C5A46D;   /* principal */
+  --gold-200: #E8D8B0;   /* claro para brillos */
+  --gold-300: #F2E3BD;   /* muy claro */
+  --gold-700: #9D8352;   /* oscuro para bordes/sombras */
+  --gold-strong: #C69A2B; /* acento/underline */
+  --gold-dark:   #7A5C16; /* texto/hover */
+
+  /* Alias de compatibilidad: todo lo "rosa" ahora es dorado */
+  --pink: var(--gold);
+}
+
+/* Utilidades de color ligadas a tokens */
+.border-default { border-color: var(--border); }
+.bg-muted       { background: var(--bg-muted); }
+.bg-subtle      { background: var(--bg-subtle); }
+.text-muted     { color: var(--fg-muted); }
+.text-pink      { color: var(--gold); } /* alias */
+.text-gold      { color: var(--gold); }
+
+/* Ring helper para Tailwind */
+.ring-gold { --tw-ring-color: color-mix(in oklab, var(--gold) 85%, #000 15%); }
+
+/* ───────────────────────────
+   Animaciones
+─────────────────────────── */
+@keyframes shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.animate-shine { animation: shine 5s linear infinite; }
+
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes hero-fade {
+  0% { opacity: 0; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-hero-fade { animation: hero-fade .6s ease-out both; }
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shine, .animate-hero-fade, .animate-float {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ───────────────────────────
+   Container System
+─────────────────────────── */
+:root{
+  --container-gutter: clamp(16px, 4vw, 32px);
+  --w-sm:  48rem;  /* 768px  */
+  --w-md:  64rem;  /* 1024px */
+  --w-lg:  72rem;  /* 1152px */
+  --w-xl:  88rem;  /* 1408px */
+  --w-2xl: 100rem; /* 1600px */
+}
+
+/* contenedor base con gutter fluido */
+.container-fluid{
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--container-gutter);
+}
+
+/* variantes de ancho */
+.container-sm  { max-width: var(--w-sm); }
+.container-md  { max-width: var(--w-md); }
+.container-lg  { max-width: var(--w-lg); }
+.container-xl  { max-width: var(--w-xl); }
+.container-2xl { max-width: var(--w-2xl); }
+
+/* secciones full-bleed (fondo ancho completo, contenido centrado) */
+.section-bleed{ position: relative; }
+.section-bleed > .bleed-bg{
+  position: absolute; inset: 0; z-index: 0;
+}
+.section-bleed > .bleed-inner{
+  position: relative; z-index: 1;
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--container-gutter);
+}
+
+/* helpers */
+.section-pad-y     { padding-block: var(--section-py-md); }
+.divider-top       { border-top:    1px solid var(--border, rgba(255,255,255,.12)); }
+.divider-bottom    { border-bottom: 1px solid var(--border, rgba(255,255,255,.12)); }
+
+/* Spacing variables para secciones */
+:root{
+  --section-py-sm: clamp(2.5rem, 4vw, 3.25rem);
+  --section-py-md: clamp(3.5rem, 6vw, 5rem);
+  --section-py-lg: clamp(5rem, 8vw, 7rem);
+  --section-py-xl: clamp(7rem, 10vw, 9rem);
+}
+
+/* variantes nuevas */
+.section-pad-y-sm  { padding-block: var(--section-py-sm); }
+.section-pad-y-md  { padding-block: var(--section-py-md); }
+.section-pad-y-lg  { padding-block: var(--section-py-lg); }
+.section-pad-y-xl  { padding-block: var(--section-py-xl); }
+
+.badge-gold-fill{
+  color: var(--bg);
+  background-image: linear-gradient(90deg, var(--gold), var(--gold-200), var(--gold));
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position: 0% 50%;
+}
+
+/* Pill con borde dorado y fondo "neutro" (dos capas) */
+.pill-gold-outline{
+  color: var(--gold);
+  border-width: 1px;
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--gold) 70%, #000 30%);
+  background-image:
+    linear-gradient(var(--bg), var(--bg)),
+    linear-gradient(90deg, var(--gold), var(--gold-200));
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  background-repeat: no-repeat, no-repeat;
+  background-size: auto, 200% 100%;
+  background-position: 0% 0%, 0% 50%;
+}

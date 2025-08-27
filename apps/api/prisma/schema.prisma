@@ -1,0 +1,252 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/* ───── Enums (ES) ───── */
+enum Rol {
+  ADMIN
+  INSTRUCTOR
+  ESTUDIANTE
+}
+
+enum TipoItemOrden {
+  CURSO
+  PRODUCTO
+}
+
+enum EstadoOrden {
+  PENDIENTE
+  PAGADO
+  CUMPLIDO
+  CANCELADO
+  REEMBOLSADO
+}
+
+enum NivelCurso {
+  BASICO
+  INTERMEDIO
+  AVANZADO
+}
+
+/* ───── Usuario / Auth ───── */
+model Usuario {
+  id            String        @id @default(cuid()) @db.Char(25)
+  email         String        @unique @db.VarChar(191)
+  nombre        String?       @db.VarChar(255)
+  passwordHash  String        @db.VarChar(72)
+  rol           Rol           @default(ESTUDIANTE)
+  creadoEn      DateTime      @default(now())
+
+  inscripciones Inscripcion[]
+  ordenes       Orden[]
+  resenas       Resena[]
+  cursosDicta   Curso[]       @relation("CursoInstructor")
+}
+
+/* ───── Cursos (estilo Udemy: asincrónicos, sin calendario) ───── */
+model Curso {
+  id            String    @id @default(cuid()) @db.Char(25)
+  slug          String    @unique @db.VarChar(128)
+  titulo        String    @db.VarChar(255)
+  resumen       String?
+  descripcionMD String?
+  precio        Int
+  publicado     Boolean   @default(false)
+
+  nivel         NivelCurso  @default(BASICO)
+  portadaUrl    String?     @db.VarChar(512)
+  destacado     Boolean     @default(false)
+  tags          Json?       // string[] JSON opcional
+  ratingProm    Decimal?    @db.Decimal(3, 2)
+  ratingConteo  Int         @default(0)
+
+  creadoEn      DateTime    @default(now())
+
+  // relaciones
+  modulos       Modulo[]
+  resenas       Resena[]
+  inscripciones Inscripcion[]
+
+  // Instructor único (simple)
+  instructorId  String?   @db.Char(25)
+  instructor    Usuario?  @relation("CursoInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
+
+  @@index([publicado, destacado, creadoEn])
+  @@fulltext([titulo, resumen])
+}
+
+model Modulo {
+  id        String   @id @default(cuid()) @db.Char(25)
+  cursoId   String   @db.Char(25)
+  titulo    String
+  orden     Int
+
+  Curso     Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  lecciones Leccion[]
+
+  @@index([cursoId, orden])
+}
+
+model Leccion {
+  id        String  @id @default(cuid()) @db.Char(25)
+  moduloId  String  @db.Char(25)
+  titulo    String
+  duracionS Int     @default(0)
+  rutaSrc   String?
+  orden     Int
+
+  Modulo    Modulo  @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+
+  @@index([moduloId, orden])
+}
+
+/* ───── Inscripciones ───── */
+model Inscripcion {
+  id        String   @id @default(cuid()) @db.Char(25)
+  usuarioId String   @db.Char(25)
+  cursoId   String   @db.Char(25)
+  estado    String   @default("active")
+  progreso  Json
+  creadoEn  DateTime @default(now())
+
+  Usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  Curso   Curso   @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, cursoId])
+}
+
+/* ───── Tienda ───── */
+model Producto {
+  id            String   @id @default(cuid()) @db.Char(25)
+  slug          String   @unique @db.VarChar(128)
+  titulo        String   @db.VarChar(255)
+  sku           String   @unique @db.VarChar(64)
+  precio        Int
+  stock         Int      @default(0)
+  publicado     Boolean  @default(false)
+  destacado     Boolean  @default(false)
+  imagen        String?  @db.VarChar(512)   // imagen principal
+  descripcionMD String?
+  precioLista   Int?                       // compare-at / tachado
+  ratingProm    Decimal?  @db.Decimal(3, 2)
+  ratingConteo  Int       @default(0)
+  creadoEn      DateTime  @default(now())
+
+  // FK a marca y categoría
+  marcaId       String?   @db.Char(25)
+  categoriaId   String?   @db.Char(25)
+
+  marca         Marca?     @relation(fields: [marcaId], references: [id], onDelete: SetNull)
+  categoria     Categoria? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  imagenes      ProductoImagen[]
+  resenas       Resena[]
+  
+  @@index([publicado, destacado, creadoEn])
+  @@index([marcaId])
+  @@index([categoriaId])
+  @@fulltext([titulo])
+}
+
+model ProductoImagen {
+  id         String   @id @default(cuid()) @db.Char(25)
+  productoId String   @db.Char(25)
+  url        String   @db.VarChar(512)
+  alt        String?  @db.VarChar(255)
+  orden      Int      @default(0)
+
+  producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([productoId, orden])
+}
+
+/* Marca y Categoría (con imagen) */
+model Marca {
+  id        String   @id @default(cuid()) @db.Char(25)
+  slug      String   @unique @db.VarChar(128)
+  nombre    String   @db.VarChar(191)
+  imagen    String?  @db.VarChar(512) // logo
+  activa    Boolean  @default(true)
+  orden     Int      @default(0)
+  creadoEn  DateTime @default(now())
+
+  productos Producto[]
+
+  @@index([orden])
+}
+
+model Categoria {
+  id          String      @id @default(cuid()) @db.Char(25)
+  slug        String      @unique @db.VarChar(128)
+  nombre      String      @db.VarChar(191)
+  descripcion String?     @db.VarChar(512)
+  imagen      String?     @db.VarChar(512) // thumbnail/cover
+  activa      Boolean     @default(true)
+  orden       Int         @default(0)
+  creadoEn    DateTime    @default(now())
+
+  // jerarquía opcional (simple)
+  parentId    String?     @db.Char(25)
+  parent      Categoria?  @relation("CategoriaSelf", fields: [parentId], references: [id], onDelete: SetNull)
+  hijos       Categoria[] @relation("CategoriaSelf")
+
+  productos   Producto[]
+
+  @@index([parentId, orden])
+}
+
+/* ───── Órdenes / Checkout ───── */
+model Orden {
+  id             String      @id @default(cuid()) @db.Char(25)
+  usuarioId      String      @db.Char(25)
+  estado         EstadoOrden @default(PENDIENTE)
+  total          Int
+  moneda         String      @default("ARS")
+  referenciaPago String?
+  creadoEn       DateTime    @default(now())
+
+  Usuario Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  items   ItemOrden[]
+
+  @@index([usuarioId, estado, creadoEn])
+}
+
+model ItemOrden {
+  id             String        @id @default(cuid()) @db.Char(25)
+  ordenId        String        @db.Char(25)
+  tipo           TipoItemOrden
+  refId          String        @db.Char(25) // id de Curso o Producto
+  titulo         String        @db.VarChar(255)
+  cantidad       Int           @default(1)
+  precioUnitario Int
+
+  Orden Orden @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+
+  @@index([ordenId])
+  @@index([tipo, refId])
+}
+
+/* ───── Reseñas polimórficas (curso o producto) ───── */
+model Resena {
+  id         String   @id @default(cuid()) @db.Char(25)
+  cursoId    String?  @db.Char(25)
+  productoId String?  @db.Char(25)
+  usuarioId  String   @db.Char(25)
+  puntaje    Int
+  comentario String?
+  creadoEn   DateTime @default(now())
+
+  Curso     Curso?     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  Producto  Producto?  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  Usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([cursoId])
+  @@index([productoId])
+  @@unique([cursoId, usuarioId], map: "unique_resena_curso_usuario")
+  @@unique([productoId, usuarioId], map: "unique_resena_producto_usuario")
+}
