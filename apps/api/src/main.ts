@@ -4,8 +4,9 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
-import compression from 'compression';
 import { json, urlencoded, raw } from 'express';
+
+const compression = require('compression');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
