@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Search } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
 import { getProducts, getProductFacets } from '@/lib/api';
 import {
@@ -22,6 +23,33 @@ import { FiltersDrawer } from '@/components/filters/FiltersDrawer';
 
 export const revalidate = 60;
 
+/* ================= Tipos auxiliares ================= */
+type ProductoSort =
+  | 'relevancia'
+  | 'novedades'
+  | 'precio_asc'
+  | 'precio_desc'
+  | 'rating_desc';
+
+/** Debe coincidir estructuralmente con lo que espera TiendaFiltersSidebar */
+type BrandFacet = { id: string; slug?: string; nombre: string; count: number };
+type CategoryFacet = { id: string; slug?: string; nombre: string; count: number };
+type Facets = { marcas?: BrandFacet[]; categorias?: CategoryFacet[] };
+
+type ProductCardProps = ComponentProps<typeof ProductCard>;
+type Product = ProductCardProps extends { p: infer T }
+  ? (T & { id?: string | number })
+  : never;
+
+function findLabel<T extends { id: string; slug?: string; nombre: string }>(
+  list: T[] | undefined,
+  key: string
+) {
+  const item = list?.find((it) => (it.slug ?? it.id) === key);
+  return item?.nombre ?? key;
+}
+
+/* ================= Metadata ================= */
 export async function generateMetadata({
   params,
   searchParams,
@@ -64,6 +92,7 @@ export async function generateMetadata({
   };
 }
 
+/* ================= Page ================= */
 export default async function TiendaPage({
   params,
   searchParams,
@@ -97,26 +126,27 @@ export default async function TiendaPage({
   }
 
   const q = sp.q || '';
-  const sort = sortSeg ?? 'relevancia';
+  const sort = (sortSeg ?? 'relevancia') as ProductoSort;
   const page = Number(sp.page || prettyPage || 1);
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
   const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
 
-  const [{ items, meta }, facets] = await Promise.all([
+  const [productsRes, facets] = (await Promise.all([
     getProducts({ q, categoria, marca, minPrice, maxPrice, sort, page, perPage: PAGE_SIZE }),
     getProductFacets({ q, categoria, marca, minPrice, maxPrice }),
-  ]);
+  ])) as [
+    { items: Product[]; meta?: { page?: number; pages?: number } },
+    Facets
+  ];
+
+  const { items, meta } = productsRes;
 
   const currentPage = meta?.page ?? page;
-  const totalPages  = meta?.pages ?? 1;
+  const totalPages = meta?.pages ?? 1;
 
   // Chips (usar labels si existen)
-  const marcaLabel = marca
-    ? facets?.marcas?.find((m:any) => (m.slug || m.id) === marca)?.nombre || marca
-    : null;
-  const categoriaLabel = categoria
-    ? facets?.categorias?.find((c:any) => (c.slug || c.id) === categoria)?.nombre || categoria
-    : null;
+  const marcaLabel = marca ? findLabel(facets?.marcas, marca) : null;
+  const categoriaLabel = categoria ? findLabel(facets?.categorias, categoria) : null;
 
   const chips: Array<{ label: string; href: string }> = [];
   if (marca) {
@@ -140,7 +170,14 @@ export default async function TiendaPage({
           : `Precio: hasta ${maxPrice}`;
     chips.push({
       label: priceLabel,
-      href: buildTiendaPathResetPage({ categoria, marca, q, minPrice: undefined, maxPrice: undefined, sort }),
+      href: buildTiendaPathResetPage({
+        categoria,
+        marca,
+        q,
+        minPrice: undefined,
+        maxPrice: undefined,
+        sort,
+      }),
     });
   }
   if (q) {
@@ -173,13 +210,13 @@ export default async function TiendaPage({
     (maxPrice ? 1 : 0) +
     (q ? 1 : 0);
 
-  const sortOptions = [
-    { value: 'relevancia',  label: 'Relevancia' },
-    { value: 'novedades',   label: 'Novedades' },
-    { value: 'precio_asc',  label: 'Precio ↑' },
+  const sortOptions: { value: ProductoSort; label: string }[] = [
+    { value: 'relevancia', label: 'Relevancia' },
+    { value: 'novedades', label: 'Novedades' },
+    { value: 'precio_asc', label: 'Precio ↑' },
     { value: 'precio_desc', label: 'Precio ↓' },
     { value: 'rating_desc', label: 'Mejor valorados' },
-  ] as const;
+  ];
 
   return (
     <div className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-8">
@@ -196,7 +233,7 @@ export default async function TiendaPage({
         {/* Columna principal con min-w-0 */}
         <div className="col-span-12 lg:col-span-10 space-y-4 min-w-0">
           <header className="flex items-center gap-3 min-w-0">
-            <h1 className="text-xl font-semibold font-display">Catalogo</h1>
+            <h1 className="text-xl font-semibold font-display">Catálogo</h1>
 
             {/* Botón Filtros (drawer) visible < lg */}
             <div className="ml-auto flex items-center gap-2 min-w-0">
@@ -205,7 +242,7 @@ export default async function TiendaPage({
                   {/* ORDEN dentro del drawer */}
                   <SortOptionsList
                     current={sort}
-                    options={sortOptions as any}
+                    options={sortOptions}
                     hrefFor={(v) =>
                       buildTiendaPrettyPath({
                         categoria,
@@ -230,7 +267,7 @@ export default async function TiendaPage({
               <div className="hidden lg:block min-w-0">
                 <SortBar
                   current={sort}
-                  options={sortOptions as any}
+                  options={sortOptions}
                   hrefFor={(v) =>
                     buildTiendaPrettyPath({
                       categoria,
@@ -261,7 +298,9 @@ export default async function TiendaPage({
             <>
               {/* Grilla de productos — min-w-0 para evitar “rigidez” en cambios de ancho */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 items-stretch min-w-0">
-                {items.map((p: any) => <ProductCard key={p.id} p={p} />)}
+                {items.map((p: Product, i) => (
+                  <ProductCard key={String(p.id ?? i)} p={p} />
+                ))}
               </div>
 
               {totalPages > 1 && (
@@ -269,7 +308,12 @@ export default async function TiendaPage({
                   {Array.from({ length: totalPages }).map((_, i) => {
                     const pageNum = i + 1;
                     const href = buildTiendaPrettyPath({
-                      categoria, marca, q, minPrice, maxPrice, sort,
+                      categoria,
+                      marca,
+                      q,
+                      minPrice,
+                      maxPrice,
+                      sort,
                       page: pageNum > 1 ? pageNum : null,
                     });
                     const active = currentPage === pageNum;

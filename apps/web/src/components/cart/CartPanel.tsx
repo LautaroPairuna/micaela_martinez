@@ -1,27 +1,32 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { X, Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { useCart, cartSelectors, CartLineProduct } from '@/store/cart';
 
 const money = (cents: number) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(cents / 100);
+  new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
 
-function isCartLineProduct(it: any): it is CartLineProduct {
-  return it?.type === 'product';
+// Type-guard sin `any`
+function isCartLineProduct(it: unknown): it is CartLineProduct {
+  return !!it && typeof it === 'object' && 'type' in it && (it as { type?: unknown }).type === 'product';
 }
 
 export function CartPanel() {
-  const isOpen = useCart(s => s.isOpen);
-  const close = useCart(s => s.close);
-  const items = useCart(s => s.items);
-  const remove = useCart(s => s.remove);
-  const inc = useCart(s => s.increase);
-  const dec = useCart(s => s.decrease);
-  const clear = useCart(s => s.clear);
+  const isOpen = useCart((s) => s.isOpen);
+  const close = useCart((s) => s.close);
+  const items = useCart((s) => s.items);
+  const remove = useCart((s) => s.remove);
+  const inc = useCart((s) => s.increase);
+  const dec = useCart((s) => s.decrease);
+  const clear = useCart((s) => s.clear);
 
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
@@ -47,13 +52,25 @@ export function CartPanel() {
     const el = panelRef.current;
     if (!el) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
       if (e.key !== 'Tab') return;
-      const focusables = el.querySelectorAll<HTMLElement>('a,button,input,select,textarea,[tabindex]:not([tabindex="-1"])');
+      const focusables = el.querySelectorAll<HTMLElement>(
+        'a,button,input,select,textarea,[tabindex]:not([tabindex="-1"])',
+      );
       if (!focusables.length) return;
-      const first = focusables[0], last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      const first = focusables[0],
+        last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -70,8 +87,11 @@ export function CartPanel() {
       <div
         onClick={close}
         aria-hidden="true"
-        className={['absolute inset-0 bg-black/60 backdrop-blur-[1px] transition-opacity',
-          show ? 'opacity-100' : 'opacity-0','motion-reduce:transition-none'].join(' ')}
+        className={[
+          'absolute inset-0 bg-black/60 backdrop-blur-[1px] transition-opacity',
+          show ? 'opacity-100' : 'opacity-0',
+          'motion-reduce:transition-none',
+        ].join(' ')}
       />
       {/* Panel */}
       <aside
@@ -81,7 +101,7 @@ export function CartPanel() {
           'grid grid-rows-[auto_1fr_auto]',
           'transform-gpu transition-transform duration-300',
           show ? 'translate-x-0' : 'translate-x-full',
-          'motion-reduce:transition-none'
+          'motion-reduce:transition-none',
         ].join(' ')}
       >
         {/* Header */}
@@ -121,15 +141,25 @@ export function CartPanel() {
             items.map((it) => {
               const href = it.type === 'product' ? `/tienda/detalle/${it.slug}` : `/cursos/detalle/${it.slug}`;
               const qty = isCartLineProduct(it) ? it.quantity : 1;
-              const stock = isCartLineProduct(it) ? (it as any).stock as number | undefined : undefined;
+
+              // Usamos maxQty del store si está presente (evitamos `any`)
+              const maxQty =
+                isCartLineProduct(it) && (it as { maxQty?: number | null }).maxQty != null
+                  ? (it as { maxQty?: number | null }).maxQty!
+                  : undefined;
+
               const canDec = isCartLineProduct(it) ? qty > 1 : false;
-              const canInc = isCartLineProduct(it) ? (typeof stock === 'number' ? qty < stock : true) : false;
+              const canInc = isCartLineProduct(it)
+                ? typeof maxQty === 'number'
+                  ? qty < maxQty
+                  : true
+                : false;
 
               const lineTotalCents = isCartLineProduct(it) ? it.priceCents * qty : it.priceCents;
 
               const onIncSafe = () => {
                 if (!isCartLineProduct(it)) return;
-                if (typeof stock === 'number' && qty >= stock) return; // bloqueo duro
+                if (typeof maxQty === 'number' && qty >= maxQty) return; // bloqueo duro
                 inc(it.id);
               };
 
@@ -141,12 +171,7 @@ export function CartPanel() {
                   {/* Miniatura */}
                   <Link href={href} onClick={close} className="block focus:outline-none focus:ring-2 focus:ring-[var(--pink)] rounded-lg">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-subtle border border-default/60">
-                      <SafeImage
-                        src={it.image || '/images/placeholder.jpg'}
-                        alt={it.title}
-                        ratio="1/1"
-                        className="object-cover"
-                      />
+                      <SafeImage src={it.image || '/images/placeholder.jpg'} alt={it.title} ratio="1/1" className="object-cover" />
                     </div>
                   </Link>
 
@@ -179,9 +204,7 @@ export function CartPanel() {
                         >
                           <Plus className="size-4" />
                         </button>
-                        {typeof stock === 'number' && (
-                          <span className="ml-2 text-xs text-muted">Stock: {stock}</span>
-                        )}
+                        {typeof maxQty === 'number' && <span className="ml-2 text-xs text-muted">Stock: {maxQty}</span>}
                       </div>
                     )}
                   </div>
@@ -191,9 +214,7 @@ export function CartPanel() {
                     <div className="text-sm font-semibold tabular-nums" aria-live="polite" aria-atomic="true">
                       {money(lineTotalCents)}
                     </div>
-                    {isCartLineProduct(it) && (
-                      <div className="text-[11px] text-muted tabular-nums">({money(it.priceCents)} c/u)</div>
-                    )}
+                    {isCartLineProduct(it) && <div className="text-[11px] text-muted tabular-nums">({money(it.priceCents)} c/u)</div>}
                     <button
                       onClick={() => remove(it.id, it.type)}
                       className="rounded-md border border-default px-2 py-1 text-xs hover:bg-subtle"
@@ -213,7 +234,9 @@ export function CartPanel() {
         <div className="sticky bottom-0 z-10 h-16 px-4 border-t border-default bg-[var(--bg)]/95 backdrop-blur flex items-center justify-between gap-2">
           <div className="text-sm">
             <div className="text-muted">Subtotal</div>
-            <div className="font-medium" aria-live="polite" aria-atomic="true">{money(subtotal)}</div>
+            <div className="font-medium" aria-live="polite" aria-atomic="true">
+              {money(subtotal)}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {items.length > 0 && (
@@ -233,6 +256,6 @@ export function CartPanel() {
         </div>
       </aside>
     </div>,
-    document.body
+    document.body,
   );
 }

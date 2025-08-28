@@ -6,7 +6,6 @@ import { ProductGallery } from '@/components/catalog/ProductGallery';
 import { Price } from '@/components/ui/Price';
 import { productJsonLd } from '@/lib/seo';
 import { RatingStars } from '@/components/ui/RatingStars';
-import { Button } from '@/components/ui/Button';
 import { Pill, Badge } from '@/components/ui/Pill';
 import { Truck, ShieldCheck, RefreshCcw, Check, AlertCircle } from 'lucide-react';
 
@@ -15,13 +14,32 @@ import { AddProductButton } from '@/components/cart/AddProductButton';
 
 export const revalidate = 120;
 
+/* ===== Tipos mínimos usados en esta página (estructurales) ===== */
 type Params = { slug: string };
 
+type ProductImage = { url: string };
+
+type Product = {
+  slug?: string;
+  titulo: string;
+  descripcionMD?: string | null;
+  imagen?: string | null;
+  imagenes?: ProductImage[] | null;
+  precio: number; // centavos
+  precioLista?: number | null;
+  stock?: number | null;
+  marca?: { nombre?: string | null } | null;
+  categoria?: { nombre?: string | null; slug?: string | null; id?: string | number | null } | null;
+  ratingProm?: number | null;
+  ratingConteo?: number | null;
+  destacado?: boolean | null;
+};
+
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-const abs = (u?: string) => (u ? (u.startsWith('http') ? u : new URL(u, SITE).toString()) : undefined);
+const abs = (u?: string | null) => (u ? (u.startsWith('http') ? u : new URL(u, SITE).toString()) : undefined);
 
 /** Normaliza el slug devuelto por la API (corto o completo) a una ruta canónica usable */
-const canonicalFrom = (slugish?: string) => {
+const canonicalFrom = (slugish?: string | null) => {
   if (!slugish) return '/tienda';
   const s = String(slugish).trim();
   if (s.startsWith('http')) return s;
@@ -47,15 +65,18 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     };
   }
 
-  const p = await getProductBySlug(slug);
+  const p = (await getProductBySlug(slug)) as Product;
   const desc = (p.descripcionMD || p.titulo || '').toString().slice(0, 160);
   const url = canonicalFrom(p.slug);
 
-  const images: string[] = p.imagenes?.length
-    ? p.imagenes.map((i: any) => abs(i.url)!).filter(Boolean)
-    : p.imagen
-      ? [abs(p.imagen)!]
-      : [];
+  const images: string[] =
+    p.imagenes && p.imagenes.length > 0
+      ? p.imagenes
+          .map((i) => abs(i.url))
+          .filter((s): s is string => Boolean(s))
+      : p.imagen
+        ? [abs(p.imagen)!]
+        : [];
 
   return {
     title: `${p.titulo} — Comprar`,
@@ -72,9 +93,11 @@ export default async function ProductoPage({ params }: { params: Promise<Params>
     redirect(`/tienda/${slug}`);
   }
 
-  const p = await getProductBySlug(slug);
+  const p = (await getProductBySlug(slug)) as Product;
 
-  const images = p.imagenes?.length ? p.imagenes : (p.imagen ? [{ url: p.imagen }] : []);
+  const images: ProductImage[] =
+    p.imagenes && p.imagenes.length > 0 ? p.imagenes : p.imagen ? [{ url: p.imagen }] : [];
+
   const compareAt = p.precioLista ?? undefined;
   const hasDiscount = !!(compareAt && compareAt > p.precio);
   const offPct = hasDiscount ? Math.round(((Number(compareAt) - p.precio) / Number(compareAt)) * 100) : 0;
@@ -83,17 +106,20 @@ export default async function ProductoPage({ params }: { params: Promise<Params>
   // Highlights: primeras líneas de la descripción (opcional)
   const highlights: string[] = String(p.descripcionMD ?? '')
     .split(/\r?\n/)
-    .map((s: string) => s.trim())
-    .filter((s: string): s is string => s.length > 0)
+    .map((s) => s.trim())
+    .filter((s): s is string => s.length > 0)
     .slice(0, 6);
 
+  // 🔧 FIX: asegurar string en `slug` para productJsonLd
   const jsonLd = productJsonLd({
     name: p.titulo,
-    slug: p.slug,
+    slug: p.slug ?? slug, // <= aquí el fallback elimina el error 2322
     price: p.precio, // centavos
-    images: images.map((i: any) => abs(i.url)!).filter(Boolean),
-    brand: p.marca?.nombre,
-    category: p.categoria?.nombre,
+    images: images
+      .map((i) => abs(i.url))
+      .filter((s): s is string => Boolean(s)),
+    brand: p.marca?.nombre ?? undefined,
+    category: p.categoria?.nombre ?? undefined,
   });
 
   return (
@@ -123,7 +149,7 @@ export default async function ProductoPage({ params }: { params: Promise<Params>
                     <li>›</li>
                     <li>
                       <Link
-                        href={`/tienda/categoria-${p.categoria.slug ?? p.categoria.id}`}
+                        href={`/tienda/categoria-${p.categoria.slug ?? p.categoria.id ?? ''}`}
                         className="hover:text-[var(--pink)]"
                       >
                         {p.categoria.nombre}
@@ -147,12 +173,22 @@ export default async function ProductoPage({ params }: { params: Promise<Params>
             </div>
 
             <div className="mt-4">
-              <Price value={p.precio/100} compareAt={compareAt ? compareAt/100 : undefined} />
+              <Price value={p.precio / 100} compareAt={compareAt ? compareAt / 100 : undefined} />
             </div>
 
             <div className="mt-4 flex gap-2">
               {/* 🛒 integra carrito */}
-              <AddProductButton p={p} />
+              <AddProductButton
+                p={{
+                  id: p.slug ?? slug,
+                  slug: p.slug ?? slug,
+                  titulo: p.titulo,
+                  precio: p.precio,
+                  stock: typeof p.stock === 'number' ? p.stock : null,
+                  imagen: p.imagen ?? null,
+                  imagenes: p.imagenes ?? null,
+                }}
+              />
               <Link href="/tienda" className="rounded-xl2 border border-default px-3 py-2 hover:bg-subtle">
                 Seguir viendo
               </Link>

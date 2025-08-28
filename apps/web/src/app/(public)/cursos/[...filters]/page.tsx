@@ -17,7 +17,22 @@ import { SortBar } from '@/components/filters/SortBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Search } from 'lucide-react';
 
+import type { ComponentProps } from 'react';
+
+// Derivamos los tipos desde CourseCard para no desincronizarnos
+type CourseMinimal = ComponentProps<typeof CourseCard>['c'];
+type InscripcionMini = NonNullable<ComponentProps<typeof CourseCard>['inscripcion']>;
+
+// Lo que llega del API (extiende lo que necesita la card)
+type CourseFromApi = CourseMinimal & {
+  inscripcionActual?: InscripcionMini | null | boolean;
+};
+
 export const revalidate = 60;
+
+// Facets tipadas para evitar any en comparadores/map
+type NivelFacet = { nivel: Nivel; count: number };
+type TagFacet = { tag: string; count: number };
 
 export async function generateMetadata({
   params, searchParams,
@@ -99,12 +114,15 @@ export default async function CursosPage({
     : undefined;
 
   const noResults = !items?.length;
-  const topNiveles = Array.isArray(facets?.niveles)
-    ? [...facets.niveles].sort((a:any,b:any)=>b.count-a.count).slice(0,3)
-    : [];
-  const topTags = Array.isArray(facets?.tags)
-    ? [...facets.tags].sort((a:any,b:any)=>b.count-a.count).slice(0,8)
-    : [];
+
+  const courses = (items ?? []) as CourseFromApi[];
+
+  // ✅ Sin any: tipamos las colecciones antes de ordenar/mapear
+  const nivelesArr: NivelFacet[] = Array.isArray(facets?.niveles) ? (facets!.niveles as NivelFacet[]) : [];
+  const tagsArr: TagFacet[] = Array.isArray(facets?.tags) ? (facets!.tags as TagFacet[]) : [];
+
+  const topNiveles: NivelFacet[] = [...nivelesArr].sort((a, b) => b.count - a.count).slice(0, 3);
+  const topTags: TagFacet[] = [...tagsArr].sort((a, b) => b.count - a.count).slice(0, 8);
 
   return (
     <section className="grid gap-6 md:grid-cols-[200px_1fr]">
@@ -161,12 +179,12 @@ export default async function CursosPage({
               <div className="rounded-xl2 border border-default p-4">
                 <h3 className="text-sm font-medium mb-2">Explorar populares</h3>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  {topNiveles.map((n:any) => (
+                  {topNiveles.map((n) => (
                     <a key={`n-${n.nivel}`} href={buildCursosPathResetPage({ nivel: n.nivel, tag, q, sort })} className="rounded-full border border-default px-3 py-1 hover:border-[var(--pink)] hover:text-[var(--pink)]">
                       {n.nivel === 'BASICO' ? '#básico' : n.nivel === 'INTERMEDIO' ? '#intermedio' : '#avanzado'}
                     </a>
                   ))}
-                  {topTags.map((t:any) => (
+                  {topTags.map((t) => (
                     <a key={`t-${t.tag}`} href={buildCursosPathResetPage({ nivel, tag: t.tag, q, sort })} className="rounded-full border border-default px-3 py-1 hover:border-[var(--pink)] hover:text-[var(--pink)]">
                       #{t.tag}
                     </a>
@@ -178,9 +196,21 @@ export default async function CursosPage({
         ) : (
           <>
             <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
-              {items.map((c: any) => (
-                <CourseCard key={c.id} c={c} inscripcion={c.inscripcionActual ?? null} />
-              ))}
+              {courses.map((c) => {
+                // Normalizamos el tipo de inscripcion para la Card
+                const inscripcion: InscripcionMini | undefined =
+                  c.inscripcionActual && typeof c.inscripcionActual === 'object'
+                    ? c.inscripcionActual
+                    : undefined;
+
+                return (
+                  <CourseCard
+                    key={c.slug}
+                    c={c}                    // c ya NO es any
+                    inscripcion={inscripcion}
+                  />
+                );
+              })}
             </div>
 
             {totalPages > 1 && (

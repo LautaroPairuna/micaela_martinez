@@ -9,12 +9,9 @@ import { SafeImage } from '@/components/ui/SafeImage';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { RatingStars } from '@/components/ui/RatingStars';
-import { Button } from '@/components/ui/Button';
 import { Clock, UserRound, PlayCircle, Layers, Award, Check } from 'lucide-react';
 import type { Nivel } from '@/lib/routes';
 import { buildCursosPrettyPath } from '@/lib/routes';
-
-// 🛒 botón cliente para carrito (asegurate de tenerlo creado)
 import { BuyCourseButton } from '@/components/cart/BuyCourseButton';
 
 export const revalidate = 120;
@@ -39,6 +36,14 @@ function qsFromSearch(searchParams?: Record<string, string | undefined>) {
   const s = usp.toString();
   return s ? `?${s}` : '';
 }
+
+// Tipos mínimos para lectura de API (evitar any)
+type LessonMini = { titulo?: string | null; duracionS?: number | null };
+type ModuleMini = { titulo?: string | null; lecciones?: LessonMini[] | null };
+
+// Tipos que exige CourseCurriculum
+type CurriculumLesson = { titulo: string; duracionS?: number };
+type CurriculumModule = { titulo: string; lecciones: CurriculumLesson[] };
 
 export async function generateMetadata({
   params, searchParams,
@@ -91,24 +96,53 @@ export default async function CursoPage({
   }
 
   const c = await getCourseBySlug(slug);
-  const nivel = (c.nivel as Nivel | undefined) ?? undefined;
+
+  // ✅ Normalizamos para que sea Nivel o undefined
+  const nivel: Nivel | undefined =
+    (['BASICO', 'INTERMEDIO', 'AVANZADO'] as const).includes(c.nivel as Nivel)
+      ? (c.nivel as Nivel)
+      : undefined;
 
   const durMin = Math.max(0, Math.floor((c.duracionTotalS || 0) / 60));
-  const modCount = typeof c._count?.modulos === 'number'
-    ? c._count.modulos
-    : Array.isArray(c.modulos) ? c.modulos.length : 0;
-  const lessonCount = Array.isArray(c.modulos)
-    ? c.modulos.reduce((acc: number, m: any) => acc + (Array.isArray(m.lecciones) ? m.lecciones.length : 0), 0)
-    : 0;
+
+  const modules: ModuleMini[] = Array.isArray(c.modulos) ? (c.modulos as ModuleMini[]) : [];
+  const modCount =
+    typeof c._count?.modulos === 'number'
+      ? c._count.modulos
+      : modules.length;
+
+  const lessonCount = modules.reduce<number>((acc, m) => {
+    const ls = Array.isArray(m.lecciones) ? m.lecciones : [];
+    return acc + ls.length;
+  }, 0);
 
   const learningPoints: string[] = (() => {
-    const fromLessons = (c.modulos || [])
-      .flatMap((m: any) => (m.lecciones || []).map((l: any) => l.titulo))
-      .filter(Boolean) as string[];
+    const fromLessons = modules
+      .flatMap((m) => (Array.isArray(m.lecciones) ? m.lecciones : []))
+      .map((l) => l.titulo ?? '')
+      .filter((t): t is string => Boolean(t));
     if (fromLessons.length) return fromLessons.slice(0, 8);
-    const fromModules = (c.modulos || []).map((m: any) => m.titulo).filter(Boolean) as string[];
+
+    const fromModules = modules
+      .map((m) => m.titulo ?? '')
+      .filter((t): t is string => Boolean(t));
     return fromModules.slice(0, 8);
   })();
+
+  // ✅ Normalizamos estructura para CourseCurriculum (titulo siempre string y lecciones siempre [])
+  const curriculumModules: CurriculumModule[] = modules.map((m, idx) => {
+    const leccionesSrc = Array.isArray(m.lecciones) ? m.lecciones : [];
+    const lecciones: CurriculumLesson[] = leccionesSrc.map((l, j) => {
+      const titulo = (l?.titulo ?? `Lección ${j + 1}`).toString();
+      const dur = l?.duracionS;
+      return typeof dur === 'number' ? { titulo, duracionS: dur } : { titulo };
+    });
+
+    return {
+      titulo: (m.titulo ?? `Módulo ${idx + 1}`).toString(),
+      lecciones,
+    };
+  });
 
   const nivelLabel = nivel
     ? nivel === 'BASICO' ? 'Básico' : nivel === 'INTERMEDIO' ? 'Intermedio' : 'Avanzado'
@@ -188,7 +222,6 @@ export default async function CursoPage({
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {/* 🛒 integra carrito */}
                     <BuyCourseButton c={c} />
                     <Link href="/cursos" className="rounded-xl2 border border-default px-3 py-2 hover:bg-subtle">Explorar</Link>
                   </div>
@@ -217,7 +250,6 @@ export default async function CursoPage({
                     <Award className="size-4" /> Acceso de por vida
                   </span>
                 </div>
-                {/* 🛒 integra carrito */}
                 <BuyCourseButton c={c} />
                 <div className="grid grid-cols-2 gap-2 text-xs text-muted">
                   <div className="rounded-xl2 border border-default p-2 flex items-center gap-2">
@@ -258,7 +290,7 @@ export default async function CursoPage({
           <Card>
             <CardBody className="space-y-3">
               <h2 className="text-lg font-medium">Contenido del curso</h2>
-              <CourseCurriculum modules={c.modulos || []} />
+              <CourseCurriculum modules={curriculumModules} />
             </CardBody>
           </Card>
 

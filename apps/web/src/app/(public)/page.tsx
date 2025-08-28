@@ -1,10 +1,12 @@
 // src/app/(public)/page.tsx
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { ComponentProps, CSSProperties } from "react";
 import { Section } from "@/components/layout/Section";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { getProducts, getCourses } from "@/lib/api";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /* ───────────────────── helpers UI ───────────────────── */
 function TitleBand({
@@ -53,21 +55,45 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
+// Derivamos tipos desde las cards (evita any y mantiene sincronía)
+type CourseMinimal = ComponentProps<typeof CourseCard>["c"];
+type ProductMinimal = ComponentProps<typeof ProductCard>["p"];
+
+// Keys seguras sin usar `any`
+const courseKey = (c: CourseMinimal, i: number) => {
+  const r = c as unknown as Record<string, unknown>;
+  const slug = r["slug"];
+  return typeof slug === "string" ? slug : String(i);
+};
+const productKey = (p: ProductMinimal, i: number) => {
+  const r = p as unknown as Record<string, unknown>;
+  const id = r["id"];
+  const slug = r["slug"];
+  return typeof id === "string" || typeof id === "number"
+    ? String(id)
+    : typeof slug === "string"
+    ? slug
+    : String(i);
+};
+
 export default async function HomePage() {
   const [cursos, productos] = await Promise.all([
     getCourses({ sort: "relevancia", page: 1, perPage: 8 }),
     getProducts({ sort: "relevancia", page: 1, perPage: 12 }),
   ]);
 
-  const courses = (cursos?.items as any[]) ?? [];
-  const products = (productos?.items as any[]) ?? [];
+  const courses: CourseMinimal[] = Array.isArray(cursos?.items) ? (cursos!.items as CourseMinimal[]) : [];
+  const products: ProductMinimal[] = Array.isArray(productos?.items) ? (productos!.items as ProductMinimal[]) : [];
 
   // visibles
   const courseCount = Math.min(4, courses.length);
   const productCount = Math.min(8, products.length);
 
-  const heroBg = process.env.NEXT_PUBLIC_HERO_BG?.trim() || "/images/hero-bg.jpg";
+  const heroBg = (process.env.NEXT_PUBLIC_HERO_BG ?? "/images/hero-bg.jpg").trim();
   const heroFocalX = Number(process.env.NEXT_PUBLIC_HERO_FOCAL_X ?? 85);
+  const clamped = Math.min(100, Math.max(0, heroFocalX));
+  // Pasamos el valor por CSS var en el wrapper (SafeImage no admite `style`)
+  const bleedStyle = ({ ["--hero-pos" as any]: `${clamped}% 50%` } as unknown) as CSSProperties;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const searchJsonLd = {
@@ -91,14 +117,17 @@ export default async function HomePage() {
         width="bleed"
         padY="lg"
         bleedBackground={
-          <div className="absolute inset-0">
-            <img
+          <div className="absolute inset-0" style={bleedStyle}>
+            {/* ✅ SafeImage sin `style`; usamos CSS var en la clase */}
+            <SafeImage
               src={heroBg}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-              style={{ objectPosition: `${Math.min(100, Math.max(0, heroFocalX))}% 50%` }}
-              loading="eager"
-              draggable={false}
+              className="absolute inset-0 h-full w-full"  // wrapper
+              objectPosition={`${clamped}% 50%`}          // ⬅️ foco horizontal
+              priority                                    // ⬅️ reemplaza loading="eager"
+              withBg={false}
+              rounded="none"
+              skeleton={false}
             />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--bg)_0%,rgba(0,0,0,0.55)_26%,rgba(0,0,0,0.32)_48%,rgba(0,0,0,0.16)_64%,transparent_80%)]" />
             <div className="absolute inset-0 mix-blend-soft-light opacity-10 bg-[radial-gradient(22rem_22rem_at_18%_30%,#f5c45155_0%,transparent_60%)]" />
@@ -166,8 +195,8 @@ export default async function HomePage() {
       >
         {courseCount > 0 ? (
           <div className={`${compactWrap(courseCount, "max-w-3xl")} grid gap-5 grid-cols-1 md:grid-cols-2`}>
-            {courses.slice(0, courseCount).map((c: any) => (
-              <CourseCard key={c.id} c={c} />
+            {courses.slice(0, courseCount).map((c, i) => (
+              <CourseCard key={courseKey(c, i)} c={c} />
             ))}
           </div>
         ) : (
@@ -192,8 +221,8 @@ export default async function HomePage() {
       >
         {productCount > 0 ? (
           <div className={`${compactWrap(productCount, "max-w-6xl")} grid gap-4 grid-cols-2 md:grid-cols-4`}>
-            {products.slice(0, productCount).map((p: any) => (
-              <ProductCard key={p.id} p={p} />
+            {products.slice(0, productCount).map((p, i) => (
+              <ProductCard key={productKey(p, i)} p={p} />
             ))}
           </div>
         ) : (

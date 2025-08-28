@@ -2,13 +2,22 @@
 
 import { useCart } from '@/store/cart';
 
-export function BuyCourseButton({ c }: { c: any }) {
-  const addCourse = useCart(s => s.addCourse);
+type CourseForCartButton = {
+  id: string | number;
+  slug: string;
+  titulo: string;
+  precio: number; // en centavos
+  portadaUrl?: string | null;
+};
+
+export function BuyCourseButton({ c }: { c: CourseForCartButton }) {
+  const addCourse = useCart((s) => s.addCourse);
+
   return (
     <button
       onClick={() =>
         addCourse({
-          id: c.id,
+          id: String(c.id),
           slug: c.slug,
           title: c.titulo,
           priceCents: c.precio,

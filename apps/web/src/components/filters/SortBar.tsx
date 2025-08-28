@@ -59,19 +59,29 @@ export function SortBar({
   }
 
   // ---- MODO FORM (fallback retro-compat)
+  // Resolvemos defaultValue sin `any`, y evitamos duplicar `sort` en los hidden
+  const sortCandidate = (hiddenFields && hiddenFields['sort']) ?? current;
+  const defaultSort =
+    typeof sortCandidate === 'string' || typeof sortCandidate === 'number'
+      ? String(sortCandidate)
+      : 'relevancia';
+
   return (
     <form method="GET" action={actionHref} className="flex items-center gap-2">
-      {Object.entries(hiddenFields).map(([k, v]) =>
-        v === null || v === undefined || v === '' ? null : (
-          <input key={k} type="hidden" name={k} defaultValue={String(v)} />
-        )
-      )}
+      {Object.entries(hiddenFields)
+        .filter(([k]) => k !== 'sort') // no dupliquemos `sort`
+        .map(([k, v]) =>
+          v === null || v === undefined || v === '' ? null : (
+            <input key={k} type="hidden" name={k} defaultValue={String(v)} />
+          )
+        )}
+
       <label className="text-sm text-muted">
         Ordenar:&nbsp;
         <select
           name="sort"
           className="rounded-xl2 border border-default bg-bg-muted px-2 py-1"
-          defaultValue={(hiddenFields as any)?.sort ?? 'relevancia'}
+          defaultValue={defaultSort}
         >
           {options.map((o) => (
             <option key={o.value} value={o.value}>
@@ -80,6 +90,7 @@ export function SortBar({
           ))}
         </select>
       </label>
+
       {showButton && (
         <button
           type="submit"

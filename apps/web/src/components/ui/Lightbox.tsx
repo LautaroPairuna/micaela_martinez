@@ -50,8 +50,7 @@ export default function Lightbox({
   initialFit = 'contain',
   heightOffsetPx = 88,
 }: LightboxProps) {
-  if (!images?.length) return null;
-
+  // ⚠️ NO retornamos aún; primero declaramos TODOS los hooks
   const [mounted, setMounted] = React.useState(false);
   const [closing, setClosing] = React.useState(false);
   const [fit, setFit] = React.useState<'contain' | 'cover'>(initialFit);
@@ -69,21 +68,27 @@ export default function Lightbox({
   React.useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const t = setTimeout(() => closeBtnRef.current?.focus(), 0);
+    const t = window.setTimeout(() => closeBtnRef.current?.focus(), 0);
     setMounted(true);
     return () => {
       document.body.style.overflow = prevOverflow;
-      clearTimeout(t);
+      window.clearTimeout(t);
     };
   }, []);
+
+  // Cierre animado
+  const handleClose = React.useCallback(() => {
+    setClosing(true);
+    window.setTimeout(() => onClose(), 160);
+  }, [onClose]);
 
   // Teclado
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       kick();
       if (e.key === 'Escape') handleClose();
-      if (e.key === 'ArrowRight') onChangeIndex((i) => (i + 1) % images.length);
-      if (e.key === 'ArrowLeft') onChangeIndex((i) => (i - 1 + images.length) % images.length);
+      if (e.key === 'ArrowRight' && images.length > 1) onChangeIndex((i) => (i + 1) % images.length);
+      if (e.key === 'ArrowLeft' && images.length > 1) onChangeIndex((i) => (i - 1 + images.length) % images.length);
       if (e.key.toLowerCase() === '0') resetZoom();
       if ((e.key === '+' || e.key === '=') && scale < 4)
         setScale((s) => Math.min(4, +(s + 0.25).toFixed(2)));
@@ -92,17 +97,12 @@ export default function Lightbox({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [kick, images.length, onChangeIndex, scale]);
-
-  // Cierre animado
-  const handleClose = React.useCallback(() => {
-    setClosing(true);
-    window.setTimeout(() => onClose(), 160);
-  }, [onClose]);
+  }, [kick, images.length, onChangeIndex, scale, handleClose]);
 
   // Reset de zoom al cambiar imagen
   React.useEffect(() => {
     resetZoom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
 
   function resetZoom() {
@@ -135,8 +135,8 @@ export default function Lightbox({
 
   // Swipe izquierda/derecha
   const startX = React.useRef<number | null>(null);
-  const onSwipeDown = (e: React.PointerEvent) => (startX.current = e.clientX);
-  const onSwipeUp = (e: React.PointerEvent) => {
+  const onSwipeStart = (e: React.PointerEvent) => (startX.current = e.clientX);
+  const onSwipeEnd = (e: React.PointerEvent) => {
     if (startX.current == null || images.length <= 1) return;
     const dx = e.clientX - startX.current;
     startX.current = null;
@@ -144,6 +144,20 @@ export default function Lightbox({
     if (dx > TH) onChangeIndex((i) => (i - 1 + images.length) % images.length);
     else if (dx < -TH) onChangeIndex((i) => (i + 1) % images.length);
   };
+
+  // Handlers para kick tipados (evita `as any`)
+  const onMouseMoveKick = React.useCallback((_: React.MouseEvent) => kick(), [kick]);
+  const onPointerMoveKick = React.useCallback((_: React.PointerEvent) => kick(), [kick]);
+
+  // Cálculos de render
+  const hasImages = Array.isArray(images) && images.length > 0;
+  const fitClass = fit === 'cover' ? 'object-cover' : 'object-contain';
+
+  // 🔚 ahora sí, si no hay imágenes salimos (después de hooks → OK)
+  if (!hasImages) return null;
+
+  const clampedIndex = Math.min(Math.max(0, index), Math.max(0, images.length - 1));
+  const current = images[clampedIndex];
 
   // Clases y estilos
   const shell = [
@@ -162,8 +176,6 @@ export default function Lightbox({
   ].join(' ');
 
   const controlsVisibility = visible ? 'opacity-100' : 'opacity-0 pointer-events-none';
-  const fitClass = fit === 'cover' ? 'object-cover' : 'object-contain';
-  const current = images[index];
 
   // Portal
   return createPortal(
@@ -173,8 +185,8 @@ export default function Lightbox({
       aria-label="Imagen ampliada"
       className={shell}
       onClick={handleClose}
-      onMouseMove={kick}
-      onPointerMove={kick as any}
+      onMouseMove={onMouseMoveKick}
+      onPointerMove={onPointerMoveKick}
     >
       <div
         className={panel}
@@ -183,12 +195,12 @@ export default function Lightbox({
         onDoubleClick={onDblClick}
         onPointerDown={(e) => {
           onPointerDown(e);
-          onSwipeDown(e);
+          onSwipeStart(e);
         }}
         onPointerMove={onPointerMove}
         onPointerUp={(e) => {
           onPointerUp();
-          onSwipeUp(e);
+          onSwipeEnd(e);
         }}
         onPointerCancel={onPointerUp}
       >
@@ -213,7 +225,7 @@ export default function Lightbox({
               <X className="size-5" />
             </button>
             <span className="select-none text-sm text-white/80">
-              {index + 1} / {images.length}
+              {clampedIndex + 1} / {images.length}
             </span>
           </div>
 
@@ -296,7 +308,12 @@ export default function Lightbox({
             <SafeImage
               src={current.url}
               alt={current.alt || 'Producto ampliado'}
-              className={[fitClass, 'w-full h-full select-none'].join(' ')}
+              className="w-full h-full select-none"
+              imgClassName={fitClass} // ✅ object-fit en la imagen, no en el wrapper
+              sizes="(min-width: 1024px) 60vw, 100vw"
+              withBg={false}
+              rounded="none"
+              skeleton={false}
             />
           </div>
         </div>
@@ -313,7 +330,7 @@ export default function Lightbox({
           >
             <div className="mx-auto max-w-3xl grid grid-flow-col auto-cols-[64px] gap-2 overflow-x-auto">
               {images.map((im, i) => {
-                const selected = i === index;
+                const selected = i === clampedIndex;
                 return (
                   <button
                     key={i}
@@ -330,8 +347,12 @@ export default function Lightbox({
                     <SafeImage
                       src={im.url}
                       alt={im.alt || 'Miniatura'}
-                      className="object-cover w-full h-full"
+                      className="w-full h-full"
+                      imgClassName="object-cover"
                       sizes="80px"
+                      withBg={false}
+                      rounded="none"
+                      skeleton={false}
                     />
                   </button>
                 );
