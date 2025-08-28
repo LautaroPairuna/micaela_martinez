@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { SearchBar } from '@/components/search/SearchBar';
@@ -13,7 +13,40 @@ import {
 } from 'lucide-react';
 import { buildCursosPrettyPath, buildTiendaPrettyPath } from '@/lib/routes';
 
+/* ================= Wrapper con Suspense ================= */
+// Exportás este componente (NO usa hooks de next/navigation)
 export function Header() {
+  return (
+    <Suspense fallback={<HeaderFallback />}>
+      <HeaderInner />
+    </Suspense>
+  );
+}
+
+function HeaderFallback() {
+  return (
+    <header className="top-0 z-50 relative bg-[var(--bg)] border-b border-default py-4">
+      <div className="mx-auto px-4 sm:px-6 min-[1200px]:px-8 h-16 flex items-center gap-10">
+        <div className="h-20 w-[160px] rounded bg-subtle/50" aria-hidden />
+        <div className="hidden min-[1200px]:flex items-center gap-6">
+          <div className="h-4 w-16 rounded bg-subtle/60" />
+          <div className="h-4 w-16 rounded bg-subtle/60" />
+          <div className="h-4 w-16 rounded bg-subtle/60" />
+        </div>
+        <div className="ml-auto hidden min-[1200px]:flex items-center gap-4">
+          <div className="w-80 h-9 rounded-xl2 border border-default bg-subtle/40" />
+          <div className="h-4 w-20 rounded bg-subtle/60" />
+          <div className="h-9 w-9 rounded-xl2 border border-default bg-subtle/40" />
+          <div className="h-8 w-28 rounded-xl2 border border-default bg-subtle/40" />
+        </div>
+        <div className="min-[1200px]:hidden ml-auto h-10 w-24 rounded-xl2 border border-default bg-subtle/40" />
+      </div>
+    </header>
+  );
+}
+
+/* ============ Componente real con hooks (queda dentro de Suspense) ============ */
+function HeaderInner() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -70,6 +103,7 @@ export function Header() {
 
         {/* Búsqueda + Auth (solo ≥1200px) */}
         <div className="ml-auto hidden min-[1200px]:flex items-center gap-4">
+          {/* ⬇️ SearchBar puede usar useSearchParams; queda dentro del Suspense del Header */}
           <div className="w-80"><SearchBar /></div>
           <Link href="/auth" className="inline-flex items-center gap-2 text-sm hover:text-[var(--gold)]">
             <LogIn className="size-4" /> Ingresar
@@ -196,6 +230,7 @@ function MobilePanel({ onClose }: { onClose: () => void }) {
 
         {/* Buscador */}
         <div className="p-4 border-b border-neutral-200">
+          {/* SearchBar también queda dentro del Suspense de Header */}
           <SearchBar />
         </div>
 
