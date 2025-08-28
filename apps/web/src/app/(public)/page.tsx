@@ -76,6 +76,9 @@ const productKey = (p: ProductMinimal, i: number) => {
     : String(i);
 };
 
+// Tipado para CSS custom properties (evita `any`)
+type CSSVars = { [key in `--${string}`]?: string | number };
+
 export default async function HomePage() {
   const [cursos, productos] = await Promise.all([
     getCourses({ sort: "relevancia", page: 1, perPage: 8 }),
@@ -92,8 +95,11 @@ export default async function HomePage() {
   const heroBg = (process.env.NEXT_PUBLIC_HERO_BG ?? "/images/hero-bg.jpg").trim();
   const heroFocalX = Number(process.env.NEXT_PUBLIC_HERO_FOCAL_X ?? 85);
   const clamped = Math.min(100, Math.max(0, heroFocalX));
-  // Pasamos el valor por CSS var en el wrapper (SafeImage no admite `style`)
-  const bleedStyle = ({ ["--hero-pos" as any]: `${clamped}% 50%` } as unknown) as CSSProperties;
+
+  // ✅ Sin `any`: pasamos custom property tipada
+  const bleedStyle: CSSProperties & CSSVars = {
+    ["--hero-pos"]: `${clamped}% 50%`,
+  };
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const searchJsonLd = {
@@ -118,13 +124,13 @@ export default async function HomePage() {
         padY="lg"
         bleedBackground={
           <div className="absolute inset-0" style={bleedStyle}>
-            {/* ✅ SafeImage sin `style`; usamos CSS var en la clase */}
+            {/* ✅ SafeImage sin `style`; controlamos foco con prop */}
             <SafeImage
               src={heroBg}
               alt=""
-              className="absolute inset-0 h-full w-full"  // wrapper
-              objectPosition={`${clamped}% 50%`}          // ⬅️ foco horizontal
-              priority                                    // ⬅️ reemplaza loading="eager"
+              className="absolute inset-0 h-full w-full"
+              objectPosition={`${clamped}% 50%`}
+              priority
               withBg={false}
               rounded="none"
               skeleton={false}
