@@ -69,7 +69,7 @@ export function CourseCard({ c, inscripcion }: { c: CourseMinimal; inscripcion?:
           </div>
 
           <CardBody className="p-0 min-w-0 flex flex-col gap-1 sm:gap-1.5">
-            <h3 className="font-medium leading-snug line-clamp-2 pr-2">{c.titulo}</h3>
+            <h3 className="font-medium leading-snug line-clamp-2 pr-2 uppercase">{c.titulo}</h3>
 
             {c.instructor?.nombre ? (
               <p className="text-xs text-muted">Por {c.instructor.nombre}</p>
