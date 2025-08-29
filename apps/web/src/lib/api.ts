@@ -97,6 +97,19 @@ export type CourseListItem = {
 export type CourseDetail = CourseListItem & {
   descripcionMD?: string | null;
   nivel?: CourseLevel;
+
+  // 🔽 Agregados para la página de detalle
+  resumen?: string | null;
+  duracionTotalS?: number | null;
+  modulos?: Array<{
+    titulo?: string | null;
+    lecciones?: Array<{
+      titulo?: string | null;
+      duracionS?: number | null;
+    }> | null;
+  }> | null;
+  _count?: { modulos?: number } | null;
+  instructor?: { nombre?: string | null } | null;
 };
 
 /** Facets tal como TU UI las espera */

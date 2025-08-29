@@ -19,7 +19,8 @@ export const revalidate = 120;
 type Params = { slug: string };
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-const abs = (u?: string) => (u ? (u.startsWith('http') ? u : new URL(u, SITE).toString()) : undefined);
+const abs = (u?: string | null) =>
+  u ? (u.startsWith('http') ? u : new URL(u, SITE).toString()) : undefined;
 
 function looksLikeCursosFilterSlug(slug: string) {
   // evita /cursos/detalle/nivel-... o tag-... o pagina-... etc.
@@ -240,7 +241,7 @@ export default async function CursoPage({
             <Card>
               <CardBody className="space-y-4">
                 <SafeImage
-                  src={abs(c.portadaUrl) || undefined}
+                  src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
                   alt={c.titulo}
                   className="w-full aspect-video object-cover rounded-xl2"
                 />
