@@ -1,8 +1,19 @@
 // src/lib/api.ts
 import { apiFetch } from './api-fetch';
 
-/* ─── Tipos alineados al DTO del backend ─── */
+/* ───────── Tipos compartidos ───────── */
 export type ProductSort = 'relevancia' | 'novedades' | 'precio_asc' | 'precio_desc' | 'rating_desc';
+const ALLOWED_PRODUCT_SORT: readonly ProductSort[] =
+  ['relevancia','novedades','precio_asc','precio_desc','rating_desc'] as const;
+
+export type ListResp<T> = {
+  items: T[];
+  total?: number;
+  page?: number;
+  perPage?: number;
+};
+
+/* ───────── Productos (DTO) ───────── */
 export type ProductQuery = {
   q?: string;
   marca?: string;       // slug o id
@@ -14,11 +25,61 @@ export type ProductQuery = {
   perPage?: number;
 };
 
-type ListResp<T> = { items: T[]; total?: number };
+/** Mínimo que consume la UI de productos (cards/buttons) */
+export type ProductListItem = {
+  id: string;
+  slug: string;
+  titulo: string;
+  precio: number; // centavos
+  imagen?: string | null;
+  imagenes?: Array<{ url: string }> | null;
+  stock?: number | null;
+  ratingProm?: number | null;
+  ratingConteo?: number | null;
+};
 
-/* ─── Helpers ─── */
-const ALLOWED_SORT: readonly ProductSort[] = ['relevancia','novedades','precio_asc','precio_desc','rating_desc'] as const;
+export type ProductDetail = ProductListItem & {
+  descripcionMD?: string | null;
+  precioLista?: number | null;
+  marca?: { nombre?: string | null } | null;
+  categoria?: { nombre?: string | null; slug?: string | null; id?: string | number | null } | null;
+  destacado?: boolean | null;
+};
 
+/* ───────── Cursos (DTO) ───────── */
+export type CourseLevel = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
+const ALLOWED_COURSE_LEVEL: readonly CourseLevel[] = ['BASICO','INTERMEDIO','AVANZADO'] as const;
+
+// El sort es el mismo conjunto que productos según tu DTO
+export type CourseSort = ProductSort;
+const ALLOWED_COURSE_SORT: readonly CourseSort[] = ALLOWED_PRODUCT_SORT;
+
+export type CourseQuery = {
+  q?: string;
+  nivel?: CourseLevel;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: CourseSort;
+  page?: number;
+  perPage?: number;
+};
+
+export type CourseListItem = {
+  id: string;
+  slug: string;
+  titulo: string;
+  precio: number; // centavos
+  portadaUrl?: string | null;
+  ratingProm?: number | null;
+  ratingConteo?: number | null;
+};
+
+export type CourseDetail = CourseListItem & {
+  descripcionMD?: string | null;
+  nivel?: CourseLevel;
+};
+
+/* ───────── Helpers ───────── */
 function clampInt(n: unknown, min: number, max?: number): number | undefined {
   const v = typeof n === 'string' ? Number(n) : (n as number);
   if (!Number.isFinite(v)) return undefined;
@@ -28,12 +89,19 @@ function clampInt(n: unknown, min: number, max?: number): number | undefined {
   return x;
 }
 
-function cleanQuery(q: Partial<ProductQuery>): Record<string, string> {
+function toQS(params: Record<string, string>) {
+  const qs = new URLSearchParams(params);
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+/* — Sanitizadores alineados a cada DTO — */
+function cleanProductQuery(q: Partial<ProductQuery>): Record<string, string> {
   const out: Record<string, string> = {};
   const push = (k: keyof ProductQuery, v: unknown) => {
     if (v === undefined || v === null) return;
     const s = typeof v === 'string' ? v.trim() : String(v);
-    if (s.length === 0) return; // evita q="" y similares
+    if (s.length === 0) return;
     out[k] = s;
   };
 
@@ -48,14 +116,14 @@ function cleanQuery(q: Partial<ProductQuery>): Record<string, string> {
   if (minP !== undefined) out.minPrice = String(minP);
   if (maxP !== undefined) out.maxPrice = String(maxP);
 
-  // sort permitido
-  if (q.sort && (ALLOWED_SORT as readonly string[]).includes(q.sort)) {
+  // sort permitido (default: relevancia)
+  if (q.sort && (ALLOWED_PRODUCT_SORT as readonly string[]).includes(q.sort)) {
     out.sort = q.sort;
   } else if (q.sort === undefined) {
-    out.sort = 'relevancia'; // default del DTO
+    out.sort = 'relevancia';
   }
 
-  // paginación segura: page >=1, perPage razonable (p.ej. 1..100)
+  // paginación segura
   const page = clampInt(q.page, 1);
   const perPage = clampInt(q.perPage, 1, 100);
   if (page !== undefined) out.page = String(page);
@@ -64,48 +132,83 @@ function cleanQuery(q: Partial<ProductQuery>): Record<string, string> {
   return out;
 }
 
-function toQS(params: Record<string, string>) {
-  const qs = new URLSearchParams(params);
-  const s = qs.toString();
-  return s ? `?${s}` : '';
+function cleanCourseQuery(q: Partial<CourseQuery>): Record<string, string> {
+  const out: Record<string, string> = {};
+  const push = (k: keyof CourseQuery, v: unknown) => {
+    if (v === undefined || v === null) return;
+    const s = typeof v === 'string' ? v.trim() : String(v);
+    if (s.length === 0) return;
+    out[k] = s;
+  };
+
+  // strings
+  push('q', q.q);
+
+  // nivel permitido
+  if (q.nivel && (ALLOWED_COURSE_LEVEL as readonly string[]).includes(q.nivel)) {
+    out.nivel = q.nivel;
+  }
+
+  // números (>= 0)
+  const minP = clampInt(q.minPrice, 0);
+  const maxP = clampInt(q.maxPrice, 0);
+  if (minP !== undefined) out.minPrice = String(minP);
+  if (maxP !== undefined) out.maxPrice = String(maxP);
+
+  // sort permitido (default: relevancia)
+  if (q.sort && (ALLOWED_COURSE_SORT as readonly string[]).includes(q.sort)) {
+    out.sort = q.sort;
+  } else if (q.sort === undefined) {
+    out.sort = 'relevancia';
+  }
+
+  // paginación segura
+  const page = clampInt(q.page, 1);
+  const perPage = clampInt(q.perPage, 1, 100);
+  if (page !== undefined) out.page = String(page);
+  if (perPage !== undefined) out.perPage = String(perPage);
+
+  return out;
 }
 
-/* ─── Productos ─── */
+/* ───────── Productos ───────── */
 export async function getProducts(params: Partial<ProductQuery> = {}) {
-  const qp = cleanQuery(params);
-  return apiFetch<ListResp<any>>(`/catalog/productos${toQS(qp)}`, { next: { revalidate: 60 } });
+  const qp = cleanProductQuery(params);
+  return apiFetch<ListResp<ProductListItem>>(`/catalog/productos${toQS(qp)}`, { next: { revalidate: 60 } });
 }
+
 export async function getProductFacets(params: Partial<ProductQuery> = {}) {
-  const qp = cleanQuery(params);
-  return apiFetch(`/catalog/productos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
+  const qp = cleanProductQuery(params);
+  // Tipar si conocés la forma exacta de filtros
+  return apiFetch<unknown>(`/catalog/productos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
 }
+
 export async function getProductBySlug(slug: string) {
-  return apiFetch(`/catalog/productos/${encodeURIComponent(slug)}`, { next: { revalidate: 120 } });
+  return apiFetch<ProductDetail>(`/catalog/productos/${encodeURIComponent(slug)}`, { next: { revalidate: 120 } });
 }
 
-/* ─── Cursos ───
-   Si tu backend de cursos usa el MISMO contrato (sort idéntico), podés
-   reutilizar ProductQuery. Si no, ajustá los allowed sort/keys aquí. */
-export type CourseQuery = ProductQuery;
-
+/* ───────── Cursos ───────── */
 export async function getCourses(params: Partial<CourseQuery> = {}) {
-  const qp = cleanQuery(params);
-  return apiFetch<ListResp<any>>(`/catalog/cursos${toQS(qp)}`, { next: { revalidate: 60 } });
-}
-export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
-  const qp = cleanQuery(params);
-  return apiFetch(`/catalog/cursos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
-}
-export async function getCourseBySlug(slug: string) {
-  return apiFetch(`/catalog/cursos/${encodeURIComponent(slug)}`, { next: { revalidate: 120 } });
+  const qp = cleanCourseQuery(params);
+  return apiFetch<ListResp<CourseListItem>>(`/catalog/cursos${toQS(qp)}`, { next: { revalidate: 60 } });
 }
 
-/* ─── Variantes “seguras” para páginas de listado (no tiran SSR) ─── */
+export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
+  const qp = cleanCourseQuery(params);
+  return apiFetch<unknown>(`/catalog/cursos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
+}
+
+export async function getCourseBySlug(slug: string) {
+  return apiFetch<CourseDetail>(`/catalog/cursos/${encodeURIComponent(slug)}`, { next: { revalidate: 120 } });
+}
+
+/* ───────── Variantes “seguras” para SSR de listados ───────── */
 export async function safeGetProducts(params: Partial<ProductQuery> = {}) {
   try { return await getProducts(params); }
-  catch (e) { console.error('getProducts failed:', e); return { items: [], total: 0 }; }
+  catch (e) { console.error('getProducts failed:', e); return { items: [], total: 0 } as ListResp<ProductListItem>; }
 }
+
 export async function safeGetCourses(params: Partial<CourseQuery> = {}) {
   try { return await getCourses(params); }
-  catch (e) { console.error('getCourses failed:', e); return { items: [], total: 0 }; }
+  catch (e) { console.error('getCourses failed:', e); return { items: [], total: 0 } as ListResp<CourseListItem>; }
 }
