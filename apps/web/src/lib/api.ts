@@ -6,9 +6,22 @@ export type ProductSort = 'relevancia' | 'novedades' | 'precio_asc' | 'precio_de
 const ALLOWED_PRODUCT_SORT: readonly ProductSort[] =
   ['relevancia','novedades','precio_asc','precio_desc','rating_desc'] as const;
 
+export type PaginationMeta = {
+  // Soporte flexible: algunos backends envían meta, otros campos sueltos
+  total?: number;
+  page?: number;
+  perPage?: number;
+  totalItems?: number;
+  itemCount?: number;
+  totalPages?: number;
+  currentPage?: number;
+};
+
 export type ListResp<T> = {
   items: T[];
-  total?: number;
+  // Soportamos ambos esquemas:
+  meta?: PaginationMeta;   // { items, meta: {...} }
+  total?: number;          // { items, total, page, perPage }
   page?: number;
   perPage?: number;
 };
@@ -18,6 +31,7 @@ export type ProductQuery = {
   q?: string;
   marca?: string;       // slug o id
   categoria?: string;   // slug o id
+  tag?: string;         // opcional si tu API contempla tags
   minPrice?: number;
   maxPrice?: number;
   sort?: ProductSort;
@@ -50,13 +64,14 @@ export type ProductDetail = ProductListItem & {
 export type CourseLevel = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
 const ALLOWED_COURSE_LEVEL: readonly CourseLevel[] = ['BASICO','INTERMEDIO','AVANZADO'] as const;
 
-// El sort es el mismo conjunto que productos según tu DTO
+// El sort es el mismo conjunto que productos
 export type CourseSort = ProductSort;
 const ALLOWED_COURSE_SORT: readonly CourseSort[] = ALLOWED_PRODUCT_SORT;
 
 export type CourseQuery = {
   q?: string;
   nivel?: CourseLevel;
+  tag?: string;         // tu página lo usa; lo propagamos
   minPrice?: number;
   maxPrice?: number;
   sort?: CourseSort;
@@ -109,6 +124,7 @@ function cleanProductQuery(q: Partial<ProductQuery>): Record<string, string> {
   push('q', q.q);
   push('marca', q.marca);
   push('categoria', q.categoria);
+  push('tag', q.tag);
 
   // números (>= 0)
   const minP = clampInt(q.minPrice, 0);
@@ -143,6 +159,7 @@ function cleanCourseQuery(q: Partial<CourseQuery>): Record<string, string> {
 
   // strings
   push('q', q.q);
+  push('tag', q.tag);
 
   // nivel permitido
   if (q.nivel && (ALLOWED_COURSE_LEVEL as readonly string[]).includes(q.nivel)) {
