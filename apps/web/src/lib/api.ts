@@ -101,6 +101,25 @@ export type CourseDetail = CourseListItem & {
   nivel?: CourseLevel;
 };
 
+export type Facet<T extends string = string> = {
+  value: T;
+  count: number;
+  label?: string;
+};
+
+export type NivelFacet = Facet<CourseLevel>;
+export type TagFacet   = Facet<string>;
+
+// Lo que devuelve /catalog/cursos/filtros
+export type CourseFacets = {
+  niveles?: NivelFacet[];
+  tags?: TagFacet[];
+  // opcionales por si tu API también manda rango de precio
+  price?: { min: number; max: number };
+  minPrice?: number;
+  maxPrice?: number;
+};
+
 /* ───────── Helpers ───────── */
 function clampInt(n: unknown, min: number, max?: number): number | undefined {
   const v = typeof n === 'string' ? Number(n) : (n as number);
@@ -219,7 +238,7 @@ export async function getCourses(params: Partial<CourseQuery> = {}) {
 
 export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
   const qp = cleanCourseQuery(params);
-  return apiFetch<unknown>(`/catalog/cursos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
+  return apiFetch<CourseFacets>(`/catalog/cursos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
 }
 
 export async function getCourseBySlug(slug: string) {
