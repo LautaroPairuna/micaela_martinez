@@ -7,14 +7,21 @@ const ALLOWED_PRODUCT_SORT: readonly ProductSort[] =
   ['relevancia','novedades','precio_asc','precio_desc','rating_desc'] as const;
 
 export type PaginationMeta = {
-  // Soporte flexible: algunos backends envían meta, otros campos sueltos
+  // formatos frecuentes
   total?: number;
   page?: number;
   perPage?: number;
+
+  // variantes que algunos backends usan
   totalItems?: number;
   itemCount?: number;
+
+  // total de páginas (nombres alternativos)
   totalPages?: number;
   currentPage?: number;
+
+  /** alias común en APIs: cantidad de páginas totales */
+  pages?: number;
 };
 
 export type ListResp<T> = {
