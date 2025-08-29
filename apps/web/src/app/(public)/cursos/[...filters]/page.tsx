@@ -1,7 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { Search } from 'lucide-react';
+import type { ComponentProps } from 'react';
+
 import { getCourses, getCourseFacets } from '@/lib/api';
+import type {
+  NivelFacet as ApiNivelFacet,
+  TagFacet as ApiTagFacet,
+} from '@/lib/api';
+
 import {
   buildCursosPrettyPath,
   buildCursosPathResetPage,
@@ -10,18 +18,18 @@ import {
   sanitizeCursoSort,
   type Nivel,
 } from '@/lib/routes';
+
 import { CourseCard } from '@/components/courses/CourseCard';
 import { CursosFiltersSidebar } from '@/components/filters/CursosFiltersSidebar';
 import { FilterChips } from '@/components/filters/FilterChips';
 import { SortBar } from '@/components/filters/SortBar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Search } from 'lucide-react';
-
-import type { ComponentProps } from 'react';
 
 // Derivamos los tipos desde CourseCard para no desincronizarnos
 type CourseMinimal = ComponentProps<typeof CourseCard>['c'];
-type InscripcionMini = NonNullable<ComponentProps<typeof CourseCard>['inscripcion']>;
+type InscripcionMini = NonNullable<
+  ComponentProps<typeof CourseCard>['inscripcion']
+>;
 
 // Lo que llega del API (extiende lo que necesita la card)
 type CourseFromApi = CourseMinimal & {
@@ -30,35 +38,62 @@ type CourseFromApi = CourseMinimal & {
 
 export const revalidate = 60;
 
-// Facets tipadas para evitar any en comparadores/map
-type NivelFacet = { nivel: Nivel; count: number };
-type TagFacet = { tag: string; count: number };
-
 export async function generateMetadata({
-  params, searchParams,
-}:{ params: Promise<{ filters?: string[] }>, searchParams: Promise<Record<string,string|undefined>> }): Promise<Metadata> {
+  params,
+  searchParams,
+}: {
+  params: Promise<{ filters?: string[] }>;
+  searchParams: Promise<Record<string, string | undefined>>;
+}): Promise<Metadata> {
   const { filters } = await params;
   const sp = await searchParams;
 
   const { nivel, tag, sort: sortSeg, page } = parseCursosPretty(filters);
   const sort = sortSeg ?? sanitizeCursoSort(sp.sort);
 
-  const nivelLabel = nivel === 'BASICO' ? 'Básico' : nivel === 'INTERMEDIO' ? 'Intermedio' : nivel === 'AVANZADO' ? 'Avanzado' : null;
-  const title = ['Cursos', nivelLabel && `· ${nivelLabel}`, tag && `· #${tag}`, sort && sort !== 'relevancia' && `· Orden ${sort}`, page>1 && `· Página ${page}`].filter(Boolean).join(' ');
+  const nivelLabel =
+    nivel === 'BASICO'
+      ? 'Básico'
+      : nivel === 'INTERMEDIO'
+      ? 'Intermedio'
+      : nivel === 'AVANZADO'
+      ? 'Avanzado'
+      : null;
+
+  const title = [
+    'Cursos',
+    nivelLabel && `· ${nivelLabel}`,
+    tag && `· #${tag}`,
+    sort && sort !== 'relevancia' && `· Orden ${sort}`,
+    page > 1 && `· Página ${page}`,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   const canonical = buildCursosPrettyPath({
-    nivel, tag,
+    nivel,
+    tag,
     q: sp.q,
     sort,
     page: page > 1 ? page : null,
   });
+
   const robots = page > 1 ? { index: false, follow: true } : undefined;
-  return { title, description: 'Cursos de pestañas al estilo Udemy.', alternates: { canonical }, robots };
+  return {
+    title,
+    description: 'Cursos de pestañas al estilo Udemy.',
+    alternates: { canonical },
+    robots,
+  };
 }
 
 export default async function CursosPage({
-  params, searchParams
-}:{ params: Promise<{ filters?: string[] }>, searchParams: Promise<Record<string,string|undefined>> }) {
-
+  params,
+  searchParams,
+}: {
+  params: Promise<{ filters?: string[] }>;
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   const { filters } = await params;
   const sp = await searchParams;
 
@@ -89,7 +124,7 @@ export default async function CursosPage({
   ]);
 
   const currentPage = meta?.page ?? page;
-  const totalPages  = meta?.pages ?? 1;
+  const totalPages = meta?.pages ?? 1;
 
   const toNivelLabel = (n: Nivel) =>
     n === 'BASICO' ? 'Básico' : n === 'INTERMEDIO' ? 'Intermedio' : 'Avanzado';
@@ -97,39 +132,45 @@ export default async function CursosPage({
 
   // Chips
   const chips: Array<{ label: string; href: string }> = [];
-  if (nivel) chips.push({
-    label: `Nivel: ${nivelLabel}`,
-    href: buildCursosPathResetPage({ nivel: undefined, tag, q, sort }),
-  });
-  if (tag) chips.push({
-    label: `#${tag}`,
-    href: buildCursosPathResetPage({ nivel, tag: undefined, q, sort }),
-  });
-  if (q) chips.push({
-    label: `Búsqueda: “${q}”`,
-    href: buildCursosPathResetPage({ nivel, tag, q: '', sort }),
-  });
+  if (nivel)
+    chips.push({
+      label: `Nivel: ${nivelLabel}`,
+      href: buildCursosPathResetPage({ nivel: undefined, tag, q, sort }),
+    });
+  if (tag)
+    chips.push({
+      label: `#${tag}`,
+      href: buildCursosPathResetPage({ nivel, tag: undefined, q, sort }),
+    });
+  if (q)
+    chips.push({
+      label: `Búsqueda: “${q}”`,
+      href: buildCursosPathResetPage({ nivel, tag, q: '', sort }),
+    });
+
   const clearHref = chips.length
-    ? buildCursosPrettyPath({ nivel: undefined, tag: undefined, q: '', sort: null, page: null })
+    ? buildCursosPrettyPath({
+        nivel: undefined,
+        tag: undefined,
+        q: '',
+        sort: null,
+        page: null,
+      })
     : undefined;
 
   const noResults = !items?.length;
-
   const courses = (items ?? []) as CourseFromApi[];
 
-  // ✅ Sin any: tipamos las colecciones antes de ordenar/mapear
-  const nivelesArr: NivelFacet[] = Array.isArray(facets?.niveles) ? (facets!.niveles as NivelFacet[]) : [];
-  const tagsArr: TagFacet[] = Array.isArray(facets?.tags) ? (facets!.tags as TagFacet[]) : [];
+  // ✅ Usamos los tipos del API para evitar colisiones de nombre
+  const nivelesArr: ApiNivelFacet[] = facets?.niveles ?? [];
+  const tagsArr: ApiTagFacet[] = facets?.tags ?? [];
 
-  const topNiveles: NivelFacet[] = [...nivelesArr].sort((a, b) => b.count - a.count).slice(0, 3);
-  const topTags: TagFacet[] = [...tagsArr].sort((a, b) => b.count - a.count).slice(0, 8);
+  const topNiveles = [...nivelesArr].sort((a, b) => b.count - a.count).slice(0, 3);
+  const topTags = [...tagsArr].sort((a, b) => b.count - a.count).slice(0, 8);
 
   return (
     <section className="grid gap-6 md:grid-cols-[200px_1fr]">
-      <CursosFiltersSidebar
-        facets={facets}
-        state={{ nivel, tag, q, sort }}
-      />
+      <CursosFiltersSidebar facets={facets} state={{ nivel, tag, q, sort }} />
 
       <div className="space-y-4">
         <header className="flex items-center justify-between gap-3">
@@ -138,16 +179,20 @@ export default async function CursosPage({
             current={sort}
             options={[
               { value: 'relevancia', label: 'Relevancia' },
-              { value: 'novedades',  label: 'Novedades' },
+              { value: 'novedades', label: 'Novedades' },
               { value: 'precio_asc', label: 'Precio ↑' },
-              { value: 'precio_desc',label: 'Precio ↓' },
-              { value: 'rating_desc',label: 'Mejor valorados' },
+              { value: 'precio_desc', label: 'Precio ↓' },
+              { value: 'rating_desc', label: 'Mejor valorados' },
             ]}
-            hrefFor={(v) => buildCursosPrettyPath({
-              nivel, tag, q,
-              sort: v ?? null,
-              page: null,
-            })}
+            hrefFor={(v) =>
+              buildCursosPrettyPath({
+                nivel,
+                tag,
+                q,
+                sort: v ?? null,
+                page: null,
+              })
+            }
           />
         </header>
 
@@ -166,13 +211,34 @@ export default async function CursosPage({
                 <h3 className="text-sm font-medium mb-2">Sugerencias rápidas</h3>
                 <ul className="text-sm space-y-1">
                   {nivel && (
-                    <li><a className="hover:text-[var(--pink)]" href={buildCursosPathResetPage({ nivel: undefined, tag, q, sort })}>Quitar filtro de nivel</a></li>
+                    <li>
+                      <a
+                        className="hover:text-[var(--pink)]"
+                        href={buildCursosPathResetPage({ nivel: undefined, tag, q, sort })}
+                      >
+                        Quitar filtro de nivel
+                      </a>
+                    </li>
                   )}
                   {tag && (
-                    <li><a className="hover:text-[var(--pink)]" href={buildCursosPathResetPage({ nivel, tag: undefined, q, sort })}>Quitar tag</a></li>
+                    <li>
+                      <a
+                        className="hover:text-[var(--pink)]"
+                        href={buildCursosPathResetPage({ nivel, tag: undefined, q, sort })}
+                      >
+                        Quitar tag
+                      </a>
+                    </li>
                   )}
                   {q && (
-                    <li><a className="hover:text-[var(--pink)]" href={buildCursosPathResetPage({ nivel, tag, q: '', sort })}>Quitar búsqueda</a></li>
+                    <li>
+                      <a
+                        className="hover:text-[var(--pink)]"
+                        href={buildCursosPathResetPage({ nivel, tag, q: '', sort })}
+                      >
+                        Quitar búsqueda
+                      </a>
+                    </li>
                   )}
                 </ul>
               </div>
@@ -180,12 +246,24 @@ export default async function CursosPage({
                 <h3 className="text-sm font-medium mb-2">Explorar populares</h3>
                 <div className="flex flex-wrap gap-2 text-xs">
                   {topNiveles.map((n) => (
-                    <a key={`n-${n.nivel}`} href={buildCursosPathResetPage({ nivel: n.nivel, tag, q, sort })} className="rounded-full border border-default px-3 py-1 hover:border-[var(--pink)] hover:text-[var(--pink)]">
-                      {n.nivel === 'BASICO' ? '#básico' : n.nivel === 'INTERMEDIO' ? '#intermedio' : '#avanzado'}
+                    <a
+                      key={`n-${n.nivel}`}
+                      href={buildCursosPathResetPage({ nivel: n.nivel, tag, q, sort })}
+                      className="rounded-full border border-default px-3 py-1 hover:border-[var(--pink)] hover:text-[var(--pink)]"
+                    >
+                      {n.nivel === 'BASICO'
+                        ? '#básico'
+                        : n.nivel === 'INTERMEDIO'
+                        ? '#intermedio'
+                        : '#avanzado'}
                     </a>
                   ))}
                   {topTags.map((t) => (
-                    <a key={`t-${t.tag}`} href={buildCursosPathResetPage({ nivel, tag: t.tag, q, sort })} className="rounded-full border border-default px-3 py-1 hover:border-[var(--pink)] hover:text-[var(--pink)]">
+                    <a
+                      key={`t-${t.tag}`}
+                      href={buildCursosPathResetPage({ nivel, tag: t.tag, q, sort })}
+                      className="rounded-full border border-default px-3 py-1 hover:border-[var(--pink)] hover:text-[var(--pink)]"
+                    >
                       #{t.tag}
                     </a>
                   ))}
@@ -203,13 +281,7 @@ export default async function CursosPage({
                     ? c.inscripcionActual
                     : undefined;
 
-                return (
-                  <CourseCard
-                    key={c.slug}
-                    c={c}                    // c ya NO es any
-                    inscripcion={inscripcion}
-                  />
-                );
+                return <CourseCard key={c.slug} c={c} inscripcion={inscripcion} />;
               })}
             </div>
 
@@ -218,14 +290,22 @@ export default async function CursosPage({
                 {Array.from({ length: totalPages }).map((_, i) => {
                   const pageNum = i + 1;
                   const href = buildCursosPrettyPath({
-                    nivel, tag, q, sort,
+                    nivel,
+                    tag,
+                    q,
+                    sort,
                     page: pageNum > 1 ? pageNum : null,
                   });
                   const active = currentPage === pageNum;
                   return (
-                    <Link key={i} href={href}
+                    <Link
+                      key={i}
+                      href={href}
                       aria-current={active ? 'page' : undefined}
-                      className={`px-3 py-1 rounded-xl2 border ${active ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-default hover:bg-subtle'}`}>
+                      className={`px-3 py-1 rounded-xl2 border ${
+                        active ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-default hover:bg-subtle'
+                      }`}
+                    >
                       {pageNum}
                     </Link>
                   );

@@ -24,12 +24,7 @@ import { FiltersDrawer } from '@/components/filters/FiltersDrawer';
 export const revalidate = 60;
 
 /* ================= Tipos auxiliares ================= */
-type ProductoSort =
-  | 'relevancia'
-  | 'novedades'
-  | 'precio_asc'
-  | 'precio_desc'
-  | 'rating_desc';
+type ProductoSort = 'relevancia' | 'novedades' | 'precio_asc' | 'precio_desc' | 'rating_desc';
 
 /** Debe coincidir estructuralmente con lo que espera TiendaFiltersSidebar */
 type BrandFacet = { id: string; slug?: string; nombre: string; count: number };
@@ -37,14 +32,9 @@ type CategoryFacet = { id: string; slug?: string; nombre: string; count: number 
 type Facets = { marcas?: BrandFacet[]; categorias?: CategoryFacet[] };
 
 type ProductCardProps = ComponentProps<typeof ProductCard>;
-type Product = ProductCardProps extends { p: infer T }
-  ? (T & { id?: string | number })
-  : never;
+type Product = ProductCardProps extends { p: infer T } ? T & { id?: string | number } : never;
 
-function findLabel<T extends { id: string; slug?: string; nombre: string }>(
-  list: T[] | undefined,
-  key: string
-) {
+function findLabel<T extends { id: string; slug?: string; nombre: string }>(list: T[] | undefined, key: string) {
   const item = list?.find((it) => (it.slug ?? it.id) === key);
   return item?.nombre ?? key;
 }
@@ -133,11 +123,9 @@ export default async function TiendaPage({
 
   const [productsRes, facets] = (await Promise.all([
     getProducts({ q, categoria, marca, minPrice, maxPrice, sort, page, perPage: PAGE_SIZE }),
-    getProductFacets({ q, categoria, marca, minPrice, maxPrice }),
-  ])) as [
-    { items: Product[]; meta?: { page?: number; pages?: number } },
-    Facets
-  ];
+    // El endpoint devuelve { marcas[], categorias[] }; casteamos a la forma esperada por el Sidebar
+    getProductFacets({ q, categoria, marca, minPrice, maxPrice }) as Promise<Facets>,
+  ])) as [{ items: Product[]; meta?: { page?: number; pages?: number } }, Facets];
 
   const { items, meta } = productsRes;
 
@@ -166,8 +154,8 @@ export default async function TiendaPage({
       typeof minPrice === 'number' && typeof maxPrice === 'number'
         ? `Precio: ${minPrice}–${maxPrice}`
         : typeof minPrice === 'number'
-          ? `Precio: desde ${minPrice}`
-          : `Precio: hasta ${maxPrice}`;
+        ? `Precio: desde ${minPrice}`
+        : `Precio: hasta ${maxPrice}`;
     chips.push({
       label: priceLabel,
       href: buildTiendaPathResetPage({
@@ -204,11 +192,7 @@ export default async function TiendaPage({
 
   // Badge del botón móvil
   const appliedCount =
-    (categoria ? 1 : 0) +
-    (marca ? 1 : 0) +
-    (minPrice ? 1 : 0) +
-    (maxPrice ? 1 : 0) +
-    (q ? 1 : 0);
+    (categoria ? 1 : 0) + (marca ? 1 : 0) + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (q ? 1 : 0);
 
   const sortOptions: { value: ProductoSort; label: string }[] = [
     { value: 'relevancia', label: 'Relevancia' },
@@ -224,10 +208,7 @@ export default async function TiendaPage({
       <section className="grid grid-cols-12 gap-6 min-w-0">
         {/* Sidebar fijo: visible solo en lg+ */}
         <aside className="hidden lg:block lg:col-span-2 min-w-0">
-          <TiendaFiltersSidebar
-            facets={facets}
-            state={{ categoria, marca, q, minPrice, maxPrice, sort }}
-          />
+          <TiendaFiltersSidebar facets={facets} state={{ categoria, marca, q, minPrice, maxPrice, sort }} />
         </aside>
 
         {/* Columna principal con min-w-0 */}
