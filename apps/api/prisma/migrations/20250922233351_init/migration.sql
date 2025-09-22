@@ -207,6 +207,7 @@ CREATE TABLE `orden` (
     INDEX `orden_es_suscripcion_idx`(`es_suscripcion`),
     INDEX `orden_suscripcion_id_idx`(`suscripcion_id`),
     INDEX `orden_suscripcion_activa_idx`(`suscripcion_activa`),
+    INDEX `orden_referencia_pago_idx`(`referencia_pago`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -230,9 +231,9 @@ CREATE TABLE `pagos_suscripciones` (
     `id` CHAR(25) NOT NULL,
     `orden_id` CHAR(25) NOT NULL,
     `usuario_id` CHAR(25) NOT NULL,
-    `referencia_pago` VARCHAR(255) NOT NULL,
+    `referencia_pago` VARCHAR(191) NOT NULL,
     `monto` DECIMAL(10, 2) NOT NULL,
-    `estado` VARCHAR(50) NOT NULL,
+    `estado` VARCHAR(191) NOT NULL,
     `metadatos` JSON NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
@@ -240,6 +241,8 @@ CREATE TABLE `pagos_suscripciones` (
     INDEX `pagos_suscripciones_orden_id_idx`(`orden_id`),
     INDEX `pagos_suscripciones_usuario_id_idx`(`usuario_id`),
     INDEX `pagos_suscripciones_referencia_pago_idx`(`referencia_pago`),
+    INDEX `pagos_suscripciones_estado_idx`(`estado`),
+    INDEX `pagos_suscripciones_creado_en_idx`(`creado_en`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -332,7 +335,7 @@ CREATE TABLE `resena_respuesta` (
 CREATE TABLE `notificacion` (
     `id` CHAR(25) NOT NULL,
     `usuario_id` CHAR(25) NOT NULL,
-    `tipo` ENUM('respuesta_resena', 'like_resena', 'mencion') NOT NULL,
+    `tipo` ENUM('respuesta_resena', 'like_resena', 'mencion', 'sistema') NOT NULL,
     `titulo` VARCHAR(255) NOT NULL,
     `mensaje` TEXT NOT NULL,
     `leida` BOOLEAN NOT NULL DEFAULT false,
@@ -489,12 +492,6 @@ ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_resena_id_fkey` 
 
 -- AddForeignKey
 ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `resena_respuesta`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
