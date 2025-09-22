@@ -6,9 +6,10 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationsTaskService } from './notifications-task.service';
 import { NotificationListenerService } from './notification-listener.service';
+import { WebsocketsModule } from '../websockets/websockets.module';
 
 @Module({
-  imports: [PrismaModule, ScheduleModule.forRoot()],
+  imports: [PrismaModule, ScheduleModule.forRoot(), WebsocketsModule],
   controllers: [NotificationsController, NotificationPreferencesController],
   providers: [
     NotificationsService,
