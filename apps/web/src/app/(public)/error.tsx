@@ -21,7 +21,6 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
   // Log para devs y ejemplo de telemetría
   React.useEffect(() => {
     // Log local
-    // eslint-disable-next-line no-console
     console.error('[App ErrorBoundary]', { message: error?.message, digest: error?.digest, stack: error?.stack });
 
     // Ejemplo de envío a backend/monitoring (Sentry/OTEL/etc.)

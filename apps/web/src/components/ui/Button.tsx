@@ -5,10 +5,16 @@ type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   asChild?: boolean;
   variant?: 'solid' | 'outline' | 'ghost';
   tone?: 'pink' | 'gold' | 'neutral';
+  size?: 'sm' | 'md' | 'lg';
 };
-export function Button({ asChild, className, variant='solid', tone='neutral', ...rest }: Props) {
+export function Button({ asChild, className, variant='solid', tone='neutral', size='md', ...rest }: Props) {
   const Cmp = asChild ? Slot : 'button';
-  const base = 'inline-flex items-center justify-center rounded-xl2 px-4 py-2 text-sm focus:outline-none focus-visible:ring-2 ring-offset-2';
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
+  };
+  const base = `inline-flex items-center justify-center rounded-xl2 ${sizeClasses[size]} focus:outline-none focus-visible:ring-2 ring-offset-2`;
   const tones = {
     neutral: variant === 'solid'
       ? 'bg-black text-white hover:opacity-90 ring-offset-[var(--bg)]'

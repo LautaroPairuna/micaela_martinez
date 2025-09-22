@@ -119,7 +119,7 @@ export function buildTiendaPrettyPath(opts: {
 }
 
 export function buildTiendaPathResetPage(opts: Parameters<typeof buildTiendaPrettyPath>[0]) {
-  const { page, ...rest } = opts;
+  const { page: _, ...rest } = opts;
   return buildTiendaPrettyPath({ ...rest, page: null });
 }
 
@@ -184,7 +184,11 @@ export function buildCursosPrettyPath(opts: {
   const pageNum = opts.page != null ? POS_INT(opts.page) : 1;
   if (pageNum > 1) segs.push(`pagina-${pageNum}`);
 
-  const base = `/cursos${segs.length ? '/' + segs.join('/') : ''}`;
+  // Si hay filtros o búsqueda, usar la ruta /cursos/filtros/
+  const hasFilters = segs.length > 0 || opts.q;
+  const base = hasFilters 
+    ? `/cursos/filtros${segs.length ? '/' + segs.join('/') : ''}` 
+    : '/cursos';
 
   const qs = new URLSearchParams();
   const q = (opts.q ?? '').toString().trim();
@@ -195,7 +199,7 @@ export function buildCursosPrettyPath(opts: {
 }
 
 export function buildCursosPathResetPage(opts: Parameters<typeof buildCursosPrettyPath>[0]) {
-  const { page, ...rest } = opts;
+  const { page: _, ...rest } = opts;
   return buildCursosPrettyPath({ ...rest, page: null });
 }
 

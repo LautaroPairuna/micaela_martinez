@@ -8,9 +8,11 @@
   --bg: #111;
   --fg: #f5f6f7;
   --muted: rgba(245,246,247,.65);
+  --fg-muted: rgba(245,246,247,.65);
   --border: rgba(255,255,255,.12);
   --subtle: rgba(255,255,255,.04);
   --bg-muted: #121214; /* si usás bg-bg-muted */
+  --focus: var(--gold);
 }
 
 /* ====== Scope claro (para header/footer) ====== */
@@ -18,9 +20,11 @@
   --bg: #ffffff;
   --fg: #111114;
   --muted: #6b7280;
+  --fg-muted: #6b7280;
   --border: rgba(17,17,20,.12);
   --subtle: rgba(17,17,20,.04);
   --bg-muted: #f5f5f6;
+  --focus: var(--gold);
 }
 
 /* (Opcional) explícito, útil si querés forzar en alguna sección */
@@ -28,7 +32,9 @@
   --bg: #0b0b0c;
   --fg: #f5f6f7;
   --muted: rgba(245,246,247,.65);
+  --fg-muted: rgba(245,246,247,.65);
   --border: rgba(255,255,255,.12);
   --subtle: rgba(255,255,255,.04);
   --bg-muted: #121214;
+  --focus: var(--gold);
 }

@@ -3,13 +3,24 @@ import { Prisma, Producto } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryProductDto } from './dto/query-product.dto';
 import { getSkipTake } from '../common/utils/pagination';
+import { ImageUrlUtil } from '../common/utils/image-url.util';
 
-function mapSort(sort: string | undefined): Prisma.ProductoOrderByWithRelationInput[] {
+function mapSort(
+  sort: string | undefined,
+): Prisma.ProductoOrderByWithRelationInput[] {
   switch (sort) {
-    case 'novedades':   return [{ creadoEn: 'desc' }];
-    case 'precio_asc':  return [{ precio: 'asc' }];
-    case 'precio_desc': return [{ precio: 'desc' }];
-    case 'rating_desc': return [{ ratingProm: 'desc' }, { ratingConteo: 'desc' }, { creadoEn: 'desc' }];
+    case 'novedades':
+      return [{ creadoEn: 'desc' }];
+    case 'precio_asc':
+      return [{ precio: 'asc' }];
+    case 'precio_desc':
+      return [{ precio: 'desc' }];
+    case 'rating_desc':
+      return [
+        { ratingProm: 'desc' },
+        { ratingConteo: 'desc' },
+        { creadoEn: 'desc' },
+      ];
     case 'relevancia':
     default:
       // si hay q → prioridad a titulo; si no, destacado/reciente
@@ -22,42 +33,48 @@ export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   async list(dto: QueryProductDto) {
-    const { page, perPage, q, marca, categoria, minPrice, maxPrice, sort } = dto;
+    const { page, perPage, q, marca, categoria, minPrice, maxPrice, sort } =
+      dto;
     const { skip, take } = getSkipTake(page, perPage);
 
     // Resolver marca/categoría como slug o id
     let marcaId: string | undefined;
     if (marca) {
-      const m = await this.prisma.marca.findFirst({ where: { OR: [{ id: marca }, { slug: marca }] } });
+      const m = await this.prisma.marca.findFirst({
+        where: { OR: [{ id: marca }, { slug: marca }] },
+      });
       marcaId = m?.id;
       if (!marcaId) return { items: [], meta: { total: 0, page, perPage } };
     }
 
     let categoriaId: string | undefined;
     if (categoria) {
-      const c = await this.prisma.categoria.findFirst({ where: { OR: [{ id: categoria }, { slug: categoria }] } });
+      const c = await this.prisma.categoria.findFirst({
+        where: { OR: [{ id: categoria }, { slug: categoria }] },
+      });
       categoriaId = c?.id;
       if (!categoriaId) return { items: [], meta: { total: 0, page, perPage } };
     }
 
     const priceFilter =
-    minPrice != null || maxPrice != null
+      minPrice != null || maxPrice != null
         ? { gte: minPrice ?? 0, ...(maxPrice != null ? { lte: maxPrice } : {}) }
         : undefined;
 
     const where: Prisma.ProductoWhereInput = {
-        publicado: true,
-        ...(q ? { titulo: { contains: q } } : {}),
-        ...(marcaId ? { marcaId } : {}),
-        ...(categoriaId ? { categoriaId } : {}),
-        ...(priceFilter ? { precio: priceFilter } : {}),
+      publicado: true,
+      ...(q ? { titulo: { contains: q } } : {}),
+      ...(marcaId ? { marcaId } : {}),
+      ...(categoriaId ? { categoriaId } : {}),
+      ...(priceFilter ? { precio: priceFilter } : {}),
     };
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.producto.findMany({
         where,
         orderBy: mapSort(q ? 'relevancia' : sort),
-        skip, take,
+        skip,
+        take,
         include: {
           marca: true,
           categoria: true,
@@ -68,8 +85,30 @@ export class ProductsService {
       this.prisma.producto.count({ where }),
     ]);
 
+    // Transformar los datos para incluir URLs de imagen
+    const transformedItems = items.map((item) => ({
+      ...item,
+      imagenUrl: ImageUrlUtil.getProductImageUrl(item.imagen),
+      marca: item.marca
+        ? {
+            ...item.marca,
+            imagenUrl: ImageUrlUtil.getBrandImageUrl(item.marca.imagen),
+          }
+        : null,
+      categoria: item.categoria
+        ? {
+            ...item.categoria,
+            imagenUrl: ImageUrlUtil.getCategoryImageUrl(item.categoria.imagen),
+          }
+        : null,
+      imagenes: item.imagenes.map((img) => ({
+        ...img,
+        url: ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
+      })),
+    }));
+
     return {
-      items,
+      items: transformedItems,
       meta: { total, page, perPage, pages: Math.ceil(total / perPage!) },
     };
   }
@@ -87,17 +126,23 @@ export class ProductsService {
     };
 
     // filtrar por categoría para facetear marcas
-    let whereForBrands: Prisma.ProductoWhereInput = { ...baseWhere };
+    const whereForBrands: Prisma.ProductoWhereInput = { ...baseWhere };
     if (categoria) {
-      const c = await this.prisma.categoria.findFirst({ where: { OR: [{ id: categoria }, { slug: categoria }] } });
-      if (c) whereForBrands.categoriaId = c.id; else whereForBrands.categoriaId = '__none__';
+      const c = await this.prisma.categoria.findFirst({
+        where: { OR: [{ id: categoria }, { slug: categoria }] },
+      });
+      if (c) whereForBrands.categoriaId = c.id;
+      else whereForBrands.categoriaId = '__none__';
     }
 
     // filtrar por marca para facetear categorías
-    let whereForCategories: Prisma.ProductoWhereInput = { ...baseWhere };
+    const whereForCategories: Prisma.ProductoWhereInput = { ...baseWhere };
     if (marca) {
-      const m = await this.prisma.marca.findFirst({ where: { OR: [{ id: marca }, { slug: marca }] } });
-      if (m) whereForCategories.marcaId = m.id; else whereForCategories.marcaId = '__none__';
+      const m = await this.prisma.marca.findFirst({
+        where: { OR: [{ id: marca }, { slug: marca }] },
+      });
+      if (m) whereForCategories.marcaId = m.id;
+      else whereForCategories.marcaId = '__none__';
     }
 
     const byBrand = await this.prisma.producto.groupBy({
@@ -105,17 +150,17 @@ export class ProductsService {
       where: whereForBrands,
       _count: { _all: true },
     });
-    const brandIds = byBrand.map(b => b.marcaId).filter(Boolean) as string[];
+    const brandIds = byBrand.map((b) => b.marcaId).filter(Boolean) as string[];
     const brands = brandIds.length
       ? await this.prisma.marca.findMany({ where: { id: { in: brandIds } } })
       : [];
 
     const brandFacets = byBrand
-      .filter(b => !!b.marcaId)
-      .map(b => ({
+      .filter((b) => !!b.marcaId)
+      .map((b) => ({
         id: b.marcaId!,
-        nombre: brands.find(x => x.id === b.marcaId)?.nombre ?? 'Desconocida',
-        slug: brands.find(x => x.id === b.marcaId)?.slug ?? '',
+        nombre: brands.find((x) => x.id === b.marcaId)?.nombre ?? 'Desconocida',
+        slug: brands.find((x) => x.id === b.marcaId)?.slug ?? '',
         count: b._count._all,
       }))
       .sort((a, b) => b.count - a.count);
@@ -125,17 +170,23 @@ export class ProductsService {
       where: whereForCategories,
       _count: { _all: true },
     });
-    const categoryIds = byCategory.map(c => c.categoriaId).filter(Boolean) as string[];
+    const categoryIds = byCategory
+      .map((c) => c.categoriaId)
+      .filter(Boolean) as string[];
     const categories = categoryIds.length
-      ? await this.prisma.categoria.findMany({ where: { id: { in: categoryIds } } })
+      ? await this.prisma.categoria.findMany({
+          where: { id: { in: categoryIds } },
+        })
       : [];
 
     const categoryFacets = byCategory
-      .filter(c => !!c.categoriaId)
-      .map(c => ({
+      .filter((c) => !!c.categoriaId)
+      .map((c) => ({
         id: c.categoriaId!,
-        nombre: categories.find(x => x.id === c.categoriaId)?.nombre ?? 'Sin categoría',
-        slug: categories.find(x => x.id === c.categoriaId)?.slug ?? '',
+        nombre:
+          categories.find((x) => x.id === c.categoriaId)?.nombre ??
+          'Sin categoría',
+        slug: categories.find((x) => x.id === c.categoriaId)?.slug ?? '',
         count: c._count._all,
       }))
       .sort((a, b) => b.count - a.count);
@@ -153,13 +204,34 @@ export class ProductsService {
         resenas: {
           take: 4,
           orderBy: { creadoEn: 'desc' },
-          include: { Usuario: { select: { id: true, nombre: true } } },
+          include: { usuario: { select: { id: true, nombre: true } } },
         },
       },
     });
     if (!item) throw new NotFoundException('Producto no encontrado');
 
-    // FUTURO: si agregás "especificaciones Json?" al modelo, podés exponerlo aquí.
-    return item;
+    // Transformar los datos para incluir URLs de imagen
+    const transformedItem = {
+      ...item,
+      imagenUrl: ImageUrlUtil.getProductImageUrl(item.imagen),
+      marca: item.marca
+        ? {
+            ...item.marca,
+            imagenUrl: ImageUrlUtil.getBrandImageUrl(item.marca.imagen),
+          }
+        : null,
+      categoria: item.categoria
+        ? {
+            ...item.categoria,
+            imagenUrl: ImageUrlUtil.getCategoryImageUrl(item.categoria.imagen),
+          }
+        : null,
+      imagenes: item.imagenes.map((img) => ({
+        ...img,
+        url: ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
+      })),
+    };
+
+    return transformedItem;
   }
 }

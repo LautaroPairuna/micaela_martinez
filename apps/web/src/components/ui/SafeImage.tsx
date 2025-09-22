@@ -2,7 +2,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { getPublicImageUrl } from '@/lib/media-utils';
 
 type Ratio = '4/3' | '1/1' | '16/9' | `${number}/${number}` | 'auto';
 
@@ -20,6 +21,7 @@ type Props = {
   objectPosition?: string;     // ej. '85% 50%'
   withBg?: boolean;            // bg neutro del wrapper
   skeleton?: boolean;          // shimmer de carga
+  useBackendProxy?: boolean;   // usar proxy de backend para imágenes
 };
 
 const PLACEHOLDER = '/images/placeholder.jpg';
@@ -40,20 +42,76 @@ export function SafeImage({
   objectPosition,
   withBg = true,
   skeleton = true,
+  useBackendProxy = true,
 }: Props) {
   const [err, setErr] = useState(false);
-  // ⬇️ clave: si no hay skeleton, no ocultes la imagen
-  const [loaded, setLoaded] = useState(!skeleton);
+  // ⬇️ Inicializar siempre como false para evitar hidratación
+  const [loaded, setLoaded] = useState(false);
+
+  // Reset de estados cuando cambia la src
+  useEffect(() => {
+    setErr(false);
+    setLoaded(!skeleton);
+  }, [src, skeleton]);
+
+  // Establecer el estado inicial después de la hidratación
+  useEffect(() => {
+    if (!skeleton) {
+      setLoaded(true);
+    }
+  }, [skeleton]);
 
   const finalSrc = useMemo(() => {
     const s = (src ?? '').trim();
-    return !s || err ? PLACEHOLDER : s;
-  }, [src, err]);
+    if (!s || err) return PLACEHOLDER;
+    
+    // Si es una URL relativa sin '/' inicial, agregarla
+    let processedSrc = s;
+    if (s && !s.startsWith('/') && !s.startsWith('http') && !s.startsWith('data:')) {
+      processedSrc = `/${s}`;
+    }
+    
+    // Manejo especial para SVG - asegurarnos de que se procesen correctamente
+    if (processedSrc.toLowerCase().endsWith('.svg')) {
+      // Para SVGs locales, usarlos directamente
+      if (processedSrc.startsWith('/')) {
+        return processedSrc;
+      }
+      // Para SVGs remotos, usar el proxy si está habilitado
+      if (useBackendProxy && !processedSrc.startsWith('data:')) {
+        return getPublicImageUrl(processedSrc);
+      }
+    }
+    
+    // Manejo directo de imágenes para evitar problemas con Next.js Image
+    if (processedSrc.includes('/api/media/public/')) {
+      // Convertimos directamente /api/media/public/ a /api/media/images/
+      return processedSrc.replace('/api/media/public/', '/api/media/images/');
+    }
+    
+    // Si la ruta contiene /images/ o es una ruta local, la usamos directamente
+    if (
+      (processedSrc.includes('/images/') && !processedSrc.startsWith('http')) || 
+      (processedSrc.startsWith('/') && !processedSrc.startsWith('/api/'))
+    ) {
+      return processedSrc;
+    }
+    
+    // Para otras rutas, usamos el proxy si está habilitado
+    if (useBackendProxy && !s.startsWith('data:') && !s.startsWith('/api/media/')) {
+      return getPublicImageUrl(processedSrc);
+    }
+    
+    return processedSrc;
+  }, [src, err, useBackendProxy]);
 
   const roundedCls =
     rounded === 'all' ? 'rounded-xl2' : rounded === 'top' ? 'rounded-t-xl2' : '';
 
   const fitCls = fit === 'contain' ? 'object-contain' : 'object-cover';
+
+  // Determinar si es un SVG para usar el componente adecuado
+  const isSvg = finalSrc.toLowerCase().endsWith('.svg');
 
   return (
     <div
@@ -69,6 +127,7 @@ export function SafeImage({
       {skeleton && (
         <div
           aria-hidden
+          suppressHydrationWarning
           className={[
             'absolute inset-0',
             'bg-[linear-gradient(90deg,rgba(0,0,0,0)_0%,rgba(0,0,0,.04)_50%,rgba(0,0,0,0)_100%)]',
@@ -80,24 +139,45 @@ export function SafeImage({
         />
       )}
 
-      <Image
-        src={finalSrc || PIXEL}
-        alt={alt || 'imagen'}
-        fill
-        sizes={sizes}
-        priority={priority}
-        onError={() => setErr(true)}
-        onLoad={() => setLoaded(true)}
-        draggable={false}
-        className={[
-          fitCls,
-          'h-full w-full',
-          skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
-          'transition-opacity duration-200',
-          imgClassName,
-        ].join(' ')}
-        style={objectPosition ? { objectPosition } : undefined}
-      />
+      {isSvg ? (
+        // Para SVGs usamos un enfoque diferente para evitar problemas con Next.js Image
+        <img
+          src={finalSrc}
+          alt={alt || 'imagen'}
+          className={[
+            fitCls,
+            'h-full w-full',
+            skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
+            'transition-opacity duration-200',
+            imgClassName,
+          ].join(' ')}
+          style={objectPosition ? { objectPosition } : undefined}
+          onError={() => setErr(true)}
+          onLoad={() => setLoaded(true)}
+          draggable={false}
+        />
+      ) : (
+        // Para imágenes normales usamos Next.js Image
+        <Image
+          src={finalSrc || PIXEL}
+          alt={alt || 'imagen'}
+          fill
+          sizes={sizes}
+          priority={priority}
+          onError={() => setErr(true)}
+          onLoad={() => setLoaded(true)}
+          draggable={false}
+          suppressHydrationWarning
+          className={[
+            fitCls,
+            'h-full w-full',
+            skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
+            'transition-opacity duration-200',
+            imgClassName,
+          ].join(' ')}
+          style={objectPosition ? { objectPosition } : undefined}
+        />
+      )}
 
       <style jsx global>{`
         @keyframes shimmer {

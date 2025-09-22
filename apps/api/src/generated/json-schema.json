@@ -1,0 +1,1637 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Usuario": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "passwordHash": {
+          "type": "string"
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "emailVerificadoEn": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "inscripciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Inscripcion"
+          }
+        },
+        "ordenes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Orden"
+          }
+        },
+        "resenas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Resena"
+          }
+        },
+        "cursosDicta": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Curso"
+          }
+        },
+        "direcciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Direccion"
+          }
+        },
+        "favoritos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Favorito"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsuarioRol"
+          }
+        },
+        "likesResenas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaLike"
+          }
+        },
+        "respuestasResenas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaRespuesta"
+          }
+        },
+        "notificaciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notificacion"
+          }
+        },
+        "borradores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaBorrador"
+          }
+        },
+        "preferenciasNotificacion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PreferenciasNotificacion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "auditLogs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AuditLog"
+          }
+        },
+        "pagosSuscripcion": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagoSuscripcion"
+          }
+        }
+      },
+      "required": [
+        "email",
+        "passwordHash",
+        "actualizadoEn"
+      ]
+    },
+    "Role": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsuarioRol"
+          }
+        }
+      },
+      "required": [
+        "slug",
+        "name"
+      ]
+    },
+    "UsuarioRol": {
+      "type": "object",
+      "properties": {
+        "usuarioId": {
+          "type": "string"
+        },
+        "roleId": {
+          "type": "string"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "role": {
+          "$ref": "#/definitions/Role"
+        }
+      },
+      "required": [
+        "usuarioId",
+        "roleId"
+      ]
+    },
+    "Favorito": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "productoId": {
+          "type": "string"
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "producto": {
+          "$ref": "#/definitions/Producto"
+        }
+      },
+      "required": [
+        "usuarioId",
+        "productoId"
+      ]
+    },
+    "Curso": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "resumen": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "descripcionMD": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requisitos": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "precio": {
+          "type": "integer"
+        },
+        "publicado": {
+          "type": "boolean",
+          "default": false
+        },
+        "nivel": {
+          "type": "string",
+          "default": "BASICO",
+          "enum": [
+            "BASICO",
+            "INTERMEDIO",
+            "AVANZADO"
+          ]
+        },
+        "portada": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "destacado": {
+          "type": "boolean",
+          "default": false
+        },
+        "tags": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "ratingProm": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ratingConteo": {
+          "type": "integer",
+          "default": 0
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "modulos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Modulo"
+          }
+        },
+        "resenas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Resena"
+          }
+        },
+        "inscripciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Inscripcion"
+          }
+        },
+        "borradores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaBorrador"
+          }
+        },
+        "instructorId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "instructor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Usuario"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "slug",
+        "titulo",
+        "precio"
+      ]
+    },
+    "Inscripcion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "cursoId": {
+          "type": "string"
+        },
+        "estado": {
+          "type": "string",
+          "default": "ACTIVADA",
+          "enum": [
+            "ACTIVADA",
+            "PAUSADA",
+            "DESACTIVADA"
+          ]
+        },
+        "progreso": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "curso": {
+          "$ref": "#/definitions/Curso"
+        }
+      },
+      "required": [
+        "usuarioId",
+        "cursoId",
+        "progreso",
+        "actualizadoEn"
+      ]
+    },
+    "Modulo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cursoId": {
+          "type": "string"
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "orden": {
+          "type": "integer"
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "curso": {
+          "$ref": "#/definitions/Curso"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Modulo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hijos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Modulo"
+          }
+        },
+        "lecciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Leccion"
+          }
+        }
+      },
+      "required": [
+        "cursoId",
+        "titulo",
+        "orden"
+      ]
+    },
+    "Leccion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "moduloId": {
+          "type": "string"
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "duracionS": {
+          "type": "integer",
+          "default": 0
+        },
+        "rutaSrc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "orden": {
+          "type": "integer"
+        },
+        "tipo": {
+          "type": "string",
+          "default": "TEXTO",
+          "enum": [
+            "VIDEO",
+            "DOCUMENTO",
+            "QUIZ",
+            "TEXTO"
+          ]
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "contenido": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "modulo": {
+          "$ref": "#/definitions/Modulo"
+        }
+      },
+      "required": [
+        "moduloId",
+        "titulo",
+        "orden"
+      ]
+    },
+    "Producto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "sku": {
+          "type": "string"
+        },
+        "precio": {
+          "type": "integer"
+        },
+        "stock": {
+          "type": "integer",
+          "default": 0
+        },
+        "publicado": {
+          "type": "boolean",
+          "default": false
+        },
+        "destacado": {
+          "type": "boolean",
+          "default": false
+        },
+        "imagen": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "descripcionMD": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "precioLista": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "ratingProm": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ratingConteo": {
+          "type": "integer",
+          "default": 0
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "marcaId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "categoriaId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "marca": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Marca"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "categoria": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Categoria"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "imagenes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductoImagen"
+          }
+        },
+        "resenas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Resena"
+          }
+        },
+        "favoritos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Favorito"
+          }
+        },
+        "borradores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaBorrador"
+          }
+        }
+      },
+      "required": [
+        "slug",
+        "titulo",
+        "sku",
+        "precio"
+      ]
+    },
+    "ProductoImagen": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "productoId": {
+          "type": "string"
+        },
+        "archivo": {
+          "type": "string"
+        },
+        "alt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "orden": {
+          "type": "integer",
+          "default": 0
+        },
+        "producto": {
+          "$ref": "#/definitions/Producto"
+        }
+      },
+      "required": [
+        "productoId",
+        "archivo"
+      ]
+    },
+    "Marca": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "imagen": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "activa": {
+          "type": "boolean",
+          "default": true
+        },
+        "orden": {
+          "type": "integer",
+          "default": 0
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "productos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Producto"
+          }
+        }
+      },
+      "required": [
+        "slug",
+        "nombre"
+      ]
+    },
+    "Categoria": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "imagen": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "activa": {
+          "type": "boolean",
+          "default": true
+        },
+        "orden": {
+          "type": "integer",
+          "default": 0
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Categoria"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hijos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Categoria"
+          }
+        },
+        "productos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Producto"
+          }
+        }
+      },
+      "required": [
+        "slug",
+        "nombre"
+      ]
+    },
+    "Orden": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "estado": {
+          "type": "string",
+          "default": "PENDIENTE",
+          "enum": [
+            "PENDIENTE",
+            "PAGADO",
+            "CUMPLIDO",
+            "CANCELADO",
+            "REEMBOLSADO"
+          ]
+        },
+        "total": {
+          "type": "integer"
+        },
+        "moneda": {
+          "type": "string",
+          "default": "ARS"
+        },
+        "referenciaPago": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "esSuscripcion": {
+          "type": "boolean",
+          "default": false
+        },
+        "suscripcionActiva": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "suscripcionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suscripcionFrecuencia": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "suscripcionTipoFrecuencia": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metadatos": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "direccionEnvioId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "direccionFacturacionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "direccionEnvio": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Direccion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "direccionFacturacion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Direccion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemOrden"
+          }
+        },
+        "pagosSuscripcion": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagoSuscripcion"
+          }
+        }
+      },
+      "required": [
+        "usuarioId",
+        "total",
+        "actualizadoEn"
+      ]
+    },
+    "ItemOrden": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ordenId": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "CURSO",
+            "PRODUCTO"
+          ]
+        },
+        "refId": {
+          "type": "string"
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "cantidad": {
+          "type": "integer",
+          "default": 1
+        },
+        "precioUnitario": {
+          "type": "integer"
+        },
+        "orden": {
+          "$ref": "#/definitions/Orden"
+        }
+      },
+      "required": [
+        "ordenId",
+        "tipo",
+        "refId",
+        "titulo",
+        "precioUnitario"
+      ]
+    },
+    "PagoSuscripcion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ordenId": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "referenciaPago": {
+          "type": "string"
+        },
+        "monto": {
+          "type": "number"
+        },
+        "estado": {
+          "type": "string"
+        },
+        "metadatos": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "orden": {
+          "$ref": "#/definitions/Orden"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        }
+      },
+      "required": [
+        "ordenId",
+        "usuarioId",
+        "referenciaPago",
+        "monto",
+        "estado",
+        "actualizadoEn"
+      ]
+    },
+    "Direccion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "etiqueta": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nombre": {
+          "type": "string"
+        },
+        "telefono": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calle": {
+          "type": "string"
+        },
+        "numero": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pisoDepto": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ciudad": {
+          "type": "string"
+        },
+        "provincia": {
+          "type": "string"
+        },
+        "cp": {
+          "type": "string"
+        },
+        "pais": {
+          "type": "string",
+          "default": "AR"
+        },
+        "predeterminada": {
+          "type": "boolean",
+          "default": false
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ordenesEnvio": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Orden"
+          }
+        },
+        "ordenesFacturacion": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Orden"
+          }
+        }
+      },
+      "required": [
+        "usuarioId",
+        "nombre",
+        "calle",
+        "ciudad",
+        "provincia",
+        "cp",
+        "actualizadoEn"
+      ]
+    },
+    "Slider": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "archivo": {
+          "type": "string"
+        },
+        "activa": {
+          "type": "boolean",
+          "default": true
+        },
+        "orden": {
+          "type": "integer",
+          "default": 0
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "titulo",
+        "alt",
+        "archivo",
+        "actualizadoEn"
+      ]
+    },
+    "Resena": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cursoId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "productoId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "puntaje": {
+          "type": "integer"
+        },
+        "comentario": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "curso": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Curso"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "producto": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Producto"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "likes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaLike"
+          }
+        },
+        "respuestas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaRespuesta"
+          }
+        }
+      },
+      "required": [
+        "usuarioId",
+        "puntaje"
+      ]
+    },
+    "ResenaLike": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "resenaId": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "LIKE",
+            "DISLIKE"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resena": {
+          "$ref": "#/definitions/Resena"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        }
+      },
+      "required": [
+        "resenaId",
+        "usuarioId",
+        "tipo"
+      ]
+    },
+    "ResenaRespuesta": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "resenaId": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "contenido": {
+          "type": "string"
+        },
+        "eliminado": {
+          "type": "boolean",
+          "default": false
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resena": {
+          "$ref": "#/definitions/Resena"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResenaRespuesta"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hijos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaRespuesta"
+          }
+        }
+      },
+      "required": [
+        "resenaId",
+        "usuarioId",
+        "contenido",
+        "actualizadoEn"
+      ]
+    },
+    "Notificacion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "RESPUESTA_RESENA",
+            "LIKE_RESENA",
+            "MENCION"
+          ]
+        },
+        "titulo": {
+          "type": "string"
+        },
+        "mensaje": {
+          "type": "string"
+        },
+        "leida": {
+          "type": "boolean",
+          "default": false
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metadata": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        }
+      },
+      "required": [
+        "usuarioId",
+        "tipo",
+        "titulo",
+        "mensaje"
+      ]
+    },
+    "PreferenciasNotificacion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "nuevaResena": {
+          "type": "boolean",
+          "default": true
+        },
+        "respuestaResena": {
+          "type": "boolean",
+          "default": true
+        },
+        "actualizacionesSistema": {
+          "type": "boolean",
+          "default": true
+        },
+        "mantenimiento": {
+          "type": "boolean",
+          "default": true
+        },
+        "reporteContenido": {
+          "type": "boolean",
+          "default": true
+        },
+        "contenidoPendiente": {
+          "type": "boolean",
+          "default": true
+        },
+        "resumenDiario": {
+          "type": "boolean",
+          "default": false
+        },
+        "notificacionesInstantaneas": {
+          "type": "boolean",
+          "default": true
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        }
+      },
+      "required": [
+        "usuarioId",
+        "actualizadoEn"
+      ]
+    },
+    "ResenaBorrador": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "string"
+        },
+        "cursoId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "productoId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "puntaje": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "comentario": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "curso": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Curso"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "producto": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Producto"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "usuarioId",
+        "actualizadoEn"
+      ]
+    },
+    "AuditLog": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tableName": {
+          "type": "string"
+        },
+        "recordId": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "oldData": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "newData": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "userId": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipAddress": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "user": {
+          "$ref": "#/definitions/Usuario"
+        }
+      },
+      "required": [
+        "tableName",
+        "recordId",
+        "action",
+        "userId"
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "usuario": {
+      "$ref": "#/definitions/Usuario"
+    },
+    "role": {
+      "$ref": "#/definitions/Role"
+    },
+    "usuarioRol": {
+      "$ref": "#/definitions/UsuarioRol"
+    },
+    "favorito": {
+      "$ref": "#/definitions/Favorito"
+    },
+    "curso": {
+      "$ref": "#/definitions/Curso"
+    },
+    "inscripcion": {
+      "$ref": "#/definitions/Inscripcion"
+    },
+    "modulo": {
+      "$ref": "#/definitions/Modulo"
+    },
+    "leccion": {
+      "$ref": "#/definitions/Leccion"
+    },
+    "producto": {
+      "$ref": "#/definitions/Producto"
+    },
+    "productoImagen": {
+      "$ref": "#/definitions/ProductoImagen"
+    },
+    "marca": {
+      "$ref": "#/definitions/Marca"
+    },
+    "categoria": {
+      "$ref": "#/definitions/Categoria"
+    },
+    "orden": {
+      "$ref": "#/definitions/Orden"
+    },
+    "itemOrden": {
+      "$ref": "#/definitions/ItemOrden"
+    },
+    "pagoSuscripcion": {
+      "$ref": "#/definitions/PagoSuscripcion"
+    },
+    "direccion": {
+      "$ref": "#/definitions/Direccion"
+    },
+    "slider": {
+      "$ref": "#/definitions/Slider"
+    },
+    "resena": {
+      "$ref": "#/definitions/Resena"
+    },
+    "resenaLike": {
+      "$ref": "#/definitions/ResenaLike"
+    },
+    "resenaRespuesta": {
+      "$ref": "#/definitions/ResenaRespuesta"
+    },
+    "notificacion": {
+      "$ref": "#/definitions/Notificacion"
+    },
+    "preferenciasNotificacion": {
+      "$ref": "#/definitions/PreferenciasNotificacion"
+    },
+    "resenaBorrador": {
+      "$ref": "#/definitions/ResenaBorrador"
+    },
+    "auditLog": {
+      "$ref": "#/definitions/AuditLog"
+    }
+  }
+}

@@ -20,13 +20,25 @@ export function ProductGallery({
       .map((im): LightboxImage => ({
         url: im?.url && String(im.url).trim() ? String(im.url) : '/images/placeholder.jpg',
         alt: im?.alt,
+        width: 800, // Dimensiones por defecto para productos
+        height: 800,
       }))
       .filter((im): im is LightboxImage => !!im.url);
-    return list.length ? list : [{ url: '/images/placeholder.jpg', alt: 'Imagen no disponible' }];
+    return list.length ? list : [{ url: '/images/placeholder.jpg', alt: 'Imagen no disponible', width: 800, height: 800 }];
   }, [images]);
+
+  // Determinar si el lightbox debe estar habilitado (solo si hay más de una imagen)
+  const lightboxEnabled = imgs.length > 1;
 
   const [idx, setIdx] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+
+  // Asegurar que el índice esté dentro del rango válido cuando cambien las imágenes
+  React.useEffect(() => {
+    if (idx >= imgs.length) {
+      setIdx(0);
+    }
+  }, [imgs.length, idx]);
 
   // Pre-carga adyacentes
   React.useEffect(() => {
@@ -37,6 +49,18 @@ export function ProductGallery({
     prev.src = imgs[(idx - 1 + imgs.length) % imgs.length].url;
   }, [idx, imgs]);
 
+  // Handler para cambio de índice que asegura la sincronización
+  const handleIndexChange = React.useCallback((newIndex: number | ((prevIndex: number) => number)) => {
+    if (typeof newIndex === 'function') {
+      setIdx(prevIdx => {
+        const nextIdx = newIndex(prevIdx);
+        return Math.max(0, Math.min(nextIdx, imgs.length - 1));
+      });
+    } else {
+      setIdx(Math.max(0, Math.min(newIndex, imgs.length - 1)));
+    }
+  }, [imgs.length]);
+
   const objectClass = fit === 'cover' ? 'object-cover' : 'object-contain';
   const current = imgs[idx];
 
@@ -46,51 +70,61 @@ export function ProductGallery({
       <div className="relative aspect-square sm:aspect-[1/1] rounded-xl2 overflow-hidden border border-default bg-neutral-900/40 select-none">
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          className="absolute inset-0"
-          aria-label="Abrir imagen en modo ampliado"
+          onClick={() => lightboxEnabled && setOpen(true)}
+          className={[
+            'absolute inset-0 w-full h-full',
+            lightboxEnabled ? 'cursor-pointer' : 'cursor-default',
+          ].join(' ')}
+          disabled={!lightboxEnabled}
+          aria-label={lightboxEnabled ? "Ampliar imagen" : "Imagen"}
+          title={lightboxEnabled ? "Clic para ampliar" : undefined}
         >
           <SafeImage
             src={current.url}
-            alt={current.alt || 'Producto'}
-            sizes="(min-width:1024px) 720px, 100vw"
-            className={[objectClass, 'w-full h-full'].join(' ')}
-            priority
+            alt={current.alt || 'Imagen del producto'}
+            className={`w-full h-full ${objectClass}`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </button>
 
+        {/* Navegación entre imágenes */}
         {imgs.length > 1 && (
           <>
             <button
               type="button"
-              aria-label="Anterior"
-              onClick={() => setIdx((i) => (i - 1 + imgs.length) % imgs.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-xl2 border border-default bg-[var(--bg)]/80 backdrop-blur px-2 py-1 hover:bg-[var(--bg)]"
+              onClick={() => handleIndexChange((idx - 1 + imgs.length) % imgs.length)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-xl2 border border-default bg-[var(--bg)]/80 backdrop-blur p-2 hover:bg-[var(--bg)]"
+              aria-label="Imagen anterior"
+              title="Anterior"
             >
-              <ChevronLeft className="size-5" />
+              <ChevronLeft className="size-4" />
             </button>
             <button
               type="button"
-              aria-label="Siguiente"
-              onClick={() => setIdx((i) => (i + 1) % imgs.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl2 border border-default bg-[var(--bg)]/80 backdrop-blur px-2 py-1 hover:bg-[var(--bg)]"
+              onClick={() => handleIndexChange((idx + 1) % imgs.length)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl2 border border-default bg-[var(--bg)]/80 backdrop-blur p-2 hover:bg-[var(--bg)]"
+              aria-label="Imagen siguiente"
+              title="Siguiente"
             >
-              <ChevronRight className="size-5" />
+              <ChevronRight className="size-4" />
             </button>
           </>
         )}
 
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="absolute bottom-3 right-3 rounded-xl2 border border-default bg-[var(--bg)]/80 backdrop-blur px-2 py-1 text-xs hover:bg-[var(--bg)]"
-          aria-label="Ampliar imagen"
-          title="Ampliar"
-        >
-          <span className="inline-flex items-center gap-1">
-            <Maximize2 className="size-3" /> Ampliar
-          </span>
-        </button>
+        {/* Botón de ampliar - solo visible si lightbox está habilitado */}
+        {lightboxEnabled && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="absolute bottom-3 right-3 rounded-xl2 border border-default bg-[var(--bg)]/80 backdrop-blur px-2 py-1 text-xs hover:bg-[var(--bg)]"
+            aria-label="Ampliar imagen"
+            title="Ampliar"
+          >
+            <span className="inline-flex items-center gap-1">
+              <Maximize2 className="size-3" /> Ampliar
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Thumbnails */}
@@ -102,7 +136,7 @@ export function ProductGallery({
               <button
                 key={i}
                 type="button"
-                onClick={() => setIdx(i)}
+                onClick={() => handleIndexChange(i)}
                 role="option"
                 aria-selected={selected}
                 aria-label={`Imagen ${i + 1}`}
@@ -119,16 +153,17 @@ export function ProductGallery({
         </div>
       )}
 
-      {/* Lightbox externo */}
-      {open && (
+      {/* Lightbox externo - solo se renderiza si está habilitado */}
+      {lightboxEnabled && open && (
         <Lightbox
           images={imgs}
           index={idx}
-          onChangeIndex={setIdx}
+          onChangeIndex={handleIndexChange}
           onClose={() => setOpen(false)}
           showThumbnails
           initialFit="contain"
           heightOffsetPx={88}
+          adaptiveSize
         />
       )}
     </div>

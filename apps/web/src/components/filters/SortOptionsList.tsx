@@ -16,11 +16,11 @@ export function SortOptionsList({
   const isActive = (v: string) => current === v;
 
   return (
-    <section aria-labelledby="sort-title" className="rounded-xl2 border border-default">
-      <header className="px-3 py-2 border-b border-default">
-        <h3 id="sort-title" className="text-sm font-medium font-display">{title}</h3>
+    <section aria-labelledby="sort-title" className="rounded-xl2 border border-default bg-background">
+      <header className="px-4 py-3 border-b border-default">
+        <h3 id="sort-title" className="text-sm font-medium font-display text-foreground">{title}</h3>
       </header>
-      <ul className="py-1">
+      <ul className="p-4 space-y-3">
         {options.map((o) => {
           const href = hrefFor(o.value === 'relevancia' ? null : o.value);
           const active = isActive(o.value);
@@ -30,15 +30,23 @@ export function SortOptionsList({
                 href={href}
                 aria-current={active ? 'true' : undefined}
                 className={[
-                  'flex items-center gap-3 px-3 py-2 transition-colors',
-                  'hover:bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--gold)]',
-                  active ? 'text-[color:var(--gold)] bg-subtle/50' : '',
+                  'flex items-center gap-3 rounded-full border-2 px-4 py-2.5 transition-all duration-200 mx-2',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]',
+                  active 
+                    ? 'text-[var(--gold)] font-medium bg-[var(--gold)]/10 border-[var(--gold)]' 
+                    : 'text-[var(--gold)] bg-transparent border-[var(--gold)]/50 hover:bg-[var(--gold)]/5 hover:border-[var(--gold)]'
                 ].join(' ')}
               >
-                <span aria-hidden className={['grid place-items-center rounded-full border w-4 h-4', active ? 'border-[color:var(--gold)]' : 'border-default'].join(' ')}>
-                  <span className={['block rounded-full w-2 h-2', active ? 'bg-[color:var(--gold)]' : 'bg-transparent'].join(' ')} />
+                <span className={[
+                  'flex items-center justify-center rounded-full border-2 w-5 h-5 transition-colors',
+                  active ? 'border-[var(--gold)] bg-[var(--gold)]' : 'border-[var(--gold)]/50'
+                ].join(' ')}>
+                  <span className={[
+                    'block rounded-full w-1.5 h-1.5 transition-colors',
+                    active ? 'bg-white' : 'bg-transparent'
+                  ].join(' ')} />
                 </span>
-                <span className="text-sm">{o.label}</span>
+                <span className="text-sm font-medium">{o.label}</span>
               </Link>
             </li>
           );

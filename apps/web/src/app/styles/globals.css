@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github.css";
 
 /* ───────────────────────────
    Base
@@ -7,8 +8,13 @@ html, body { background: var(--bg); color: var(--fg); }
 html, body {
   font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
-h1, h2, h3, .font-display {
+h1, h2, .font-display {
   font-family: var(--font-tanAegean), ui-serif, Georgia, "Times New Roman", Times, serif;
+}
+
+/* h3, h4, h5, h6 heredan Montserrat del body */
+h3, h4, h5, h6 {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 /* Tokens mínimos locales (el resto viene de theme.css) */
@@ -151,4 +157,56 @@ h1, h2, h3, .font-display {
   background-repeat: no-repeat, no-repeat;
   background-size: auto, 200% 100%;
   background-position: 0% 0%, 0% 50%;
+}
+
+/* ───────────────────────────
+   Comment Highlight Effect
+─────────────────────────── */
+.highlight-comment {
+  position: relative;
+  animation: highlight-pulse 3s ease-out;
+}
+
+.highlight-comment::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    color-mix(in oklab, var(--gold) 20%, transparent), 
+    color-mix(in oklab, var(--gold) 30%, transparent),
+    color-mix(in oklab, var(--gold) 20%, transparent), 
+    transparent
+  );
+  border-radius: 8px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 40%, transparent);
+  }
+  25% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--gold) 20%, transparent);
+  }
+  50% {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 12px color-mix(in oklab, var(--gold) 10%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight-comment {
+    animation: none;
+  }
+  .highlight-comment::before {
+    background: color-mix(in oklab, var(--gold) 15%, transparent);
+  }
 }

@@ -1,7 +1,6 @@
 export const site = {
   name: "Micaela Martinez - Extension de Pestañas",
-  description:
-    "Plataforma de cursos de maquillaje y tienda cosmética seleccionada por instructoras.",
+  description: "Plataforma de cursos de maquillaje y tienda de cosméticos seleccionados.",
   keywords: [
     "cursos de maquillaje",
     "cosméticos",

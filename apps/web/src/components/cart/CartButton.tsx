@@ -22,8 +22,8 @@ export function CartButton() {
       className="relative inline-flex items-center gap-2 rounded-xl2 border border-default px-3 py-1.5 hover:bg-subtle"
       aria-label="Abrir carrito"
     >
-      <ShoppingBag className="size-4" />
-      <span className="text-sm">Carrito</span>
+      <ShoppingBag className="size-4 text-black" />
+      <span className="text-sm text-black">Carrito</span>
 
       {hydrated && count > 0 && (
         <span

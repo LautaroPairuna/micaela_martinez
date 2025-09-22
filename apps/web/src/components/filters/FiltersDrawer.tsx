@@ -4,20 +4,28 @@ import { ReactNode, useEffect, useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-// Hook simple de media query (SSR-safe)
+// Hook SSR-safe para media queries
 function useMediaQuery(query: string) {
-  const get = () => (typeof window !== 'undefined' ? window.matchMedia(query).matches : false);
-  const [matches, setMatches] = useState(get);
+  // Inicializar con false para evitar hidratación mismatch
+  const [matches, setMatches] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
   useEffect(() => {
+    setMounted(true);
     if (typeof window === 'undefined') return;
+    
     const mq = window.matchMedia(query);
     const onChange = () => setMatches(mq.matches);
-    mq.addEventListener?.('change', onChange);
-    // sync en mount
+    
+    // Establecer valor inicial después del mount
     setMatches(mq.matches);
+    
+    mq.addEventListener?.('change', onChange);
     return () => mq.removeEventListener?.('change', onChange);
   }, [query]);
-  return matches;
+  
+  // Retornar false hasta que esté montado para evitar hydration mismatch
+  return mounted ? matches : false;
 }
 
 export function FiltersDrawer({
@@ -33,8 +41,10 @@ export function FiltersDrawer({
   const [open, setOpen] = useState(false);
   const isLg = useMediaQuery('(min-width:1024px)');
 
-  // Montaje (portal listo)
-  useEffect(() => setMounted(true), []);
+  // Montaje (portal listo) - asegurar que esté completamente montado
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Lock/unlock scroll del body
   useEffect(() => {

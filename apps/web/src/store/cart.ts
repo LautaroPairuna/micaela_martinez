@@ -10,7 +10,7 @@ export type CartLineProduct = {
   id: string;            // id del producto
   slug: string;
   title: string;
-  priceCents: number;    // en centavos
+  price: number;         // precio directo
   image?: string | null;
   quantity: number;      // >=1
   maxQty?: number | null;
@@ -21,7 +21,7 @@ export type CartLineCourse = {
   id: string;            // id del curso
   slug: string;
   title: string;
-  priceCents: number;    // en centavos
+  price: number;         // precio directo
   image?: string | null;
   quantity: 1;           // fijo
 };
@@ -44,8 +44,8 @@ type CartState = {
   setQty: (id: string, qty: number) => void;
   increase: (id: string) => void;
   decrease: (id: string) => void;
-  addProduct: (line: Omit<CartLineProduct, 'type' | 'quantity'> & { quantity?: number }) => void;
-  addCourse: (line: Omit<CartLineCourse, 'type' | 'quantity'>) => void;
+  addProduct: (line: Omit<CartLineProduct, 'type' | 'quantity'> & { quantity?: number }) => Promise<void>;
+  addCourse: (line: Omit<CartLineCourse, 'type' | 'quantity'>) => Promise<void>;
 };
 
 export const useCart = create<CartState>()(
@@ -85,16 +85,32 @@ export const useCart = create<CartState>()(
         get().setQty(id, next);
       },
 
-      addProduct: (line) => {
+      addProduct: async (line) => {
         const qty = Math.max(1, Math.min(line.quantity ?? 1, line.maxQty ?? 99));
         const cur = get().items;
         const idx = cur.findIndex(i => i.type === 'product' && i.id === line.id);
+        
         if (idx >= 0) {
           const it = cur[idx] as CartLineProduct;
           const mergedQty = Math.min(it.quantity + qty, it.maxQty ?? line.maxQty ?? 99);
           const next = [...cur];
           next[idx] = { ...it, quantity: mergedQty };
           set({ items: next, isOpen: true });
+          
+          // Toast para producto actualizado
+          try {
+            const { toast } = await import('react-toastify');
+            toast.success(`${line.title} actualizado en el carrito (${mergedQty})`, {
+              position: 'bottom-right',
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          } catch (error) {
+            console.error('Error al mostrar toast:', error);
+          }
         } else {
           set({
             items: [
@@ -104,7 +120,7 @@ export const useCart = create<CartState>()(
                 id: line.id,
                 slug: line.slug,
                 title: line.title,
-                priceCents: line.priceCents,
+                price: line.price,
                 image: line.image ?? null,
                 quantity: qty,
                 maxQty: line.maxQty ?? null,
@@ -112,29 +128,77 @@ export const useCart = create<CartState>()(
             ],
             isOpen: true,
           });
+          
+          // Toast para producto agregado
+          try {
+            const { toast } = await import('react-toastify');
+            toast.success(`${line.title} agregado al carrito`, {
+              position: 'bottom-right',
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          } catch (error) {
+            console.error('Error al mostrar toast:', error);
+          }
         }
       },
 
-      addCourse: (line) => {
+      addCourse: async (line) => {
         const cur = get().items;
         const exists = cur.some(i => i.type === 'course' && i.id === line.id);
-        set({
-          items: exists
-            ? cur
-            : [
-                ...cur,
-                {
-                  type: 'course',
-                  id: line.id,
-                  slug: line.slug,
-                  title: line.title,
-                  priceCents: line.priceCents,
-                  image: line.image ?? null,
-                  quantity: 1,
-                },
-              ],
-          isOpen: true,
-        });
+        
+        if (!exists) {
+          set({
+            items: [
+              ...cur,
+              {
+                type: 'course',
+                id: line.id,
+                slug: line.slug,
+                title: line.title,
+                price: line.price,
+                image: line.image ?? null,
+                quantity: 1,
+              },
+            ],
+            isOpen: true,
+          });
+          
+          // Toast para curso agregado
+          try {
+            const { toast } = await import('react-toastify');
+            toast.success(`${line.title} agregado al carrito`, {
+              position: 'bottom-right',
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          } catch (error) {
+            console.error('Error al mostrar toast:', error);
+          }
+        } else {
+          set({ isOpen: true });
+          
+          // Toast para curso ya existente
+          try {
+            const { toast } = await import('react-toastify');
+            toast.info(`${line.title} ya está en tu carrito`, {
+              position: 'bottom-right',
+              autoClose: 2000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          } catch (error) {
+            console.error('Error al mostrar toast:', error);
+          }
+        }
       },
     }),
     {
@@ -164,6 +228,6 @@ if (typeof window !== 'undefined') {
 export const cartSelectors = {
   count: (items: CartLine[]) =>
     items.reduce((acc, it) => acc + (it.type === 'product' ? it.quantity : 1), 0),
-  subtotalCents: (items: CartLine[]) =>
-    items.reduce((acc, it) => acc + it.priceCents * (it.type === 'product' ? it.quantity : 1), 0),
+  subtotal: (items: CartLine[]) =>
+    items.reduce((acc, it) => acc + it.price * (it.type === 'product' ? it.quantity : 1), 0),
 };

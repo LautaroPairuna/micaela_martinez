@@ -21,10 +21,10 @@ export function SortBar({
   // ---- MODO LINKS (recomendado)
   if (typeof hrefFor === 'function') {
     const chipBase =
-      'rounded-full border px-3 py-1.5 text-sm transition-colors whitespace-nowrap';
+      'rounded-full border-2 px-4 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1';
     const activeCls =
-      'text-[color:var(--gold)] bg-subtle/50 border-[color:color-mix(in oklab,var(--gold) 70%,#000 30%)]';
-    const idleCls = 'border-default hover:bg-subtle';
+      'text-[var(--gold)] bg-[var(--gold)]/10 border-[var(--gold)] shadow-sm focus-visible:ring-[var(--gold)]';
+    const idleCls = 'text-[var(--gold)] bg-transparent border-[var(--gold)]/50 hover:bg-[var(--gold)]/5 hover:border-[var(--gold)] focus-visible:ring-[var(--gold)]';
 
     return (
       <div className="min-w-0">
@@ -32,10 +32,12 @@ export function SortBar({
           <ul
             className="
               sortbar-chips
-              -mx-2 px-2 flex items-center gap-2 sm:gap-3
+              -mx-1 px-3 py-3 flex items-center gap-3 sm:gap-4
               overflow-x-auto no-scrollbar
               snap-x snap-mandatory
+              scrollbar-none
             "
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {options.map((o) => {
               const href = hrefFor(o.value === 'relevancia' ? null : o.value);
@@ -76,11 +78,11 @@ export function SortBar({
           )
         )}
 
-      <label className="text-sm text-muted">
+      <label className="text-sm text-muted-foreground font-medium">
         Ordenar:&nbsp;
         <select
           name="sort"
-          className="rounded-xl2 border border-default bg-bg-muted px-2 py-1"
+          className="rounded-xl2 border border-default bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground"
           defaultValue={defaultSort}
         >
           {options.map((o) => (
@@ -94,7 +96,7 @@ export function SortBar({
       {showButton && (
         <button
           type="submit"
-          className="rounded-xl2 border border-default px-2 py-1 text-sm hover:bg-subtle"
+          className="rounded-xl2 border border-default px-3 py-2 text-sm font-medium transition-colors hover:bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-muted-foreground"
         >
           Aplicar
         </button>

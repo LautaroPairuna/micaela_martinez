@@ -42,7 +42,11 @@ export default function SortSelect({
           page: null,                           // reset de paginación
         });
 
-        replaceMode ? router.replace(href) : router.push(href);
+        if (replaceMode) {
+          router.replace(href);
+        } else {
+          router.push(href);
+        }
       }}
     >
       <option value="relevancia">Relevancia</option>

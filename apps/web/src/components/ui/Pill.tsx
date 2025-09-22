@@ -63,9 +63,13 @@ export function Pill({
   );
 }
 
-export function Badge({ children, tone='pink' }: React.PropsWithChildren<{ tone?: 'pink'|'gold'|'neutral' }>) {
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  tone?: 'pink' | 'gold' | 'neutral';
+}
+
+export function Badge({ children, tone = 'pink', className = '', ...rest }: React.PropsWithChildren<BadgeProps>) {
   const m = tone === 'pink' ? 'bg-[var(--pink)] text-white' :
             tone === 'gold' ? 'bg-[var(--gold)] text-black' :
             'bg-subtle text-[var(--fg)]';
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${m}`}>{children}</span>;
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${m} ${className}`} {...rest}>{children}</span>;
 }

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Search } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
-import { getProducts, getProductFacets } from '@/lib/api';
+import { getProducts, getProductFacets } from '@/lib/sdk/catalogApi';
 import {
   buildTiendaPrettyPath,
   buildTiendaPathResetPage,
@@ -20,6 +20,7 @@ import { SortBar } from '@/components/filters/SortBar';
 import { SortOptionsList } from '@/components/filters/SortOptionsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FiltersDrawer } from '@/components/filters/FiltersDrawer';
+import { Pagination } from '@/components/ui/Pagination';
 
 export const revalidate = 60;
 
@@ -34,7 +35,10 @@ type Facets = { marcas?: BrandFacet[]; categorias?: CategoryFacet[] };
 type ProductCardProps = ComponentProps<typeof ProductCard>;
 type Product = ProductCardProps extends { p: infer T } ? T & { id?: string | number } : never;
 
-function findLabel<T extends { id: string; slug?: string; nombre: string }>(list: T[] | undefined, key: string) {
+function findLabel<T extends { id: string; slug?: string; nombre: string }>(
+  list: T[] | undefined,
+  key: string
+) {
   const item = list?.find((it) => (it.slug ?? it.id) === key);
   return item?.nombre ?? key;
 }
@@ -203,120 +207,239 @@ export default async function TiendaPage({
   ];
 
   return (
-    <div className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-      {/* grid padre con min-w-0 para permitir encogimiento sin “trabar” */}
-      <section className="grid grid-cols-12 gap-6 min-w-0">
-        {/* Sidebar fijo: visible solo en lg+ */}
-        <aside className="hidden lg:block lg:col-span-2 min-w-0">
-          <TiendaFiltersSidebar facets={facets} state={{ categoria, marca, q, minPrice, maxPrice, sort }} />
-        </aside>
+    <div className="min-h-screen w-full bg-[var(--bg)]">
+      {/* Header con búsqueda */}
+      <section className="border-b border-[var(--border)] bg-[var(--bg)]">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col gap-4">
+            {/* Breadcrumb */}
+            <nav className="text-sm text-[var(--muted)]">
+              <Link href="/" className="hover:text-[var(--fg)]">
+                Inicio
+              </Link>
+              <span className="mx-2">›</span>
+              <Link href="/tienda" className="hover:text-[var(--fg)]">
+                Tienda
+              </Link>
+              {categoria && (
+                <>
+                  <span className="mx-2">›</span>
+                  <Link
+                    href={buildTiendaPrettyPath({
+                      categoria,
+                      marca: undefined,
+                      q: '',
+                      minPrice: null,
+                      maxPrice: null,
+                      sort: null,
+                      page: null,
+                    })}
+                    className="hover:text-[var(--fg)] underline"
+                  >
+                    {findLabel(facets?.categorias, categoria) || 'Categoría'}
+                  </Link>
+                </>
+              )}
+              {marca && (
+                <>
+                  <span className="mx-2">›</span>
+                  <Link
+                    href={buildTiendaPrettyPath({
+                      categoria: undefined,
+                      marca,
+                      q: '',
+                      minPrice: null,
+                      maxPrice: null,
+                      sort: null,
+                      page: null,
+                    })}
+                    className="hover:text-[var(--fg)] underline"
+                  >
+                    {findLabel(facets?.marcas, marca) || 'Marca'}
+                  </Link>
+                </>
+              )}
+              {q && (
+                <>
+                  <span className="mx-2">›</span>
+                  <span>
+                    Búsqueda: &quot;{q}&quot;
+                  </span>
+                </>
+              )}
+              {(minPrice || maxPrice) && (
+                <>
+                  <span className="mx-2">›</span>
+                  <span>
+                    {minPrice && maxPrice
+                      ? `$${minPrice} - $${maxPrice}`
+                      : minPrice
+                      ? `Desde $${minPrice}`
+                      : `Hasta $${maxPrice}`}
+                  </span>
+                </>
+              )}
+              {sort && sort !== 'relevancia' && (
+                <>
+                  <span className="mx-2">›</span>
+                  <span className="text-[var(--accent)]">
+                    Orden:{' '}
+                    {sort === 'novedades'
+                      ? 'Más recientes'
+                      : sort === 'precio_asc'
+                      ? 'Precio: menor a mayor'
+                      : sort === 'precio_desc'
+                      ? 'Precio: mayor a menor'
+                      : sort === 'rating_desc'
+                      ? 'Mejor valorados'
+                      : sort}
+                  </span>
+                </>
+              )}
+            </nav>
 
-        {/* Columna principal con min-w-0 */}
-        <div className="col-span-12 lg:col-span-10 space-y-4 min-w-0">
-          <header className="flex items-center gap-3 min-w-0">
-            <h1 className="text-xl font-semibold font-display">Catálogo</h1>
+            {/* Título y búsqueda */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold text-[var(--fg)]">
+                  {q ? `Resultados para "${q}"` : 'Catálogo de Productos'}
+                </h1>
+                <p className="text-[var(--muted)] mt-1">
+                  {items.length} {items.length === 1 ? 'producto encontrado' : 'productos encontrados'}
+                </p>
+              </div>
 
-            {/* Botón Filtros (drawer) visible < lg */}
-            <div className="ml-auto flex items-center gap-2 min-w-0">
-              <FiltersDrawer badgeCount={appliedCount}>
-                <div className="space-y-6">
-                  {/* ORDEN dentro del drawer */}
-                  <SortOptionsList
-                    current={sort}
-                    options={sortOptions}
-                    hrefFor={(v) =>
+              {/* Barra de búsqueda */}
+              <div className="relative max-w-md w-full lg:w-auto">
+                <form method="GET" action="/tienda">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted)]" />
+                    <input
+                      type="search"
+                      name="q"
+                      defaultValue={q}
+                      placeholder="Buscar productos..."
+                      className="w-full pl-10 pr-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--fg)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:border-transparent"
+                    />
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contenido principal */}
+      <section className="flex-1">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+            {/* Sidebar de filtros - Desktop */}
+            <div className="hidden lg:block">
+              <TiendaFiltersSidebar
+                facets={facets}
+                state={{ categoria, marca, q, minPrice, maxPrice, sort }}
+              />
+            </div>
+
+            {/* Contenido principal */}
+            <div className="space-y-6">
+              {/* Filtros activos y ordenamiento */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Drawer de filtros - Mobile */}
+                  <div className="lg:hidden">
+                    <FiltersDrawer badgeCount={appliedCount}>
+                      <div className="space-y-6">
+                        {/* ORDEN dentro del drawer */}
+                        <SortOptionsList
+                          current={sort}
+                          options={sortOptions}
+                          hrefFor={(v) =>
+                            buildTiendaPrettyPath({
+                              categoria,
+                              marca,
+                              q,
+                              minPrice,
+                              maxPrice,
+                              sort: v ?? null,
+                              page: null,
+                            })
+                          }
+                        />
+                        {/* FILTROS */}
+                        <TiendaFiltersSidebar
+                          facets={facets}
+                          state={{ categoria, marca, q, minPrice, maxPrice, sort }}
+                        />
+                      </div>
+                    </FiltersDrawer>
+                  </div>
+
+                  {/* Chips de filtros activos */}
+                  {chips.length > 0 && <FilterChips items={chips} clearHref={clearHref} />}
+                </div>
+
+                {/* Ordenamiento */}
+                <div className="flex items-center gap-2">
+                  <div className="hidden lg:block">
+                    <SortBar
+                      current={sort}
+                      options={sortOptions}
+                      hrefFor={(v) =>
+                        buildTiendaPrettyPath({
+                          categoria,
+                          marca,
+                          q,
+                          minPrice,
+                          maxPrice,
+                          sort: v ?? null,
+                          page: null,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid de productos */}
+              {noResults ? (
+                <EmptyState
+                  icon={<Search className="size-6 text-muted" />}
+                  title="No encontramos productos con esos filtros"
+                  description="Probá quitar algún filtro o ajustar el rango de precio."
+                  primary={clearHref ? { href: clearHref, label: 'Limpiar filtros' } : undefined}
+                  secondary={{ href: '/tienda', label: 'Ir a la tienda' }}
+                />
+              ) : (
+                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {items.map((p: Product, i) => (
+                    <ProductCard key={String(p.id ?? i)} p={p} />
+                  ))}
+                </div>
+              )}
+
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className="flex justify-center">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    hrefFor={(page) =>
                       buildTiendaPrettyPath({
                         categoria,
                         marca,
                         q,
                         minPrice,
                         maxPrice,
-                        sort: v ?? null,
-                        page: null,
+                        sort,
+                        page,
                       })
                     }
                   />
-                  {/* FILTROS */}
-                  <TiendaFiltersSidebar
-                    facets={facets}
-                    state={{ categoria, marca, q, minPrice, maxPrice, sort }}
-                  />
                 </div>
-              </FiltersDrawer>
-
-              {/* SortBar visible solo en lg+ */}
-              <div className="hidden lg:block min-w-0">
-                <SortBar
-                  current={sort}
-                  options={sortOptions}
-                  hrefFor={(v) =>
-                    buildTiendaPrettyPath({
-                      categoria,
-                      marca,
-                      q,
-                      minPrice,
-                      maxPrice,
-                      sort: v ?? null,
-                      page: null,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </header>
-
-          <FilterChips items={chips} clearHref={clearHref} />
-
-          {noResults ? (
-            <EmptyState
-              icon={<Search className="size-6 text-muted" />}
-              title="No encontramos productos con esos filtros"
-              description="Probá quitar algún filtro o ajustar el rango de precio."
-              primary={clearHref ? { href: clearHref, label: 'Limpiar filtros' } : undefined}
-              secondary={{ href: '/tienda', label: 'Ir a la tienda' }}
-            />
-          ) : (
-            <>
-              {/* Grilla de productos — min-w-0 para evitar “rigidez” en cambios de ancho */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 items-stretch min-w-0">
-                {items.map((p: Product, i) => (
-                  <ProductCard key={String(p.id ?? i)} p={p} />
-                ))}
-              </div>
-
-              {totalPages > 1 && (
-                <nav className="flex justify-center gap-2 mt-4" aria-label="Paginación">
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    const pageNum = i + 1;
-                    const href = buildTiendaPrettyPath({
-                      categoria,
-                      marca,
-                      q,
-                      minPrice,
-                      maxPrice,
-                      sort,
-                      page: pageNum > 1 ? pageNum : null,
-                    });
-                    const active = currentPage === pageNum;
-                    return (
-                      <Link
-                        key={i}
-                        href={href}
-                        aria-current={active ? 'page' : undefined}
-                        className={`px-3 py-1 rounded-xl2 border ${
-                          active
-                            ? 'border-[color:var(--gold)] text-[color:var(--gold)]'
-                            : 'border-default hover:bg-subtle'
-                        }`}
-                      >
-                        {pageNum}
-                      </Link>
-                    );
-                  })}
-                </nav>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </section>
     </div>

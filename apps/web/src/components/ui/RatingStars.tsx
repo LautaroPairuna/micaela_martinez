@@ -18,7 +18,7 @@ export function RatingStars({
   value = 0,
   count = 0,
   size = 'md',
-  showCount = true,
+  showCount = false,
   showValue = false,
   ariaLabel,
   colorClass = 'text-[var(--gold)]',
@@ -28,11 +28,10 @@ export function RatingStars({
   // clamp estable para SSR
   const v = Number.isFinite(value) ? Math.min(5, Math.max(0, value)) : 0;
 
-  // formateo de conteo
-  const nf = React.useMemo(() => new Intl.NumberFormat('es-AR'), []);
-  const countLabel = count > 0 ? `(${nf.format(count)})` : '(0)';
+  // formateo de conteo estable para SSR
+  const countLabel = count > 0 ? `(${count})` : '(0)';
 
-  const a11y = ariaLabel ?? `Calificación ${v.toFixed(1)} de 5, ${nf.format(count)} reseñas`;
+  const a11y = ariaLabel ?? `Calificación ${v.toFixed(1)} de 5, ${count} reseñas`;
 
   const sizeCls =
     size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5';

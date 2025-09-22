@@ -1,0 +1,133 @@
+<svg width="1200" height="600" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="heroGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fc466b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3f5efb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffecd2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fcb69f;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="600" fill="url(#heroGradient3)"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="120" cy="120" r="35" fill="rgba(255,255,255,0.1)"/>
+  <circle cx="1080" cy="150" r="55" fill="rgba(255,255,255,0.08)"/>
+  <circle cx="150" cy="480" r="20" fill="rgba(255,255,255,0.12)"/>
+  <circle cx="1000" cy="450" r="40" fill="rgba(255,255,255,0.06)"/>
+  
+  <!-- Main instructor illustration -->
+  <g transform="translate(650, 120)">
+    <!-- Instructor avatar -->
+    <circle cx="100" cy="80" r="50" fill="url(#avatarGradient)" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+    
+    <!-- Face features -->
+    <circle cx="85" cy="70" r="3" fill="#2d3748"/>
+    <circle cx="115" cy="70" r="3" fill="#2d3748"/>
+    <path d="M90 90 Q100 100 110 90" stroke="#2d3748" stroke-width="2" fill="none" stroke-linecap="round"/>
+    
+    <!-- Hair -->
+    <path d="M60 50 Q100 30 140 50 Q130 40 100 35 Q70 40 60 50" fill="#4a5568"/>
+    
+    <!-- Body -->
+    <rect x="70" y="130" width="60" height="80" rx="10" fill="#4299e1"/>
+    <rect x="75" y="135" width="50" height="70" rx="5" fill="#63b3ed"/>
+    
+    <!-- Arms -->
+    <ellipse cx="50" cy="160" rx="15" ry="30" fill="url(#avatarGradient)"/>
+    <ellipse cx="150" cy="160" rx="15" ry="30" fill="url(#avatarGradient)"/>
+    
+    <!-- Pointing gesture -->
+    <circle cx="35" cy="140" r="8" fill="url(#avatarGradient)"/>
+    <rect x="25" y="135" width="20" height="4" rx="2" fill="url(#avatarGradient)" transform="rotate(-20 35 137)"/>
+  </g>
+  
+  <!-- Whiteboard/Screen -->
+  <g transform="translate(750, 280)">
+    <rect x="0" y="0" width="200" height="120" rx="8" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="2"/>
+    
+    <!-- Content on board -->
+    <rect x="15" y="15" width="60" height="8" rx="2" fill="#4299e1"/>
+    <rect x="15" y="30" width="80" height="6" rx="1" fill="#a0aec0"/>
+    <rect x="15" y="42" width="70" height="6" rx="1" fill="#a0aec0"/>
+    
+    <!-- Chart/Graph -->
+    <rect x="120" y="20" width="60" height="40" rx="2" fill="#f7fafc" stroke="#e2e8f0"/>
+    <rect x="125" y="50" width="8" height="8" fill="#48bb78"/>
+    <rect x="135" y="45" width="8" height="13" fill="#4299e1"/>
+    <rect x="145" y="40" width="8" height="18" fill="#ed8936"/>
+    <rect x="155" y="35" width="8" height="23" fill="#9f7aea"/>
+    
+    <!-- Checkmarks -->
+    <path d="M15 70 L22 77 L35 64" stroke="#48bb78" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M15 85 L22 92 L35 79" stroke="#48bb78" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M15 100 L22 107 L35 94" stroke="#48bb78" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Student avatars -->
+  <g transform="translate(400, 400)">
+    <!-- Student 1 -->
+    <circle cx="0" cy="0" r="25" fill="#fbb6ce" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+    <circle cx="-8" cy="-5" r="2" fill="#2d3748"/>
+    <circle cx="8" cy="-5" r="2" fill="#2d3748"/>
+    <path d="M-5 5 Q0 10 5 5" stroke="#2d3748" stroke-width="1" fill="none"/>
+    
+    <!-- Student 2 -->
+    <circle cx="60" cy="-10" r="25" fill="#a78bfa" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+    <circle cx="52" cy="-15" r="2" fill="#2d3748"/>
+    <circle cx="68" cy="-15" r="2" fill="#2d3748"/>
+    <path d="M55 -5 Q60 0 65 -5" stroke="#2d3748" stroke-width="1" fill="none"/>
+    
+    <!-- Student 3 -->
+    <circle cx="120" cy="5" r="25" fill="#90cdf4" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+    <circle cx="112" cy="0" r="2" fill="#2d3748"/>
+    <circle cx="128" cy="0" r="2" fill="#2d3748"/>
+    <path d="M115 10 Q120 15 125 10" stroke="#2d3748" stroke-width="1" fill="none"/>
+  </g>
+  
+  <!-- Text content -->
+  <g transform="translate(80, 200)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">
+      Aprende con Expertos
+    </text>
+    <text x="0" y="60" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.9)">
+      Instructores certificados
+    </text>
+    <text x="0" y="90" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.9)">
+      te guían paso a paso
+    </text>
+    
+    <!-- CTA Button -->
+    <rect x="0" y="120" width="200" height="50" rx="25" fill="#fbb6ce"/>
+    <text x="100" y="150" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#2d3748" text-anchor="middle">
+      Conocer Instructores
+    </text>
+  </g>
+  
+  <!-- Certification badges -->
+  <g transform="translate(350, 120)">
+    <!-- Certificate 1 -->
+    <rect x="0" y="0" width="50" height="60" rx="5" fill="rgba(255,255,255,0.9)"/>
+    <circle cx="25" cy="20" r="10" fill="#ffd700"/>
+    <rect x="8" y="35" width="34" height="3" rx="1" fill="#4a5568"/>
+    <rect x="12" y="42" width="26" height="2" rx="1" fill="#718096"/>
+    <rect x="15" y="48" width="20" height="2" rx="1" fill="#718096"/>
+    
+    <!-- Certificate 2 -->
+    <rect x="70" y="-10" width="50" height="60" rx="5" fill="rgba(255,255,255,0.9)"/>
+    <circle cx="95" cy="10" r="10" fill="#48bb78"/>
+    <rect x="78" y="25" width="34" height="3" rx="1" fill="#4a5568"/>
+    <rect x="82" y="32" width="26" height="2" rx="1" fill="#718096"/>
+    <rect x="85" y="38" width="20" height="2" rx="1" fill="#718096"/>
+  </g>
+  
+  <!-- Knowledge transfer arrows -->
+  <g transform="translate(550, 250)">
+    <path d="M0 0 L40 20 L0 40" stroke="rgba(255,255,255,0.6)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M60 10 L100 30 L60 50" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

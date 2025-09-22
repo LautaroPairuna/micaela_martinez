@@ -1,10 +1,15 @@
 // components/courses/CourseCardHorizontal.tsx
+'use client';
+
 import Link from 'next/link';
-import { Card, CardBody } from '@/components/ui/Card';
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Pill } from '@/components/ui/Pill';
 import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
+import { AddCourseButton } from '@/components/cart/AddCourseButton';
+import { Star } from 'lucide-react';
 
 type NivelCurso = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
 const NIVEL_LABEL: Record<NivelCurso, string> = {
@@ -16,7 +21,7 @@ const NIVEL_LABEL: Record<NivelCurso, string> = {
 type CourseMinimal = {
   slug: string;
   titulo: string;
-  precio: number;                // centavos
+  precio: number;                // precio directo
   nivel?: NivelCurso | null;
   portadaUrl?: string | null;
   destacado?: boolean | null;
@@ -31,78 +36,115 @@ type InscripcionMini = {
   progreso?: { percent?: number; porcentaje?: number } | null;
 } | null;
 
-export function CourseCard({ c, inscripcion }: { c: CourseMinimal; inscripcion?: InscripcionMini }) {
+export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscripcion?: InscripcionMini }) {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const nivelLabel = c.nivel ? NIVEL_LABEL[c.nivel] : undefined;
 
-  const isEnrolled = !!inscripcion && inscripcion?.estado !== 'cancelled';
-  const progressPctRaw = inscripcion?.progreso?.percent ?? inscripcion?.progreso?.porcentaje ?? 0;
+  // Solo calcular valores dependientes del cliente después de la hidratación
+  const isEnrolled = isClient ? (!!inscripcion && inscripcion?.estado !== 'cancelled') : false;
+  const progressPctRaw = isClient ? (inscripcion?.progreso?.percent ?? inscripcion?.progreso?.porcentaje ?? 0) : 0;
   const progressPct = Math.max(0, Math.min(100, Math.round(progressPctRaw || 0)));
   const ctaLabel = isEnrolled ? (progressPct > 0 ? 'Continuar' : 'Empezar') : 'Ver curso';
 
   return (
-    <Link href={`/cursos/detalle/${c.slug}`} className="block focus:outline-none">
-      <Card
-        className={[
-          'relative overflow-hidden',
-          'before:content-[""] before:absolute before:inset-y-0 before:left-0 before:w-[2px]',
-          'before:bg-gradient-to-b before:from-transparent before:via-[var(--gold)]/80 before:to-transparent',
-          'before:pointer-events-none',
-        ].join(' ')}
-      >
-        {/* Grid interno: col fija para imagen + col flexible para contenido */}
-        <div
-          className={[
-            'grid gap-4 p-3 sm:p-4',
-            // Ancho fijo de imagen según breakpoint; el resto es 1fr
-            'grid-cols-[9rem_1fr] sm:grid-cols-[12rem_1fr] xl:grid-cols-[14rem_1fr]',
-          ].join(' ')}
-        >
-          <div className="min-w-0">
+    <Link
+      href={`/cursos/detalle/${c.slug}`}
+      className="group block h-full touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/40"
+      style={{ outlineOffset: 4, WebkitTapHighlightColor: 'transparent' }}
+    >
+      <Card className="h-full flex flex-col lg:flex-row border border-gray-700 bg-gray-900 backdrop-blur-sm transition-all duration-300 ease-out group-hover:border-[var(--gold)] group-hover:shadow-xl group-hover:shadow-[var(--gold)]/20 group-hover:-translate-y-1">
+        {/* Imagen */}
+        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:h-auto">
+          <div className="aspect-video lg:aspect-square w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
             <SafeImage
               src={c.portadaUrl || null}
               alt={c.titulo}
-              ratio="1/1"
+              ratio="16/9"
+              className="w-full h-full object-cover"
               rounded="all"
               hoverZoom={false}
-              sizes="(min-width:1280px) 14rem, (min-width:768px) 12rem, 9rem"
+              sizes="(min-width:1280px) 100vw, (min-width:768px) 50vw, 100vw"
             />
           </div>
-
-          <CardBody className="p-0 min-w-0 flex flex-col gap-1 sm:gap-1.5">
-            <h3 className="font-medium leading-snug line-clamp-2 pr-2 uppercase">{c.titulo}</h3>
-
-            {c.instructor?.nombre ? (
-              <p className="text-xs text-muted">Por {c.instructor.nombre}</p>
-            ) : null}
-
-            <div className="mt-1 flex flex-wrap gap-2">
-              {nivelLabel ? <Pill tone="gold" size="sm">Nivel: {nivelLabel}</Pill> : null}
-              {typeof c._count?.modulos === 'number' ? (
-                <Pill tone="muted" size="sm">{c._count.modulos} módulos</Pill>
-              ) : null}
-              {c.destacado ? <Pill tone="gold" size="sm">Recomendado</Pill> : null}
+          {/* Overlay con badges */}
+          <div className="absolute inset-2 flex flex-col justify-between pointer-events-none">
+            <div className="flex flex-wrap gap-2">
+              {c.destacado && (
+                <span className="animate-pulse rounded-full px-3 py-1.5 text-xs font-bold text-black shadow-lg backdrop-blur-sm border border-[var(--gold-700)] bg-[var(--gold)] flex items-center gap-1.5">
+                  <Star className="h-3 w-3 fill-current" />
+                  Destacado
+                </span>
+              )}
+              {nivelLabel && (
+                <Pill tone="default">
+                  {nivelLabel}
+                </Pill>
+              )}
             </div>
+          </div>
+        </div>
 
-            <div className="mt-1">
-              <RatingStars value={Number(c.ratingProm || 0)} count={c.ratingConteo || 0} size="sm" />
-            </div>
+        {/* Contenido principal */}
+        <div className="flex flex-col gap-3 flex-1 p-4 sm:p-5 lg:p-6">
+              <h3 className="font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem] uppercase tracking-wide transition-all duration-300 text-white group-hover:text-[var(--gold)]">{c.titulo}</h3>
 
-            {isEnrolled && (
-              <div className="mt-1">
-                <div className="h-1.5 rounded-full bg-neutral-200">
-                  <div className="h-1.5 rounded-full bg-[var(--gold)]" style={{ width: `${progressPct}%` }} />
+              <p className="text-sm text-[var(--muted)]">
+                {c._count?.modulos && c._count.modulos > 0 ? `${c._count.modulos} módulos` : 'Sin módulos'}
+              </p>
+
+              {c.ratingProm && c.ratingConteo && c.ratingConteo > 0 && (
+                <div className="min-h-[24px] flex items-center">
+                  <RatingStars value={Number(c.ratingProm || 0)} count={c.ratingConteo || 0} size="sm" />
                 </div>
-                <span className="mt-1 block text-[11px] text-muted">{progressPct}% completado</span>
-              </div>
-            )}
+              )}
 
-            <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-              <Price value={c.precio / 100} />
-              <span className="inline-flex items-center rounded-xl2 border border-default px-2.5 py-1 text-sm transition-colors hover:bg-subtle">
-                {ctaLabel}
-              </span>
-            </div>
-          </CardBody>
+              {isEnrolled && (
+                <div className="space-y-2 p-3 rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 border border-gray-600">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-gray-200">Tu progreso</span>
+                    <span className="font-bold text-[var(--gold)]">{progressPct}%</span>
+                  </div>
+                  <div className="h-3 bg-gray-600 rounded-full overflow-hidden shadow-inner">
+                    <div 
+                      className="h-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold)]/80 transition-all duration-500 ease-out shadow-sm"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-auto pt-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Price value={c.precio} />
+                </div>
+                
+                {isEnrolled ? (
+                  <div className="rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold)]/90 px-4 py-2 text-center shadow-lg transition-all duration-300 hover:from-[var(--gold)]/90 hover:to-[var(--gold)]/80 hover:shadow-xl hover:scale-105 active:scale-95">
+                    <span className="text-sm font-bold text-black">{ctaLabel}</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <AddCourseButton 
+                      c={{
+                        id: c.slug,
+                        slug: c.slug,
+                        titulo: c.titulo,
+                        precio: c.precio,
+                        portadaUrl: c.portadaUrl
+                      }}
+                      className="w-full"
+                    />
+                    <div className="rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 border border-gray-600 px-4 py-2 text-center transition-all duration-300 group-hover:from-gray-700 group-hover:to-gray-600 group-hover:border-[var(--gold)]/50 group-hover:shadow-md">
+                      <span className="text-sm font-medium text-gray-200 transition-colors group-hover:text-[var(--gold)]">{ctaLabel}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
         </div>
       </Card>
     </Link>
