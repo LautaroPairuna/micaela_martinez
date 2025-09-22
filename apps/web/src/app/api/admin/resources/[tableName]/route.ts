@@ -204,7 +204,7 @@ async function handleFileRequest(
         const buffer = await fs.readFile(filePath)
         const chunk = buffer.subarray(start, end + 1)
 
-        return new NextResponse(chunk, {
+        return new NextResponse(new Blob([chunk]), {
           status: 206,
           headers: {
             ...baseHeaders,
