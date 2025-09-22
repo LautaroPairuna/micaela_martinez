@@ -32,3 +32,29 @@ export const folderNames = {
 
 // Alias para mantener compatibilidad con código existente
 export const allFolderNames = folderNames;
+
+/**
+ * Extensiones de archivos de imagen soportadas
+ */
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif'];
+
+/**
+ * Extensiones de archivos de video soportadas
+ */
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.3gp', '.m4v', '.mpg', '.mpeg'];
+
+/**
+ * Verifica si un archivo es una imagen basándose en su extensión
+ */
+export function isImageFile(filePath: string): boolean {
+  const extension = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+  return IMAGE_EXTENSIONS.includes(extension);
+}
+
+/**
+ * Verifica si un archivo es un video basándose en su extensión
+ */
+export function isVideoFile(filePath: string): boolean {
+  const extension = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+  return VIDEO_EXTENSIONS.includes(extension);
+}

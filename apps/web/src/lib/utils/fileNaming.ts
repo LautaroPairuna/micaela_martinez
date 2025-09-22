@@ -1,17 +1,43 @@
-import { databaseSlugService } from '../services/DatabaseSlugService';
+// Función genérica para obtener slug desde la API
+async function getGenericSlug(tableName: string, recordId: string): Promise<string | null> {
+  try {
+    // Get auth token
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) {
+      console.warn('No auth token found for slug lookup');
+      return null;
+    }
+
+    const response = await fetch(`/api/admin/tables/${tableName}/records/${recordId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${tableName}: ${response.statusText}`);
+    }
+
+    const record = await response.json();
+    return record?.slug || null;
+  } catch (error) {
+    console.error(`Error obteniendo slug de ${tableName}:`, error);
+    return null;
+  }
+}
 
 /**
- * Tipos de archivos soportados
+ * Tipos de archivo soportados
  */
 export type FileType = 'video' | 'image';
 
 /**
- * Tipos de entidades para imágenes
+ * Tipos de entidad para imágenes
  */
 export type ImageEntityType = 'marca' | 'categoria' | 'producto';
 
 /**
- * Configuración para el renombrado de archivos
+ * Configuración para generación de nombres de archivo
  */
 interface FileNamingConfig {
   fileType: FileType;
@@ -22,61 +48,53 @@ interface FileNamingConfig {
 }
 
 /**
- * Convierte un texto a slug válido para nombres de archivo
+ * Convierte texto a slug usando slugify
  */
 export function textToSlug(text: string): string {
   return text
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remover acentos
     .replace(/[^a-z0-9\s-]/g, '') // Solo letras, números, espacios y guiones
     .replace(/\s+/g, '-') // Espacios a guiones
     .replace(/-+/g, '-') // Múltiples guiones a uno solo
-    .replace(/^-|-$/g, ''); // Remover guiones al inicio y final
+    .trim();
 }
 
 /**
  * Obtiene la extensión de un archivo
  */
 export function getFileExtension(fileName: string): string {
-  const lastDotIndex = fileName.lastIndexOf('.');
-  return lastDotIndex !== -1 ? fileName.substring(lastDotIndex) : '';
+  return fileName.substring(fileName.lastIndexOf('.'));
 }
 
 /**
- * Genera un nombre de archivo único basado en slug y timestamp
+ * Genera un nombre único de archivo usando slug
  */
 export function generateUniqueFileName(slug: string | null, extension: string, isEdit: boolean = false): string {
-  // Limpiar el slug si existe
-  const cleanSlug = slug ? textToSlug(slug) : null;
+  const timestamp = Date.now();
+  const editSuffix = isEdit ? '-edit' : '';
   
-  // Generar timestamp en zona horaria de Argentina
-  const now = new Date();
-  const argentinaTime = new Intl.DateTimeFormat('es-AR', {
-    timeZone: 'America/Argentina/Buenos_Aires',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).formatToParts(now);
-
-  const timestamp = `${argentinaTime.find(p => p.type === 'year')?.value}${argentinaTime.find(p => p.type === 'month')?.value}${argentinaTime.find(p => p.type === 'day')?.value}-${argentinaTime.find(p => p.type === 'hour')?.value}${argentinaTime.find(p => p.type === 'minute')?.value}${argentinaTime.find(p => p.type === 'second')?.value}`;
-
-  if (cleanSlug) {
-    // Si tenemos slug, usarlo con timestamp
-    if (isEdit) {
-      return `${cleanSlug}-editado-${timestamp}${extension}`;
-    } else {
-      return `${cleanSlug}-${timestamp}${extension}`;
-    }
-  } else {
-    // Fallback: usar "nuevo-producto" para creación o "archivo" para casos sin contexto
-    const prefix = isEdit ? 'archivo-editado' : 'nuevo-producto';
-    return `${prefix}-${timestamp}${extension}`;
+  if (!slug) {
+    return `archivo${editSuffix}-${timestamp}${extension}`;
   }
+  
+  // Limpiar el slug para asegurar que sea válido como nombre de archivo
+  const cleanSlug = slug
+    .replace(/[^a-z0-9\-]/gi, '') // Solo letras, números y guiones
+    .replace(/-+/g, '-') // Múltiples guiones a uno solo
+    .replace(/^-|-$/g, '') // Remover guiones al inicio y final
+    .toLowerCase();
+  
+  if (!cleanSlug) {
+    return `archivo${editSuffix}-${timestamp}${extension}`;
+  }
+  
+  // Limitar longitud del slug
+  const maxSlugLength = 50;
+  const truncatedSlug = cleanSlug.length > maxSlugLength 
+    ? cleanSlug.substring(0, maxSlugLength).replace(/-$/, '')
+    : cleanSlug;
+  
+  return `${truncatedSlug}${editSuffix}-${timestamp}${extension}`;
 }
 
 /**
@@ -89,7 +107,7 @@ export async function generateVideoFileName(
   isEdit: boolean = false
 ): Promise<string> {
   try {
-    const slug = await databaseSlugService.getGenericSlug(tableName, recordId);
+    const slug = await getGenericSlug(tableName, recordId);
     return generateUniqueFileName(slug, extension, isEdit);
   } catch (error) {
     console.error('Error generando nombre de video:', error);
@@ -112,58 +130,45 @@ export async function generateImageFileName(
   console.log('🔍 generateImageFileName called with:', { tableName, recordId, extension, isEdit });
   
   try {
-    const slug = await databaseSlugService.getGenericSlug(tableName, recordId);
+    const slug = await getGenericSlug(tableName, recordId);
     console.log('📝 Slug obtenido:', slug);
     
     if (!slug) {
       console.warn('⚠️ No se pudo obtener slug, usando fallback');
       const timestamp = Date.now();
-      // Para imágenes, siempre usar .webp ya que se convierten automáticamente
-      return `imagen-${tableName}-${timestamp}.webp`;
+      const editSuffix = isEdit ? '-edit' : '';
+      return `imagen${editSuffix}-${timestamp}${extension}`;
     }
     
-    // Para imágenes, siempre usar .webp ya que se convierten automáticamente
-    const filename = generateUniqueFileName(slug, '.webp', isEdit);
-    console.log('📁 Filename generado:', filename);
+    const fileName = generateUniqueFileName(slug, extension, isEdit);
+    console.log('✅ Nombre de archivo generado:', fileName);
+    return fileName;
     
-    return filename;
   } catch (error) {
     console.error('❌ Error generando nombre de imagen:', error);
     // Fallback usando timestamp si falla la obtención del slug
     const timestamp = Date.now();
-    // Para imágenes, siempre usar .webp ya que se convierten automáticamente
-    return `imagen-${tableName}-${timestamp}.webp`;
+    const editSuffix = isEdit ? '-edit' : '';
+    return `imagen${editSuffix}-${timestamp}${extension}`;
   }
 }
 
 /**
- * Función principal para generar nombres de archivos
+ * Genera un nombre de archivo basado en la configuración proporcionada
  */
 export async function generateFileName(config: FileNamingConfig): Promise<string> {
-  const { fileType, entityType, entityId, originalFileName, fieldName } = config;
-
-  try {
-    switch (fileType) {
-      case 'video':
-        // Para videos, usar el entityId como recordId y obtener la extensión
-        const videoExtension = getFileExtension(originalFileName);
-        return await generateVideoFileName('lesson', entityId, videoExtension);
-      
-      case 'image':
-        if (!entityType) {
-          throw new Error('entityType es requerido para imágenes');
-        }
-        const imageExtension = getFileExtension(originalFileName);
-        return await generateImageFileName(entityType, entityId, imageExtension);
-      
-      default:
-        console.warn(`Tipo de archivo no soportado: ${fileType}`);
-        return originalFileName;
-    }
-  } catch (error) {
-    console.error('Error generando nombre de archivo:', error);
-    return originalFileName;
+  const { fileType, entityId, originalFileName } = config;
+  const extension = getFileExtension(originalFileName);
+  
+  if (fileType === 'image') {
+    return await generateImageFileName('Producto', entityId, extension);
+  } else if (fileType === 'video') {
+    return await generateVideoFileName('Producto', entityId, extension);
   }
+  
+  // Fallback para otros tipos
+  const timestamp = Date.now();
+  return `${fileType}-${entityId}-${timestamp}${extension}`;
 }
 
 /**
@@ -172,15 +177,13 @@ export async function generateFileName(config: FileNamingConfig): Promise<string
 export function detectFileType(fileName: string): FileType | null {
   const extension = getFileExtension(fileName).toLowerCase();
   
-  const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'];
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
-  
-  if (videoExtensions.includes(extension)) {
-    return 'video';
-  }
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv'];
   
   if (imageExtensions.includes(extension)) {
     return 'image';
+  } else if (videoExtensions.includes(extension)) {
+    return 'video';
   }
   
   return null;
@@ -201,7 +204,7 @@ export function isValidFileName(fileName: string): boolean {
     return false;
   }
   
-  // Verificar longitud máxima (255 caracteres es el límite común)
+  // Verificar longitud máxima
   if (fileName.length > 255) {
     return false;
   }
@@ -210,13 +213,12 @@ export function isValidFileName(fileName: string): boolean {
 }
 
 /**
- * Sanitiza un nombre de archivo para que sea válido
+ * Sanitiza un nombre de archivo removiendo caracteres no válidos
  */
 export function sanitizeFileName(fileName: string): string {
   return fileName
-    .replace(/[<>:"/\\|?*]/g, '-') // Reemplazar caracteres no válidos
+    .replace(/[<>:"/\\|?*]/g, '') // Remover caracteres no válidos
     .replace(/\s+/g, '-') // Espacios a guiones
     .replace(/-+/g, '-') // Múltiples guiones a uno solo
-    .replace(/^-|-$/g, '') // Remover guiones al inicio y final
-    .substring(0, 255); // Limitar longitud
+    .trim();
 }

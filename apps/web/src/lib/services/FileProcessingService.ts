@@ -7,7 +7,7 @@ import { generateVideoThumbnail } from '@/lib/thumbnailGenerator';
 import { allFolderNames } from '@/lib/adminConstants';
 import { videoOptimizationService, DEFAULT_VIDEO_OPTIONS } from './VideoOptimizationService';
 import { folderOrganizationService } from './FolderOrganizationService';
-import { databaseSlugService } from './DatabaseSlugService';
+
 import { generateImageFileName, generateVideoFileName, ImageEntityType } from '@/lib/utils/fileNaming';
 // Note: This service runs on the frontend, so we don't import Prisma directly
 // Instead, we'll make API calls when we need database operations

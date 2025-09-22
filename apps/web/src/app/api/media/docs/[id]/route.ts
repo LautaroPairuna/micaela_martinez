@@ -131,7 +131,7 @@ export async function GET(req: NextRequest, context: Context) {
       headers['Content-Disposition'] = `inline; filename="${downloadFilename}"`;
     }
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(fileBuffer as BodyInit, {
       status: 200,
       headers
     });
