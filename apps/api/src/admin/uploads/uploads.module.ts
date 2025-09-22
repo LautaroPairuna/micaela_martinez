@@ -12,7 +12,7 @@ import {
 } from './constants';
 import { ensureDir } from '../../common/fs.util';
 import * as path from 'path';
-import multer from 'multer';
+import * as multer from 'multer';
 
 @Module({
   imports: [
