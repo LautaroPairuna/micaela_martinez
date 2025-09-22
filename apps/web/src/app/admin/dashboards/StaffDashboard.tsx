@@ -51,6 +51,7 @@ export default function StaffDashboard() {
           totalRevenue: 125000,
           activeUsers: 890,
           pendingOrders: 23,
+          monthlyRevenue: [12500, 15000, 18000, 22000, 25000, 32500],
           recentActivity: [
             {
               id: '1',
