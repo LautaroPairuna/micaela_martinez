@@ -29,3 +29,6 @@ export const folderNames = {
   /** Categorías - carpeta: /images/categorias/ */
   Categoria: 'categorias',
 } as const;
+
+// Alias para mantener compatibilidad con código existente
+export const allFolderNames = folderNames;
