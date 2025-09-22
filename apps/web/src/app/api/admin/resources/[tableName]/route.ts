@@ -9,7 +9,7 @@ import { allFolderNames }               from '@/lib/adminConstants'
 import { isFileField, getFileTypeFromMime, getFileType, getFolderByFileType, type FileType } from '../../../../admin/resources/[tableName]/utils/fileFieldDetection'
 
 import { adminApi, AdminApiClient } from '@/lib/sdk/adminApi'
-import { existsSync, statSync } from 'fs'
+import { existsSync, statSync, createReadStream } from 'fs'
 
 // ───────── MAPEO DE RECURSOS A NOMBRES DE TABLA ─────────
 const resourceToTable: Record<string, string> = {
@@ -218,9 +218,9 @@ async function handleFileRequest(
       }
     }
 
-    // Servir archivo completo
-    const buffer = await fs.readFile(filePath)
-    return new NextResponse(buffer, {
+    // Servir archivo completo usando streams para eficiencia
+    const stream = createReadStream(filePath)
+    return new NextResponse(stream as any, {
       headers: {
         ...baseHeaders,
         'Content-Length': stats.size.toString(),
