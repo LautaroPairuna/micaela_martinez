@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { json, urlencoded, raw } from 'express';
-import cookieParser from 'cookie-parser';
+const cookieParser = require('cookie-parser');
 import * as express from 'express';
 
 // 👇 importa tus rutas y dirs públicos del módulo de uploads
