@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TipoNotificacion } from '@prisma/client';
+import { UpdateNotificationPreferencesDto } from './dto/user-preferences.dto';
 
 export interface CreateNotificationDto {
   usuarioId: string;
@@ -22,6 +23,121 @@ export class NotificationsService {
 
   constructor(private prisma: PrismaService) {
     setInterval(() => this.cleanupRateLimitCache(), 5 * 60 * 1000);
+  }
+
+  async updateUserPreferences(usuarioId: string, updateDto: UpdateNotificationPreferencesDto) {
+    try {
+      const preferences = await (this.prisma as any).preferenciasNotificacion.upsert({
+        where: { usuarioId },
+        update: {
+          ...updateDto,
+          actualizadoEn: new Date(),
+        },
+        create: {
+          usuarioId,
+          ...updateDto,
+          creadoEn: new Date(),
+          actualizadoEn: new Date(),
+        },
+      });
+      return preferences;
+    } catch (error) {
+      console.error('Error updating user preferences:', error);
+      throw new Error('Failed to update notification preferences');
+    }
+  }
+
+  async getNotificationStats() {
+    try {
+      const [totalNotifications, unreadNotifications, recentNotifications] = await Promise.all([
+        this.prisma.notificacion.count(),
+        this.prisma.notificacion.count({ where: { leida: false } }),
+        this.prisma.notificacion.count({
+          where: {
+            creadoEn: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Últimas 24 horas
+            },
+          },
+        }),
+      ]);
+
+      return {
+        totalNotifications,
+        unreadNotifications,
+        recentNotifications,
+        readRate: totalNotifications > 0 ? ((totalNotifications - unreadNotifications) / totalNotifications) * 100 : 0,
+      };
+    } catch (error) {
+      console.error('Error getting notification stats:', error);
+      throw new Error('Failed to get notification statistics');
+    }
+  }
+
+  async notifyReviewLike(reviewId: string, likedByUserId: string, reviewAuthorId: string) {
+    if (likedByUserId === reviewAuthorId) return; // No notificar si el autor se da like a sí mismo
+
+    try {
+      const [likedByUser, review] = await Promise.all([
+        this.prisma.usuario.findUnique({ where: { id: likedByUserId } }),
+        this.prisma.resena.findUnique({ 
+          where: { id: reviewId },
+          include: { producto: { select: { titulo: true } } }
+        }),
+      ]);
+
+      if (!likedByUser || !review) return;
+
+      await this.createNotification({
+        usuarioId: reviewAuthorId,
+        tipo: TipoNotificacion.LIKE_RESENA,
+        titulo: 'Le gustó tu reseña',
+        mensaje: `A ${likedByUser.nombre} le gustó tu reseña de ${review.producto?.titulo}`,
+        url: `/productos/${review.productoId}#resena-${reviewId}`,
+        metadata: {
+          contextoId: reviewId,
+          likedByUserId,
+          productoId: review.productoId,
+        },
+      });
+    } catch (error) {
+      console.error('Error notifying review like:', error);
+    }
+  }
+
+  async notifyReviewResponse(responseId: string, respondedByUserId: string, originalReviewAuthorId: string) {
+    if (respondedByUserId === originalReviewAuthorId) return; // No notificar si responde a su propia reseña
+
+    try {
+      const [respondedByUser, response] = await Promise.all([
+        this.prisma.usuario.findUnique({ where: { id: respondedByUserId } }),
+        this.prisma.resenaRespuesta.findUnique({ 
+          where: { id: responseId },
+          include: { 
+            resena: { 
+              include: { producto: { select: { titulo: true } } }
+            }
+          }
+        }),
+      ]);
+
+      if (!respondedByUser || !response) return;
+
+      await this.createNotification({
+        usuarioId: originalReviewAuthorId,
+        tipo: TipoNotificacion.RESPUESTA_RESENA,
+        titulo: 'Nueva respuesta a tu reseña',
+        mensaje: `${respondedByUser.nombre} respondió a tu reseña de ${response.resena.producto?.titulo}`,
+        url: `/productos/${response.resena.productoId}#respuesta-${responseId}`,
+        metadata: {
+          contextoId: response.resenaId,
+          respondedByUserId,
+          responseId,
+          productoId: response.resena.productoId,
+        },
+      });
+    } catch (error) {
+      console.error('Error notifying review response:', error);
+    }
   }
 
   private checkRateLimit(usuarioId: string): boolean {
