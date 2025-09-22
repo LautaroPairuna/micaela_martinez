@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -21,7 +21,7 @@ interface PaymentData {
   statusDetail: PendingStatusDetail | null;
 }
 
-export default function CheckoutPendingPage() {
+function CheckoutPendingContent() {
   const searchParams = useSearchParams();
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,5 +166,17 @@ export default function CheckoutPendingPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPendingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
+      </div>
+    }>
+      <CheckoutPendingContent />
+    </Suspense>
   );
 }

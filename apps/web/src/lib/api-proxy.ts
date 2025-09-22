@@ -34,7 +34,9 @@ async function getSSRRequestHeaders(): Promise<HeadersInit | undefined> {
     const hdrs: Record<string, string> = {};
     if (cookie) hdrs.cookie = cookie;
     return hdrs;
-  } catch {
+  } catch (error) {
+    // Si falla (ej: en rutas estáticas), continuar sin headers
+    console.warn('Failed to get SSR headers, continuing without cookies:', error);
     return undefined;
   }
 }

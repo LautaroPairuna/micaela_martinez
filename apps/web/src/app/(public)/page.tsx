@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { Section } from "@/components/layout/Section";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { CourseCard } from "@/components/courses/CourseCard";
-import { getProducts, getCourses } from "@/lib/sdk/catalogApi";
+import { getProducts, getCourses, safeGetCourses, safeGetProducts } from "@/lib/sdk/catalogApi";
 import { HeroCarousel } from "@/components/ui/HeroCarousel";
 
 /* ───────────────────── helpers UI ───────────────────── */
@@ -108,9 +108,10 @@ const productKey = (p: ProductMinimal, i: number) => {
 
 
 export default async function HomePage() {
+  // Usar funciones seguras que no fallan en build estático
   const [cursos, productos] = await Promise.all([
-    getCourses({ sort: "relevancia", page: 1, perPage: 8 }),
-    getProducts({ sort: "relevancia", page: 1, perPage: 12 }),
+    safeGetCourses({ sort: "relevancia", page: 1, perPage: 8 }),
+    safeGetProducts({ sort: "relevancia", page: 1, perPage: 12 }),
   ]);
 
   const courses: CourseMinimal[] = Array.isArray(cursos?.items) ? (cursos!.items as CourseMinimal[]) : [];

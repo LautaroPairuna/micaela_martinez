@@ -19,17 +19,21 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Obtener datos del usuario en el servidor para evitar loading states
-  // Solo en rutas que no sean estáticas
+  // Solo obtener datos del usuario si no estamos en rutas estáticas
   let initialUser = null;
   
-  try {
-    const session = await auth();
-    initialUser = session?.user || null;
-  } catch (error) {
-    // Si falla la autenticación (ej: en rutas estáticas), continuar sin usuario
-    console.warn('Auth failed in layout, continuing without user:', error);
-    initialUser = null;
+  // Detectar si estamos en una ruta que necesita autenticación
+  const needsAuth = false; // Por defecto, no necesita auth para rutas estáticas
+  
+  if (needsAuth) {
+    try {
+      const session = await auth();
+      initialUser = session?.user || null;
+    } catch (error) {
+      // Si falla la autenticación, continuar sin usuario
+      console.warn('Auth failed in layout, continuing without user:', error);
+      initialUser = null;
+    }
   }
 
   return (
