@@ -20,8 +20,17 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Obtener datos del usuario en el servidor para evitar loading states
-  const session = await auth();
-  const initialUser = session?.user || null;
+  // Solo en rutas que no sean estáticas
+  let initialUser = null;
+  
+  try {
+    const session = await auth();
+    initialUser = session?.user || null;
+  } catch (error) {
+    // Si falla la autenticación (ej: en rutas estáticas), continuar sin usuario
+    console.warn('Auth failed in layout, continuing without user:', error);
+    initialUser = null;
+  }
 
   return (
     <html lang="es" className={`${montserrat.variable} ${tanAegean.variable}`}>

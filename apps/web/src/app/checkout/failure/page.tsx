@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +24,7 @@ interface FailurePaymentData {
   statusDetail: PaymentStatusDetail | null;
 }
 
-export default function CheckoutFailurePage() {
+function CheckoutFailureContent() {
   const searchParams = useSearchParams();
   const [paymentData, setPaymentData] = useState<FailurePaymentData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -152,5 +152,17 @@ export default function CheckoutFailurePage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutFailurePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
+      </div>
+    }>
+      <CheckoutFailureContent />
+    </Suspense>
   );
 }
