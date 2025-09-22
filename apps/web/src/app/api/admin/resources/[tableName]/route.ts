@@ -203,8 +203,11 @@ async function handleFileRequest(
 
         const buffer = await fs.readFile(filePath)
         const chunk = buffer.subarray(start, end + 1)
+        
+        // Convertimos el Buffer a Uint8Array que es compatible con BlobPart
+        const uint8Array = new Uint8Array(chunk)
 
-        return new NextResponse(new Blob([chunk]), {
+        return new NextResponse(new Blob([uint8Array]), {
           status: 206,
           headers: {
             ...baseHeaders,
