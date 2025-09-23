@@ -28,8 +28,10 @@ export default async function FavoritosPage() {
   try {
     items = await listFavoriteProducts();
   } catch (error) {
-    console.error('❌ Error al obtener favoritos:', error);
+    console.error('❌ Error al obtener favoritos en la página:', error);
   }
+
+  console.log('Items en FavoritosPage:', items);
 
   return (
     <div className="space-y-8">
@@ -102,142 +104,13 @@ export default async function FavoritosPage() {
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((p) => {
-            const priceValue = p.precio ?? 0;
-            const compareAt = p.precioLista ?? undefined;
-            const hasDiscount = !!(compareAt && compareAt > priceValue);
-            const offPct = hasDiscount ? Math.round(((Number(compareAt) - priceValue) / Number(compareAt)) * 100) : 0;
-            const img = p.imagenes?.[0]?.url || p.imagen || null;
-            const outOfStock = typeof p.stock === 'number' && p.stock <= 0;
-
             return (
-              <div key={p.id} className="group h-full touch-manipulation">
-                <Card className="h-full flex flex-col border border-[var(--border)] bg-gradient-to-br from-[var(--bg)] to-[var(--bg-secondary)] transition-all duration-500 ease-out group-hover:border-[var(--gold)] group-hover:shadow-2xl group-hover:shadow-[var(--gold)]/20 group-hover:-translate-y-2 group-hover:scale-[1.02]">
-                  {/* Imagen */}
-                  <div className="relative overflow-hidden rounded-t-xl">
-                    <div className="transition-transform duration-700 ease-out group-hover:scale-110">
-                      <Link href={`/tienda/producto/${p.slug}`}>
-                        <SafeImage 
-                          src={img} 
-                          alt={p.titulo} 
-                          ratio="1/1" 
-                          className="cursor-pointer"
-                        />
-                      </Link>
-                    </div>
-
-                    {/* Badges superiores */}
-                    <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {p.destacado && (
-                          <span className="animate-pulse rounded-full px-3 py-1.5 text-xs font-bold text-black shadow-lg border border-[var(--gold-700)] bg-[var(--gold)] flex items-center gap-1.5">
-                            <Star className="h-3 w-3 fill-current" />
-                            Destacado
-                          </span>
-                        )}
-                        {hasDiscount && (
-                          <span className="rounded-full bg-red-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
-                            -{offPct}%
-                          </span>
-                        )}
-                      </div>
-                      
-                      {/* Badge de favorito */}
-                      <div className="pointer-events-auto">
-                        <div className="p-2.5 rounded-full bg-red-500 shadow-xl border border-red-400/20">
-                          <Heart className="h-4 w-4 text-white fill-current animate-pulse" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sin stock */}
-                    {outOfStock && (
-                      <div className="absolute inset-0 z-20 grid place-items-center bg-[var(--bg)]/90">
-                        <div className="rounded-full bg-[var(--bg-secondary)] px-4 py-2 text-sm font-semibold text-[var(--fg)] shadow-xl border border-[var(--border)]">
-                          Sin stock
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Cuerpo */}
-                  <CardBody className="flex flex-col gap-4 flex-1 p-5">
-                    {/* Precio */}
-                    <div className="flex items-baseline justify-between">
-                      <Price value={priceValue} compareAt={compareAt} />
-                    </div>
-
-                    {/* Título */}
-                    <Link href={`/tienda/producto/${p.slug}`}>
-                      <h3 className="text-base sm:text-lg font-bold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide cursor-pointer">
-                        {p.titulo}
-                      </h3>
-                    </Link>
-
-                    {/* Meta */}
-                    <div className="flex flex-wrap gap-2 min-h-[2rem]">
-                      {p.marca?.nombre && (
-                        <span className="inline-flex items-center rounded-full bg-[var(--gold)]/10 border border-[var(--gold)]/30 px-3 py-1 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/20">
-                          {p.marca.nombre}
-                        </span>
-                      )}
-                      {p.categoria?.nombre && (
-                        <span className="inline-flex items-center rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] px-3 py-1 text-xs font-medium text-[var(--muted)] transition-all duration-200 hover:bg-[var(--bg)]">
-                          {p.categoria.nombre}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Rating */}
-                    <div className="min-h-[24px] flex items-center">
-                      {p.ratingProm ? (
-                        <RatingStars value={Number(p.ratingProm || 0)} count={p.ratingConteo || 0} size="sm" />
-                      ) : (
-                        <span className="text-xs text-[var(--muted)]">Sin calificaciones</span>
-                      )}
-                    </div>
-
-                    {/* CTA */}
-                    <div className="mt-auto pt-2 space-y-3">
-                      <AddProductButton 
-                        p={{
-                          id: p.id || p.slug,
-                          slug: p.slug,
-                          titulo: p.titulo,
-                          precio: priceValue,
-                          stock: p.stock,
-                          imagen: img,
-                          imagenes: p.imagenes
-                        }}
-                        className="w-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] text-black font-bold hover:from-[var(--gold-dark)] hover:to-[var(--gold)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 transform"
-                      />
-                      <div className="flex gap-2">
-                        <Link href={`/tienda/producto/${p.slug}`} className="flex-1">
-                          <Button 
-                            variant="outline" 
-                            className="w-full rounded-xl bg-gradient-to-r from-[var(--bg-secondary)] to-[var(--bg)] border border-[var(--border)] transition-all duration-300 group-hover:from-[var(--bg)] group-hover:to-[var(--bg-secondary)] group-hover:border-[var(--gold)]/50 group-hover:shadow-md hover:scale-105 transform"
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">Ver detalles</span>
-                          </Button>
-                        </Link>
-                        
-                        <form action={removeFavAction}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <Button 
-                            type="submit" 
-                            variant="outline"
-                            className="p-3 text-red-500 hover:bg-red-50 hover:border-red-200 transition-all duration-300 hover:scale-110 transform rounded-xl"
-                            title="Eliminar de favoritos"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </form>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
+              <div key={p.id}>
+                <h3>{p.titulo}</h3>
+                <p>ID: {p.id}</p>
+                <p>Precio: {p.precio}</p>
               </div>
-            );
+            )
           })}
         </div>
       )}
