@@ -6,10 +6,7 @@ function computeApiUrl(): string {
     return apiUrl.replace(/\/+$/, '');
   }
   
-  // Fallback para desarrollo local
-  const fallback = 'http://localhost:3001';
-  console.warn(`[API-CLIENT] NEXT_PUBLIC_API_URL no definido, usando fallback: ${fallback}`);
-  return fallback;
+  throw new Error('[API-CLIENT] NEXT_PUBLIC_API_URL no está definida.');
 }
 
 // Crear instancia de axios con configuración base

@@ -41,10 +41,7 @@ export async function login(email: string, password: string) {
           return base.endsWith('/api') ? base : `${base}/api`;
         }
         
-        // Fallback para desarrollo local
-        const fallback = 'http://localhost:3001/api';
-        console.warn(`[AUTH] NEXT_PUBLIC_API_URL no definido, usando fallback: ${fallback}`);
-        return fallback;
+        throw new Error('[API-AUTH] NEXT_PUBLIC_API_URL no está definida.');
       }
 
       const tokenResponse = await fetch(`${computeApiUrl()}/auth/login`, {

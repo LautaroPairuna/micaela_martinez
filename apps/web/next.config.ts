@@ -1,13 +1,16 @@
 import type { NextConfig } from 'next';
 import { IMAGE_PUBLIC_URL, DOC_PUBLIC_URL } from './src/lib/adminConstants';
 
-const BACKEND = process.env.BACKEND_INTERNAL_URL || 'http://localhost:3001';
+const BACKEND = process.env.BACKEND_INTERNAL_URL;
+if (!BACKEND) {
+  throw new Error('BACKEND_INTERNAL_URL is not defined');
+}
 
 const nextConfig: NextConfig = {
   // Variables de entorno para el servidor
   env: {
-    BACKEND_INTERNAL_URL: process.env.BACKEND_INTERNAL_URL || 'http://localhost:3001',
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    BACKEND_INTERNAL_URL: process.env.BACKEND_INTERNAL_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   // Para <Image /> de Next y optimización remota
   images: {
