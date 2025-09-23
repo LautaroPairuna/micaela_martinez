@@ -31,12 +31,17 @@ export default function PerfilPage() {
 
   useEffect(() => {
     (async () => {
-      const userData = await getMe();
-      setMe(userData);
-      reset({ nombre: userData?.nombre ?? '' });
-      setLoading(false);
+      try {
+        const userData = await getMe({ cache: 'no-store' });
+        setMe(userData);
+        reset({ nombre: userData?.nombre ?? '' });
+      } catch (error) {
+        console.error('Error al cargar perfil:', error);
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [reset]);
+  }, []);
 
   const handleFormSubmit = async (values: FormData) => {
     await updateMe({ nombre: values.nombre });

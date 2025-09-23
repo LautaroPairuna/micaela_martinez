@@ -11,7 +11,7 @@ import { GraduationCap, Clock, PlayCircle, BookOpen, Award, TrendingUp } from 'l
 import { SubscriptionInfoCard } from '@/components/subscription/SubscriptionInfoCard';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Se eliminó revalidate=0 porque causa conflicto con 'use client'
 
 /** Tipos mínimos necesarios para evitar any y cubrir el uso real en la UI */
 type EnrollmentProgreso = {

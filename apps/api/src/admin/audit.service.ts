@@ -15,7 +15,7 @@ export interface AuditLogData {
     | 'EXPORT';
   oldData?: any;
   newData?: any;
-  userId: string;
+  userId?: string; // Hacemos userId opcional para manejar casos donde no esté disponible
   userAgent?: string;
   ipAddress?: string;
   endpoint?: string;
@@ -32,6 +32,19 @@ export class AuditService {
    */
   async logAction(data: AuditLogData): Promise<void> {
     try {
+      // Validar campos requeridos
+      if (!data.tableName || !data.recordId || !data.action) {
+        this.logger.warn('Missing required audit fields', { 
+          tableName: data.tableName, 
+          recordId: data.recordId, 
+          action: data.action 
+        });
+        return;
+      }
+
+      // Asegurar que userId siempre tenga un valor válido
+      const userId = data.userId || 'system';
+
       await this.prisma.auditLog.create({
         data: {
           tableName: data.tableName,
@@ -39,17 +52,17 @@ export class AuditService {
           action: data.action,
           oldData: data.oldData || null,
           newData: data.newData || null,
-          userId: data.userId,
-          userAgent: data.userAgent,
-          ipAddress: data.ipAddress,
-          endpoint: data.endpoint,
+          userId: userId,
+          userAgent: data.userAgent || null,
+          ipAddress: data.ipAddress || null,
+          endpoint: data.endpoint || null,
         },
       });
 
       // Log estructurado para debugging
       this.logger.log({
         message: `Audit: ${data.action} on ${data.tableName}`,
-        userId: data.userId,
+        userId: userId,
         tableName: data.tableName,
         recordId: data.recordId,
         action: data.action,
@@ -73,13 +86,26 @@ export class AuditService {
     newData?: any,
     request?: Request,
   ): Promise<void> {
+    // Validar campos requeridos
+    if (!tableName || !recordId || !action) {
+      this.logger.warn('Missing required audit fields in logCrudAction', { 
+        tableName, 
+        recordId, 
+        action 
+      });
+      return;
+    }
+
+    // Asegurar que userId siempre tenga un valor válido
+    const safeUserId = userId || 'system';
+    
     const auditData: AuditLogData = {
       tableName,
       recordId,
       action,
       oldData,
       newData,
-      userId,
+      userId: safeUserId,
       userAgent: request?.get('User-Agent'),
       ipAddress: this.getClientIp(request),
       endpoint: request

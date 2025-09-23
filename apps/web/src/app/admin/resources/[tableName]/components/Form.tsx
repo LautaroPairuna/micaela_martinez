@@ -123,7 +123,6 @@ function validateLessonForm(formData: Record<string, unknown>): string | null {
         if (rutaSrc.startsWith('http')) {
           try {
             // valida URL
-            // eslint-disable-next-line no-new
             new URL(rutaSrc)
           } catch {
             return 'La URL del video no es válida'
@@ -688,44 +687,156 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
 /* ───────────────────────────── BulkForm (opcional) ───────────────────────────── */
 
 type BulkValue = string | number | boolean
-type BulkP = { onSubmit: (field: string, value: BulkValue) => void }
+type BulkP = { 
+  onSubmit: (field: string, value: BulkValue) => void,
+  selectedItems?: Record<string, unknown>[] // Elementos seleccionados para edición múltiple
+}
 
-export const BulkForm = memo(function BulkForm({ onSubmit }: BulkP) {
+export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }: BulkP) {
   const [field, setField] = React.useState<string>('')
   const [value, setValue] = React.useState<string>('')
+  const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({})
+
+  // Expandir/colapsar un elemento específico
+  const toggleItem = (itemId: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }))
+  }
 
   const send = (e: FormEvent) => {
     e.preventDefault()
     onSubmit(field, value as unknown as BulkValue)
   }
 
+  // Si no hay elementos seleccionados, mostrar el formulario original
+  if (!selectedItems || selectedItems.length === 0) {
+    return (
+      <form onSubmit={send} className="grid grid-cols-1 gap-6">
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-gray-900">Campo</label>
+          <input
+            value={field}
+            onChange={e => setField(e.target.value)}
+            placeholder="nombreCampo"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+          />
+        </div>
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-gray-900">Valor</label>
+          <input
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+          />
+        </div>
+        <div className="md:col-span-2 flex justify-end pt-4">
+          <button
+            type="submit"
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow"
+          >
+            Aplicar
+          </button>
+        </div>
+      </form>
+    )
+  }
+
+  // Mostrar un formulario apilado para cada elemento seleccionado
   return (
-    <form onSubmit={send} className="grid grid-cols-1 gap-6">
-      <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium text-gray-900">Campo</label>
-        <input
-          value={field}
-          onChange={e => setField(e.target.value)}
-          placeholder="nombreCampo"
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-        />
+    <div className="space-y-6">
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+        <p className="text-sm text-blue-700">
+          Estás editando <strong>{selectedItems.length}</strong> elementos. Puedes expandir cada uno para ver sus detalles.
+        </p>
       </div>
-      <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium text-gray-900">Valor</label>
-        <input
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-        />
+
+      {/* Formulario común para todos los elementos */}
+      <form onSubmit={send} className="grid grid-cols-1 gap-6 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-md font-semibold text-gray-900">Aplicar a todos los elementos seleccionados</h3>
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-gray-900">Campo</label>
+          <input
+            value={field}
+            onChange={e => setField(e.target.value)}
+            placeholder="nombreCampo"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+          />
+        </div>
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-gray-900">Valor</label>
+          <input
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+          />
+        </div>
+        <div className="md:col-span-2 flex justify-end pt-4">
+          <button
+            type="submit"
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow"
+          >
+            Aplicar a todos
+          </button>
+        </div>
+      </form>
+
+      {/* Lista de elementos seleccionados */}
+      <div className="space-y-4">
+        <h3 className="text-md font-semibold text-gray-900">Elementos seleccionados</h3>
+        
+        {selectedItems.map((item, index) => {
+          const itemId = item.id || `item-${index}`
+          const isExpanded = expandedItems[itemId]
+          
+          return (
+            <div key={itemId} className="border border-gray-200 rounded-lg overflow-hidden">
+              {/* Cabecera del elemento */}
+              <div 
+                className="flex justify-between items-center p-4 bg-white cursor-pointer hover:bg-gray-50"
+                onClick={() => toggleItem(itemId)}
+              >
+                <div className="flex items-center space-x-2">
+                  <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">
+                    {index + 1}
+                  </span>
+                  <span className="font-medium text-gray-900 truncate">
+                    {item.nombre || item.title || item.name || `Elemento #${index + 1}`}
+                  </span>
+                </div>
+                <svg 
+                  className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              
+              {/* Contenido expandible */}
+              {isExpanded && (
+                <div className="p-4 bg-gray-50 border-t border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(item).map(([key, val]) => {
+                      if (key === 'id') return null
+                      return (
+                        <div key={key} className="flex flex-col">
+                          <span className="text-xs font-medium text-gray-500">{key}</span>
+                          <span className="text-sm text-gray-900 truncate">
+                            {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
-      <div className="md:col-span-2 flex justify-end pt-4">
-        <button
-          type="submit"
-          className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow"
-        >
-          Aplicar
-        </button>
-      </div>
-    </form>
+    </div>
   )
 })

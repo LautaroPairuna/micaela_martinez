@@ -33,12 +33,14 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const favoriteProducts = await listFavorites();
+      // Forzamos no-cache para obtener datos actualizados
+      const favoriteProducts = await listFavorites({ cache: 'no-store' });
       const productIds = favoriteProducts.map(f => f.id);
       set({ favorites: new Set(productIds), isInitialized: true });
+      console.log('✅ Favoritos cargados en store:', productIds.length);
     } catch (error) {
       // Si hay error (ej: usuario no autenticado), simplemente no cargamos favoritos
-      console.debug('No se pudieron cargar favoritos:', error);
+      console.error('❌ Error al cargar favoritos en store:', error);
       set({ isInitialized: true });
     } finally {
       set({ isLoading: false });

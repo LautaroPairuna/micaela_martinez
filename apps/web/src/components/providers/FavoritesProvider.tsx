@@ -3,28 +3,40 @@
 import { useEffect } from 'react';
 import { useFavorites } from '@/store/favorites';
 import { useSession } from '@/hooks/useSession';
+import { listFavorites } from '@/lib/sdk/userApi';
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { me, loading } = useSession();
-  const { loadFavorites, reset } = useFavorites();
+  const { loadFavorites, reset, setFavorites } = useFavorites();
 
   // Efecto principal para manejar autenticación/logout
   useEffect(() => {
     if (loading) return;
 
     if (me) {
-      // Usuario autenticado: cargar favoritos
-      // Pequeño delay para asegurar que el estado esté completamente actualizado
-      const timeoutId = setTimeout(() => {
-        loadFavorites(true);
-      }, 100);
+      // Usuario autenticado: cargar favoritos directamente desde la API
+      const loadFavoritesFromAPI = async () => {
+        try {
+          // Obtener favoritos directamente de la API
+          const favorites = await listFavorites({ cache: 'no-store' });
+          // Actualizar el estado con los IDs de los productos favoritos
+          const productIds = favorites.map(f => f.id);
+          setFavorites(productIds);
+          console.log('✅ Favoritos cargados correctamente:', productIds.length);
+        } catch (error) {
+          console.error('❌ Error al cargar favoritos:', error);
+          // Intentar cargar favoritos con el método estándar como fallback
+          loadFavorites(true);
+        }
+      };
       
-      return () => clearTimeout(timeoutId);
+      // Ejecutar inmediatamente sin delay
+      loadFavoritesFromAPI();
     } else {
       // Usuario no autenticado: resetear favoritos
       reset();
     }
-  }, [me, loading, loadFavorites, reset]);
+  }, [me, loading, loadFavorites, reset, setFavorites]);
 
   // Efecto adicional para detectar cambios de usuario (login de usuario diferente)
   useEffect(() => {
@@ -32,12 +44,18 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     
     // Cuando cambia el ID del usuario, forzar recarga completa
     // Esto maneja el caso de login con usuario diferente
-    const timeoutId = setTimeout(() => {
-      loadFavorites(true);
-    }, 150); // Delay ligeramente mayor para evitar duplicados
+    const loadFavoritesFromAPI = async () => {
+      try {
+        const favorites = await listFavorites({ cache: 'no-store' });
+        const productIds = favorites.map(f => f.id);
+        setFavorites(productIds);
+      } catch (error) {
+        console.error('❌ Error al recargar favoritos (cambio de usuario):', error);
+      }
+    };
     
-    return () => clearTimeout(timeoutId);
-  }, [me?.id, loading, loadFavorites]);
+    loadFavoritesFromAPI();
+  }, [me?.id, loading, setFavorites]);
 
   return <>{children}</>;
 }

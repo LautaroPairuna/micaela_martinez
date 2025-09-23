@@ -1048,7 +1048,10 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
 
       {ui.editRow === 'bulk' && (
         <Modal title={`Edición masiva (${ui.selected.length})`} onClose={() => dispatch({ type: 'openEdit', row: null })}>
-          <BulkForm onSubmit={handleBulk} />
+          <BulkForm 
+            onSubmit={handleBulk} 
+            selectedItems={(data as Row[]).filter((r: any) => ui.selected.includes(r.id))}
+          />
         </Modal>
       )}
 

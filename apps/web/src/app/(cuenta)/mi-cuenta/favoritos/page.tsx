@@ -10,8 +10,9 @@ import { RatingStars } from '@/components/ui/RatingStars';
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { Heart, ShoppingBag, Trash2, ExternalLink, Star } from 'lucide-react';
 
+// Forzamos que la página siempre se renderice en el servidor con datos frescos
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Eliminamos revalidate=0 ya que causa conflictos con 'use client'
 
 // ✅ Server Action: recibe FormData (no cierres sobre variables)
 async function removeFavAction(formData: FormData) {

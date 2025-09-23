@@ -7,7 +7,8 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import sharp from 'sharp';
+import * as sharpPkg from 'sharp';
+const sharp = typeof sharpPkg === 'function' ? sharpPkg : (sharpPkg as any).default;
 import { promises as fsPromises } from 'fs';
 import { randomBytes } from 'crypto';
 import {

@@ -75,15 +75,22 @@ export class AuditInterceptor implements NestInterceptor {
             recordId || this.extractIdFromResponse(response);
 
           if (finalRecordId) {
-            await this.auditService.logCrudAction(
-              auditAction,
-              tableName,
-              finalRecordId,
-              userId,
-              undefined, // oldData - se podría implementar para UPDATE
-              requestData,
-              request,
-            );
+            try {
+              await this.auditService.logCrudAction(
+                auditAction,
+                tableName,
+                finalRecordId,
+                userId || 'system', // Asegurar que userId nunca sea undefined
+                undefined, // oldData - se podría implementar para UPDATE
+                requestData,
+                request,
+              );
+            } catch (error: unknown) {
+              // Capturar errores específicos del servicio de auditoría
+              const auditError = error as Error;
+              this.logger.error(`Error en auditoría: ${auditError.message || 'Error desconocido'}`, auditError);
+              // No propagamos el error para no afectar la operación principal
+            }
           }
 
           this.logger.debug(

@@ -57,8 +57,14 @@ export default function DireccionesPage() {
   });
 
   const refresh = async () => {
-    const rows = await listAddresses();
-    setItems(rows);
+    try {
+      const rows = await listAddresses({ cache: 'no-store' });
+      setItems(rows);
+      return true;
+    } catch (error) {
+      console.error('Error al cargar direcciones:', error);
+      return false;
+    }
   };
 
   useEffect(() => {

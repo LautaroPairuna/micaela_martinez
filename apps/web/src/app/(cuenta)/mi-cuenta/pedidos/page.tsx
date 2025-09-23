@@ -8,8 +8,8 @@ import { Package, Calendar, CreditCard, Truck, CheckCircle, Clock, AlertCircle, 
 import { PageHeader } from '@/components/ui/PageHeader';
 import { OrderDetailsModal } from './OrderDetailsModal';
 
+// Eliminamos revalidate ya que está causando conflicto con 'use client'
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const getStatusIcon = (estado: string) => {
   switch (estado?.toLowerCase()) {
