@@ -103,15 +103,76 @@ export default async function FavoritosPage() {
         </Card>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => {
-            return (
-              <div key={p.id}>
-                <h3>{p.titulo}</h3>
-                <p>ID: {p.id}</p>
-                <p>Precio: {p.precio}</p>
-              </div>
-            )
-          })}
+          {items.map((p) => (
+            <Card key={p.id} className="group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+              <CardBody className="p-0">
+                <div className="absolute top-3 right-3 z-10">
+                  <form action={removeFavAction}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="bg-red-500/80 text-white rounded-full w-10 h-10 backdrop-blur-sm hover:bg-red-600 transition-all duration-200 group-hover:opacity-100 opacity-90"
+                      aria-label="Quitar de favoritos"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  </form>
+                </div>
+
+                <Link href={`/tienda/${p.slug}`} className="block">
+                  <SafeImage
+                    src={p.imagen ?? p.imagenes?.[0]?.url}
+                    alt={`Imagen de ${p.titulo}`}
+                    className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                </Link>
+
+                <div className="p-5 space-y-4 bg-gradient-to-t from-[var(--bg-secondary)] to-[var(--bg)]">
+                  {p.categoria?.nombre && (
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)] bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] bg-clip-text">
+                      {p.categoria.nombre}
+                    </span>
+                  )}
+                  <h3 className="font-bold text-xl h-14 text-[var(--fg)] overflow-hidden">
+                    {p.titulo}
+                  </h3>
+                  
+                  <div className="flex items-center justify-between">
+                    <Price
+                      value={p.precio}
+                      compareAt={p.precioLista ?? undefined}
+                      className="text-2xl font-extrabold"
+                    />
+                    {p.ratingProm && (
+                      <RatingStars value={typeof p.ratingProm === 'string' ? parseFloat(p.ratingProm) : (p.ratingProm ?? 0)} count={p.ratingConteo ?? undefined} />
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 pt-3 border-t border-[var(--border)]">
+                    <AddProductButton
+                      p={{
+                        id: p.id,
+                        slug: p.slug,
+                        titulo: p.titulo,
+                        precio: p.precio,
+                        stock: p.stock,
+                        imagen: p.imagen,
+                        imagenes: p.imagenes,
+                      }}
+                      className="flex-1 bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-bold"
+                    />
+                    <Link href={`/tienda/${p.slug}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        <ExternalLink className="w-5 h-5 mr-2" />
+                        Ver
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          ))}
         </div>
       )}
       

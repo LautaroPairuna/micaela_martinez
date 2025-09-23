@@ -5,14 +5,15 @@ type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   asChild?: boolean;
   variant?: 'solid' | 'outline' | 'ghost';
   tone?: 'pink' | 'gold' | 'neutral';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
 };
 export function Button({ asChild, className, variant='solid', tone='neutral', size='md', ...rest }: Props) {
   const Cmp = asChild ? Slot : 'button';
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-xs',
     md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    lg: 'px-6 py-3 text-base',
+    icon: 'h-10 w-10',
   };
   const base = `inline-flex items-center justify-center rounded-xl2 ${sizeClasses[size]} focus:outline-none focus-visible:ring-2 ring-offset-2`;
   const tones = {
