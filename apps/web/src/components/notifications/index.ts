@@ -4,4 +4,4 @@ export { NotificationBadge } from './NotificationBadge';
 
 // Hooks personalizados
 export { useNotifications } from '../../hooks/useNotifications';
-export type { Notification, NotificationsData, UseNotificationsReturn } from '../../hooks/useNotifications';
+export type { AppNotification, NotificationsData, UseNotificationsReturn } from '../../hooks/useNotifications';

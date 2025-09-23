@@ -6,7 +6,7 @@ import { Bell, MessageCircle, Heart, AtSign, Trash2, Check, CheckCheck, Loader2 
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
-import { useNotifications, type Notification } from '@/hooks/useNotifications';
+import { useNotifications, type AppNotification } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 
@@ -14,7 +14,7 @@ interface NotificationsListProps {
   className?: string;
 }
 
-const getNotificationIcon = (tipo: Notification['tipo']) => {
+const getNotificationIcon = (tipo: AppNotification['tipo']) => {
   switch (tipo) {
     case 'RESPUESTA_RESENA':
       return <MessageCircle className="h-4 w-4" />;
@@ -27,7 +27,7 @@ const getNotificationIcon = (tipo: Notification['tipo']) => {
   }
 };
 
-const getNotificationColor = (tipo: Notification['tipo']) => {
+const getNotificationColor = (tipo: AppNotification['tipo']) => {
   switch (tipo) {
     case 'RESPUESTA_RESENA':
       return 'text-blue-600';
@@ -40,7 +40,7 @@ const getNotificationColor = (tipo: Notification['tipo']) => {
   }
 };
 
-const getEnhancedMessage = (notification: Notification) => {
+const getEnhancedMessage = (notification: AppNotification) => {
   const baseMessage = notification.mensaje;
   const timeAgo = formatDistanceToNow(new Date(notification.creadoEn), {
     addSuffix: false,
@@ -60,7 +60,7 @@ const getEnhancedMessage = (notification: Notification) => {
 };
 
 interface NotificationItemProps {
-  notification: Notification;
+  notification: AppNotification;
   onMarkAsRead: (id: string) => void;
   onDelete: (id: string) => void;
   isSelected: boolean;

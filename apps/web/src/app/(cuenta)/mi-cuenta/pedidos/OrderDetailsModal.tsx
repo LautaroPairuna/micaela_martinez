@@ -91,9 +91,9 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
   }).format(Number(order.total || 0));
 
   // Calcular valores de envío y subtotal
-  // Como no tenemos costoEnvio en el tipo Orden, asumimos un valor fijo o 0
-  const costoEnvio = 0; // Valor por defecto
-  const subtotal = Number(order.total || 0) - costoEnvio;
+  // Asumimos que no hay costo de envío ya que no está en el tipo Orden
+  const costoEnvio = 0; // Valor fijo para envío
+  const subtotal = Number(order.total || 0); // El total es el subtotal ya que no hay costo de envío
   const subtotalFmt = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: order.moneda || 'ARS',
@@ -173,10 +173,10 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             </div>
             <div>
               <h3 className="font-bold mb-3">Envío</h3>
-              <address className="not-italic text-sm space-y-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-[var(--border)]">
-                <p className="font-bold">Dirección de envío</p>
-                <p>Consultar detalles en el sistema</p>
-              </address>
+              <div className="text-sm space-y-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-[var(--border)]">
+                <p className="font-bold">Información de envío</p>
+                <p>Consultar detalles en el sistema administrativo</p>
+              </div>
             </div>
           </div>
         </div>
