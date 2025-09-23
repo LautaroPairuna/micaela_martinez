@@ -96,10 +96,10 @@ async function resolveApiUrl(input: string): Promise<string> {
       return `${strip(base)}${p}`;
     };
 
-    // 4) Rama browser → siempre usar URLs relativas en desarrollo
+    // 4) Rama browser → SIEMPRE usar URLs relativas para evitar problemas de CORS
     if (typeof window !== 'undefined') {
-      // SIEMPRE usar URLs relativas en desarrollo para evitar problemas de CORS
-      return rel;
+      // Aseguramos que la ruta comience con /api si no lo hace ya
+      return rel.startsWith('/api') ? rel : `/api${rel}`;
     }
 
     // 5) Rama server (SSR/Route Handlers) → siempre red interna
@@ -117,14 +117,17 @@ async function resolveApiUrl(input: string): Promise<string> {
       if (host) {
         return `${proto}://${host}${rel.startsWith('/api') ? rel : `/api${rel}`}`;
       }
-    } catch { /* noop */ }
+    } catch (error) {
+      console.warn('Error al obtener headers:', error);
+    }
 
     // 7) Fallback a URL relativa en caso de error
-    return rel;
+    return rel.startsWith('/api') ? rel : `/api${rel}`;
   } catch (error) {
     console.error('Error al resolver URL de API:', error);
     // En caso de cualquier error, siempre devolver URL relativa como último recurso
-    return input.startsWith('/') ? input : `/${input}`;
+    const safeRel = input.startsWith('/') ? input : `/${input}`;
+    return safeRel.startsWith('/api') ? safeRel : `/api${safeRel}`;
   }
 }
 
