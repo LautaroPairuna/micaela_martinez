@@ -141,15 +141,15 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-        <DialogHeader className="border-b border-[var(--border)] pb-4">
-          <DialogTitle className="flex items-center gap-3 text-xl">
-            <div className="p-2 rounded-lg bg-[var(--gold)]/10">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden bg-black border-2 border-[var(--gold)]/30">
+        <DialogHeader className="border-b border-[var(--gold)]/30 pb-4">
+          <DialogTitle className="flex items-center gap-3 text-xl text-white">
+            <div className="p-2 rounded-lg bg-[var(--gold)]/20 border border-[var(--gold)]/40">
               <Package className="h-6 w-6 text-[var(--gold)]" />
             </div>
             <div>
-              <div className="font-bold">Pedido #{order.id.slice(0, 8)}</div>
-              <div className="text-sm text-[var(--muted)] font-normal flex items-center gap-2 mt-1">
+              <div className="font-bold text-[var(--gold)]">Pedido #{order.id.slice(0, 8)}</div>
+              <div className="text-sm text-gray-300 font-normal flex items-center gap-2 mt-1">
                 <Calendar className="h-4 w-4" />
                 Realizado el {fecha}
               </div>
@@ -157,7 +157,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-black">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-6">
             {/* Contenido principal - Items del pedido */}
             <div className="lg:col-span-2 space-y-6">
@@ -165,18 +165,18 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {productos.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                      <ShoppingBag className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-400/30">
+                      <ShoppingBag className="h-5 w-5 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">Productos</h3>
-                      <p className="text-sm text-[var(--muted)]">{productos.length} producto{productos.length !== 1 ? 's' : ''}</p>
+                      <h3 className="font-bold text-lg text-white">Productos</h3>
+                      <p className="text-sm text-gray-300">{productos.length} producto{productos.length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   <div className="space-y-3">
                     {productos.map((item: OrdenItem) => (
-                      <div key={item.id} className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:shadow-sm transition-shadow">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                      <div key={item.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-600 bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200 hover:border-[var(--gold)]/40">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-600 flex-shrink-0">
                           <SafeImage
                             src={resolveProductImage(item.refId)}
                             alt={item.titulo || 'Producto'}
@@ -187,21 +187,21 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                           />
                         </div>
                         <div className="flex-grow min-w-0">
-                          <div className="font-semibold text-base truncate">
+                          <div className="font-semibold text-base truncate text-white">
                             {item.titulo || 'Producto no disponible'}
                           </div>
                           <div className="flex items-center gap-4 mt-1">
-                            <p className="text-sm text-[var(--muted)]">Ref: {item.refId || 'N/A'}</p>
-                            <div className="flex items-center gap-1 text-sm text-[var(--muted)]">
+                            <p className="text-sm text-gray-300">Ref: {item.refId || 'N/A'}</p>
+                            <div className="flex items-center gap-1 text-sm text-gray-300">
                               <span>Cantidad: {item.cantidad}</span>
                             </div>
                           </div>
-                          <p className="text-sm font-medium mt-1">
+                          <p className="text-sm font-medium mt-1 text-gray-200">
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))} c/u
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-lg">
+                          <div className="font-bold text-lg text-[var(--gold)]">
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.cantidad * item.precioUnitario) || 0)}
                           </div>
                         </div>
@@ -215,18 +215,18 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {cursos.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                      <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-400/30">
+                      <BookOpen className="h-5 w-5 text-purple-400" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">Cursos</h3>
-                      <p className="text-sm text-[var(--muted)]">{cursos.length} curso{cursos.length !== 1 ? 's' : ''}</p>
+                      <h3 className="font-bold text-lg text-white">Cursos</h3>
+                      <p className="text-sm text-gray-300">{cursos.length} curso{cursos.length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   <div className="space-y-3">
                     {cursos.map((item: OrdenItem) => (
-                      <div key={item.id} className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:shadow-sm transition-shadow">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                      <div key={item.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-600 bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200 hover:border-[var(--gold)]/40">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-600 flex-shrink-0">
                           <SafeImage
                             src={resolveCourseImage(item.refId)}
                             alt={item.titulo || 'Curso'}
@@ -237,21 +237,21 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                           />
                         </div>
                         <div className="flex-grow min-w-0">
-                          <div className="font-semibold text-base truncate">
+                          <div className="font-semibold text-base truncate text-white">
                             {item.titulo || 'Curso no disponible'}
                           </div>
                           <div className="flex items-center gap-4 mt-1">
-                            <p className="text-sm text-[var(--muted)]">Ref: {item.refId || 'N/A'}</p>
-                            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                            <p className="text-sm text-gray-300">Ref: {item.refId || 'N/A'}</p>
+                            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 border border-purple-400/30 text-purple-300">
                               Acceso digital
                             </div>
                           </div>
-                          <p className="text-sm font-medium mt-1">
+                          <p className="text-sm font-medium mt-1 text-gray-200">
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))}
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-lg">
+                          <div className="font-bold text-lg text-[var(--gold)]">
                             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.cantidad * item.precioUnitario) || 0)}
                           </div>
                         </div>
@@ -265,60 +265,60 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             {/* Sidebar - Resumen y detalles */}
             <div className="space-y-6">
               {/* Estado del pedido */}
-              <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] p-6">
-                <h3 className="font-bold text-lg mb-4">Estado del pedido</h3>
+              <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-6">
+                <h3 className="font-bold text-lg mb-4 text-white">Estado del pedido</h3>
                 <div className={`flex items-center gap-3 p-4 rounded-lg ${getStatusColor(order.estado)}`}>
                   {getStatusIcon(order.estado)}
                   <div>
-                    <p className="font-bold text-sm">Estado actual</p>
-                    <p className="capitalize font-semibold">{getStatusText(order.estado)}</p>
+                    <p className="font-bold text-sm text-gray-300">Estado actual</p>
+                    <p className="capitalize font-semibold text-white">{getStatusText(order.estado)}</p>
                   </div>
                 </div>
               </div>
 
               {/* Resumen de pago */}
-              <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] p-6">
-                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
+              <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-6">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+                  <CreditCard className="h-5 w-5 text-[var(--gold)]" />
                   Resumen de pago
                 </h3>
                 <div className="space-y-3 text-sm">
                   {productos.length > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-[var(--muted)]">Productos ({productos.length})</span>
-                      <span className="font-medium">
+                      <span className="text-gray-300">Productos ({productos.length})</span>
+                      <span className="font-medium text-white">
                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(subtotalProductos)}
                       </span>
                     </div>
                   )}
                   {cursos.length > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-[var(--muted)]">Cursos ({cursos.length})</span>
-                      <span className="font-medium">
+                      <span className="text-gray-300">Cursos ({cursos.length})</span>
+                      <span className="font-medium text-white">
                         {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(subtotalCursos)}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-[var(--muted)]">Subtotal</span>
-                    <span className="font-medium">{subtotalFmt}</span>
+                    <span className="text-gray-300">Subtotal</span>
+                    <span className="font-medium text-white">{subtotalFmt}</span>
                   </div>
                   {productos.length > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-[var(--muted)]">Envío</span>
-                      <span className="font-medium text-green-600">Gratis</span>
+                      <span className="text-gray-300">Envío</span>
+                      <span className="font-medium text-green-400">Gratis</span>
                     </div>
                   )}
-                  <div className="border-t border-[var(--border)] pt-3 mt-3">
+                  <div className="border-t border-gray-600 pt-3 mt-3">
                     <div className="flex justify-between font-bold text-lg">
-                      <span>Total</span>
+                      <span className="text-white">Total</span>
                       <span className="text-[var(--gold)]">{totalFmt}</span>
                     </div>
                   </div>
                   {order.referenciaPago && (
-                    <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                      <p className="text-xs text-[var(--muted)] mb-1">Referencia de pago</p>
-                      <p className="font-mono text-sm">{order.referenciaPago}</p>
+                    <div className="mt-4 p-3 bg-gray-800/50 rounded-lg border border-gray-600">
+                      <p className="text-xs text-gray-400 mb-1">Referencia de pago</p>
+                      <p className="font-mono text-sm text-white">{order.referenciaPago}</p>
                     </div>
                   )}
                 </div>
@@ -326,15 +326,15 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
               {/* Información de entrega */}
               {productos.length > 0 && (
-                <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] p-6">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
+                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-6">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+                    <Truck className="h-5 w-5 text-[var(--gold)]" />
                     Información de entrega
                   </h3>
                   <div className="text-sm space-y-2">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <p className="font-medium text-blue-800 dark:text-blue-300">Envío gratuito</p>
-                      <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
+                    <div className="p-3 bg-blue-500/20 rounded-lg border border-blue-400/30">
+                      <p className="font-medium text-blue-300">Envío gratuito</p>
+                      <p className="text-blue-400 text-xs mt-1">
                         Los productos se envían dentro de 24-48 horas hábiles
                       </p>
                     </div>
@@ -344,15 +344,15 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
               {/* Acceso a cursos */}
               {cursos.length > 0 && (
-                <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] p-6">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
+                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-6">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+                    <BookOpen className="h-5 w-5 text-[var(--gold)]" />
                     Acceso a cursos
                   </h3>
                   <div className="text-sm space-y-2">
-                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                      <p className="font-medium text-green-800 dark:text-green-300">Acceso inmediato</p>
-                      <p className="text-green-600 dark:text-green-400 text-xs mt-1">
+                    <div className="p-3 bg-green-500/20 rounded-lg border border-green-400/30">
+                      <p className="font-medium text-green-300">Acceso inmediato</p>
+                      <p className="text-green-400 text-xs mt-1">
                         Los cursos están disponibles en tu área de estudiante
                       </p>
                     </div>
@@ -363,8 +363,8 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           </div>
         </div>
 
-        <DialogFooter className="border-t border-[var(--border)] pt-4">
-          <Button onClick={onClose} variant="outline" className="px-8">
+        <DialogFooter className="border-t border-gray-600 pt-4 bg-black">
+          <Button onClick={onClose} variant="outline" className="px-8 border-[var(--gold)]/40 text-[var(--gold)] hover:bg-[var(--gold)]/10 hover:border-[var(--gold)]">
             Cerrar
           </Button>
         </DialogFooter>

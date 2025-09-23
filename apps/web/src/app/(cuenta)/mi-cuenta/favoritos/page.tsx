@@ -123,74 +123,72 @@ export default function FavoritosPage() {
           </Link>
         </div>
       ) : (
-        /* Products Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        /* Products Grid - Diseño compacto y elegante */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((product: ProductMinimal) => (
-            <Card key={product.id} className="group hover:shadow-xl transition-all duration-300 border-[var(--border)] bg-[var(--card)] overflow-hidden">
+            <Card key={product.id} className="group hover:shadow-lg transition-all duration-200 border-[var(--border)] bg-[var(--card)] overflow-hidden rounded-lg">
               <CardBody className="p-0">
-                {/* Product Image */}
-                <div className="relative aspect-square overflow-hidden bg-[var(--muted-bg)]">
+                {/* Product Image - Más compacta */}
+                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--muted-bg)]">
                   <SafeImage
                     src={product.imagen ?? product.imagenes?.[0]?.url}
                     alt={product.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                   
-                  {/* Remove from Favorites Button */}
+                  {/* Remove from Favorites Button - Más discreto */}
                   <Button
                     onClick={() => handleRemoveFavorite(product.id, product.titulo)}
                     disabled={removingIds.has(product.id)}
-                    className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white text-red-500 hover:text-red-600 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+                    className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full shadow-md transition-all duration-200 hover:scale-110 backdrop-blur-sm"
                     size="sm"
                   >
                     {removingIds.has(product.id) ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     )}
                   </Button>
                 </div>
 
-                {/* Product Info */}
-                <div className="p-6 space-y-4">
-                  {/* Title and Link */}
-                  <div className="space-y-2">
-                    <Link 
-                      href={`/tienda/${product.slug}`}
-                      className="block group-hover:text-[var(--gold)] transition-colors duration-200"
-                    >
-                      <h3 className="font-semibold text-lg text-[var(--fg)] line-clamp-2 leading-tight">
-                        {product.titulo}
-                      </h3>
-                    </Link>
-                    
-                    {/* Rating */}
-                    {product.ratingProm && (
-                      <div className="flex items-center gap-2">
-                        <RatingStars value={typeof product.ratingProm === 'string' ? parseFloat(product.ratingProm) : (product.ratingProm ?? 0)} count={product.ratingConteo ?? undefined} />
-                        <span className="text-sm text-[var(--muted)]">
-                          ({product.ratingProm})
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                {/* Product Info - Más compacto */}
+                <div className="p-3 space-y-2">
+                  {/* Title - Una sola línea */}
+                  <Link 
+                    href={`/tienda/${product.slug}`}
+                    className="block group-hover:text-[var(--gold)] transition-colors duration-200"
+                  >
+                    <h3 className="font-medium text-sm text-[var(--fg)] line-clamp-1 leading-tight">
+                      {product.titulo}
+                    </h3>
+                  </Link>
+                  
+                  {/* Rating - Más pequeño */}
+                  {product.ratingProm && (
+                    <div className="flex items-center gap-1">
+                      <RatingStars value={typeof product.ratingProm === 'string' ? parseFloat(product.ratingProm) : (product.ratingProm ?? 0)} count={product.ratingConteo ?? undefined} size="sm" />
+                      <span className="text-xs text-[var(--muted)]">
+                        ({product.ratingProm})
+                      </span>
+                    </div>
+                  )}
 
-                  {/* Price */}
-                  <div className="space-y-1">
+                  {/* Price - Más compacto */}
+                  <div className="space-y-0.5">
                     <Price 
                       value={product.precio} 
                       compareAt={product.precioLista ?? undefined}
-                      className="text-xl font-bold"
+                      className="text-lg font-bold"
                     />
                     {product.precioLista && product.precioLista > product.precio && (
-                      <div className="text-sm text-green-600 font-medium">
+                      <div className="text-xs text-green-600 font-medium">
                         Ahorrás ${(product.precioLista - product.precio).toLocaleString('es-AR')}
                       </div>
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-2">
+                  {/* Actions - Más compactas */}
+                  <div className="flex gap-2 pt-1">
                     <AddProductButton 
                       p={{
                         id: product.id,
@@ -201,14 +199,15 @@ export default function FavoritosPage() {
                         imagen: product.imagen,
                         imagenes: product.imagenes,
                       }}
-                      className="flex-1 bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-semibold py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                      className="flex-1 bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-medium text-xs py-2 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
                     />
                     <Link href={`/tienda/${product.slug}`}>
                       <Button 
                         variant="outline" 
-                        className="p-2.5 border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200"
+                        className="p-2 border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200 rounded-md"
+                        size="sm"
                       >
-                        <ExternalLink className="h-4 w-4" />
+                        <ExternalLink className="h-3 w-3" />
                       </Button>
                     </Link>
                   </div>
