@@ -1,9 +1,11 @@
 #!/bin/bash
 # Script para probar autenticación y endpoints de admin
 
-API_BASE="http://localhost:3001/api"
+# Usar variable de entorno o fallback a localhost
+API_BASE="${API_BASE_URL:-http://localhost:3001/api}"
 
-echo "🔐 Intentando autenticación..."
+echo "🔐 Intentando autenticación con API_BASE: $API_BASE"
+echo "💡 Para usar otra URL, define: export API_BASE_URL=http://tu-servidor:puerto/api"
 
 # 1. Intentar login con credenciales de prueba
 LOGIN_RESPONSE=$(curl -s -X POST "$API_BASE/auth/login" \

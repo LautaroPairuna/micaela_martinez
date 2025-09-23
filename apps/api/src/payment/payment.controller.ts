@@ -102,7 +102,7 @@ export class PaymentController {
         back_urls: preferenceData.back_urls,
         auto_return: 'approved',
         external_reference: `user_${userId}_${Date.now()}`,
-        notification_url: `${process.env.API_BASE_URL || 'http://localhost:3001'}/api/payment/mercadopago/webhook`,
+        notification_url: `${process.env.API_BASE_URL || process.env.PUBLIC_URL || 'http://localhost:3001'}/api/payment/mercadopago/webhook`,
       };
 
       console.log('=== CONTROLLER: Datos preparados para MercadoPago ===');

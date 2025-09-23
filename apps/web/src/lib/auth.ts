@@ -34,7 +34,20 @@ export async function login(email: string, password: string) {
     
     // 3. Obtener el token directamente del backend para adminApi
     try {
-      const tokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/login`, {
+      function computeApiUrl(): string {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (apiUrl) {
+          const base = apiUrl.replace(/\/+$/, '');
+          return base.endsWith('/api') ? base : `${base}/api`;
+        }
+        
+        // Fallback para desarrollo local
+        const fallback = 'http://localhost:3001/api';
+        console.warn(`[AUTH] NEXT_PUBLIC_API_URL no definido, usando fallback: ${fallback}`);
+        return fallback;
+      }
+
+      const tokenResponse = await fetch(`${computeApiUrl()}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

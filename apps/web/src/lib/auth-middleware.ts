@@ -37,8 +37,20 @@ export async function validateAuthToken(request: NextRequest): Promise<AuthValid
     }
 
     // Si no está en cache, validar token con el backend de NestJS
-    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
-    const url = base.endsWith('/api') ? base : `${base}/api`;
+    function computeApiUrl(): string {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+      if (apiUrl) {
+        const base = apiUrl.replace(/\/+$/, '');
+        return base.endsWith('/api') ? base : `${base}/api`;
+      }
+      
+      // Fallback para desarrollo local
+      const fallback = 'http://localhost:3001/api';
+      console.warn(`[AUTH-MIDDLEWARE] NEXT_PUBLIC_API_URL no definido, usando fallback: ${fallback}`);
+      return fallback;
+    }
+
+    const url = computeApiUrl();
 
     const authResponse = await fetch(`${url}/auth/me`, {
       method: 'GET',

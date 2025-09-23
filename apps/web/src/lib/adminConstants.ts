@@ -7,7 +7,19 @@ export const MEDIA_PUBLIC_URL = '/api/media';  // base para /api/media/videos|do
 export const DOC_PUBLIC_URL   = '/docs';       // si además sirves PDFs públicos
 
 // Útil por si querés construir URLs absolutas al backend en alguna circunstancia
-export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+function computeBackendUrl(): string {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+  if (backendUrl) {
+    return backendUrl.replace(/\/+$/, '');
+  }
+  
+  // Fallback para desarrollo local
+  const fallback = 'http://localhost:3001';
+  console.warn(`[ADMIN-CONSTANTS] NEXT_PUBLIC_BACKEND_URL no definido, usando fallback: ${fallback}`);
+  return fallback;
+}
+
+export const BACKEND_URL = computeBackendUrl();
 
 /**
  * Mapeo específico para tablas que manejan archivos

@@ -2,7 +2,19 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/+$/,'');
+function computeApiBase(): string {
+  const publicUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (publicUrl) {
+    return publicUrl.replace(/\/+$/, '');
+  }
+  
+  // Fallback para desarrollo local
+  const fallback = 'http://localhost:3001/api';
+  console.warn(`[AUTH-REGISTER] NEXT_PUBLIC_API_URL no definido, usando fallback: ${fallback}`);
+  return fallback;
+}
+
+const API_BASE = computeApiBase();
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const r = await fetch(`${API_BASE}/auth/register`, {

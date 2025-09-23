@@ -1,8 +1,20 @@
 import axios from 'axios';
 
+function computeApiUrl(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (apiUrl) {
+    return apiUrl.replace(/\/+$/, '');
+  }
+  
+  // Fallback para desarrollo local
+  const fallback = 'http://localhost:3001';
+  console.warn(`[API-CLIENT] NEXT_PUBLIC_API_URL no definido, usando fallback: ${fallback}`);
+  return fallback;
+}
+
 // Crear instancia de axios con configuración base
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: computeApiUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
