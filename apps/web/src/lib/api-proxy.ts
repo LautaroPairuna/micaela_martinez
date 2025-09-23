@@ -95,10 +95,19 @@ async function resolveApiUrl(input: string): Promise<string> {
     return `${strip(base)}${p}`;
   };
 
-  // 4) Rama browser → siempre dominio público
+  // 4) Rama browser → siempre dominio público o relativo
   if (typeof window !== 'undefined') {
+    // Si estamos en desarrollo, usar URLs relativas para evitar problemas de CORS
+    if (process.env.NODE_ENV === 'development') {
+      return rel; // Usar URL relativa en desarrollo
+    }
+    
     const pub = process.env.NEXT_PUBLIC_API_URL;
-    if (!pub) throw new Error('Falta NEXT_PUBLIC_API_URL para llamadas desde el navegador');
+    if (!pub) {
+      // Si no hay URL pública configurada, usar URL relativa como fallback
+      console.warn('Falta NEXT_PUBLIC_API_URL para llamadas desde el navegador, usando URL relativa');
+      return rel;
+    }
     return joinApi(pub, rel);
   }
 
@@ -107,7 +116,6 @@ async function resolveApiUrl(input: string): Promise<string> {
   if (internal) return joinApi(internal, rel);
 
   // 6) (Opcional) último respaldo: usa el host del request (mismo frontend) solo si querés saltar por el proxy del propio Next.
-  // ⚠️ Si preferís SIEMPRE backend directo, comentá este bloque y que explote con error claro.
   try {
     const { headers } = await import('next/headers');
     // headers() puede devolver sincrónico o promesa; lo normalizamos con await
@@ -121,7 +129,8 @@ async function resolveApiUrl(input: string): Promise<string> {
     }
   } catch { /* noop */ }
 
-  // 7) Nunca caigas a localhost en producción
-  throw new Error('No se pudo resolver la URL de API. Define BACKEND_INTERNAL_URL (server) y NEXT_PUBLIC_API_URL (client).');
+  // 7) Fallback a URL relativa en caso de error
+  console.warn('No se pudo resolver la URL de API, usando URL relativa como fallback');
+  return rel;
 }
 
