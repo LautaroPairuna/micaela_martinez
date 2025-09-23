@@ -31,11 +31,27 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     const { isInitialized } = get();
     if (isInitialized && !forceReload) return;
 
+    console.log('[FAVORITES STORE] Iniciando carga de favoritos:', { forceReload, isInitialized });
+
     set({ isLoading: true });
     try {
       // Forzamos no-cache para obtener datos actualizados
       const favoriteProducts = await listFavorites({ cache: 'no-store' });
+      
+      console.log('[FAVORITES STORE] Productos favoritos obtenidos:', {
+        favoriteProducts,
+        count: favoriteProducts?.length || 0,
+        type: typeof favoriteProducts,
+        isArray: Array.isArray(favoriteProducts)
+      });
+      
       const productIds = favoriteProducts.map(f => f.id);
+      
+      console.log('[FAVORITES STORE] IDs extraídos:', {
+        productIds,
+        count: productIds.length
+      });
+      
       set({ favorites: new Set(productIds), isInitialized: true });
       console.log('✅ Favoritos cargados en store:', productIds.length);
     } catch (error) {

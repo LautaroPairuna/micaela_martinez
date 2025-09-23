@@ -11,11 +11,45 @@ type Ctx = { params: Promise<{ rest?: string[] }> };
 async function pathOf(ctx: Ctx) {
   const { rest } = await ctx.params;               // ← await params
   const tail = rest && rest.length ? `/${rest.join('/')}` : '';
-  return `/users/me${tail}`;                        // ← incluye /me
+  const path = `/users/me${tail}`;                 // ← incluye /me
+  
+  // Log para diagnóstico de favoritos
+  console.log(`[CATCH-ALL] Construyendo path:`, {
+    rest,
+    tail,
+    finalPath: path,
+    timestamp: new Date().toISOString()
+  });
+  
+  return path;
 }
 
 export async function GET(req: NextRequest, ctx: Ctx) {
-  return proxy(req, await pathOf(ctx));
+  const path = await pathOf(ctx);
+  
+  // Log específico para favoritos
+  if (path.includes('favorites')) {
+    console.log(`[CATCH-ALL GET] Petición de favoritos:`, {
+      url: req.url,
+      path,
+      headers: Object.fromEntries(req.headers.entries()),
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  const response = await proxy(req, path);
+  
+  // Log de respuesta para favoritos
+  if (path.includes('favorites')) {
+    console.log(`[CATCH-ALL GET] Respuesta de favoritos:`, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  return response;
 }
 export async function POST(req: NextRequest, ctx: Ctx) {
   return proxy(req, await pathOf(ctx));

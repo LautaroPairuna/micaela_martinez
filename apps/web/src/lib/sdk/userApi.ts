@@ -290,9 +290,47 @@ export async function removeAddress(id: string, opts?: NextOpts) {
    Favoritos (CRUD base)
 ──────────────────────────── */
 export async function listFavorites(opts?: NextOpts) {
-  // Usar el catchAll existente para evitar problemas de contenido mixto
-  return fetch('/api/users/me/favorites', { ...opts, cache: 'no-store' })
-    .then(res => res.json()) as Promise<FavoriteProduct[]>;
+  console.log('[FRONTEND] listFavorites - Iniciando petición:', {
+    url: '/api/users/me/favorites',
+    opts,
+    timestamp: new Date().toISOString()
+  });
+  
+  try {
+    // Usar el catchAll existente para evitar problemas de contenido mixto
+    const response = await fetch('/api/users/me/favorites', { ...opts, cache: 'no-store' });
+    
+    console.log('[FRONTEND] listFavorites - Respuesta recibida:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries()),
+      timestamp: new Date().toISOString()
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    console.log('[FRONTEND] listFavorites - Datos parseados:', {
+      data,
+      type: typeof data,
+      isArray: Array.isArray(data),
+      length: Array.isArray(data) ? data.length : 'N/A',
+      timestamp: new Date().toISOString()
+    });
+    
+    return data as FavoriteProduct[];
+  } catch (error) {
+    console.error('[FRONTEND] listFavorites - Error:', {
+      error,
+      message: error instanceof Error ? error.message : 'Error desconocido',
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
 }
 
 export async function addFavorite(productoId: string, opts?: NextOpts) {

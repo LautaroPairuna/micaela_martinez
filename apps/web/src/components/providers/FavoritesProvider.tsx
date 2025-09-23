@@ -17,10 +17,26 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       // Usuario autenticado: cargar favoritos directamente desde la API
       const loadFavoritesFromAPI = async () => {
         try {
+          console.log('[FAVORITES PROVIDER] Cargando favoritos para usuario:', me?.id);
+          
           // Obtener favoritos directamente de la API
           const favorites = await listFavorites({ cache: 'no-store' });
+          
+          console.log('[FAVORITES PROVIDER] Favoritos obtenidos de la API:', {
+            favorites,
+            count: favorites?.length || 0,
+            type: typeof favorites,
+            isArray: Array.isArray(favorites)
+          });
+          
           // Actualizar el estado con los IDs de los productos favoritos
           const productIds = favorites.map(f => f.id);
+          
+          console.log('[FAVORITES PROVIDER] IDs de productos extraídos:', {
+            productIds,
+            count: productIds.length
+          });
+          
           setFavorites(productIds);
           console.log('✅ Favoritos cargados correctamente:', productIds.length);
         } catch (error) {
