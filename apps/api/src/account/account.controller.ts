@@ -11,6 +11,7 @@ import {
 import { IsString, IsOptional, IsBoolean, IsObject } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { AccountService } from './account.service';
+import { OrdersService } from '../orders/orders.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtUser } from '../auth/types/jwt-user';
 
@@ -93,7 +94,10 @@ class UpdateLessonProgressDto {
 @UseGuards(JwtAuthGuard)
 @Controller('users/me')
 export class AccountController {
-  constructor(private readonly svc: AccountService) {}
+  constructor(
+    private readonly svc: AccountService,
+    private readonly ordersService: OrdersService
+  ) {}
 
   /** Perfil (incluye roles) */
   @Get()
@@ -144,7 +148,9 @@ export class AccountController {
   /** Órdenes */
   @Get('orders')
   listOrders(@CurrentUser() user: JwtUser) {
-    return this.svc.listOrders(user.sub);
+    // 🔧 CORRECCIÓN: Usar OrdersService para obtener órdenes con items completos
+    // En lugar de this.svc.listOrders que solo devuelve resumen sin items
+    return this.ordersService.getUserOrders(user.sub);
   }
 
   /** Mis cursos (inscripciones) */

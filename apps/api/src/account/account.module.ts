@@ -4,9 +4,10 @@ import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { OrdersModule } from '../orders/orders.module';
 
 @Module({
-  imports: [PassportModule],
+  imports: [PassportModule, OrdersModule],
   controllers: [AccountController], // → expone /users/me
   providers: [AccountService, PrismaService, JwtAuthGuard],
   exports: [AccountService],

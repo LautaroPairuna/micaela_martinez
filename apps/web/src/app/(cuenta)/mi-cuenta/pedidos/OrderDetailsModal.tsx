@@ -106,6 +106,29 @@ interface OrderDetailsModalProps {
 export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalProps) {
   if (!isOpen || !order) return null;
 
+  // 🔍 LOGS DE DEPURACIÓN - DETALLE DEL PEDIDO
+  console.log('=== DETALLE DEL PEDIDO - DEBUG ===');
+  console.log('📦 Orden completa:', order);
+  console.log('🔢 ID de la orden:', order.id);
+  console.log('📋 Items de la orden:', order.items);
+  console.log('📊 Cantidad de items:', order.items?.length || 0);
+  
+  if (order.items && order.items.length > 0) {
+    console.log('🔍 Detalle de cada item:');
+    order.items.forEach((item, index) => {
+      console.log(`  Item ${index + 1}:`, {
+        id: item.id,
+        tipo: item.tipo,
+        refId: item.refId,
+        titulo: item.titulo,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioUnitario
+      });
+    });
+  } else {
+    console.log('⚠️ No hay items en la orden o items es undefined/null');
+  }
+
   const fecha = order.creadoEn ? new Date(order.creadoEn).toLocaleDateString('es-AR', {
     year: 'numeric',
     month: 'long',
@@ -122,6 +145,12 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
   // Separar productos y cursos
   const productos = (order.items || []).filter(item => item.tipo === 'PRODUCTO');
   const cursos = (order.items || []).filter(item => item.tipo === 'CURSO');
+
+  // 🔍 LOGS DE DEPURACIÓN - SEPARACIÓN DE ITEMS
+  console.log('🛍️ Productos filtrados:', productos);
+  console.log('📚 Cursos filtrados:', cursos);
+  console.log('📊 Cantidad de productos:', productos.length);
+  console.log('📊 Cantidad de cursos:', cursos.length);
 
   // Calcular subtotales
   const subtotalProductos = productos.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0);

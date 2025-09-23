@@ -83,6 +83,27 @@ export default function PedidosPage() {
     const fetchOrders = async () => {
       try {
         const { items } = await listOrdersSmart();
+        
+        // 🔍 LOGS DE DEPURACIÓN - CARGA DE PEDIDOS
+        console.log('=== CARGA DE PEDIDOS - DEBUG ===');
+        console.log('📦 Respuesta completa de listOrdersSmart:', { items });
+        console.log('📊 Cantidad de órdenes recibidas:', Array.isArray(items) ? items.length : 0);
+        
+        if (Array.isArray(items) && items.length > 0) {
+          console.log('🔍 Detalle de las primeras 3 órdenes:');
+          items.slice(0, 3).forEach((order, index) => {
+            console.log(`  Orden ${index + 1}:`, {
+              id: order.id,
+              estado: order.estado,
+              total: order.total,
+              items: order.items,
+              itemsCount: order.items?.length || 0
+            });
+          });
+        } else {
+          console.log('⚠️ No se recibieron órdenes o items no es un array');
+        }
+        
         setOrders(Array.isArray(items) ? items : []);
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -95,6 +116,13 @@ export default function PedidosPage() {
   }, []);
 
   const handleOpenModal = (order: Orden) => {
+    // 🔍 LOGS DE DEPURACIÓN - APERTURA DE MODAL
+    console.log('=== APERTURA DE MODAL - DEBUG ===');
+    console.log('📦 Orden seleccionada para el modal:', order);
+    console.log('🔢 ID de la orden:', order.id);
+    console.log('📋 Items de la orden seleccionada:', order.items);
+    console.log('📊 Cantidad de items:', order.items?.length || 0);
+    
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
