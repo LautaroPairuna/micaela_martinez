@@ -1,9 +1,29 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
-    "dev": { "cache": false, "persistent": true },
-    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**", "build/**"] },
-    "lint": { "outputs": [] },
-    "start": { "cache": false }
-  }
+    "dev": { 
+      "cache": false, 
+      "persistent": true 
+    },
+    "build": { 
+      "dependsOn": ["^build", "db:generate"], 
+      "outputs": ["dist/**", ".next/**", "build/**"],
+      "env": ["NODE_ENV", "DATABASE_URL", "NEXT_PUBLIC_*"]
+    },
+    "lint": { 
+      "outputs": [] 
+    },
+    "start": { 
+      "cache": false,
+      "dependsOn": ["build"]
+    },
+    "db:generate": {
+      "cache": false,
+      "outputs": ["node_modules/.prisma/**"]
+    },
+    "db:migrate": {
+      "cache": false
+    }
+  },
+  "globalEnv": ["NODE_ENV", "DATABASE_URL", "NEXT_PUBLIC_*"]
 }
