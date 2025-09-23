@@ -17,7 +17,7 @@ import {
 
 import { logout } from '@/lib/auth';
 import { useSession } from '@/hooks/useSession';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useUnreadCount } from '@/hooks/useNotifications';
 
 export function Header() {
   return (
@@ -793,7 +793,7 @@ function Separator() {
 }
 
 function NotificationMenuItem() {
-  const { unreadCount } = useNotifications();
+  const { unreadCount } = useUnreadCount();
   
   return (
     <MenuItem 

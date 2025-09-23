@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from 'next';
 import { montserrat, tanAegean } from './fonts';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import { FavoritesProvider } from '@/components/providers/FavoritesProvider';
 import { AddressProvider } from '@/components/providers/AddressProvider';
 import { auth } from '@/lib/server-auth';
@@ -41,11 +42,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-dvh antialiased bg-[var(--bg)] text-[var(--fg)]">
         <ToastProvider>
           <AuthProvider initialUser={initialUser}>
-            <FavoritesProvider>
-              <AddressProvider>
-                {children}
-              </AddressProvider>
-            </FavoritesProvider>
+            <NotificationsProvider>
+              <FavoritesProvider>
+                <AddressProvider>
+                  {children}
+                </AddressProvider>
+              </FavoritesProvider>
+            </NotificationsProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

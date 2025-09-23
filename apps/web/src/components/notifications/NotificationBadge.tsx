@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useUnreadCount } from '@/hooks/useNotifications';
 import { NotificationsList } from './NotificationsList';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ interface NotificationBadgeProps {
 }
 
 export function NotificationBadge({ className }: NotificationBadgeProps) {
-  const { unreadCount, loading } = useNotifications();
+  const { unreadCount, loading } = useUnreadCount();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);

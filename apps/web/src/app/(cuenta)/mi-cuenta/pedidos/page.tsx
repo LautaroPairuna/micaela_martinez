@@ -1,8 +1,12 @@
 // src/app/(cuenta)/mi-cuenta/pedidos/page.tsx
-import { listOrdersSmart } from '@/lib/sdk/userApi';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { listOrdersSmart, Orden } from '@/lib/sdk/userApi';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Package, Calendar, CreditCard, Truck, CheckCircle, Clock, AlertCircle, ShoppingBag, RotateCcw } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { OrderDetailsModal } from './OrderDetailsModal';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -69,9 +73,38 @@ const getStatusColor = (estado: string) => {
   }
 };
 
-export default async function PedidosPage() {
-  const { items } = await listOrdersSmart();
-  const rows = Array.isArray(items) ? items : [];
+export default function PedidosPage() {
+  const [orders, setOrders] = useState<Orden[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Orden | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const { items } = await listOrdersSmart();
+        setOrders(Array.isArray(items) ? items : []);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const handleOpenModal = (order: Orden) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedOrder(null);
+  };
+
+  const rows = orders;
 
   return (
     <div className="space-y-8">
@@ -121,7 +154,7 @@ export default async function PedidosPage() {
               </button>
             </div>
           </CardBody>
-        </Card>
+              </Card>
       ) : (
         <div className="space-y-4">
           {rows.map((o) => {
@@ -206,7 +239,7 @@ export default async function PedidosPage() {
                     
                     {/* Acciones */}
                     <div className="flex gap-2">
-                      <button className="px-4 py-2 text-sm font-bold text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)]">
+                      <button onClick={() => handleOpenModal(o)} className="px-4 py-2 text-sm font-bold text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)]">
                         Ver detalles
                       </button>
                       <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)] rounded-xl transition-all duration-200 border border-[var(--border)] hover:border-[var(--gold)]/30 flex items-center gap-2">
@@ -221,6 +254,7 @@ export default async function PedidosPage() {
           })}
         </div>
       )}
+      <OrderDetailsModal order={selectedOrder} isOpen={isModalOpen} onClose={handleCloseModal} />
     </div>
   );
 }
