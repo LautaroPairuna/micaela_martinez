@@ -67,8 +67,21 @@ export class ReviewsController {
         user.sub,
         createReviewDto,
       );
-      console.log('Review created successfully:', result.id);
-      return result;
+      
+      // Verificar si fue una actualización o creación
+      if (result.isUpdate) {
+        console.log('Review updated successfully:', result.id);
+        return {
+          ...result,
+          message: 'Reseña actualizada exitosamente',
+        };
+      } else {
+        console.log('Review created successfully:', result.id);
+        return {
+          ...result,
+          message: 'Reseña creada exitosamente',
+        };
+      }
     } catch (error) {
       console.log(
         'Error creating review:',
@@ -78,6 +91,27 @@ export class ReviewsController {
         'Error stack:',
         error instanceof Error ? error.stack : 'No stack trace available',
       );
+      
+      // Manejar específicamente errores de restricción única
+      if (
+        typeof error === 'object' && 
+        error !== null && 
+        'code' in error && 
+        error.code === 'P2002' && 
+        'meta' in error && 
+        error.meta && 
+        typeof error.meta === 'object' && 
+        'target' in error.meta && 
+        Array.isArray(error.meta.target) && 
+        error.meta.target.some((t: string) => t.includes('unique_resena'))
+      ) {
+        return {
+          error: 'Ya has escrito una reseña para este elemento',
+          message: 'Ya has escrito una reseña para este elemento. Puedes editarla en su lugar.',
+          statusCode: 409,
+        };
+      }
+      
       throw error;
     }
   }

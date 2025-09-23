@@ -107,24 +107,57 @@ export class ReviewsService {
       realProductoId = producto.id;
     }
 
-    // Crear la reseña
-    const resena = await this.prisma.resena.create({
-      data: {
+    // Buscar si ya existe una reseña del usuario para este curso/producto
+    const existingReview = await this.prisma.resena.findFirst({
+      where: {
         usuarioId: userId,
-        cursoId: dto.cursoId,
-        productoId: realProductoId,
-        puntaje: dto.puntaje,
-        comentario: dto.comentario,
-      },
-      include: {
-        usuario: {
-          select: {
-            id: true,
-            nombre: true,
-          },
-        },
+        ...(dto.cursoId ? { cursoId: dto.cursoId } : {}),
+        ...(realProductoId ? { productoId: realProductoId } : {}),
       },
     });
+
+    let resena;
+    let isUpdate = false;
+
+    if (existingReview) {
+      // Actualizar la reseña existente
+      isUpdate = true;
+      resena = await this.prisma.resena.update({
+        where: { id: existingReview.id },
+        data: {
+          puntaje: dto.puntaje,
+          comentario: dto.comentario,
+          // Usando updatedAt que es el campo estándar de Prisma
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+            },
+          },
+        },
+      });
+    } else {
+      // Crear una nueva reseña
+      resena = await this.prisma.resena.create({
+        data: {
+          usuarioId: userId,
+          cursoId: dto.cursoId,
+          productoId: realProductoId,
+          puntaje: dto.puntaje,
+          comentario: dto.comentario,
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+            },
+          },
+        },
+      });
+    }
 
     // Actualizar rating promedio
     if (dto.cursoId) {
@@ -134,7 +167,8 @@ export class ReviewsService {
       await this.updateProductRating(realProductoId);
     }
 
-    return resena;
+    // Añadir propiedad para indicar si fue actualización
+    return { ...resena, isUpdate };
   }
 
   async updateReview(userId: string, reviewId: string, dto: UpdateReviewDto) {
