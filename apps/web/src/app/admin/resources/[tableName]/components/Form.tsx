@@ -805,7 +805,12 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
                     {index + 1}
                   </span>
                   <span className="font-medium text-gray-900 truncate">
-                    {item.nombre || item.title || item.name || `Elemento #${index + 1}`}
+                    {String(
+                      (item as Record<string, unknown>).nombre || 
+                      (item as Record<string, unknown>).title || 
+                      (item as Record<string, unknown>).name || 
+                      `Elemento #${index + 1}`
+                    )}
                   </span>
                 </div>
                 <svg 
