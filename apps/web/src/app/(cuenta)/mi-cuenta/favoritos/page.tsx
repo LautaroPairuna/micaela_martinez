@@ -1,6 +1,8 @@
 // src/app/(cuenta)/mi-cuenta/favoritos/page.tsx
+'use client';
+
 import Link from 'next/link';
-import { revalidatePath } from 'next/cache';
+import { useFavorites } from '@/store/favorites';
 import { listFavoriteProducts, removeFavorite, type ProductMinimal } from '@/lib/sdk/userApi';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
@@ -8,164 +10,205 @@ import { Price } from '@/components/ui/Price';
 import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { AddProductButton } from '@/components/cart/AddProductButton';
-import { Heart, ShoppingBag, Trash2, ExternalLink, Star } from 'lucide-react';
+import { Heart, ShoppingBag, Trash2, ExternalLink, Star, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-// Forzamos que la página siempre se renderice en el servidor con datos frescos
-export const dynamic = 'force-dynamic';
-// Eliminamos revalidate=0 ya que causa conflictos con 'use client'
+export default function FavoritosPage() {
+  const { removeFromFavorites, isLoading: storeLoading } = useFavorites();
+  const [favoriteProducts, setFavoriteProducts] = useState<ProductMinimal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
 
-// ✅ Server Action: recibe FormData (no cierres sobre variables)
-async function removeFavAction(formData: FormData) {
-  'use server';
-  const id = String(formData.get('id') ?? '');
-  if (!id) return;
-  await removeFavorite(id);
-  revalidatePath('/mi-cuenta/favoritos');
-}
+  // Cargar productos favoritos completos
+  useEffect(() => {
+    const loadFavoriteProducts = async () => {
+      try {
+        setIsLoading(true);
+        const products = await listFavoriteProducts();
+        setFavoriteProducts(products);
+      } catch (error) {
+        console.error('❌ Error al cargar productos favoritos:', error);
+        setFavoriteProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-export default async function FavoritosPage() {
-  let items: ProductMinimal[] = [];
-  try {
-    items = await listFavoriteProducts();
-  } catch (error) {
-    console.error('❌ Error al obtener favoritos en la página:', error);
+    loadFavoriteProducts();
+  }, []);
+
+  const handleRemoveFavorite = async (productId: string, productTitle: string) => {
+    try {
+      setRemovingIds(prev => new Set(prev).add(productId));
+      await removeFromFavorites(productId, productTitle);
+      // Actualizar la lista local
+      setFavoriteProducts(prev => prev.filter(p => p.id !== productId));
+    } catch (error) {
+      console.error('❌ Error al quitar de favoritos:', error);
+    } finally {
+      setRemovingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
+    }
+  };
+
+  // Mostrar loading mientras se cargan los favoritos
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
+            <Heart className="h-8 w-8 text-black" />
+          </div>
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-[var(--fg)] tracking-tight">
+              Mis Favoritos
+            </h1>
+            <p className="text-[var(--muted)] text-lg mt-1">
+              Cargando tus productos favoritos...
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
+        </div>
+      </div>
+    );
   }
 
-  console.log('Items en FavoritosPage:', items);
+  const items = favoriteProducts;
 
   return (
     <div className="space-y-8">
-      {/* Header mejorado */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
-                <Heart className="h-8 w-8 text-black" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">{items.length}</span>
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-[var(--fg)] tracking-tight bg-gradient-to-r from-[var(--fg)] to-[var(--muted)] bg-clip-text">
-                Mis Favoritos
-              </h1>
-              <p className="text-[var(--muted)] text-lg mt-1">
-                {items.length > 0 
-                  ? `${items.length} producto${items.length !== 1 ? 's' : ''} guardado${items.length !== 1 ? 's' : ''}`
-                  : 'Guardá productos que te interesen'
-                }
-              </p>
-            </div>
-          </div>
-          
-          {/* Nota: Controles de vista y filtros removidos temporalmente */}
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
+          <Heart className="h-8 w-8 text-black" />
+        </div>
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[var(--fg)] tracking-tight">
+            Mis Favoritos
+          </h1>
+          <p className="text-[var(--muted)] text-lg mt-1">
+            {items.length === 0 
+              ? 'Aún no tienes productos favoritos' 
+              : `${items.length} producto${items.length === 1 ? '' : 's'} guardado${items.length === 1 ? '' : 's'}`
+            }
+          </p>
         </div>
       </div>
 
+      {/* Empty State */}
       {items.length === 0 ? (
-        <Card className="border-2 border-dashed border-[var(--border)] bg-gradient-to-br from-[var(--bg)] to-[var(--bg-secondary)]">
-          <CardBody className="text-center py-20">
-            <div className="max-w-lg mx-auto space-y-8">
-              <div className="relative">
-                <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] flex items-center justify-center shadow-2xl">
-                  <Heart className="h-12 w-12 text-black" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-                  <span className="text-sm font-bold text-white">0</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-[var(--fg)] bg-gradient-to-r from-[var(--fg)] to-[var(--muted)] bg-clip-text">
-                  Tu lista de favoritos está vacía
-                </h3>
-                <p className="text-[var(--muted)] text-lg leading-relaxed">
-                  Descubrí productos increíbles en nuestra tienda y guardá los que más te gusten haciendo clic en el corazón ❤️
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/tienda">
-                  <Button className="bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-bold px-8 py-4 rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 transform">
-                    <ShoppingBag className="h-5 w-5 mr-3" />
-                    Explorar tienda
-                  </Button>
-                </Link>
-                <Link href="/cursos">
-                  <Button variant="outline" className="px-8 py-4 rounded-xl border-2 border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/10 transition-all duration-300 hover:shadow-lg">
-                    <Star className="h-5 w-5 mr-3" />
-                    Ver cursos
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+        <div className="text-center py-20 space-y-6">
+          <div className="mx-auto w-24 h-24 rounded-full bg-[var(--muted-bg)] flex items-center justify-center">
+            <Heart className="h-12 w-12 text-[var(--muted)]" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-[var(--fg)]">
+              No tienes favoritos aún
+            </h3>
+            <p className="text-[var(--muted)] max-w-md mx-auto">
+              Explora nuestro catálogo y guarda los productos que más te gusten para encontrarlos fácilmente después.
+            </p>
+          </div>
+          <Link href="/productos">
+            <Button className="bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+              <ShoppingBag className="h-5 w-5 mr-2" />
+              Explorar Productos
+            </Button>
+          </Link>
+        </div>
       ) : (
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => (
-            <Card key={p.id} className="group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+        /* Products Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((product: ProductMinimal) => (
+            <Card key={product.id} className="group hover:shadow-xl transition-all duration-300 border-[var(--border)] bg-[var(--card)] overflow-hidden">
               <CardBody className="p-0">
-                <div className="absolute top-3 right-3 z-10">
-                  <form action={removeFavAction}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      className="bg-red-500/80 text-white rounded-full w-10 h-10 backdrop-blur-sm hover:bg-red-600 transition-all duration-200 group-hover:opacity-100 opacity-90"
-                      aria-label="Quitar de favoritos"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </form>
+                {/* Product Image */}
+                <div className="relative aspect-square overflow-hidden bg-[var(--muted-bg)]">
+                  <SafeImage
+                    src={product.imagen ?? product.imagenes?.[0]?.url}
+                    alt={product.titulo}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  
+                  {/* Remove from Favorites Button */}
+                  <Button
+                    onClick={() => handleRemoveFavorite(product.id, product.titulo)}
+                    disabled={removingIds.has(product.id)}
+                    className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white text-red-500 hover:text-red-600 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+                    size="sm"
+                  >
+                    {removingIds.has(product.id) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
 
-                <Link href={`/tienda/${p.slug}`} className="block">
-                  <SafeImage
-                    src={p.imagen ?? p.imagenes?.[0]?.url}
-                    alt={`Imagen de ${p.titulo}`}
-                    className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                </Link>
-
-                <div className="p-5 space-y-4 bg-gradient-to-t from-[var(--bg-secondary)] to-[var(--bg)]">
-                  {p.categoria?.nombre && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)] bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] bg-clip-text">
-                      {p.categoria.nombre}
-                    </span>
-                  )}
-                  <h3 className="font-bold text-xl h-14 text-[var(--fg)] overflow-hidden">
-                    {p.titulo}
-                  </h3>
-                  
-                  <div className="flex items-center justify-between">
-                    <Price
-                      value={p.precio}
-                      compareAt={p.precioLista ?? undefined}
-                      className="text-2xl font-extrabold"
-                    />
-                    {p.ratingProm && (
-                      <RatingStars value={typeof p.ratingProm === 'string' ? parseFloat(p.ratingProm) : (p.ratingProm ?? 0)} count={p.ratingConteo ?? undefined} />
+                {/* Product Info */}
+                <div className="p-6 space-y-4">
+                  {/* Title and Link */}
+                  <div className="space-y-2">
+                    <Link 
+                      href={`/tienda/${product.slug}`}
+                      className="block group-hover:text-[var(--gold)] transition-colors duration-200"
+                    >
+                      <h3 className="font-semibold text-lg text-[var(--fg)] line-clamp-2 leading-tight">
+                        {product.titulo}
+                      </h3>
+                    </Link>
+                    
+                    {/* Rating */}
+                    {product.ratingProm && (
+                      <div className="flex items-center gap-2">
+                        <RatingStars value={typeof product.ratingProm === 'string' ? parseFloat(product.ratingProm) : (product.ratingProm ?? 0)} count={product.ratingConteo ?? undefined} />
+                        <span className="text-sm text-[var(--muted)]">
+                          ({product.ratingProm})
+                        </span>
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex gap-3 pt-3 border-t border-[var(--border)]">
-                    <AddProductButton
-                      p={{
-                        id: p.id,
-                        slug: p.slug,
-                        titulo: p.titulo,
-                        precio: p.precio,
-                        stock: p.stock,
-                        imagen: p.imagen,
-                        imagenes: p.imagenes,
-                      }}
-                      className="flex-1 bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-bold"
+                  {/* Price */}
+                  <div className="space-y-1">
+                    <Price 
+                      value={product.precio} 
+                      compareAt={product.precioLista ?? undefined}
+                      className="text-xl font-bold"
                     />
-                    <Link href={`/tienda/${p.slug}`} className="flex-1">
-                      <Button variant="outline" className="w-full">
-                        <ExternalLink className="w-5 h-5 mr-2" />
-                        Ver
+                    {product.precioLista && product.precioLista > product.precio && (
+                      <div className="text-sm text-green-600 font-medium">
+                        Ahorrás ${(product.precioLista - product.precio).toLocaleString('es-AR')}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <AddProductButton 
+                      p={{
+                        id: product.id,
+                        slug: product.slug,
+                        titulo: product.titulo,
+                        precio: product.precio,
+                        stock: product.stock,
+                        imagen: product.imagen,
+                        imagenes: product.imagenes,
+                      }}
+                      className="flex-1 bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-semibold py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                    />
+                    <Link href={`/tienda/${product.slug}`}>
+                      <Button 
+                        variant="outline" 
+                        className="p-2.5 border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200"
+                      >
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     </Link>
                   </div>
@@ -173,21 +216,6 @@ export default async function FavoritosPage() {
               </CardBody>
             </Card>
           ))}
-        </div>
-      )}
-      
-      {/* CTA adicional si hay favoritos */}
-      {items.length > 0 && (
-        <div className="text-center pt-8">
-          <Link href="/tienda">
-            <Button 
-              variant="outline"
-              className="px-6 py-3 rounded-xl transition-all duration-200 hover:shadow-lg"
-            >
-              <ShoppingBag className="h-4 w-4 mr-2" />
-              Seguir comprando
-            </Button>
-          </Link>
         </div>
       )}
     </div>
