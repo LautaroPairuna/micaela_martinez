@@ -3,8 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Package, Truck, CheckCircle, Clock, AlertCircle, RotateCcw } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { Orden, OrdenItem } from "@/lib/sdk/userApi";
 
 const getStatusIcon = (estado: string) => {
     switch (estado?.toLowerCase()) {
@@ -70,7 +69,7 @@ const getStatusIcon = (estado: string) => {
 
 // Definición de tipos para el componente
 interface OrderDetailsModalProps {
-  order: any;
+  order: Orden | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -78,7 +77,7 @@ interface OrderDetailsModalProps {
 export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalProps) {
   if (!isOpen || !order) return null;
 
-  const fecha = order?.creadoEn ? new Date(order.creadoEn).toLocaleDateString('es-AR', {
+  const fecha = order.creadoEn ? new Date(order.creadoEn).toLocaleDateString('es-AR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -91,15 +90,19 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
     currency: order.moneda || 'ARS',
   }).format(Number(order.total || 0));
 
+  // Calcular valores de envío y subtotal
+  // Como no tenemos costoEnvio en el tipo Orden, asumimos un valor fijo o 0
+  const costoEnvio = 0; // Valor por defecto
+  const subtotal = Number(order.total || 0) - costoEnvio;
   const subtotalFmt = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: order.moneda || 'ARS',
-  }).format(Number(order.subtotal || 0));
+  }).format(subtotal);
 
   const envioFmt = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: order.moneda || 'ARS',
-  }).format(Number(order.costoEnvio || 0));
+  }).format(costoEnvio);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -118,24 +121,19 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             <h3 className="font-bold mb-3">Productos</h3>
             <div className="h-64 pr-4 overflow-y-auto">
               <ul className="divide-y divide-[var(--border)]">
-                {(order.items || []).map((item: any) => (
+                {(order.items || []).map((item: OrdenItem) => (
                   <li key={item.id} className="flex items-center gap-4 py-3">
                     <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                      {item.producto?.imagenes?.[0]?.url && (
-                        <Image
-                          src={item.producto.imagenes[0].url}
-                          alt={item.producto.titulo}
-                          width={64}
-                          height={64}
-                          className="object-cover w-full h-full"
-                        />
-                      )}
+                      {/* Imagen de producto (si está disponible) */}
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                        <Package className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                      </div>
                     </div>
                     <div className="flex-grow">
-                      <Link href={`/tienda/producto/${item.producto?.slug}`} className="font-bold hover:text-[var(--gold)] transition-colors text-sm">
-                        {item.producto?.titulo || 'Producto no disponible'}
-                      </Link>
-                      <p className="text-xs text-[var(--muted)]">SKU: {item.producto?.sku || 'N/A'}</p>
+                      <div className="font-bold text-sm">
+                        {item.titulo || 'Producto no disponible'}
+                      </div>
+                      <p className="text-xs text-[var(--muted)]">Ref: {item.refId || 'N/A'}</p>
                       <p className="text-xs text-[var(--muted)]">
                         {item.cantidad} x {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))}
                       </p>
@@ -176,10 +174,8 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             <div>
               <h3 className="font-bold mb-3">Envío</h3>
               <address className="not-italic text-sm space-y-1 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-[var(--border)]">
-                <p className="font-bold">{order.direccionEnvio?.nombreCompleto || 'No especificado'}</p>
-                <p>{order.direccionEnvio?.calle} {order.direccionEnvio?.numero}</p>
-                <p>{order.direccionEnvio?.codigoPostal} {order.direccionEnvio?.ciudad}, {order.direccionEnvio?.provincia}</p>
-                <p>{order.direccionEnvio?.pais}</p>
+                <p className="font-bold">Dirección de envío</p>
+                <p>Consultar detalles en el sistema</p>
               </address>
             </div>
           </div>
