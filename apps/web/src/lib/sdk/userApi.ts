@@ -1,5 +1,5 @@
-// src/lib/sdk/userApi.ts
 import { apiProxy } from '@/lib/api-proxy';
+import { getServerCookies } from '@/lib/server-utils';
 
 /** Opciones compatibles con fetch de Next (SSR o cliente) */
 export type NextOpts = RequestInit & {
@@ -214,23 +214,8 @@ export async function getMe(opts?: NextOpts) {
   
   const raw = await apiProxy<BackendMe>('/users/me', { ...opts, cache: 'no-store' });
   
-  // Obtener el token de acceso de las cookies para incluirlo en el usuario
-  let accessToken: string | undefined;
-  
-  // Solo intentar obtener cookies en el servidor
-  if (typeof window === 'undefined') {
-    try {
-      const { cookies } = await import('next/headers');
-      const jar = await cookies();
-      accessToken = jar.get('mp_session')?.value;
-    } catch {
-      // Si falla la importación o acceso a cookies, continuar sin token
-      accessToken = undefined;
-    }
-  } else {
-    // En el cliente, cookies() no está disponible, el token se maneja en el contexto
-    accessToken = undefined;
-  }
+  // Obtener el token de acceso de las cookies usando utilidades centralizadas
+  const accessToken = await getServerCookies();
   
   const user = adaptMe(raw, accessToken);
   

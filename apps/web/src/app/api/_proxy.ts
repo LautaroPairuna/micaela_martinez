@@ -77,13 +77,33 @@ export async function proxy(req: NextRequest, path: string) {
   } catch (error) {
     console.error(`[API-PROXY] Network error - ${req.method} ${target}:`, error);
     
+    // Detectar diferentes tipos de errores de conexión
+    const isConnectionRefused = error instanceof Error && 
+      (error.message.includes('ECONNREFUSED') || error.message.includes('connect ECONNREFUSED'));
+    
+    const isTimeout = error instanceof Error && 
+      (error.message.includes('timeout') || error.message.includes('ETIMEDOUT'));
+    
+    let errorMessage = 'Unable to connect to backend service';
+    let errorDetails = '';
+    
+    if (isConnectionRefused) {
+      errorMessage = 'Backend service is not available';
+      errorDetails = 'The backend server is not running or not accessible. Please check if the backend service is started.';
+    } else if (isTimeout) {
+      errorMessage = 'Backend service timeout';
+      errorDetails = 'The backend service took too long to respond. Please try again later.';
+    }
+    
     // Retornar error 502 Bad Gateway para errores de red
     return new NextResponse(
       JSON.stringify({ 
         error: 'Backend unavailable', 
-        message: 'Unable to connect to backend service',
+        message: errorMessage,
+        details: errorDetails,
         path,
-        target 
+        target,
+        timestamp: new Date().toISOString()
       }), 
       { 
         status: 502, 

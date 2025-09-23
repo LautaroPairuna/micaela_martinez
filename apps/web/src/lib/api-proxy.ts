@@ -1,5 +1,6 @@
+import { getServerHeaders } from './server-utils';
+
 type NextInit = RequestInit & { next?: { revalidate?: number | false; tags?: string[] } };
-type HeadersLike = { get(name: string): string | null };
 
 /** Rewrites locales (front SDK → backend) */
 const REWRITES: Array<[RegExp, string]> = [
@@ -23,22 +24,7 @@ function rewritePath(p: string) {
 }
 
 async function getSSRRequestHeaders(): Promise<HeadersInit | undefined> {
-  if (typeof window !== 'undefined') return undefined;
-  try {
-    const mod: { headers?: () => HeadersLike | Promise<HeadersLike> } = await import('next/headers');
-    const headersFn: undefined | (() => HeadersLike | Promise<HeadersLike>) = mod?.headers;
-    const h: HeadersLike | undefined = headersFn ? await headersFn() : undefined;
-    if (!h) return undefined;
-
-    const cookie = h.get('cookie') || '';
-    const hdrs: Record<string, string> = {};
-    if (cookie) hdrs.cookie = cookie;
-    return hdrs;
-  } catch (error) {
-    // Si falla (ej: en rutas estáticas), continuar sin headers
-    console.warn('Failed to get SSR headers, continuing without cookies:', error);
-    return undefined;
-  }
+  return await getServerHeaders();
 }
 
 export async function apiProxy<T>(path: string, init?: NextInit) {
@@ -95,29 +81,47 @@ async function resolveApiUrl(input: string): Promise<string> {
   // 1) Absoluta → dejar tal cual
   if (/^https?:\/\//i.test(input)) return input;
 
-  // 2) Normalizar y prefijar /api si falta (tras rewrite)
+  // 2) Normalizar relativo (si no empieza con /, prefijar)
   let rel = input.startsWith('/') ? input : `/${input}`;
-  if (!rel.startsWith('/api')) rel = `/api${rel}`;
 
-  // 3) En el navegador, la relativa funciona
-  if (typeof window !== 'undefined') return rel;
+  // 3) Helpers de base URLs
+  const strip = (s = '') => s.replace(/\/+$/, '');
+  const hasApi = (s = '') => /\/api\/?$/i.test(s);
+  const joinApi = (base: string, path: string) => {
+    // Si base termina en /api, NO dupliques /api
+    if (hasApi(base)) return `${strip(base)}${path.startsWith('/api') ? path.replace(/^\/api/, '') : path}`;
+    // Si base no tiene /api, asegúralo
+    const p = path.startsWith('/api') ? path : `/api${path}`;
+    return `${strip(base)}${p}`;
+  };
 
-  // 4) En server, construir origin desde headers de Next (sync o async)
-  try {
-    const mod: { headers?: () => HeadersLike | Promise<HeadersLike> } = await import('next/headers');
-    const headersFn: undefined | (() => HeadersLike | Promise<HeadersLike>) = mod?.headers;
-    const h: HeadersLike | undefined = headersFn ? await headersFn() : undefined;
-
-    if (h) {
-      const proto = h.get('x-forwarded-proto') ?? 'http';
-      const host  = h.get('x-forwarded-host') ?? h.get('host');
-      if (host) return `${proto}://${host}${rel}`;
-    }
-  } catch {
-    /* noop */
+  // 4) Rama browser → siempre dominio público
+  if (typeof window !== 'undefined') {
+    const pub = process.env.NEXT_PUBLIC_API_URL;
+    if (!pub) throw new Error('Falta NEXT_PUBLIC_API_URL para llamadas desde el navegador');
+    return joinApi(pub, rel);
   }
 
-  // 5) Fallback explícito (dev/local)
-  const site = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-  return new URL(rel, site).toString();
+  // 5) Rama server (SSR/Route Handlers) → siempre red interna
+  const internal = process.env.BACKEND_INTERNAL_URL;
+  if (internal) return joinApi(internal, rel);
+
+  // 6) (Opcional) último respaldo: usa el host del request (mismo frontend) solo si querés saltar por el proxy del propio Next.
+  // ⚠️ Si preferís SIEMPRE backend directo, comentá este bloque y que explote con error claro.
+  try {
+    const { headers } = await import('next/headers');
+    // headers() puede devolver sincrónico o promesa; lo normalizamos con await
+    const h: Headers | undefined = headers ? await headers() : undefined;
+
+    const proto = h?.get('x-forwarded-proto') ?? 'https';
+    const host  = h?.get('x-forwarded-host') ?? h?.get('host');
+
+    if (host) {
+      return `${proto}://${host}${rel.startsWith('/api') ? rel : `/api${rel}`}`;
+    }
+  } catch { /* noop */ }
+
+  // 7) Nunca caigas a localhost en producción
+  throw new Error('No se pudo resolver la URL de API. Define BACKEND_INTERNAL_URL (server) y NEXT_PUBLIC_API_URL (client).');
 }
+

@@ -3,6 +3,9 @@ import { ReactNode } from 'react';
 import { getMe } from '@/lib/sdk/userApi';
 import AccountSidebar from '@/components/account/AccountSidebar';
 
+// Forzar renderizado dinámico para páginas que requieren autenticación
+export const dynamic = 'force-dynamic';
+
 export default async function AccountLayout({ children }: { children: ReactNode }) {
   const me = await getMe();
   
