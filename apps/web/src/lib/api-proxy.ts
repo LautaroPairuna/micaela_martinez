@@ -82,7 +82,7 @@ async function resolveApiUrl(input: string): Promise<string> {
   if (/^https?:\/\//i.test(input)) return input;
 
   // 2) Normalizar relativo (si no empieza con /, prefijar)
-  let rel = input.startsWith('/') ? input : `/${input}`;
+  const rel = input.startsWith('/') ? input : `/${input}`;
 
   // 3) Helpers de base URLs
   const strip = (s = '') => s.replace(/\/+$/, '');
