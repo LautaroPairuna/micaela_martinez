@@ -78,59 +78,53 @@ export async function apiProxy<T>(path: string, init?: NextInit) {
 }
 
 async function resolveApiUrl(input: string): Promise<string> {
-  // 1) Absoluta → dejar tal cual
-  if (/^https?:\/\//i.test(input)) return input;
+  try {
+    // 1) Absoluta → dejar tal cual
+    if (/^https?:\/\//i.test(input)) return input;
 
-  // 2) Normalizar relativo (si no empieza con /, prefijar)
-  const rel = input.startsWith('/') ? input : `/${input}`;
+    // 2) Normalizar relativo (si no empieza con /, prefijar)
+    const rel = input.startsWith('/') ? input : `/${input}`;
 
-  // 3) Helpers de base URLs
-  const strip = (s = '') => s.replace(/\/+$/, '');
-  const hasApi = (s = '') => /\/api\/?$/i.test(s);
-  const joinApi = (base: string, path: string) => {
-    // Si base termina en /api, NO dupliques /api
-    if (hasApi(base)) return `${strip(base)}${path.startsWith('/api') ? path.replace(/^\/api/, '') : path}`;
-    // Si base no tiene /api, asegúralo
-    const p = path.startsWith('/api') ? path : `/api${path}`;
-    return `${strip(base)}${p}`;
-  };
+    // 3) Helpers de base URLs
+    const strip = (s = '') => s.replace(/\/+$/, '');
+    const hasApi = (s = '') => /\/api\/?$/i.test(s);
+    const joinApi = (base: string, path: string) => {
+      // Si base termina en /api, NO dupliques /api
+      if (hasApi(base)) return `${strip(base)}${path.startsWith('/api') ? path.replace(/^\/api/, '') : path}`;
+      // Si base no tiene /api, asegúralo
+      const p = path.startsWith('/api') ? path : `/api${path}`;
+      return `${strip(base)}${p}`;
+    };
 
-  // 4) Rama browser → siempre dominio público o relativo
-  if (typeof window !== 'undefined') {
-    // Si estamos en desarrollo, usar URLs relativas para evitar problemas de CORS
-    if (process.env.NODE_ENV === 'development') {
-      return rel; // Usar URL relativa en desarrollo
-    }
-    
-    const pub = process.env.NEXT_PUBLIC_API_URL;
-    if (!pub) {
-      // Si no hay URL pública configurada, usar URL relativa como fallback
-      console.warn('Falta NEXT_PUBLIC_API_URL para llamadas desde el navegador, usando URL relativa');
+    // 4) Rama browser → siempre usar URLs relativas en desarrollo
+    if (typeof window !== 'undefined') {
+      // SIEMPRE usar URLs relativas en desarrollo para evitar problemas de CORS
       return rel;
     }
-    return joinApi(pub, rel);
+
+    // 5) Rama server (SSR/Route Handlers) → siempre red interna
+    const internal = process.env.BACKEND_INTERNAL_URL;
+    if (internal) return joinApi(internal, rel);
+
+    // 6) (Opcional) último respaldo: usa el host del request (mismo frontend)
+    try {
+      const { headers } = await import('next/headers');
+      const h: Headers | undefined = headers ? await headers() : undefined;
+
+      const proto = h?.get('x-forwarded-proto') ?? 'https';
+      const host  = h?.get('x-forwarded-host') ?? h?.get('host');
+
+      if (host) {
+        return `${proto}://${host}${rel.startsWith('/api') ? rel : `/api${rel}`}`;
+      }
+    } catch { /* noop */ }
+
+    // 7) Fallback a URL relativa en caso de error
+    return rel;
+  } catch (error) {
+    console.error('Error al resolver URL de API:', error);
+    // En caso de cualquier error, siempre devolver URL relativa como último recurso
+    return input.startsWith('/') ? input : `/${input}`;
   }
-
-  // 5) Rama server (SSR/Route Handlers) → siempre red interna
-  const internal = process.env.BACKEND_INTERNAL_URL;
-  if (internal) return joinApi(internal, rel);
-
-  // 6) (Opcional) último respaldo: usa el host del request (mismo frontend) solo si querés saltar por el proxy del propio Next.
-  try {
-    const { headers } = await import('next/headers');
-    // headers() puede devolver sincrónico o promesa; lo normalizamos con await
-    const h: Headers | undefined = headers ? await headers() : undefined;
-
-    const proto = h?.get('x-forwarded-proto') ?? 'https';
-    const host  = h?.get('x-forwarded-host') ?? h?.get('host');
-
-    if (host) {
-      return `${proto}://${host}${rel.startsWith('/api') ? rel : `/api${rel}`}`;
-    }
-  } catch { /* noop */ }
-
-  // 7) Fallback a URL relativa en caso de error
-  console.warn('No se pudo resolver la URL de API, usando URL relativa como fallback');
-  return rel;
 }
 

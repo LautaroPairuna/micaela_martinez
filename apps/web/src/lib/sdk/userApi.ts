@@ -368,36 +368,42 @@ async function getProductBySlug(slug: string, opts?: NextOpts): Promise<ProductM
 }
 
 export async function listFavoriteProducts(opts?: NextOpts): Promise<ProductMinimal[]> {
-  // Forzamos no-cache para obtener datos actualizados
-  const favs = await listFavorites({ cache: 'no-store' });
-  if (!Array.isArray(favs) || favs.length === 0) {
-    console.log('⚠️ No se encontraron favoritos');
-    return [];
-  }
+  try {
+    // Forzamos no-cache para obtener datos actualizados
+    const favs = await listFavorites({ cache: 'no-store' });
+    if (!Array.isArray(favs) || favs.length === 0) {
+      console.log('⚠️ No se encontraron favoritos');
+      return [];
+    }
 
-  console.log(`✅ Obtenidos ${favs.length} favoritos del backend`);
-  
-  // Extraemos slugs únicos para consultar productos completos
-  const slugs = Array.from(new Set(favs.map((f) => f.slug).filter(Boolean))) as string[];
+    console.log(`✅ Obtenidos ${favs.length} favoritos del backend`);
+    
+    // Extraemos slugs únicos para consultar productos completos
+    const slugs = Array.from(new Set(favs.map((f) => f.slug).filter(Boolean))) as string[];
 
-  let resolved: ProductMinimal[] = [];
-  if (slugs.length) {
-    // Consultamos detalles de productos por slug (en paralelo con límite)
-    const prods = await mapLimit(slugs, 5, (s) => getProductBySlug(s, { cache: 'no-store' }));
-    resolved = prods.filter((p): p is ProductMinimal => !!p);
-    console.log(`✅ Resueltos ${resolved.length} productos por slug`);
-  }
+    let resolved: ProductMinimal[] = [];
+    if (slugs.length) {
+      try {
+        // Consultamos detalles de productos por slug (en paralelo con límite)
+        const prods = await mapLimit(slugs, 5, (s) => getProductBySlug(s, { cache: 'no-store' }));
+        resolved = prods.filter((p): p is ProductMinimal => !!p);
+        console.log(`✅ Resueltos ${resolved.length} productos por slug`);
+      } catch (error) {
+        console.error('Error al resolver productos por slug:', error);
+        // Continuamos con el fallback
+      }
+    }
 
-  // Fallback para los que no pudieron resolverse por catálogo
-  const resolvedSlugs = new Set(resolved.map((p) => p.slug));
-  const fallback: ProductMinimal[] = favs
-    .filter((f) => !f.slug || !resolvedSlugs.has(f.slug))
-    .map((f) => ({
-      id: f.id,
-      slug: f.slug ?? f.id, // si no hay slug, usamos id como sustituto
-      titulo: f.titulo ?? 'Producto',
-      precio: typeof f.precio === 'number' ? f.precio : 0,
-      imagen: f.imagen ?? null,
+    // Fallback para los que no pudieron resolverse por catálogo
+    const resolvedSlugs = new Set(resolved.map((p) => p.slug));
+    const fallback: ProductMinimal[] = favs
+      .filter((f) => !f.slug || !resolvedSlugs.has(f.slug))
+      .map((f) => ({
+        id: f.id,
+        slug: f.slug ?? f.id, // si no hay slug, usamos id como sustituto
+        titulo: f.titulo ?? 'Producto',
+        precio: typeof f.precio === 'number' ? f.precio : 0,
+        imagen: f.imagen ?? null,
       imagenes: [],
       destacado: null,
       stock: null,
@@ -408,13 +414,17 @@ export async function listFavoriteProducts(opts?: NextOpts): Promise<ProductMini
       precioLista: null,
     }));
 
-  if (fallback.length > 0) {
-    console.log(`⚠️ Se usó fallback para ${fallback.length} productos`);
-  }
+    if (fallback.length > 0) {
+      console.log(`⚠️ Se usó fallback para ${fallback.length} productos`);
+    }
 
-  const result = [...resolved, ...fallback];
-  console.log(`✅ Total de productos favoritos: ${result.length}`);
-  return result;
+    const result = [...resolved, ...fallback];
+    console.log(`✅ Total de productos favoritos: ${result.length}`);
+    return result;
+  } catch (error) {
+    console.error('Error al obtener favoritos:', error);
+    return []; // Devolver array vacío en caso de error
+  }
 }
 
 /* ───────────────────────────

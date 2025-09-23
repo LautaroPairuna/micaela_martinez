@@ -57,36 +57,14 @@ async function bootstrap() {
   // API prefix
   app.setGlobalPrefix('api');
 
-  const origins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
-    .split(',')
-    .map((s) => s.trim());
-
-  // Configuración CORS más permisiva para manejar URLs con caracteres especiales
+  // CORS - Configuración simplificada
+  const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['*'];
   app.enableCors({
-    origin: (origin, callback) => {
-      // Permitir solicitudes sin origen (como aplicaciones móviles o postman)
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      
-      // Verificar si el origen está en la lista de permitidos
-      // Usamos startsWith para ser más permisivos con subdominios y caracteres especiales
-      const isAllowed = origins.some(allowedOrigin => 
-        origin.startsWith(allowedOrigin.replace(/^https?:\/\//, ''))
-      );
-      
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS: Origen rechazado: ${origin}`);
-        callback(null, false);
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    origin: corsOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Length', 'ETag'],
+    exposedHeaders: ['Content-Disposition'],
+    credentials: true,
   });
 
   app.useGlobalPipes(
