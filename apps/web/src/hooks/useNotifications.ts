@@ -1,11 +1,13 @@
 // src/hooks/useNotifications.ts
 import { useNotificationsContext } from '@/contexts/NotificationsContext';
 
-// Re-exportamos los tipos para mantener compatibilidad
-export type { Notification } from '@/contexts/NotificationsContext';
+// Re-exportamos los tipos para mantener compatibilidad pero con un nombre diferente
+// para evitar colisiones con el tipo global Notification del navegador
+import { Notification as AppNotification } from '@/contexts/NotificationsContext';
+export type { Notification as AppNotification } from '@/contexts/NotificationsContext';
 
 export interface NotificationsData {
-  notifications: any[];
+  notifications: AppNotification[];
   unreadCount: number;
   loading: boolean;
   error: string | null;
@@ -40,7 +42,7 @@ export function useNotifications(): UseNotificationsReturn {
   } = useNotificationsContext();
 
   return {
-    notifications: state.notifications,
+    notifications: state.notifications as AppNotification[],
     unreadCount: state.unreadCount,
     loading: state.loading,
     error: state.error,
