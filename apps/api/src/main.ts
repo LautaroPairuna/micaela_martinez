@@ -61,8 +61,28 @@ async function bootstrap() {
     .split(',')
     .map((s) => s.trim());
 
+  // Configuración CORS más permisiva para manejar URLs con caracteres especiales
   app.enableCors({
-    origin: origins,
+    origin: (origin, callback) => {
+      // Permitir solicitudes sin origen (como aplicaciones móviles o postman)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      
+      // Verificar si el origen está en la lista de permitidos
+      // Usamos startsWith para ser más permisivos con subdominios y caracteres especiales
+      const isAllowed = origins.some(allowedOrigin => 
+        origin.startsWith(allowedOrigin.replace(/^https?:\/\//, ''))
+      );
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS: Origen rechazado: ${origin}`);
+        callback(null, false);
+      }
+    },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
