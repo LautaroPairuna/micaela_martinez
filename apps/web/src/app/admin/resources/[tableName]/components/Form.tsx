@@ -826,6 +826,47 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
               {/* Contenido expandible */}
               {isExpanded && (
                 <div className="p-4 bg-gray-50 border-t border-gray-200">
+                  {/* Formulario individual para este elemento */}
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      // Aplicar cambios solo a este elemento
+                      const itemData = { ...item };
+                      itemData[field] = value;
+                      // Aquí deberías implementar la lógica para actualizar solo este elemento
+                      console.log(`Actualizando elemento ${itemId}:`, { [field]: value });
+                    }} 
+                    className="mb-4 p-4 bg-white rounded-lg border border-gray-200"
+                  >
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Editar este elemento</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex flex-col space-y-2">
+                        <label className="text-xs font-medium text-gray-900">Campo</label>
+                        <input
+                          defaultValue={field}
+                          placeholder="nombreCampo"
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-sm"
+                        />
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <label className="text-xs font-medium text-gray-900">Valor</label>
+                        <input
+                          defaultValue={value}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+                      >
+                        Aplicar a este elemento
+                      </button>
+                    </div>
+                  </form>
+                  
+                  {/* Datos del elemento */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Object.entries(item).map(([key, val]) => {
                       if (key === 'id') return null

@@ -42,8 +42,53 @@ export class AuditService {
         return;
       }
 
-      // Asegurar que userId siempre tenga un valor válido
-      const userId = data.userId || 'system';
+      // Verificar si el userId existe o es nulo
+      let userId = data.userId;
+      
+      // Si no hay userId, intentamos usar un usuario administrador existente
+      if (!userId) {
+        try {
+          // Buscar un usuario administrador para usar como fallback
+            const adminUser = await this.prisma.usuario.findFirst({
+              where: {
+                roles: {
+                  some: {
+                    role: {
+                      slug: 'admin'
+                    }
+                  }
+                }
+              },
+              select: {
+                id: true
+              }
+            });
+          
+          // Si encontramos un admin, usamos su ID
+          if (adminUser) {
+            userId = adminUser.id;
+          } else {
+            // Si no hay admin, omitimos el registro de auditoría
+            this.logger.warn('No se pudo registrar auditoría: no hay userId válido y no se encontró usuario admin');
+            return;
+          }
+        } catch (userError) {
+          // Si hay error al buscar usuario, omitimos el registro
+          this.logger.warn('Error al buscar usuario admin para auditoría', userError);
+          return;
+        }
+      } else {
+        // Verificar que el usuario existe
+        const userExists = await this.prisma.usuario.findUnique({
+          where: { id: userId },
+          select: { id: true }
+        });
+        
+        if (!userExists) {
+          this.logger.warn(`No se pudo registrar auditoría: el usuario con ID ${userId} no existe`);
+          return;
+        }
+      }
 
       await this.prisma.auditLog.create({
         data: {
@@ -95,9 +140,6 @@ export class AuditService {
       });
       return;
     }
-
-    // Asegurar que userId siempre tenga un valor válido
-    const safeUserId = userId || 'system';
     
     const auditData: AuditLogData = {
       tableName,
@@ -105,7 +147,7 @@ export class AuditService {
       action,
       oldData,
       newData,
-      userId: safeUserId,
+      userId, // Pasamos el userId tal cual, logAction se encargará de validarlo
       userAgent: request?.get('User-Agent'),
       ipAddress: this.getClientIp(request),
       endpoint: request

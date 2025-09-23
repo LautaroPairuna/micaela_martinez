@@ -250,39 +250,49 @@ export async function updateMe(payload: Partial<Pick<UsuarioMe, 'nombre'>>, opts
    Direcciones
 ──────────────────────────── */
 export async function listAddresses(opts?: NextOpts) {
-  return apiProxy<Direccion[]>('/users/me/addresses', { ...opts, cache: 'no-store' });
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch('/api/users/me/addresses', { ...opts, cache: 'no-store' })
+    .then(res => res.json()) as Promise<Direccion[]>;
 }
 
 export async function addAddress(input: DireccionInput, opts?: NextOpts) {
-  return apiProxy<Direccion>('/users/me/addresses', {
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch('/api/users/me/addresses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
     ...opts,
-  });
+  }).then(res => res.json()) as Promise<Direccion>;
 }
 
 export async function upsertAddress(input: DireccionUpsertInput, opts?: NextOpts) {
-  return apiProxy<Direccion>('/users/me/addresses', {
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch('/api/users/me/addresses', {
     method: 'POST', // el backend hace upsert si viene id
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
     ...opts,
-  });
+  }).then(res => res.json()) as Promise<Direccion>;
 }
 
 export async function removeAddress(id: string, opts?: NextOpts) {
-  return apiProxy<void>(`/users/me/addresses/${encodeURIComponent(id)}`, {
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch(`/api/users/me/addresses/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     ...opts,
-  });
+  }).then(res => {
+    if (!res.ok) throw new Error('Error al eliminar dirección');
+    return undefined;
+  }) as Promise<void>;
 }
 
 /* ───────────────────────────
    Favoritos (CRUD base)
 ──────────────────────────── */
 export async function listFavorites(opts?: NextOpts) {
-  return apiProxy<FavoriteProduct[]>('/users/me/favorites', { ...opts, cache: 'no-store' });
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch('/api/users/me/favorites', { ...opts, cache: 'no-store' })
+    .then(res => res.json()) as Promise<FavoriteProduct[]>;
 }
 
 export async function addFavorite(productoId: string, opts?: NextOpts) {
@@ -292,22 +302,30 @@ export async function addFavorite(productoId: string, opts?: NextOpts) {
   
   const payload = { productoId: productoId.trim() };
   
-  return apiProxy<void>('/users/me/favorites', {
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch('/api/users/me/favorites', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     ...opts,
-  });
+  }).then(res => {
+    if (!res.ok) throw new Error('Error al añadir favorito');
+    return undefined;
+  }) as Promise<void>;
 }
 
 export async function removeFavorite(productoId: string, opts?: NextOpts) {
   if (!productoId || typeof productoId !== 'string' || productoId.trim() === '') {
     throw new Error('productoId debe ser un string válido');
   }
-  return apiProxy<void>(`/users/me/favorites/${encodeURIComponent(productoId.trim())}`, {
+  // Usar el catchAll existente para evitar problemas de contenido mixto
+  return fetch(`/api/users/me/favorites/${encodeURIComponent(productoId.trim())}`, {
     method: 'DELETE',
     ...opts,
-  });
+  }).then(res => {
+    if (!res.ok) throw new Error('Error al eliminar favorito');
+    return undefined;
+  }) as Promise<void>;
 }
 
 export async function toggleFavorite(productoId: string, isFav: boolean, opts?: NextOpts) {

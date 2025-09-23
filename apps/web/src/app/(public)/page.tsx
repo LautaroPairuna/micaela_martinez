@@ -8,6 +8,9 @@ import { CourseCard } from "@/components/courses/CourseCard";
 import { getProducts, getCourses, safeGetCourses, safeGetProducts } from "@/lib/sdk/catalogApi";
 import { HeroCarousel } from "@/components/ui/HeroCarousel";
 
+// Forzar renderizado dinámico para evitar errores con headers()
+export const dynamic = 'force-dynamic';
+
 /* ───────────────────── helpers UI ───────────────────── */
 function TitleBand({
   title,
