@@ -696,6 +696,9 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
   const [field, setField] = React.useState<string>('')
   const [value, setValue] = React.useState<string>('')
   const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({})
+  
+  // Asegurarse de que selectedItems sea un array
+  const items = selectedItems || []
 
   // Expandir/colapsar un elemento específico
   const toggleItem = (itemId: string) => {
@@ -786,9 +789,9 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
       <div className="space-y-4">
         <h3 className="text-md font-semibold text-gray-900">Elementos seleccionados</h3>
         
-        {selectedItems.map((item, index) => {
-          const itemId = item.id || `item-${index}`
-          const isExpanded = expandedItems[itemId]
+        {items.map((item, index) => {
+          const itemId = String(item.id || `item-${index}`)
+          const isExpanded = expandedItems[itemId] || false
           
           return (
             <div key={itemId} className="border border-gray-200 rounded-lg overflow-hidden">
