@@ -417,10 +417,19 @@ export function MercadoPagoBricks({
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
+      
+      // Protegemos el desmontaje para evitar errores de DOM
       const controller = brickControllerRef.current;
       if (controller) {
         try {
-          controller.unmount();
+          // Envolvemos en un setTimeout para evitar errores de DOM durante el ciclo de renderizado
+          setTimeout(() => {
+            try {
+              controller.unmount();
+            } catch (e) {
+              console.warn('Error al desmontar el brick (deferred):', e);
+            }
+          }, 0);
         } catch (e) {
           console.warn('Error al desmontar el brick:', e);
         } finally {
