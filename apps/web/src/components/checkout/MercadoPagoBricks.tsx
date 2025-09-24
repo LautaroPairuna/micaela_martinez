@@ -181,7 +181,11 @@ export function MercadoPagoBricks({
         const settings: PaymentBrickSettings = {
           initialization: init,
           customization: {
-            paymentMethods: { creditCard: 'all', debitCard: 'all', mercadoPago: 'all' },
+            paymentMethods: { 
+              creditCard: ['master', 'visa', 'amex', 'naranja'], 
+              debitCard: 'all', 
+              mercadoPago: 'all' 
+            },
             visual: { style: { theme: 'default' } },
           },
           callbacks: {
