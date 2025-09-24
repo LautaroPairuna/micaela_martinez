@@ -167,9 +167,17 @@ function getMimeType(filename: string): string {
 
 async function getVideoPathLocal(videoId: string): Promise<string | null> {
   const safe = videoId.replace(/[^a-zA-Z0-9._-]/g, '');
-  const base = join(process.cwd(), 'public', 'videos', 'leccion');
+  // Buscar primero en la carpeta principal de videos
+  const base = join(process.cwd(), 'public', 'videos');
   const full = join(base, safe);
-  return existsSync(full) ? full : null;
+  
+  if (existsSync(full)) return full;
+  
+  // Si no existe, buscar en la subcarpeta leccion (para mantener compatibilidad)
+  const baseLeccion = join(base, 'leccion');
+  const fullLeccion = join(baseLeccion, safe);
+  
+  return existsSync(fullLeccion) ? fullLeccion : null;
 }
 
 /* ========= HANDLERS ========= */

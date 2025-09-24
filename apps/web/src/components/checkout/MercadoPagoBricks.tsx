@@ -155,7 +155,7 @@ export function MercadoPagoBricks({
   const handlersRef = useRef({ onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder });
   handlersRef.current = { onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder };
 
-  useEffect(() => {
+  useEffect((): (() => void) | void => {
     if (!publicKey) return;
 
     let cancelled = false;
@@ -173,24 +173,30 @@ export function MercadoPagoBricks({
         const mp = new MercadoPago(publicKey, { locale: 'es-AR' });
         const bricks = mp.bricks();
 
-        // Solo incluimos preferenceId si es string válido
+        // initialization (no enviar preferenceId null/undefined)
         const init: PaymentBrickSettings['initialization'] = { amount };
         const pref = asStringOrNull(preferenceId);
         if (pref) init.preferenceId = pref;
 
+        // Configuración de medios: en suscripciones ocultamos débito (MP suele no aceptarlo en AR)
+        type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
+        const paymentMethodsCfg: PaymentMethodsCfg = isSubscription
+          ? { creditCard: ['master', 'visa', 'amex', 'cabal', 'naranja'] } // sin débito en suscripción
+          : {
+              creditCard: 'all',
+              debitCard: 'all',
+              ...(pref ? { mercadoPago: 'all' as const } : {}), // Wallet sólo si hay preferenceId
+            };
+
         const settings: PaymentBrickSettings = {
           initialization: init,
           customization: {
-            paymentMethods: { 
-              creditCard: ['master', 'visa', 'amex', 'naranja'], 
-              debitCard: 'all', 
-              mercadoPago: 'all' 
-            },
-            visual: { style: { theme: 'default' } },
+            paymentMethods: paymentMethodsCfg,
+            visual: { style: { theme: 'default' } }
           },
           callbacks: {
             onReady: () => {},
-            onSubmit: async (cardFormData: CardFormData) => {
+            onSubmit: async (cardFormData: CardFormData): Promise<void> => {
               if (cancelled) return;
 
               const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
