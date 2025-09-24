@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { CreditCard, Shield, AlertCircle } from 'lucide-react';
 import { MERCADOPAGO_PUBLIC_KEY } from '@/lib/env';
 import { processMercadoPagoPayment, createSubscription } from '@/lib/sdk/ordersApi';
 
-/* ─────────────── Tipos locales mínimos para MP Bricks (v2) ─────────────── */
-
+/** Tipos mínimos */
 type PaymentSuccessData = {
   orderId: string;
   paymentMethodId: string;
@@ -16,44 +15,22 @@ type PaymentSuccessData = {
   amount: number;
   status: string;
 };
-
-type PaymentErrorData = {
-  message: string;
-  details?: unknown;
-};
-
-type OnPaymentSuccess = (paymentData: PaymentSuccessData) => void;
-type OnPaymentError = (error: PaymentErrorData) => void;
+type PaymentErrorData = { message: string; details?: unknown };
+type OnPaymentSuccess = (d: PaymentSuccessData) => void;
+type OnPaymentError = (e: PaymentErrorData) => void;
 
 type CardFormData = {
   token: string;
   payment_method_id: string;
   installments?: number;
-  payer?: {
-    email?: string;
-    identification?: {
-      type?: string;
-      number?: string;
-    };
-  };
+  payer?: { email?: string; identification?: { type?: string; number?: string } };
 };
 
 type PaymentBrickSettings = {
-  initialization: {
-    amount: number;
-    preferenceId?: string | null;
-  };
+  initialization: { amount: number; preferenceId?: string | null };
   customization?: {
-    paymentMethods?: {
-      creditCard?: 'all' | string[];
-      debitCard?: 'all' | string[];
-      mercadoPago?: 'all' | string[];
-    };
-    visual?: {
-      style?: {
-        theme?: 'default' | 'dark' | string;
-      };
-    };
+    paymentMethods?: { creditCard?: 'all' | string[]; debitCard?: 'all' | string[]; mercadoPago?: 'all' | string[] };
+    visual?: { style?: { theme?: 'default' | 'dark' | string } };
   };
   callbacks: {
     onReady?: () => void;
@@ -61,32 +38,57 @@ type PaymentBrickSettings = {
     onError?: (error: unknown) => void;
   };
 };
-
-type BrickController = {
-  unmount: () => Promise<void> | void;
-};
-
+type BrickController = { unmount: () => Promise<void> | void };
 type Bricks = {
-  create: (
-    type: 'payment',
-    container: string | HTMLElement,
-    settings: PaymentBrickSettings
-  ) => Promise<BrickController>;
+  create: (type: 'payment', container: HTMLElement, settings: PaymentBrickSettings) => Promise<BrickController>;
 };
-
-type MercadoPagoInstance = {
-  bricks: () => Bricks;
-};
-
-type MercadoPagoConstructor = new (
-  publicKey: string,
-  options?: { locale?: string }
-) => MercadoPagoInstance;
+type MercadoPagoInstance = { bricks: () => Bricks };
+type MercadoPagoConstructor = new (publicKey: string, options?: { locale?: string }) => MercadoPagoInstance;
 
 declare global {
-  interface Window {
-    MercadoPago?: MercadoPagoConstructor;
+  interface Window { MercadoPago?: MercadoPagoConstructor }
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
+}
+function extractId(resp: unknown, fallback: string): string {
+  if (isRecord(resp)) {
+    const v = (resp as any).id ?? (resp as any).orderId ?? (resp as any).order_id;
+    if (typeof v === 'string' || typeof v === 'number') return String(v);
   }
+  return fallback;
+}
+function extractStatus(resp: unknown): string {
+  if (isRecord(resp)) {
+    const r = resp as any;
+    const s = [r.estado, r.status, r.payment_status, r.status_detail, r.state].find((x: any) => typeof x === 'string');
+    if (typeof s === 'string') return s;
+  }
+  return 'unknown';
+}
+function normalizeError(err: unknown): PaymentErrorData {
+  if (err instanceof Error) return { message: err.message, details: err };
+  if (typeof err === 'string') return { message: err };
+  return { message: 'Error desconocido', details: err };
+}
+
+/** Loader singleton del SDK (se agrega <script> una sola vez) */
+let mpSdkPromise: Promise<MercadoPagoConstructor | null> | null = null;
+function loadMercadoPagoSDK(): Promise<MercadoPagoConstructor | null> {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (window.MercadoPago) return Promise.resolve(window.MercadoPago!);
+  if (mpSdkPromise) return mpSdkPromise;
+
+  mpSdkPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://sdk.mercadopago.com/js/v2';
+    s.async = true;
+    s.onload = () => resolve(window.MercadoPago ?? null);
+    s.onerror = () => reject(new Error('No se pudo cargar el SDK de MercadoPago'));
+    document.head.appendChild(s);
+  });
+  return mpSdkPromise;
 }
 
 interface MercadoPagoBricksProps {
@@ -101,390 +103,138 @@ interface MercadoPagoBricksProps {
   subscriptionFrequencyType?: 'days' | 'months';
 }
 
-/* ───────────────────────────── Helpers ───────────────────────────── */
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
-}
-
-function extractId(resp: unknown, fallback: string): string {
-  if (isRecord(resp)) {
-    const r = resp as Record<string, unknown>;
-    const v = r.id ?? r.orderId ?? r.order_id;
-    if (typeof v === 'string' || typeof v === 'number') return String(v);
-  }
-  return fallback;
-}
-
-function extractStatus(resp: unknown): string {
-  if (isRecord(resp)) {
-    const r = resp as Record<string, unknown>;
-    const candidates = [
-      r.estado,
-      r.status,
-      r.payment_status,
-      r.status_detail,
-      r.state
-    ];
-    const s = candidates.find((x) => typeof x === 'string');
-    if (typeof s === 'string') return s;
-  }
-  return 'unknown';
-}
-function normalizeError(err: unknown): PaymentErrorData {
-  if (err instanceof Error) {
-    return { message: err.message, details: err };
-  }
-  if (typeof err === 'string') {
-    return { message: err };
-  }
-  return { message: 'Error desconocido', details: err };
-}
-
-/* ──────────────────────────── Componente ─────────────────────────── */
-
-export function MercadoPagoBricks({
-  amount,
-  orderId,
-  onPaymentSuccess,
-  onPaymentError,
-  onPaymentStart,
-  onCreateOrder,
-  isSubscription = false,
-  subscriptionFrequency = 1,
-  subscriptionFrequencyType = 'months'
-}: MercadoPagoBricksProps) {
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [containerId, setContainerId] = useState<string>('');
-  const [forceRender, setForceRender] = useState(0);
-
-  const brickContainerRef = useRef<HTMLDivElement>(null);
-  const brickControllerRef = useRef<BrickController | null>(null);
-  const initializationRef = useRef(false);
-
-  const publicKey = MERCADOPAGO_PUBLIC_KEY;
-
-  // Mantener handlers siempre actualizados sin re-crear callbacks
-  const handlersRef = useRef({
+export function MercadoPagoBricks(props: MercadoPagoBricksProps) {
+  const {
+    amount,
+    orderId,
     onPaymentSuccess,
     onPaymentError,
+    onPaymentStart,
     onCreateOrder,
-    onPaymentStart
-  });
-  useEffect(() => {
-    handlersRef.current = {
-      onPaymentSuccess,
-      onPaymentError,
-      onCreateOrder,
-      onPaymentStart
-    };
-  }, [onPaymentSuccess, onPaymentError, onCreateOrder, onPaymentStart]);
+    isSubscription = false,
+    subscriptionFrequency = 1,
+    subscriptionFrequencyType = 'months',
+  } = props;
 
-  /* Limpieza de contenedores huérfanos (IDs viejos) */
-  const cleanupOrphanedContainers = useCallback(() => {
-    const orphanedContainers = document.querySelectorAll('[id^="mercadopago-brick-"]');
-    const orphanedCount = Array.from(orphanedContainers).filter(
-      (container) => container.id !== containerId
-    ).length;
+  const publicKey = MERCADOPAGO_PUBLIC_KEY;
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-    if (orphanedCount > 0) {
-      console.log(`🧹 Encontrados ${orphanedCount} contenedores huérfanos, limpiando...`);
-      orphanedContainers.forEach((container) => {
-        if (container.id !== containerId) container.remove();
-      });
-    }
-  }, [containerId]);
-
-  // useLayoutEffect para trazar existencia del contenedor
-  useLayoutEffect(() => {
-    if (containerId) {
-      const container = document.getElementById(containerId);
-      console.log(`🔍 Layout Effect - Contenedor ${containerId} encontrado:`, !!container);
-    }
-  }, [containerId]);
-
-  // Montaje / ID único - Generamos un ID estable que no cambie en cada renderizado
-  useEffect(() => {
-    setIsMounted(true);
-    cleanupOrphanedContainers();
-
-    // Usamos un ID estable que no cambie en cada renderizado
-    // Solo incluimos forceRender para casos de recuperación explícita
-    const uniqueId = `mercadopago-brick-${forceRender}-stable`;
-
-    setContainerId(uniqueId);
-    console.log('🔧 Componente montado con ID:', uniqueId);
-
-    return () => {
-      console.log('🔧 Desmontando componente con ID:', uniqueId);
-      // Desactivamos el componente antes de cualquier operación de limpieza
-      setIsMounted(false);
-      initializationRef.current = false;
-      
-      // Damos tiempo al ciclo de renderizado para completarse antes de limpiar
-      // Esto evita conflictos de DOM durante el desmontaje
-      window.setTimeout(() => {
-        try {
-          // Intentamos limpiar el controlador de forma segura
-            if (brickControllerRef.current) {
-              const unmountPromise = brickControllerRef.current.unmount();
-              // Verificamos si el resultado es una promesa antes de usar catch
-              if (unmountPromise && typeof unmountPromise.catch === 'function') {
-                unmountPromise.catch((e: Error) => {
-                  console.warn('⚠️ Error controlado al desmontar brick:', e);
-                });
-              }
-              brickControllerRef.current = null;
-            }
-        } catch (e) {
-          console.warn('⚠️ Error controlado durante limpieza:', e);
-        }
-      }, 100);
-    };
-  }, [forceRender, cleanupOrphanedContainers]);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const controllerRef = useRef<BrickController | null>(null);
+  const handlersRef = useRef({ onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder });
+  handlersRef.current = { onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder };
 
   useEffect(() => {
-    if (!publicKey || !isMounted || !containerId) {
-      if (!publicKey) {
-        console.error('NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY no está configurada');
-      }
-      return;
-    }
+    if (!publicKey) return;
 
-    // Evitamos reinicializaciones innecesarias si ya está inicializado
-    if (brickControllerRef.current && initializationRef.current) {
-      console.log('✅ Brick ya inicializado, evitando reinicialización innecesaria');
-      return;
-    }
-
-    initializationRef.current = false;
     let cancelled = false;
 
-    const ensureContainer = async (): Promise<boolean> => {
-      const found = !!document.getElementById(containerId);
-      if (found) return true;
-      // primer reintento
-      await new Promise((r) => setTimeout(r, 200));
-      return !!document.getElementById(containerId);
-    };
-
-    const loadMercadoPagoSDK = async (): Promise<void> => {
-      if (window.MercadoPago) {
+    async function mountBrick() {
+      try {
+        const MercadoPago = await loadMercadoPagoSDK();
+        if (!MercadoPago || cancelled) return;
         setIsSDKLoaded(true);
-        return;
-      }
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://sdk.mercadopago.com/js/v2';
-        script.async = true;
-        script.onload = () => {
-          setIsSDKLoaded(true);
-          resolve();
-        };
-        script.onerror = () => reject(new Error('Error al cargar el SDK de MercadoPago'));
-        document.head.appendChild(script);
-      });
-    };
 
-    const initializeBricks = async (): Promise<void> => {
-      // Verificaciones de prerrequisito
-      const container = document.getElementById(containerId);
-      if (!container || !brickContainerRef.current || !isMounted || cancelled) {
-        console.warn(`❌ Contenedor del brick no encontrado o componente desmontado: ${containerId}`);
-        return;
-      }
+        // Evitar re-montajes innecesarios
+        if (!containerRef.current || controllerRef.current) return;
 
-      // Desmontar brick anterior si existía
-      if (brickControllerRef.current) {
-        try {
-          // Usamos un timeout para evitar conflictos de DOM durante el desmontaje
-          await new Promise<void>((resolve) => {
-            window.setTimeout(async () => {
+        const mp = new MercadoPago(publicKey, { locale: 'es-AR' });
+        const bricks = mp.bricks();
+
+        const settings: PaymentBrickSettings = {
+          initialization: { amount, preferenceId: null },
+          customization: {
+            paymentMethods: { creditCard: 'all', debitCard: 'all', mercadoPago: 'all' },
+            visual: { style: { theme: 'default' } },
+          },
+          callbacks: {
+            onReady: () => {
+              // opcional: log
+            },
+            onSubmit: async (cardFormData: CardFormData) => {
+              if (cancelled) return;
+              const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
+
+              onPaymentStart?.();
+              setIsProcessing(true);
+
               try {
-                await brickControllerRef.current?.unmount();
-              } catch (e) {
-                console.warn('⚠️ Error controlado al desmontar brick existente:', e);
+                let currentOrderId = orderId || (await onCreateOrder());
+
+                const rawResult = isSubscription
+                  ? await createSubscription(currentOrderId, {
+                      token: cardFormData.token,
+                      paymentMethodId: cardFormData.payment_method_id,
+                      email: cardFormData.payer?.email,
+                      identificationType: cardFormData.payer?.identification?.type,
+                      identificationNumber: cardFormData.payer?.identification?.number,
+                      frequency: subscriptionFrequency,
+                      frequencyType: subscriptionFrequencyType,
+                    })
+                  : await processMercadoPagoPayment(currentOrderId, {
+                      token: cardFormData.token,
+                      paymentMethodId: cardFormData.payment_method_id,
+                      email: cardFormData.payer?.email,
+                      identificationType: cardFormData.payer?.identification?.type,
+                      identificationNumber: cardFormData.payer?.identification?.number,
+                    });
+
+                onPaymentSuccess({
+                  orderId: extractId(rawResult, String(currentOrderId)),
+                  paymentMethodId: cardFormData.payment_method_id,
+                  token: cardFormData.token,
+                  installments: cardFormData.installments,
+                  amount,
+                  status: extractStatus(rawResult),
+                });
+              } catch (err) {
+                onPaymentError(normalizeError(err));
               } finally {
-                brickControllerRef.current = null;
-                resolve();
+                if (!cancelled) setIsProcessing(false);
               }
-            }, 50);
-          });
-        } catch (e) {
-          console.warn('⚠️ Error al desmontar brick existente:', e);
-          brickControllerRef.current = null;
-        }
-      }
+            },
+            onError: (error: unknown) => {
+              if (!cancelled) {
+                handlersRef.current.onPaymentError(normalizeError(error));
+                setIsProcessing(false);
+              }
+            },
+          },
+        };
 
-      // Verificamos que el componente siga montado después del desmontaje
-      if (cancelled || !isMounted) return;
-
-      // Limpiar contenedor HTML de forma segura
-      try {
-        container.innerHTML = '';
+        const controller = await bricks.create('payment', containerRef.current, settings);
+        if (!cancelled) controllerRef.current = controller;
       } catch (e) {
-        console.warn('⚠️ Error al limpiar contenedor:', e);
+        if (!cancelled) handlersRef.current.onPaymentError(normalizeError(e));
       }
-      
-      // Esperamos un poco para asegurar que el DOM se estabilice
-      await new Promise((r) => setTimeout(r, 100));
+    }
 
-      const containerAfter = document.getElementById(containerId);
-      if (!containerAfter || cancelled) return;
+    mountBrick();
 
-      // Instanciar MP
-      const MP = window.MercadoPago;
-      if (!MP) throw new Error('MercadoPago no está disponible');
-
-      const mp = new MP(publicKey, { locale: 'es-AR' });
-      const bricks = mp.bricks();
-
-      const settings: PaymentBrickSettings = {
-        initialization: {
-          amount,
-          preferenceId: null
-        },
-        customization: {
-          paymentMethods: {
-            creditCard: 'all',
-            debitCard: 'all',
-            mercadoPago: 'all'
-          },
-          visual: { style: { theme: 'default' } }
-        },
-        callbacks: {
-          onReady: () => {
-            console.log('✅ MercadoPago Brick listo en:', containerId);
-          },
-          onSubmit: async (cardFormData: CardFormData) => {
-            if (!isMounted || cancelled) return;
-
-            const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } =
-              handlersRef.current;
-
-            onPaymentStart?.();
-            setIsProcessing(true);
-
-            try {
-              // Crear orden si aún no existe
-              let currentOrderId = orderId;
-              if (!currentOrderId) {
-                currentOrderId = await onCreateOrder();
-              }
-
-              // Llamar backend para procesar pago o crear suscripción
-              let rawResult: unknown;
-              
-              if (isSubscription) {
-                // Crear suscripción mensual
-                rawResult = await createSubscription(currentOrderId, {
-                  token: cardFormData.token,
-                  paymentMethodId: cardFormData.payment_method_id,
-                  email: cardFormData.payer?.email,
-                  identificationType: cardFormData.payer?.identification?.type,
-                  identificationNumber: cardFormData.payer?.identification?.number,
-                  frequency: subscriptionFrequency,
-                  frequencyType: subscriptionFrequencyType
-                });
-              } else {
-                // Procesar pago único normal
-                rawResult = await processMercadoPagoPayment(currentOrderId, {
-                  token: cardFormData.token,
-                  paymentMethodId: cardFormData.payment_method_id,
-                  email: cardFormData.payer?.email,
-                  identificationType: cardFormData.payer?.identification?.type,
-                  identificationNumber: cardFormData.payer?.identification?.number
-                });
-              }
-
-              // Usamos helpers seguros y sin `any`
-              onPaymentSuccess({
-                orderId: extractId(rawResult, String(currentOrderId)),
-                paymentMethodId: cardFormData.payment_method_id,
-                token: cardFormData.token,
-                installments: cardFormData.installments,
-                amount,
-                status: extractStatus(rawResult)
-              });
-            } catch (err) {
-              const normalized = normalizeError(err);
-              onPaymentError(normalized);
-            } finally {
-              if (!cancelled) setIsProcessing(false);
-            }
-          },
-          onError: (error: unknown) => {
-            const { onPaymentError } = handlersRef.current;
-            onPaymentError(normalizeError(error));
-            if (!cancelled) setIsProcessing(false);
-          }
-        }
-      };
-
-      const controller = await bricks.create('payment', containerId, settings);
-      brickControllerRef.current = controller;
-    };
-
-    // ✅ prefer-const: usamos un id fijo para el cleanup
-    const timeoutId = window.setTimeout(async () => {
-      if (cancelled) return;
-
-      const containerOk = await ensureContainer();
-      if (!containerOk || cancelled) {
-        console.warn(`⚠️ Contenedor ${containerId} no encontrado; pero no forzamos reintento para evitar ciclos`);
-        // Eliminamos el reintento automático que causaba ciclos infinitos
-        // setForceRender((p) => p + 1);
-        return;
-      }
-
-      try {
-        initializationRef.current = true;
-        await loadMercadoPagoSDK();
-        if (!cancelled) {
-          await initializeBricks();
-        }
-      } catch (err) {
-        const { onPaymentError } = handlersRef.current;
-        const normalized = normalizeError(err);
-        // Desactivamos el intento de recuperación automática que causaba ciclos
-        // Solo logueamos el error para diagnóstico
-        if (
-          normalized.message.toLowerCase().includes('container') ||
-          normalized.message.toLowerCase().includes('contenedor')
-        ) {
-          console.error('Error de contenedor en MercadoPago:', normalized.message);
-          // setForceRender((p) => p + 1); // Comentado para evitar ciclos infinitos
-          return;
-        }
-        onPaymentError(normalized);
-      }
-    }, 300);
-
+    // Cleanup SIN demoras ni toqueteo del DOM
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
-      
-      // Protegemos el desmontaje para evitar errores de DOM
-      const controller = brickControllerRef.current;
-      if (controller) {
+      const c = controllerRef.current;
+      controllerRef.current = null;
+      if (c) {
         try {
-          // Envolvemos en un setTimeout para evitar errores de DOM durante el ciclo de renderizado
-          setTimeout(() => {
-            try {
-              controller.unmount();
-            } catch (e) {
-              console.warn('Error al desmontar el brick (deferred):', e);
-            }
-          }, 0);
+          // Importante: sin setTimeout. React llama cleanup antes de remover el nodo.
+          c.unmount();
         } catch (e) {
-          console.warn('Error al desmontar el brick:', e);
-        } finally {
-          brickControllerRef.current = null;
+          // swallow
         }
       }
     };
-  }, [publicKey, amount, isMounted, containerId, orderId, cleanupOrphanedContainers]);
+    // Re-montar solo si cambia algo realmente relevante para el Brick
+  }, [
+    publicKey,
+    amount,
+    orderId,
+    isSubscription,
+    subscriptionFrequency,
+    subscriptionFrequencyType,
+  ]);
 
   if (!publicKey) {
     return (
@@ -494,9 +244,7 @@ export function MercadoPagoBricks({
             <AlertCircle className="h-5 w-5" />
             <div>
               <h3 className="font-medium">Error de configuración</h3>
-              <p className="text-sm text-red-500">
-                La clave pública de MercadoPago no está configurada.
-              </p>
+              <p className="text-sm text-red-500">La clave pública de MercadoPago no está configurada.</p>
             </div>
           </div>
         </CardBody>
@@ -517,39 +265,31 @@ export function MercadoPagoBricks({
           </div>
         </div>
 
-        {/* Contenedor del Brick */}
-        {containerId ? (
-          <div
-            id={containerId}
-            ref={brickContainerRef}
-            className="mb-6"
-            style={{ minHeight: '400px' }}
-          >
-            {!isSDKLoaded && (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-                <span className="ml-3 text-[var(--muted)]">Cargando formulario de pago...</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-8 mb-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            <span className="ml-3 text-[var(--muted)]">Preparando contenedor...</span>
-          </div>
-        )}
+        <div ref={containerRef} className="mb-6" style={{ minHeight: 400 }}>
+          {!isSDKLoaded && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              <span className="ml-3 text-[var(--muted)]">Cargando formulario de pago...</span>
+            </div>
+          )}
+        </div>
 
-        {/* Total a pagar */}
         <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between text-sm">
             <span className="text-[var(--muted)]">Total a pagar:</span>
-            <span className="font-semibold text-[var(--fg)] text-lg">
-              ${amount.toLocaleString('es-AR')}
-            </span>
+            <span className="font-semibold text-[var(--fg)] text-lg">${amount.toLocaleString('es-AR')}</span>
           </div>
         </div>
 
-        {/* Security Notice */}
+        {isProcessing && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+              <p className="text-sm text-blue-800">Procesando tu pago... No cierres esta ventana.</p>
+            </div>
+          </div>
+        )}
+
         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-green-600" />
@@ -559,17 +299,6 @@ export function MercadoPagoBricks({
             </div>
           </div>
         </div>
-
-        {isProcessing && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-              <p className="text-sm text-blue-800">
-                Procesando tu pago... Por favor, no cierres esta ventana.
-              </p>
-            </div>
-          </div>
-        )}
       </CardBody>
     </Card>
   );
