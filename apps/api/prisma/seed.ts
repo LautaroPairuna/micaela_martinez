@@ -178,7 +178,7 @@ async function main() {
       email: 'admin@demo.com',
       nombre: 'Admin Demo',
       passwordHash: '$2b$10$oc6bQbe6F67xUabv2r1.mecBi8Emco5qNTH3NUBFzUyJQRIyJDXym',
-      creadoEn: new Date(),
+
       emailVerificadoEn: new Date(),
     },
   });
@@ -190,7 +190,7 @@ async function main() {
       email: 'instructor@demo.com',
       nombre: 'Instructora Demo',
       passwordHash: '$2b$10$ck3bjxlcYx/ir8YYe6rv2OrF4LVVcFI/iQI4s0FyTSkzSMBqEh/oC',
-      creadoEn: new Date(),
+
       emailVerificadoEn: new Date(),
     },
   });
@@ -846,6 +846,110 @@ async function main() {
       tags: json(['prueba', 'testing', 'suscripcion']),
       creadoEn: new Date(),
       instructorId: ids.users.instructor,
+    },
+  });
+  
+  // Módulos y lecciones para el curso de prueba
+  const moduloPrueba1Id = 'mod_prueba_01';
+  const moduloPrueba2Id = 'mod_prueba_02';
+  const leccionPrueba1Id = 'lec_prueba_01';
+  const leccionPrueba2Id = 'lec_prueba_02';
+  const leccionPrueba3Id = 'lec_prueba_03';
+  
+  // Módulo 1 del curso de prueba
+  await prisma.modulo.upsert({
+    where: { id: moduloPrueba1Id },
+    update: {
+      titulo: 'Módulo 1: Introducción',
+      orden: 1,
+      cursoId: ids.cursos.prueba,
+    },
+    create: {
+      id: moduloPrueba1Id,
+      titulo: 'Módulo 1: Introducción',
+      orden: 1,
+      cursoId: ids.cursos.prueba,
+    },
+  });
+  
+  // Módulo 2 del curso de prueba
+  await prisma.modulo.upsert({
+    where: { id: moduloPrueba2Id },
+    update: {
+      titulo: 'Módulo 2: Contenido Principal',
+      orden: 2,
+      cursoId: ids.cursos.prueba,
+    },
+    create: {
+      id: moduloPrueba2Id,
+      titulo: 'Módulo 2: Contenido Principal',
+      orden: 2,
+      cursoId: ids.cursos.prueba,
+    },
+  });
+  
+  // Lecciones para el módulo 1
+  await prisma.leccion.upsert({
+    where: { id: leccionPrueba1Id },
+    update: {
+      titulo: 'Lección 1: Bienvenida',
+      descripcion: 'Bienvenida al curso de prueba',
+      contenido: '# Bienvenida al curso de prueba\n\nEste es un curso para probar las suscripciones mensuales en MercadoPago.',
+      duracionS: 300,
+      orden: 1,
+      moduloId: moduloPrueba1Id,
+    },
+    create: {
+      id: leccionPrueba1Id,
+      titulo: 'Lección 1: Bienvenida',
+      descripcion: 'Bienvenida al curso de prueba',
+      contenido: '# Bienvenida al curso de prueba\n\nEste es un curso para probar las suscripciones mensuales en MercadoPago.',
+      duracionS: 300,
+      orden: 1,
+      moduloId: moduloPrueba1Id,
+    },
+  });
+  
+  // Lecciones para el módulo 2
+  await prisma.leccion.upsert({
+    where: { id: leccionPrueba2Id },
+    update: {
+      titulo: 'Lección 2: Contenido Principal',
+      descripcion: 'Contenido principal del curso de prueba',
+      contenido: '# Contenido Principal\n\nEste es el contenido principal del curso de prueba para suscripciones mensuales.',
+      duracionS: 600,
+      orden: 1,
+      moduloId: moduloPrueba2Id,
+    },
+    create: {
+      id: leccionPrueba2Id,
+      titulo: 'Lección 2: Contenido Principal',
+      descripcion: 'Contenido principal del curso de prueba',
+      contenido: '# Contenido Principal\n\nEste es el contenido principal del curso de prueba para suscripciones mensuales.',
+      duracionS: 600,
+      orden: 1,
+      moduloId: moduloPrueba2Id,
+    },
+  });
+  
+  await prisma.leccion.upsert({
+    where: { id: leccionPrueba3Id },
+    update: {
+      titulo: 'Lección 3: Conclusión',
+      descripcion: 'Conclusión del curso de prueba',
+      contenido: '# Conclusión\n\nGracias por completar este curso de prueba para suscripciones mensuales.',
+      duracionS: 300,
+      orden: 2,
+      moduloId: moduloPrueba2Id,
+    },
+    create: {
+      id: leccionPrueba3Id,
+      titulo: 'Lección 3: Conclusión',
+      descripcion: 'Conclusión del curso de prueba',
+      contenido: '# Conclusión\n\nGracias por completar este curso de prueba para suscripciones mensuales.',
+      duracionS: 300,
+      orden: 2,
+      moduloId: moduloPrueba2Id,
     },
   });
   // existentes
