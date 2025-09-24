@@ -73,7 +73,7 @@ export const Toolbar = memo(function Toolbar({
 
   return (
     <div className="
-      sticky top-2 z-10
+      sticky top-2 z-50
       flex flex-wrap items-center justify-between gap-4 mb-4
       bg-white/95 backdrop-blur-sm border border-gray-200/50 rounded-2xl px-6 py-4 shadow-lg shadow-gray-900/5
     ">

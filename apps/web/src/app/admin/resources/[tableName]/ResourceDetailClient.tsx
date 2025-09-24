@@ -459,6 +459,31 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
     (val: unknown, col: string, rowId: number) => {
       if (val == null) return <span className="text-gray-400">null</span>
 
+      // Detectar campos de archivos de manera más amplia
+      const isLikelyFileField = (fieldName: string, value: unknown): boolean => {
+        if (typeof value !== 'string' || !value.trim()) return false
+        
+        const lowerField = fieldName.toLowerCase()
+        const filePatterns = [
+          'foto', 'imagen', 'portada', 'archivo', 'rutasrc', 'src', 'url',
+          'productoImagen', 'imagenArchivo', 'portadaArchivo', 'video', 'audio',
+          'documento', 'file', 'media', 'attachment'
+        ]
+        
+        // Verificar si el nombre del campo sugiere un archivo
+        const matchesPattern = filePatterns.some(pattern => lowerField.includes(pattern))
+        
+        // Verificar si el valor parece una ruta de archivo (tiene extensión)
+        const hasFileExtension = /\.[a-zA-Z0-9]{2,4}$/.test(value.trim())
+        
+        return matchesPattern || hasFileExtension
+      }
+
+      // Si parece un campo de archivo, mostrar miniatura
+      if (isLikelyFileField(col, val) && typeof val === 'string' && val.trim()) {
+        return <FotoCell tableName={tableName} childRelation={child} fileName={val} />
+      }
+
       if (resource === 'Pedidos' && col === 'datos') {
         const items = parsedDatos[String(rowId)] ?? []
         if (items.length)

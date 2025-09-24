@@ -60,6 +60,7 @@ type Me = {
   email: string;
   nombre?: string | null;
   rol?: 'ADMIN' | 'STAFF' | 'INSTRUCTOR' | 'CUSTOMER' | string | undefined;
+  roles?: string[];
 } | null;
 
 /* ─────────────────────────────────────────
@@ -277,8 +278,8 @@ function UserMenu({ me, onLogout }:{ me: NonNullable<Me>, onLogout: ()=>void }) 
   const firstItemRef = useRef<HTMLAnchorElement>(null!); // TS-safe
 
   const initials = useMemo(() => getInitials(me?.nombre, me?.email, 2), [me]);
-  // Corregido: Verificar correctamente los roles con acceso a administración
-  const hasAdminAccess = me?.rol === 'ADMIN' || me?.rol === 'STAFF'; // Solo roles administrativos
+  // Verificar roles con acceso a administración (incluyendo INSTRUCTOR)
+  const hasAdminAccess = me?.roles?.includes('ADMIN') || me?.roles?.includes('STAFF') || me?.roles?.includes('INSTRUCTOR');
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -422,7 +423,7 @@ function MobilePanel({
   const [show, setShow] = useState(false);
   const DURATION = 200;
   // Corregido: Verificar correctamente los roles con acceso a administración
-  const hasAdminAccess = me?.rol === 'ADMIN' || me?.rol === 'STAFF'; // Solo roles administrativos
+  const hasAdminAccess = me?.roles?.includes('ADMIN') || me?.roles?.includes('STAFF'); // Solo roles administrativos
 
   useEffect(() => {
     setMounted(true);
