@@ -91,7 +91,10 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
             setInitialized(true);
           }
         } else {
-          console.error('Error initializing auth:', error);
+          // Solo logear errores que no sean 401 o 500 esperados
+          if (error instanceof Error && !error.message.includes('HTTP 401') && !error.message.includes('HTTP 500')) {
+            console.error('Error initializing auth:', error);
+          }
           if (mounted) {
             setUser(null);
             setInitialized(true);

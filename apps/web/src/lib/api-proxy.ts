@@ -51,6 +51,13 @@ export async function apiProxy<T>(path: string, init?: NextInit) {
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
+    
+    // No registrar errores esperados para evitar spam en consola
+    const isExpectedError = res.status === 401 || res.status === 403;
+    if (!isExpectedError) {
+      console.error(`[API-PROXY] HTTP ${res.status} ${res.statusText} — ${url}`);
+    }
+    
     throw new Error(`HTTP ${res.status} ${res.statusText} — ${url}\n${body}`);
   }
   
