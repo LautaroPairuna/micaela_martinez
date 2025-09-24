@@ -123,72 +123,72 @@ export default function FavoritosPage() {
           </Link>
         </div>
       ) : (
-        /* Products Grid - Diseño compacto y elegante */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        /* Products Grid - Diseño similar a ProductCard */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items.map((product: ProductMinimal) => (
-            <Card key={product.id} className="group hover:shadow-lg transition-all duration-200 border-[var(--border)] bg-[var(--card)] overflow-hidden rounded-lg">
+            <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 border-[var(--border)] bg-[var(--card)] overflow-hidden rounded-xl">
               <CardBody className="p-0">
-                {/* Product Image - Más compacta */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--muted-bg)]">
+                {/* Product Image */}
+                <div className="relative aspect-square overflow-hidden bg-[var(--muted-bg)]">
                   <SafeImage
                     src={product.imagen ?? product.imagenes?.[0]?.url}
                     alt={product.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   
-                  {/* Remove from Favorites Button - Más discreto */}
+                  {/* Remove from Favorites Button */}
                   <Button
                     onClick={() => handleRemoveFavorite(product.id, product.titulo)}
                     disabled={removingIds.has(product.id)}
-                    className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full shadow-md transition-all duration-200 hover:scale-110 backdrop-blur-sm"
+                    className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white text-red-500 hover:text-red-600 rounded-full shadow-lg transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-red-200"
                     size="sm"
                   >
                     {removingIds.has(product.id) ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     )}
                   </Button>
                 </div>
 
-                {/* Product Info - Más compacto */}
-                <div className="p-3 space-y-2">
-                  {/* Title - Una sola línea */}
+                {/* Product Info */}
+                <div className="p-4 space-y-3">
+                  {/* Title */}
                   <Link 
                     href={`/tienda/${product.slug}`}
                     className="block group-hover:text-[var(--gold)] transition-colors duration-200"
                   >
-                    <h3 className="font-medium text-sm text-[var(--fg)] line-clamp-1 leading-tight">
+                    <h3 className="font-semibold text-base text-[var(--fg)] line-clamp-2 leading-tight min-h-[2.5rem]">
                       {product.titulo}
                     </h3>
                   </Link>
                   
-                  {/* Rating - Más pequeño */}
+                  {/* Rating */}
                   {product.ratingProm && (
-                    <div className="flex items-center gap-1">
-                      <RatingStars value={typeof product.ratingProm === 'string' ? parseFloat(product.ratingProm) : (product.ratingProm ?? 0)} count={product.ratingConteo ?? undefined} size="sm" />
-                      <span className="text-xs text-[var(--muted)]">
+                    <div className="flex items-center gap-2">
+                      <RatingStars value={typeof product.ratingProm === 'string' ? parseFloat(product.ratingProm) : (product.ratingProm ?? 0)} count={product.ratingConteo ?? undefined} />
+                      <span className="text-sm text-[var(--muted)] font-medium">
                         ({product.ratingProm})
                       </span>
                     </div>
                   )}
 
-                  {/* Price - Más compacto */}
-                  <div className="space-y-0.5">
+                  {/* Price */}
+                  <div className="space-y-1">
                     <Price 
                       value={product.precio} 
                       compareAt={product.precioLista ?? undefined}
-                      className="text-lg font-bold"
+                      className="text-xl font-bold"
                     />
                     {product.precioLista && product.precioLista > product.precio && (
-                      <div className="text-xs text-green-600 font-medium">
+                      <div className="text-sm text-green-600 font-semibold">
                         Ahorrás ${(product.precioLista - product.precio).toLocaleString('es-AR')}
                       </div>
                     )}
                   </div>
 
-                  {/* Actions - Más compactas */}
-                  <div className="flex gap-2 pt-1">
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
                     <AddProductButton 
                       p={{
                         id: product.id,
@@ -199,15 +199,14 @@ export default function FavoritosPage() {
                         imagen: product.imagen,
                         imagenes: product.imagenes,
                       }}
-                      className="flex-1 bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-medium text-xs py-2 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="flex-1 bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-semibold py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                     />
                     <Link href={`/tienda/${product.slug}`}>
                       <Button 
                         variant="outline" 
-                        className="p-2 border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200 rounded-md"
-                        size="sm"
+                        className="px-3 py-2.5 border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200 rounded-lg"
                       >
-                        <ExternalLink className="h-3 w-3" />
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     </Link>
                   </div>

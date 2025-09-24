@@ -170,7 +170,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden bg-black border-2 border-[var(--gold)]/30">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden bg-black border-2 border-[var(--gold)]/30 flex flex-col">
         <DialogHeader className="border-b border-[var(--gold)]/30 pb-4 flex-shrink-0">
           <DialogTitle className="flex items-center gap-3 text-xl text-white">
             <div className="p-2 rounded-lg bg-[var(--gold)]/20 border border-[var(--gold)]/40">
@@ -186,7 +186,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full py-4">
             {/* Contenido principal - Items del pedido */}
             <div className="lg:col-span-3 overflow-y-auto pr-2 space-y-4">
@@ -290,140 +290,124 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             </div>
 
             {/* Sidebar - Resumen y detalles */}
-            <div className="lg:col-span-2 space-y-4 overflow-y-auto">
-              {/* Estado del pedido */}
-              <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
-                <h3 className="font-bold text-base mb-3 text-white">Estado del pedido</h3>
-                <div className={`flex items-center gap-3 p-3 rounded-lg ${getStatusColor(order.estado)}`}>
-                  {getStatusIcon(order.estado)}
-                  <div>
-                    <p className="font-bold text-xs text-gray-300">Estado actual</p>
-                    <p className="capitalize font-semibold text-sm text-white">{getStatusText(order.estado)}</p>
+            <div className="lg:col-span-2 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                {/* Estado del pedido */}
+                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
+                  <h3 className="font-bold text-base mb-3 text-white">Estado del pedido</h3>
+                  <div className={`flex items-center gap-3 p-3 rounded-lg ${getStatusColor(order.estado)}`}>
+                    {getStatusIcon(order.estado)}
+                    <div>
+                      <p className="font-bold text-xs text-gray-300">Estado actual</p>
+                      <p className="capitalize font-semibold text-sm text-white">{getStatusText(order.estado)}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Resumen de pago detallado */}
-              <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
-                <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
-                  <CreditCard className="h-4 w-4 text-[var(--gold)]" />
-                  Resumen de pago
-                </h3>
-                <div className="space-y-2 text-xs">
-                  {/* Detalle de productos */}
-                  {productos.length > 0 && (
-                    <div className="space-y-1">
-                      <div className="font-medium text-blue-400 text-xs mb-2">Productos:</div>
-                      {productos.map((item: OrdenItem) => (
-                        <div key={item.id} className="flex justify-between items-center py-1 border-l-2 border-blue-400/30 pl-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="truncate text-gray-300 text-xs">{item.titulo}</div>
-                            <div className="text-gray-500 text-xs">
-                              {item.cantidad}x {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))}
-                            </div>
-                          </div>
-                          <span className="font-medium text-white text-xs ml-2">
-                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.cantidad * item.precioUnitario) || 0)}
-                          </span>
-                        </div>
-                      ))}
-                      <div className="flex justify-between font-medium pt-1 border-t border-gray-600">
-                        <span className="text-blue-400 text-xs">Subtotal productos:</span>
-                        <span className="text-white text-xs">
-                          {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(subtotalProductos)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Detalle de cursos */}
-                  {cursos.length > 0 && (
-                    <div className="space-y-1 mt-3">
-                      <div className="font-medium text-purple-400 text-xs mb-2">Cursos:</div>
-                      {cursos.map((item: OrdenItem) => (
-                        <div key={item.id} className="flex justify-between items-center py-1 border-l-2 border-purple-400/30 pl-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="truncate text-gray-300 text-xs">{item.titulo}</div>
-                            <div className="text-gray-500 text-xs">Acceso digital</div>
-                          </div>
-                          <span className="font-medium text-white text-xs ml-2">
-                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))}
-                          </span>
-                        </div>
-                      ))}
-                      <div className="flex justify-between font-medium pt-1 border-t border-gray-600">
-                        <span className="text-purple-400 text-xs">Subtotal cursos:</span>
-                        <span className="text-white text-xs">
-                          {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(subtotalCursos)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Totales */}
-                  <div className="space-y-1 mt-3 pt-2 border-t border-gray-600">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300 text-xs">Subtotal</span>
-                      <span className="font-medium text-white text-xs">{subtotalFmt}</span>
-                    </div>
+                {/* Resumen de pago detallado */}
+                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
+                  <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
+                    <CreditCard className="h-4 w-4 text-[var(--gold)]" />
+                    Resumen de pago
+                  </h3>
+                  <div className="space-y-2 text-xs">
+                    {/* Detalle de productos */}
                     {productos.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-300 text-xs">Envío</span>
-                        <span className="font-medium text-green-400 text-xs">Gratis</span>
+                      <div className="space-y-1">
+                        <div className="font-medium text-blue-400 text-xs mb-2">Productos:</div>
+                        {productos.map((item: OrdenItem) => (
+                          <div key={item.id} className="flex justify-between items-center py-1 border-l-2 border-blue-400/30 pl-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="truncate text-gray-300 text-xs">{item.titulo}</div>
+                              <div className="text-gray-500 text-xs">
+                                {item.cantidad}x {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))}
+                              </div>
+                            </div>
+                            <span className="font-medium text-white text-xs ml-2">
+                              {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.cantidad * item.precioUnitario) || 0)}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between font-medium pt-1 border-t border-gray-600">
+                          <span className="text-blue-400 text-xs">Subtotal productos:</span>
+                          <span className="text-white text-xs">
+                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(subtotalProductos)}
+                          </span>
+                        </div>
                       </div>
                     )}
-                    <div className="border-t border-gray-600 pt-2 mt-2">
-                      <div className="flex justify-between font-bold">
-                        <span className="text-white text-sm">Total</span>
-                        <span className="text-[var(--gold)] text-sm">{totalFmt}</span>
+
+                    {/* Detalle de cursos */}
+                    {cursos.length > 0 && (
+                      <div className="space-y-1 mt-3">
+                        <div className="font-medium text-purple-400 text-xs mb-2">Cursos:</div>
+                        {cursos.map((item: OrdenItem) => (
+                          <div key={item.id} className="flex justify-between items-center py-1 border-l-2 border-purple-400/30 pl-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="truncate text-gray-300 text-xs">{item.titulo}</div>
+                              <div className="text-gray-500 text-xs">Acceso digital</div>
+                            </div>
+                            <span className="font-medium text-white text-xs ml-2">
+                              {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(Number(item.precioUnitario || 0))}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between font-medium pt-1 border-t border-gray-600">
+                          <span className="text-purple-400 text-xs">Subtotal cursos:</span>
+                          <span className="text-white text-xs">
+                            {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda || 'ARS' }).format(subtotalCursos)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Totales */}
+                    <div className="space-y-1 mt-3 pt-2 border-t border-gray-600">
+                      <div className="flex justify-between">
+                        <span className="text-gray-300 text-xs">Subtotal</span>
+                        <span className="font-medium text-white text-xs">{subtotalFmt}</span>
+                      </div>
+                      {productos.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-300 text-xs">Envío</span>
+                          <span className="font-medium text-green-400 text-xs">Gratis</span>
+                        </div>
+                      )}
+                      <div className="border-t border-gray-600 pt-2 mt-2">
+                        <div className="flex justify-between font-bold">
+                          <span className="text-white text-sm">Total</span>
+                          <span className="text-[var(--gold)] text-sm">{totalFmt}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {order.referenciaPago && (
+                      <div className="mt-3 p-2 bg-gray-800/50 rounded-lg border border-gray-600">
+                        <p className="text-xs text-gray-400 mb-1">Referencia de pago</p>
+                        <p className="font-mono text-xs text-white">{order.referenciaPago}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Acceso a cursos */}
+                {cursos.length > 0 && (
+                  <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
+                    <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
+                      <BookOpen className="h-4 w-4 text-[var(--gold)]" />
+                      Acceso a cursos
+                    </h3>
+                    <div className="text-xs">
+                      <div className="p-2 bg-green-500/20 rounded-lg border border-green-400/30">
+                        <p className="font-medium text-green-300 text-xs">Acceso inmediato</p>
+                        <p className="text-green-400 text-xs mt-1">
+                          Los cursos están disponibles en tu área de estudiante
+                        </p>
                       </div>
                     </div>
                   </div>
-
-                  {order.referenciaPago && (
-                    <div className="mt-3 p-2 bg-gray-800/50 rounded-lg border border-gray-600">
-                      <p className="text-xs text-gray-400 mb-1">Referencia de pago</p>
-                      <p className="font-mono text-xs text-white">{order.referenciaPago}</p>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-
-              {/* Información de entrega */}
-              {productos.length > 0 && (
-                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
-                  <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
-                    <Truck className="h-4 w-4 text-[var(--gold)]" />
-                    Información de entrega
-                  </h3>
-                  <div className="text-xs">
-                    <div className="p-2 bg-blue-500/20 rounded-lg border border-blue-400/30">
-                      <p className="font-medium text-blue-300 text-xs">Envío gratuito</p>
-                      <p className="text-blue-400 text-xs mt-1">
-                        Los productos se envían dentro de 24-48 horas hábiles
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Acceso a cursos */}
-              {cursos.length > 0 && (
-                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
-                  <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
-                    <BookOpen className="h-4 w-4 text-[var(--gold)]" />
-                    Acceso a cursos
-                  </h3>
-                  <div className="text-xs">
-                    <div className="p-2 bg-green-500/20 rounded-lg border border-green-400/30">
-                      <p className="font-medium text-green-300 text-xs">Acceso inmediato</p>
-                      <p className="text-green-400 text-xs mt-1">
-                        Los cursos están disponibles en tu área de estudiante
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
