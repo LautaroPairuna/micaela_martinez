@@ -120,7 +120,10 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
 
               <div className="mt-auto pt-2 space-y-2">
                 <div className="flex items-center justify-between">
-                  <Price value={c.precio} />
+                  <div className="flex flex-col">
+                    <Price value={c.precio} />
+                    <span className="text-xs text-[var(--muted)]">Suscripción mensual</span>
+                  </div>
                 </div>
                 
                 {isEnrolled ? (

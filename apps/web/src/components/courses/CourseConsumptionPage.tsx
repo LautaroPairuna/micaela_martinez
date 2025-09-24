@@ -290,10 +290,13 @@ export function CourseConsumptionPage({
                 {/* Precio y beneficios */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Price value={course.precio / 100} className="text-2xl font-bold" />
+                    <div className="flex flex-col">
+                      <Price value={course.precio / 100} className="text-2xl font-bold" />
+                      <span className="text-sm text-gray-400">Suscripción mensual</span>
+                    </div>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Award className="w-4 h-4" />
-                      <span>Acceso de por vida</span>
+                      <span>Renovación automática</span>
                     </div>
                   </div>
 
