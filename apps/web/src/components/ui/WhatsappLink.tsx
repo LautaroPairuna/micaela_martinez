@@ -23,7 +23,7 @@ export default function WhatsappLink({
       className={`fixed bottom-5 right-6 z-50 inline-block rounded-full shadow-sm transition-transform hover:scale-[1.03] active:scale-95 ${className}`}
     >
       <Image
-        src="/images/icons/ico-whatsapp-ventana.svg"
+        src="/api/media/images/icons/ico-whatsapp-ventana.svg"
         alt="WhatsApp"
         width={64}
         height={64}
