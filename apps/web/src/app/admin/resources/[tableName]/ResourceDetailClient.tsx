@@ -464,17 +464,6 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         if (typeof value !== 'string' || !value.trim()) return false
         
         const lowerField = fieldName.toLowerCase()
-        
-        // Excluir explícitamente columnas de fecha/timestamp
-        const dateTimeFields = [
-          'creadoen', 'actualizadoen', 'createdat', 'updatedat', 'fecha', 'timestamp',
-          'fechacreacion', 'fechaactualizacion', 'fechamodificacion', 'fechavencimiento'
-        ]
-        
-        if (dateTimeFields.some(dateField => lowerField.includes(dateField))) {
-          return false
-        }
-        
         const filePatterns = [
           'foto', 'imagen', 'portada', 'archivo', 'rutasrc', 'src', 'url',
           'productoImagen', 'imagenArchivo', 'portadaArchivo', 'video', 'audio',
@@ -485,14 +474,9 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         const matchesPattern = filePatterns.some(pattern => lowerField.includes(pattern))
         
         // Verificar si el valor parece una ruta de archivo (tiene extensión)
-        // Pero solo si no es un campo de fecha y el patrón de nombre coincide
         const hasFileExtension = /\.[a-zA-Z0-9]{2,4}$/.test(value.trim())
         
-        // Solo considerar extensión de archivo si también coincide el patrón de nombre
-        // o si es una ruta de archivo válida (contiene / o \)
-        const looksLikeFilePath = /[\/\\]/.test(value.trim()) || value.trim().startsWith('http')
-        
-        return matchesPattern || (hasFileExtension && looksLikeFilePath)
+        return matchesPattern || hasFileExtension
       }
 
       // Si parece un campo de archivo, mostrar miniatura

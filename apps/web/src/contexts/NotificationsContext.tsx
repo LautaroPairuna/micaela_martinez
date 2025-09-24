@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import { useAuth } from './AuthContext';
 
 // Definimos nuestro propio tipo Notification
 export interface Notification {
@@ -176,7 +175,6 @@ const NotificationsContext = createContext<NotificationsContextType | undefined>
 // Provider
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(notificationsReducer, initialState);
-  const { user } = useAuth();
 
   const fetchNotifications = useCallback(
     async (page = 1, loadMore = false) => {
@@ -232,24 +230,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   );
 
   const fetchUnreadCount = useCallback(async () => {
-    // Solo hacer la llamada si el usuario está autenticado
-    if (!user) {
-      dispatch({ type: 'UPDATE_UNREAD_COUNT', payload: 0 });
-      return;
-    }
-
     try {
       const unreadData = await apiProxy<UnreadCountResponse>('/notifications/unread-count');
       dispatch({ type: 'UPDATE_UNREAD_COUNT', payload: unreadData.count });
     } catch (err) {
-      // Solo logear errores que no sean de autenticación (401)
-      if (err instanceof Error && !err.message.includes('Unauthorized')) {
-        console.error('Error fetching unread count:', err);
-      }
-      // Silenciosamente establecer count en 0 para usuarios no autenticados
-      dispatch({ type: 'UPDATE_UNREAD_COUNT', payload: 0 });
+      console.error('Error fetching unread count:', err);
     }
-  }, [user]);
+  }, []);
 
   const setFilter = useCallback((filter: 'all' | 'unread') => {
     dispatch({ type: 'SET_FILTER', payload: filter });
