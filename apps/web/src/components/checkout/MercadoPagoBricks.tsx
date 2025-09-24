@@ -218,8 +218,29 @@ export function MercadoPagoBricks({
 
     return () => {
       console.log('🔧 Desmontando componente con ID:', uniqueId);
+      // Desactivamos el componente antes de cualquier operación de limpieza
       setIsMounted(false);
       initializationRef.current = false;
+      
+      // Damos tiempo al ciclo de renderizado para completarse antes de limpiar
+      // Esto evita conflictos de DOM durante el desmontaje
+      window.setTimeout(() => {
+        try {
+          // Intentamos limpiar el controlador de forma segura
+            if (brickControllerRef.current) {
+              const unmountPromise = brickControllerRef.current.unmount();
+              // Verificamos si el resultado es una promesa antes de usar catch
+              if (unmountPromise && typeof unmountPromise.catch === 'function') {
+                unmountPromise.catch((e: Error) => {
+                  console.warn('⚠️ Error controlado al desmontar brick:', e);
+                });
+              }
+              brickControllerRef.current = null;
+            }
+        } catch (e) {
+          console.warn('⚠️ Error controlado durante limpieza:', e);
+        }
+      }, 100);
     };
   }, [forceRender, cleanupOrphanedContainers]);
 
@@ -228,6 +249,12 @@ export function MercadoPagoBricks({
       if (!publicKey) {
         console.error('NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY no está configurada');
       }
+      return;
+    }
+
+    // Evitamos reinicializaciones innecesarias si ya está inicializado
+    if (brickControllerRef.current && initializationRef.current) {
+      console.log('✅ Brick ya inicializado, evitando reinicialización innecesaria');
       return;
     }
 
@@ -271,17 +298,37 @@ export function MercadoPagoBricks({
       // Desmontar brick anterior si existía
       if (brickControllerRef.current) {
         try {
-          await brickControllerRef.current.unmount();
+          // Usamos un timeout para evitar conflictos de DOM durante el desmontaje
+          await new Promise<void>((resolve) => {
+            window.setTimeout(async () => {
+              try {
+                await brickControllerRef.current?.unmount();
+              } catch (e) {
+                console.warn('⚠️ Error controlado al desmontar brick existente:', e);
+              } finally {
+                brickControllerRef.current = null;
+                resolve();
+              }
+            }, 50);
+          });
         } catch (e) {
           console.warn('⚠️ Error al desmontar brick existente:', e);
-        } finally {
           brickControllerRef.current = null;
         }
       }
 
-      // Limpiar contenedor HTML
-      container.innerHTML = '';
-      await new Promise((r) => setTimeout(r, 50));
+      // Verificamos que el componente siga montado después del desmontaje
+      if (cancelled || !isMounted) return;
+
+      // Limpiar contenedor HTML de forma segura
+      try {
+        container.innerHTML = '';
+      } catch (e) {
+        console.warn('⚠️ Error al limpiar contenedor:', e);
+      }
+      
+      // Esperamos un poco para asegurar que el DOM se estabilice
+      await new Promise((r) => setTimeout(r, 100));
 
       const containerAfter = document.getElementById(containerId);
       if (!containerAfter || cancelled) return;

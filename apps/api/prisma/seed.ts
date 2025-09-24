@@ -1105,7 +1105,7 @@ async function main() {
         completado: [ids.lecs.l1],
         subscription: {
           duration: "1",
-          durationType: "meses",
+          durationType: "mes",
           startDate: new Date().toISOString(),
           endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
         }
@@ -1119,10 +1119,10 @@ async function main() {
       progreso: json({ 
         completado: [ids.lecs.l1],
         subscription: {
-          duration: "3",
-          durationType: "meses",
+          duration: "1",
+          durationType: "mes",
           startDate: new Date().toISOString(),
-          endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString()
+          endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
         }
       }),
       creadoEn: new Date(),

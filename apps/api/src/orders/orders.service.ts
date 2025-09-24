@@ -691,9 +691,9 @@ export class OrdersService {
       (i) => i.tipo === TipoItemOrden.CURSO,
     );
 
-    // Determinar la duración de la suscripción
-    const duration = order.esSuscripcion ? '1' : '3'; // 1 mes para suscripciones, 3 meses para compras únicas
-    const durationType = order.esSuscripcion ? 'mes' : 'meses';
+    // Todos los cursos tienen duración mensual
+    const duration = '1'; // 1 mes para todos los cursos
+    const durationType = 'mes';
 
     // Calcular fechas de inicio y fin
     const startDate = new Date();
