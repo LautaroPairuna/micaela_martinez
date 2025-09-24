@@ -204,14 +204,14 @@ export function MercadoPagoBricks({
     }
   }, [containerId]);
 
-  // Montaje / ID único
+  // Montaje / ID único - Generamos un ID estable que no cambie en cada renderizado
   useEffect(() => {
     setIsMounted(true);
     cleanupOrphanedContainers();
 
-    const uniqueId = `mercadopago-brick-${Date.now()}-${forceRender}-${Math.random()
-      .toString(36)
-      .slice(2, 11)}`;
+    // Usamos un ID estable que no cambie en cada renderizado
+    // Solo incluimos forceRender para casos de recuperación explícita
+    const uniqueId = `mercadopago-brick-${forceRender}-stable`;
 
     setContainerId(uniqueId);
     console.log('🔧 Componente montado con ID:', uniqueId);
@@ -385,8 +385,9 @@ export function MercadoPagoBricks({
 
       const containerOk = await ensureContainer();
       if (!containerOk || cancelled) {
-        console.warn(`⚠️ Contenedor ${containerId} no encontrado; reintento forzado`);
-        setForceRender((p) => p + 1);
+        console.warn(`⚠️ Contenedor ${containerId} no encontrado; pero no forzamos reintento para evitar ciclos`);
+        // Eliminamos el reintento automático que causaba ciclos infinitos
+        // setForceRender((p) => p + 1);
         return;
       }
 
@@ -399,12 +400,14 @@ export function MercadoPagoBricks({
       } catch (err) {
         const { onPaymentError } = handlersRef.current;
         const normalized = normalizeError(err);
-        // Intento de recuperación si es error de contenedor
+        // Desactivamos el intento de recuperación automática que causaba ciclos
+        // Solo logueamos el error para diagnóstico
         if (
           normalized.message.toLowerCase().includes('container') ||
           normalized.message.toLowerCase().includes('contenedor')
         ) {
-          setForceRender((p) => p + 1);
+          console.error('Error de contenedor en MercadoPago:', normalized.message);
+          // setForceRender((p) => p + 1); // Comentado para evitar ciclos infinitos
           return;
         }
         onPaymentError(normalized);

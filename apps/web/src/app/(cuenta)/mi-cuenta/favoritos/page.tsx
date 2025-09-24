@@ -131,7 +131,7 @@ export default function FavoritosPage() {
                 {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden bg-[var(--muted-bg)]">
                   <SafeImage
-                    src={product.imagen ?? product.imagenes?.[0]?.url}
+                    src={product.imagen ?? product.imagenes?.[0]?.url ?? '/images/placeholder-product.jpg'}
                     alt={product.titulo}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />

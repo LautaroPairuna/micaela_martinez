@@ -1,9 +1,10 @@
 // src/components/account/AccountSidebar.tsx
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { User, MapPin, Heart, Package, Edit3, LogOut, Menu, X, GraduationCap, ChevronRight, Bell, Home } from 'lucide-react';
+import { logout } from '@/lib/auth';
 
 type Me = { id: string; email: string; nombre?: string | null } | null;
 
@@ -231,8 +232,9 @@ export default function AccountSidebar({ me }: { me: Me }) {
         <button
           type="button"
           className="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700 transition-colors duration-200"
-          onClick={() => {
-            // Conectar a tu flujo real de logout (NextAuth/JWT/etc.)
+          onClick={async () => {
+            await logout();
+            window.location.href = '/auth';
           }}
         >
           <LogOut className="h-4 w-4" />

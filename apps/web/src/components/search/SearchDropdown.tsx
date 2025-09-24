@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, BookOpen, ShoppingBag, TrendingUp, Star } from 'lucide-react';
+import { Search, BookOpen, ShoppingBag, Star } from 'lucide-react';
 import { SafeImage } from '@/components/ui/SafeImage';
-import { useSearchSuggestions, usePopularSearchTerms, addRecentSearch } from '@/hooks/useSearchSuggestions';
+import { useSearchSuggestions, addRecentSearch } from '@/hooks/useSearchSuggestions';
 import { formatCurrency } from '@/lib/format';
 import type { SearchResult } from '@/hooks/useSearchSuggestions';
 
@@ -91,80 +91,7 @@ function SearchResultItem({ result, isHighlighted, onClick }: {
   );
 }
 
-function PopularTerms({ onSelectTerm }: { onSelectTerm: (term: string) => void }) {
-  const { courses, products, isLoading } = usePopularSearchTerms();
 
-  if (isLoading) {
-    return (
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-4 h-4 text-[var(--gold)]" />
-          <span className="text-sm font-medium text-black">
-            Cargando sugerencias...
-          </span>
-        </div>
-        <div className="space-y-2">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-6 bg-neutral-100 rounded animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <TrendingUp className="w-4 h-4 text-[var(--gold)]" />
-        <span className="text-sm font-medium text-black">
-          Búsquedas populares
-        </span>
-      </div>
-      
-      <div className="space-y-3">
-        {courses.length > 0 && (
-          <div>
-            <h5 className="text-xs font-medium text-neutral-600 mb-2">Cursos</h5>
-            <div className="flex flex-wrap gap-2">
-              {courses.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => {
-                    onSelectTerm(term);
-                    addRecentSearch(term);
-                  }}
-                  className="px-3 py-1.5 text-xs rounded-full bg-gradient-to-r from-[var(--gold)]/10 to-[var(--gold)]/5 text-black hover:from-[var(--gold)]/20 hover:to-[var(--gold)]/10 transition-all duration-200"
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {products.length > 0 && (
-          <div>
-            <h5 className="text-xs font-medium text-neutral-600 mb-2">Productos</h5>
-            <div className="flex flex-wrap gap-2">
-              {products.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => {
-                    onSelectTerm(term);
-                    addRecentSearch(term);
-                  }}
-                  className="px-3 py-1.5 text-xs rounded-full bg-gradient-to-r from-neutral-100 to-neutral-50 text-black hover:from-neutral-200 hover:to-neutral-100 transition-all duration-200"
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export function SearchDropdown({ query, isOpen, onClose, onSelectResult }: SearchDropdownProps) {
   const { courses, products, isLoading } = useSearchSuggestions(query);
@@ -172,7 +99,6 @@ export function SearchDropdown({ query, isOpen, onClose, onSelectResult }: Searc
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const hasResults = courses.length > 0 || products.length > 0;
-  const showPopular = !query.trim() || (!hasResults && !isLoading);
 
   // Manejar navegación por teclado
   useEffect(() => {
@@ -313,16 +239,6 @@ export function SearchDropdown({ query, isOpen, onClose, onSelectResult }: Searc
               Intenta con otros términos de búsqueda
             </p>
           </div>
-        )}
-
-        {showPopular && (
-          <PopularTerms 
-            onSelectTerm={(term) => {
-              // Usar el término seleccionado para realizar búsqueda
-              onSelectResult({ id: term, title: term, type: 'course', slug: term, price: 0 });
-              onClose();
-            }} 
-          />
         )}
       </div>
     </>
