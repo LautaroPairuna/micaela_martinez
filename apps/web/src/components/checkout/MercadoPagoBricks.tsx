@@ -23,8 +23,8 @@ type OnPaymentSuccess = (d: PaymentSuccessData) => void;
 type OnPaymentError = (e: PaymentErrorData) => void;
 
 type CardFormData = {
-  token: unknown; // validamos runtime
-  payment_method_id: unknown; // validamos runtime
+  token: unknown; // validamos en runtime
+  payment_method_id: unknown; // validamos en runtime
   installments?: number;
   payer?: {
     email?: unknown;
@@ -54,7 +54,7 @@ type PaymentBrickSettings = {
 
 type BrickController = { unmount: () => Promise<void> | void };
 type Bricks = {
-  create: (type: 'payment', container: HTMLElement, settings: PaymentBrickSettings) => Promise<BrickController>;
+  create: (type: 'payment', container: string, settings: PaymentBrickSettings) => Promise<BrickController>;
 };
 type MercadoPagoInstance = { bricks: () => Bricks };
 type MercadoPagoConstructor = new (publicKey: string, options?: { locale?: string }) => MercadoPagoInstance;
@@ -68,36 +68,28 @@ declare global {
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
-
-function pickFirst<T = unknown>(
-  obj: Record<string, unknown>,
-  keys: readonly string[]
-): T | undefined {
+function pickFirst<T = unknown>(obj: Record<string, unknown>, keys: readonly string[]): T | undefined {
   for (const k of keys) {
     if (k in obj) return obj[k] as T;
   }
   return undefined;
 }
-
 function extractId(resp: unknown, fallback: string): string {
   if (!isRecord(resp)) return fallback;
   const v = pickFirst<unknown>(resp, ['id', 'orderId', 'order_id']);
   if (typeof v === 'string' || typeof v === 'number') return String(v);
   return fallback;
 }
-
 function extractStatus(resp: unknown): string {
   if (!isRecord(resp)) return 'unknown';
   const v = pickFirst<unknown>(resp, ['estado', 'status', 'payment_status', 'status_detail', 'state']);
   return typeof v === 'string' ? v : 'unknown';
 }
-
 function normalizeError(err: unknown): PaymentErrorData {
   if (err instanceof Error) return { message: err.message, details: err };
   if (typeof err === 'string') return { message: err };
   return { message: 'Error desconocido', details: err };
 }
-
 function asStringOrNull(v: unknown): string | null {
   return typeof v === 'string' && v.trim() ? v : null;
 }
@@ -149,16 +141,17 @@ export function MercadoPagoBricks({
   isSubscription = false,
   subscriptionFrequency = 1,
   subscriptionFrequencyType = 'months',
-  preferenceId = null, // NUEVO
+  preferenceId = null,
 }: MercadoPagoBricksProps) {
   const publicKey = MERCADOPAGO_PUBLIC_KEY;
 
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const controllerRef = useRef<BrickController | null>(null);
+  // Id estable del contenedor (string), requerido por Bricks (usa .startsWith internamente)
+  const containerIdRef = useRef<string>(`mp-payment-brick-${Math.random().toString(36).slice(2, 8)}`);
 
+  const controllerRef = useRef<BrickController | null>(null);
   const handlersRef = useRef({ onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder });
   handlersRef.current = { onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder };
 
@@ -174,12 +167,13 @@ export function MercadoPagoBricks({
 
         setIsSDKLoaded(true);
 
-        if (!containerRef.current || controllerRef.current) return;
+        // Evitar montar más de una vez por instancia
+        if (controllerRef.current) return;
 
         const mp = new MercadoPago(publicKey, { locale: 'es-AR' });
         const bricks = mp.bricks();
 
-        // ⚠️ Solo incluimos preferenceId si es string no vacío
+        // Solo incluimos preferenceId si es string válido
         const init: PaymentBrickSettings['initialization'] = { amount };
         const pref = asStringOrNull(preferenceId);
         if (pref) init.preferenceId = pref;
@@ -197,7 +191,7 @@ export function MercadoPagoBricks({
 
               const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
 
-              // ✅ Validaciones defensivas para evitar e.startsWith en el SDK
+              // Validaciones defensivas
               const token = asStringOrNull(cardFormData.token);
               const paymentMethodId = asStringOrNull(cardFormData.payment_method_id);
               if (!token || !paymentMethodId) {
@@ -256,7 +250,8 @@ export function MercadoPagoBricks({
           },
         };
 
-        const controller = await bricks.create('payment', containerRef.current, settings);
+        // ⬅️ IMPORTANTE: pasar **string id** (no HTMLElement) para evitar e.startsWith
+        const controller = await bricks.create('payment', containerIdRef.current, settings);
         if (!cancelled) controllerRef.current = controller;
       } catch (e) {
         if (!cancelled) handlersRef.current.onPaymentError(normalizeError(e));
@@ -284,7 +279,7 @@ export function MercadoPagoBricks({
     isSubscription,
     subscriptionFrequency,
     subscriptionFrequencyType,
-    preferenceId, // NUEVA dependencia
+    preferenceId,
   ]);
 
   if (!publicKey) {
@@ -316,7 +311,8 @@ export function MercadoPagoBricks({
           </div>
         </div>
 
-        <div ref={containerRef} className="mb-6" style={{ minHeight: 400 }}>
+        {/* Contenedor del Brick: STRING ID (requerido por Bricks) */}
+        <div id={containerIdRef.current} className="mb-6" style={{ minHeight: 400 }}>
           {!isSDKLoaded && (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -325,6 +321,7 @@ export function MercadoPagoBricks({
           )}
         </div>
 
+        {/* Total a pagar */}
         <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between text-sm">
             <span className="text-[var(--muted)]">Total a pagar:</span>
@@ -334,6 +331,7 @@ export function MercadoPagoBricks({
           </div>
         </div>
 
+        {/* Estado de procesamiento */}
         {isProcessing && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-3">
@@ -343,6 +341,7 @@ export function MercadoPagoBricks({
           </div>
         )}
 
+        {/* Aviso de seguridad */}
         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-green-600" />
