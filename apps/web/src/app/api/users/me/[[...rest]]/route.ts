@@ -52,7 +52,53 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   return response;
 }
 export async function POST(req: NextRequest, ctx: Ctx) {
-  return proxy(req, await pathOf(ctx));
+  const path = await pathOf(ctx);
+  
+  // Log específico para favoritos
+  if (path.includes('favorites')) {
+    console.log(`[CATCH-ALL POST] Petición de favoritos:`, {
+      url: req.url,
+      path,
+      method: req.method,
+      headers: Object.fromEntries(req.headers.entries()),
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  try {
+    const response = await proxy(req, path);
+    
+    // Log de respuesta para favoritos
+    if (path.includes('favorites')) {
+      console.log(`[CATCH-ALL POST] Respuesta de favoritos:`, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    console.error(`[CATCH-ALL POST] Error en proxy:`, {
+      path,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return new Response(
+      JSON.stringify({ 
+        statusCode: 500, 
+        message: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      }),
+      { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
+    );
+  }
 }
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   return proxy(req, await pathOf(ctx));
