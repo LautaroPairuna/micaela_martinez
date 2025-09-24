@@ -62,6 +62,7 @@ async function main() {
       sunscreen: 'prd_sunscreen_01',
       toner: 'prd_toner_01',
       brochas: 'prd_brochas_01',
+      prueba: 'prd_prueba_01', // Producto de prueba
     },
     // imágenes de producto
     imgs: {
@@ -86,6 +87,7 @@ async function main() {
       cejas: 'curso_cejas_01',
       dermo: 'curso_dermo_01',
       skinSens: 'curso_skin_sens_01',
+      prueba: 'curso_prueba_01', // Curso de prueba
     },
     mods: {
       m1: 'mod1_cmaqu',
@@ -98,6 +100,7 @@ async function main() {
       cj1: 'mod_cejas_01',
       cj2: 'mod_cejas_02',
       de1: 'mod_dermo_01',
+      prueba1: 'mod_prueba_01', // Módulo para curso de prueba
       de2: 'mod_dermo_02',
       ss1: 'mod_skin_sens_01',
       ss2: 'mod_skin_sens_02',
@@ -419,8 +422,43 @@ async function main() {
   await mk.upsert({ where: { id: ids.brands.elf }, update: { nombre: 'e.l.f.', slug: 'elf', activa: true, orden: 17 }, create: { id: ids.brands.elf, nombre: 'e.l.f.', slug: 'elf', activa: true, orden: 17, creadoEn: new Date() }});
   await mk.upsert({ where: { id: ids.brands.realtech }, update: { nombre: 'Real Techniques', slug: 'real-techniques', activa: true, orden: 55 }, create: { id: ids.brands.realtech, nombre: 'Real Techniques', slug: 'real-techniques', activa: true, orden: 55, creadoEn: new Date() }});
 
-  // ───────────────── Productos (10 en total)
+  // ───────────────── Productos (11 en total)
   const pd = prisma.producto;
+  
+  // Producto de prueba con precio 1000
+  await pd.upsert({
+    where: { id: ids.prods.prueba },
+    update: {
+      titulo: 'Producto de Prueba',
+      slug: 'producto-de-prueba',
+      sku: 'PROD-TEST-1000',
+      precio: 1000,
+      stock: 100,
+      publicado: true,
+      destacado: true,
+      imagen: 'producto_prueba.jpg',
+      descripcionMD: 'Producto de prueba con precio 1000 para testing de pagos.',
+      precioLista: 1200,
+      marcaId: ids.brands.loreal,
+      categoriaId: ids.cats.maqu,
+    },
+    create: {
+      id: ids.prods.prueba,
+      titulo: 'Producto de Prueba',
+      slug: 'producto-de-prueba',
+      sku: 'PROD-TEST-1000',
+      precio: 1000,
+      stock: 100,
+      publicado: true,
+      destacado: true,
+      imagen: 'producto_prueba.jpg',
+      descripcionMD: 'Producto de prueba con precio 1000 para testing de pagos.',
+      precioLista: 1200,
+      creadoEn: new Date(),
+      marcaId: ids.brands.loreal,
+      categoriaId: ids.cats.maqu,
+    },
+  });
   await pd.upsert({
     where: { id: ids.prods.labial },
     update: {
@@ -775,8 +813,41 @@ async function main() {
     create: { id: ids.fav.f1, usuarioId: ids.users.cliente, productoId: ids.prods.labial, creadoEn: new Date() },
   });
 
-  // ───────────────── Cursos (6 en total)
+  // ───────────────── Cursos (7 en total)
   const cs = prisma.curso;
+  
+  // Curso de prueba para testing de suscripciones
+  await cs.upsert({
+    where: { id: ids.cursos.prueba },
+    update: {
+      titulo: 'Curso de Prueba',
+      slug: 'curso-de-prueba',
+      resumen: 'Curso para testing de suscripciones mensuales.',
+      descripcionMD: 'Este es un curso de prueba para verificar el funcionamiento de las suscripciones mensuales en MercadoPago.',
+      precio: 1000,
+      publicado: true,
+      nivel: NivelCurso.BASICO,
+      portada: 'curso-prueba.jpg',
+      destacado: true,
+      tags: json(['prueba', 'testing', 'suscripcion']),
+      instructorId: ids.users.instructor,
+    },
+    create: {
+      id: ids.cursos.prueba,
+      titulo: 'Curso de Prueba',
+      slug: 'curso-de-prueba',
+      resumen: 'Curso para testing de suscripciones mensuales.',
+      descripcionMD: 'Este es un curso de prueba para verificar el funcionamiento de las suscripciones mensuales en MercadoPago.',
+      precio: 1000,
+      publicado: true,
+      nivel: NivelCurso.BASICO,
+      portada: 'curso-prueba.jpg',
+      destacado: true,
+      tags: json(['prueba', 'testing', 'suscripcion']),
+      creadoEn: new Date(),
+      instructorId: ids.users.instructor,
+    },
+  });
   // existentes
   await cs.upsert({
     where: { id: ids.cursos.maqu },
