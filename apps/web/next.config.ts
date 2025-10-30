@@ -1,26 +1,33 @@
+// next.config.ts
 import type { NextConfig } from 'next';
 import { IMAGE_PUBLIC_URL, DOC_PUBLIC_URL } from './src/lib/adminConstants';
 
-const BACKEND = process.env.BACKEND_INTERNAL_URL;
-if (!BACKEND) {
-  throw new Error('BACKEND_INTERNAL_URL is not defined');
+// 1) Resolver BACKEND con fallbacks (runtime interno del cluster)
+const BACKEND =
+  process.env.BACKEND_INTERNAL_URL // ideal (runtime)
+  ?? process.env.NEXT_PUBLIC_API_URL // opcional (si ya lo exponés)
+  ?? 'http://api:3001';              // fallback cuando corre en la misma red de Docker (service "api")
+
+function parseUrl(u: string) {
+  try { return new URL(u); } catch { return new URL('http://api:3001'); }
 }
+const U = parseUrl(BACKEND);
 
 const nextConfig: NextConfig = {
-  // Variables de entorno para el servidor
+  // 2) Solo exponé lo público; lo interno que quede para el server en runtime
   env: {
-    BACKEND_INTERNAL_URL: process.env.BACKEND_INTERNAL_URL,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? U.origin,
   },
-  // Para <Image /> de Next y optimización remota
+
+  // 3) Images: evitar throw si la URL no es válida
   images: {
-    unoptimized: true, // Desactivamos la optimización para evitar problemas
-    domains: ['localhost', new URL(BACKEND).hostname],
+    unoptimized: true,
+    domains: ['localhost', U.hostname],
     remotePatterns: [
       {
-        protocol: new URL(BACKEND).protocol.replace(':', '') as 'http' | 'https',
-        hostname: new URL(BACKEND).hostname,
-        port: new URL(BACKEND).port || undefined,
+        protocol: U.protocol.replace(':', '') as 'http' | 'https',
+        hostname: U.hostname,
+        port: U.port || undefined,
         pathname: '/**',
       },
     ],
@@ -29,55 +36,25 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 
-  // Configuración para Sharp
-  serverExternalPackages: ['sharp'],
-
-  // Rewrites para proxear API y assets
+  // 4) Rewrites usando la URL ya parseada
   async rewrites() {
     return [
-      // Proxy API
-      {
-        source: '/api/:path*',
-        destination: `${BACKEND}/api/:path*`,
-      },
-      // Rewrite para imágenes públicas
-      {
-        source: '/api/media/images/:path*',
-        destination: `${BACKEND}/api/media/images/:path*`,
-      },
-      // Rewrite directo para imágenes
-      {
-        source: '/api/media/public/:path*',
-        destination: `${BACKEND}/api/media/images/:path*`,
-      },
-      // Rewrite para imágenes del slider
-      {
-        source: '/api/media/images/:path*',
-        destination: `${BACKEND}/api/media/images/:path*`,
-      },
-      // Rewrite para el componente Next.js Image
-      {
-        source: '/_next/image',
-        destination: '/_next/image',
-      },
-      // ====== STATIC PROXIES HACIA EL BACKEND ======
-      // Imágenes públicas (p.ej. /images/producto/...)
-      { source: `${IMAGE_PUBLIC_URL}/:path*`, destination: `${BACKEND}${IMAGE_PUBLIC_URL}/:path*` },
-
-      // Documentos públicos (si sirves PDFs estaticamente en /docs)
-      { source: `${DOC_PUBLIC_URL}/:path*`, destination: `${BACKEND}${DOC_PUBLIC_URL}/:path*` },
-
-      // Carpetas útiles si las usas (ajusta según tu estructura en el back)
-      { source: `/uploads/:path*`,  destination: `${BACKEND}/uploads/:path*` },
-      { source: `/static/:path*`,   destination: `${BACKEND}/static/:path*` },
-      { source: `/files/:path*`,    destination: `${BACKEND}/files/:path*` },
-      { source: `/videos/:path*`,   destination: `${BACKEND}/videos/:path*` },
-
-      // Endpoints de administración para upload/borrado (AdminUploadsController)
-      { source: `/api/admin/uploads`,        destination: `${BACKEND}/api/admin/uploads` },
-      { source: `/api/admin/uploads/:path*`, destination: `${BACKEND}/api/admin/uploads/:path*` },
+      { source: '/api/:path*',                  destination: `${U.origin}/api/:path*` },
+      { source: '/api/media/images/:path*',     destination: `${U.origin}/api/media/images/:path*` },
+      { source: '/api/media/public/:path*',     destination: `${U.origin}/api/media/images/:path*` },
+      { source: `${IMAGE_PUBLIC_URL}/:path*`,   destination: `${U.origin}${IMAGE_PUBLIC_URL}/:path*` },
+      { source: `${DOC_PUBLIC_URL}/:path*`,     destination: `${U.origin}${DOC_PUBLIC_URL}/:path*` },
+      { source: '/uploads/:path*',              destination: `${U.origin}/uploads/:path*` },
+      { source: '/static/:path*',               destination: `${U.origin}/static/:path*` },
+      { source: '/files/:path*',                destination: `${U.origin}/files/:path*` },
+      { source: '/videos/:path*',               destination: `${U.origin}/videos/:path*` },
+      { source: '/api/admin/uploads',           destination: `${U.origin}/api/admin/uploads` },
+      { source: '/api/admin/uploads/:path*',    destination: `${U.origin}/api/admin/uploads/:path*` },
+      { source: '/_next/image',                 destination: '/_next/image' },
     ];
   },
+
+  serverExternalPackages: ['sharp'],
 };
 
 export default nextConfig;

@@ -71,13 +71,20 @@ export class UploadsService {
     ).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
     const rand = randomBytes(3).toString('hex');
 
-    const baseSlug = (title || table || 'archivo')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+    // Normalizar acentos/diacríticos y caracteres especiales para generar un slug robusto
+    const baseRaw = (title || table || 'archivo').toString();
+    const baseNormalized = baseRaw
+      .normalize('NFD') // separa letras y diacríticos
+      .replace(/[\u0300-\u036f]/g, '') // elimina diacríticos
+      .replace(/ß/g, 'ss') // casos especiales comunes
+      .replace(/ñ/gi, (m) => (m === 'Ñ' ? 'N' : 'n'))
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
 
     const ext = path.extname(originalName).toLowerCase() || '.bin';
-    return `${baseSlug}-${ts}-${rand}${ext}`;
+    return `${baseNormalized}-${ts}-${rand}${ext}`;
   }
 
   private getFileType(mimetype: string): FileType {

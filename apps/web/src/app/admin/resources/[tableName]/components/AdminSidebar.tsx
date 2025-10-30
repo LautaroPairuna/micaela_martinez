@@ -112,9 +112,9 @@ const menuItems: MenuItem[] = [
     roles: ['ADMIN', 'STAFF'], // Solo admin supremo + gestión ecommerce
     children: [
       { id: 'Curso', label: 'Cursos', icon: FileText, href: '/admin/resources/Curso', roles: ['ADMIN', 'STAFF'] },
-      { id: 'Modulo', label: 'Módulos', icon: Layers, href: '/admin/resources/Modulo', roles: ['ADMIN', 'STAFF'], parentTable: 'Curso', parentKey: 'cursoId' },
-      { id: 'Leccion', label: 'Lecciones', icon: FileText, href: '/admin/resources/Leccion', roles: ['ADMIN', 'STAFF'], parentTable: 'Modulo', parentKey: 'moduloId' },
-      { id: 'Inscripcion', label: 'Inscripciones', icon: Shield, href: '/admin/resources/Inscripcion', roles: ['ADMIN', 'STAFF'], parentTable: 'Curso', parentKey: 'cursoId' }, // Solo admin y staff ven inscripciones
+      { id: 'Modulo', label: 'Módulos', icon: Layers, href: '/admin/resources/Modulo', roles: ['ADMIN', 'STAFF'], parentTable: 'Curso', parentKey: 'curso_id' },
+      { id: 'Leccion', label: 'Lecciones', icon: FileText, href: '/admin/resources/Leccion', roles: ['ADMIN', 'STAFF'], parentTable: 'Modulo', parentKey: 'modulo_id' },
+      { id: 'Inscripcion', label: 'Inscripciones', icon: Shield, href: '/admin/resources/Inscripcion', roles: ['ADMIN', 'STAFF'], parentTable: 'Curso', parentKey: 'curso_id' }, // Solo admin y staff ven inscripciones
     ]
   },
   
@@ -204,7 +204,7 @@ export function AdminSidebar({
         if (filtersParam) {
           const filters = JSON.parse(filtersParam);
           // Buscar cualquier ID que pueda ser del padre
-          const possibleKeys = ['id', `${parentTable.toLowerCase()}_id`, 'curso_id', 'modulo_id'];
+          const possibleKeys = ['id', `${parentTable.toLowerCase()}_id`, 'curso_id', 'modulo_id', 'producto_id', 'usuario_id'];
           for (const key of possibleKeys) {
             if (filters[key]) {
               return filters[key];

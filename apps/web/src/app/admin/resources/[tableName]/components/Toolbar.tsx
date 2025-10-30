@@ -19,6 +19,11 @@ type Props = {
   resource: string
   filters: Filters
   setFilters: (f: Filters) => void
+  child?: {
+    childTable: string
+    foreignKey: string
+    parentId: string | number
+  } | null
 }
 
 export const Toolbar = memo(function Toolbar({
@@ -34,6 +39,7 @@ export const Toolbar = memo(function Toolbar({
   resource,
   filters,
   setFilters,
+  child,
 }: Props) {
   /* estado local para debounce del buscador */
   const [q, setQ] = useState(search)
@@ -157,7 +163,7 @@ export const Toolbar = memo(function Toolbar({
           value={pageSize}
           onChange={e => setPageSize(+e.target.value)}
           aria-label="Filas por página"
-          className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium text-sm"
+          className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium text-sm text-gray-900"
         >
           {[5, 10, 25, 50].map(n => (
             <option key={n} value={n}>{n} filas</option>
@@ -172,6 +178,7 @@ export const Toolbar = memo(function Toolbar({
         setFilters={setFilters}
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
+        child={child}
       />
     </div>
   )

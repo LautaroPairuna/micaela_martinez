@@ -11,8 +11,29 @@ type FkSelectP = {
   onChange: (v: string) => void
 }
 
+// Normalizadores para admitir tanto camelCase como snake_case
+function toCamelFK(key: string): string {
+  if (!key) return key
+  if (!key.includes('_')) return key
+  return key
+    .toLowerCase()
+    .replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+    .replace(/Id$/, 'Id')
+}
+function toSnakeFK(key: string): string {
+  if (!key) return key
+  if (key.includes('_')) return key.toLowerCase()
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/_i_d$/, '_id')
+    .toLowerCase()
+}
+
 export function FkSelect({ col, value, fixed, onChange }: FkSelectP) {
-  const cfg: FkCfg | undefined = (fkConfig as Record<string, FkCfg>)[col]
+  // Intentar resolver config por camelCase primero y luego por snake_case
+  const camelKey = toCamelFK(col)
+  const snakeKey = toSnakeFK(col)
+  const cfg: FkCfg | undefined = (fkConfig as Record<string, FkCfg>)[camelKey] || (fkConfig as Record<string, FkCfg>)[snakeKey]
 
   // Hook SIEMPRE llamado (clave vacía => SWR no fetch)
   const { options, isLoading } = useCatalog(cfg?.resource ?? '')
@@ -28,7 +49,7 @@ export function FkSelect({ col, value, fixed, onChange }: FkSelectP) {
       <input
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white shadow-sm"
+        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 shadow-sm"
       />
     )
   }
@@ -50,7 +71,7 @@ export function FkSelect({ col, value, fixed, onChange }: FkSelectP) {
     <select
       value={value ?? ''}
       onChange={e => onChange(e.target.value)}
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white shadow-sm"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 shadow-sm"
     >
       <option value="" disabled={isLoading}>
         {isLoading ? 'Cargando…' : '— Selecciona —'}

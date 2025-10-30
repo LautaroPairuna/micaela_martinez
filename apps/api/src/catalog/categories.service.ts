@@ -46,7 +46,7 @@ export class CategoriesService {
   async getChildrenCount(parentId: string): Promise<number> {
     return await this.prisma.categoria.count({
       where: {
-        parentId: parentId,
+        parentId: Number(parentId),
         activa: true,
       },
     });
@@ -61,7 +61,7 @@ export class CategoriesService {
     const counts = await this.prisma.categoria.groupBy({
       by: ['parentId'],
       where: {
-        parentId: { in: parentIds },
+        parentId: { in: parentIds.map(id => Number(id)) },
         activa: true,
       },
       _count: {

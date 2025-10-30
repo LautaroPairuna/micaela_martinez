@@ -66,7 +66,7 @@ export class AuditService {
           
           // Si encontramos un admin, usamos su ID
           if (adminUser) {
-            userId = adminUser.id;
+            userId = String(adminUser.id);
           } else {
             // Si no hay admin, omitimos el registro de auditoría
             this.logger.warn('No se pudo registrar auditoría: no hay userId válido y no se encontró usuario admin');
@@ -78,9 +78,16 @@ export class AuditService {
           return;
         }
       } else {
+        // Validar que userId es un número válido antes de hacer la consulta
+        const userIdNumber = Number(userId);
+        if (isNaN(userIdNumber) || userIdNumber <= 0) {
+          this.logger.warn(`No se pudo registrar auditoría: userId inválido '${userId}'`);
+          return;
+        }
+        
         // Verificar que el usuario existe
         const userExists = await this.prisma.usuario.findUnique({
-          where: { id: userId },
+          where: { id: userIdNumber },
           select: { id: true }
         });
         
@@ -97,7 +104,7 @@ export class AuditService {
           action: data.action,
           oldData: data.oldData || null,
           newData: data.newData || null,
-          userId: userId,
+          userId: Number(userId),
           userAgent: data.userAgent || null,
           ipAddress: data.ipAddress || null,
           endpoint: data.endpoint || null,
@@ -270,7 +277,7 @@ export class AuditService {
    */
   async getAuditLogsByUser(userId: string, limit: number = 50) {
     return this.prisma.auditLog.findMany({
-      where: { userId },
+      where: { userId: Number(userId) },
       take: limit,
       orderBy: { timestamp: 'desc' },
       include: {

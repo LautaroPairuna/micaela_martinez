@@ -11,9 +11,9 @@ const YEAR = new Date().getFullYear();
 export function Footer() {
   const { me, loading } = useSession();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const ig = 'https://instagram.com/micaela.pestanas'
-  const fb = 'https://facebook.com/micaela.pestanas'
-  const tiktok = 'https://tiktok.com/@micaela.pestanas'
+  const ig = 'https://www.instagram.com/micaela_martinez.pestanas/'
+  const fb = 'https://www.facebook.com/profile.php?id=100080133412997'
+  const tiktok = 'https://www.tiktok.com/@micaela_martinez.pestana'
 
   // JSON-LD Organization (sólo Instagram en sameAs)
   const orgJsonLd = {

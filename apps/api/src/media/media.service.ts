@@ -36,31 +36,29 @@ export class MediaService {
 
   // Directorios base para buscar archivos
   private roots(): string[] {
+    const projectRoot = path.resolve(__dirname, '../../..'); // Resuelve a la raíz de /apps/api
     const roots = [
-      // Raíz principal de la API compilada (dist)
-      path.resolve(__dirname, '../../'), // -> apps/api/dist
-
-      // Raíz del proyecto sin compilar (para desarrollo)
-      path.resolve(__dirname, '../../../'), // -> apps/api
-
-      // Raíz absoluta del proyecto (por si acaso)
-      'D:/wamp64/www/mica_pestanas/apps/api',
+      // Raíz de la API donde se encuentra la carpeta public
+      projectRoot,
+      // Directorio de uploads directamente
+      path.join(projectRoot, 'public', 'uploads'),
     ];
 
     // Normalizamos y quitamos duplicados
     const out = Array.from(new Set(roots.map((r) => path.resolve(r))));
+    this.logger.log(`Roots para búsqueda de media: ${out.join(', ')}`);
     return out;
   }
 
   // carpetas candidatas donde pueden estar los videos (simplificado)
   private candidateVideoPaths(filename: string): string[] {
     const roots = this.roots();
+    const videoFilename = decodeURIComponent(filename);
 
     // Estructuras principales que usamos
     const patterns = [
-      ['public', 'uploads', 'media', filename], // apps/api/public/uploads/media/<file> (PRINCIPAL)
-      ['public', 'uploads', 'media', 'leccion', filename],
-      ['public', 'videos', filename], // apps/api/public/videos/<file> (ALTERNATIVA)
+      ['media', videoFilename], // Busca en <root>/media/<file>
+      [videoFilename], // Busca directamente en el root (p.ej. <project>/public/uploads/<file>)
     ];
 
     const paths: string[] = [];
@@ -69,11 +67,18 @@ export class MediaService {
         paths.push(path.resolve(root, ...parts));
       }
     }
-    return Array.from(new Set(paths));
+    const uniquePaths = Array.from(new Set(paths));
+    this.logger.log(`Rutas candidatas para ${filename}: ${uniquePaths.join(', ')}`);
+    return uniquePaths;
   }
 
   private debugListDir(dir: string): void {
-    // Método eliminado - ya no necesitamos logs de depuración
+    try {
+      const items = fs.readdirSync(dir);
+      this.logger.log(`Contenido de ${dir}: ${items.join(', ')}`);
+    } catch (e) {
+      this.logger.warn(`No se pudo leer el directorio ${dir}`);
+    }
   }
 
   private findVideoOr404(filename: string): string {
@@ -81,9 +86,36 @@ export class MediaService {
 
     for (const p of candidates) {
       if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+        this.logger.log(`Video encontrado en: ${p}`);
         return p;
       }
     }
+
+    // Fallback: si llega "nombre-basico.mp4" intenta buscar última versión con sufijo -YYYYMMDD-HHMMSS-<rand>
+    try {
+      const base = filename.replace(/\.[^.]+$/, '');
+      const ext  = path.extname(filename) || '.mp4';
+      const roots = this.roots();
+      for (const root of roots) {
+        const dir = path.resolve(root, 'media');
+        if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) continue;
+        const files = fs.readdirSync(dir).filter((f) => f.startsWith(`${base}-`) && f.toLowerCase().endsWith(ext.toLowerCase()));
+        if (files.length > 0) {
+          // Elegimos la última por orden lexicográfico (suele contener timestamp)
+          const chosen = files.sort().pop() as string;
+          const full = path.resolve(dir, chosen);
+          if (fs.existsSync(full) && fs.statSync(full).isFile()) {
+            this.logger.warn(`Video no encontrado exacto: ${filename}. Usando coincidencia por prefijo: ${chosen}`);
+            return full;
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Fallback por prefijo falló para ${filename}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    this.logger.error(`Video no encontrado: ${filename}. Rutas buscadas: ${candidates.join(', ')}`);
+    this.debugListDir(path.resolve(__dirname, '../../..', 'public', 'uploads', 'media'));
     throw new NotFoundException('Video no encontrado');
   }
 

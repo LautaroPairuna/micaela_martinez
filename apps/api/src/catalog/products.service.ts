@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Producto } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../common/cache/cache.service';
 import { QueryProductDto } from './dto/query-product.dto';
 import { getSkipTake } from '../common/utils/pagination';
 import { ImageUrlUtil } from '../common/utils/image-url.util';
@@ -30,27 +31,48 @@ function mapSort(
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cacheService: CacheService,
+  ) {}
 
   async list(dto: QueryProductDto) {
+    // ✅ Implementar caché para consultas de productos del catálogo
+    const cacheKey = this.cacheService.generateCatalogKey(
+      dto.page || 1,
+      dto.perPage || 12,
+      dto.q,
+      dto.marca,
+      dto.categoria,
+      dto.minPrice,
+      dto.maxPrice,
+      dto.sort,
+    );
+
+    // Intentar obtener del caché primero
+    const cachedResult = this.cacheService.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+
     const { page, perPage, q, marca, categoria, minPrice, maxPrice, sort } =
       dto;
     const { skip, take } = getSkipTake(page, perPage);
 
     // Resolver marca/categoría como slug o id
-    let marcaId: string | undefined;
+    let marcaId: number | undefined;
     if (marca) {
       const m = await this.prisma.marca.findFirst({
-        where: { OR: [{ id: marca }, { slug: marca }] },
+        where: { OR: [{ id: Number(marca) }, { slug: marca }] },
       });
       marcaId = m?.id;
       if (!marcaId) return { items: [], meta: { total: 0, page, perPage } };
     }
 
-    let categoriaId: string | undefined;
+    let categoriaId: number | undefined;
     if (categoria) {
       const c = await this.prisma.categoria.findFirst({
-        where: { OR: [{ id: categoria }, { slug: categoria }] },
+        where: { OR: [{ id: Number(categoria) }, { slug: categoria }] },
       });
       categoriaId = c?.id;
       if (!categoriaId) return { items: [], meta: { total: 0, page, perPage } };
@@ -107,10 +129,15 @@ export class ProductsService {
       })),
     }));
 
-    return {
+    const result = {
       items: transformedItems,
       meta: { total, page, perPage, pages: Math.ceil(total / perPage!) },
     };
+
+    // ✅ Guardar resultado en caché (TTL: 5 minutos para catálogo público)
+    this.cacheService.set(cacheKey, result, 300000);
+
+    return result;
   }
 
   async facets(dto: QueryProductDto) {
@@ -129,20 +156,20 @@ export class ProductsService {
     const whereForBrands: Prisma.ProductoWhereInput = { ...baseWhere };
     if (categoria) {
       const c = await this.prisma.categoria.findFirst({
-        where: { OR: [{ id: categoria }, { slug: categoria }] },
+        where: { OR: [{ id: Number(categoria) }, { slug: categoria }] },
       });
       if (c) whereForBrands.categoriaId = c.id;
-      else whereForBrands.categoriaId = '__none__';
+      else whereForBrands.categoriaId = -1; // Usando -1 en lugar de '__none__'
     }
 
     // filtrar por marca para facetear categorías
     const whereForCategories: Prisma.ProductoWhereInput = { ...baseWhere };
     if (marca) {
       const m = await this.prisma.marca.findFirst({
-        where: { OR: [{ id: marca }, { slug: marca }] },
+        where: { OR: [{ id: Number(marca) }, { slug: marca }] },
       });
       if (m) whereForCategories.marcaId = m.id;
-      else whereForCategories.marcaId = '__none__';
+      else whereForCategories.marcaId = -1; // Usando -1 en lugar de '__none__'
     }
 
     const byBrand = await this.prisma.producto.groupBy({
@@ -150,7 +177,7 @@ export class ProductsService {
       where: whereForBrands,
       _count: { _all: true },
     });
-    const brandIds = byBrand.map((b) => b.marcaId).filter(Boolean) as string[];
+    const brandIds = byBrand.map((b) => b.marcaId).filter(Boolean) as number[];
     const brands = brandIds.length
       ? await this.prisma.marca.findMany({ where: { id: { in: brandIds } } })
       : [];
@@ -172,7 +199,7 @@ export class ProductsService {
     });
     const categoryIds = byCategory
       .map((c) => c.categoriaId)
-      .filter(Boolean) as string[];
+      .filter(Boolean) as number[];
     const categories = categoryIds.length
       ? await this.prisma.categoria.findMany({
           where: { id: { in: categoryIds } },

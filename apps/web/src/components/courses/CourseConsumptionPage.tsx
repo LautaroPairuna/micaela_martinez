@@ -171,8 +171,6 @@ export function CourseConsumptionPage({
         <CoursePlayer
           course={adaptedCourse}
           enrollment={enrollment}
-          currentLessonId={leccionSlug}
-          currentModuleId={moduloSlug}
         />
       </div>
     );

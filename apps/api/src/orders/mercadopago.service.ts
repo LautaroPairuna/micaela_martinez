@@ -88,29 +88,29 @@ export class MercadoPagoService {
     subscriptionData: MercadoPagoSubscriptionData,
   ): Promise<any> {
     try {
-      // Crear plan de suscripción
-      const planData = {
+      // Suscripción SIN plan asociado, con pago autorizado
+      // Docs: POST /preapproval con card_token_id y status="authorized"
+      const preapprovalPayload = {
         reason: subscriptionData.description,
+        external_reference: subscriptionData.external_reference,
+        payer_email: subscriptionData.payer.email,
+        card_token_id: subscriptionData.token,
         auto_recurring: {
           frequency: subscriptionData.frequency,
           frequency_type: subscriptionData.frequency_type,
           transaction_amount: subscriptionData.transaction_amount,
           currency_id: 'ARS',
         },
-        payment_methods_allowed: {
-          payment_types: [{ id: 'credit_card' }],
-          payment_methods: [{ id: subscriptionData.payment_method_id }],
-        },
         back_url:
           this.configService.get<string>('FRONTEND_URL') ||
           'http://localhost:3000',
-        external_reference: subscriptionData.external_reference,
-        payer_email: subscriptionData.payer.email,
+        status: 'authorized',
       };
 
-      // Configurar idempotency key único
+      // Configurar idempotency key único por request
+      const idemKey = `subscription-${preapprovalPayload.external_reference}-${Date.now()}`;
       if (this.client.options) {
-        this.client.options.idempotencyKey = `subscription-${subscriptionData.external_reference}-${Date.now()}`;
+        this.client.options.idempotencyKey = idemKey;
       }
 
       // Usar la API de suscripciones de MercadoPago
@@ -119,19 +119,33 @@ export class MercadoPagoService {
         headers: {
           Authorization: `Bearer ${this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN')}`,
           'Content-Type': 'application/json',
+          'X-Idempotency-Key': idemKey,
         },
-        body: JSON.stringify(planData),
+        body: JSON.stringify(preapprovalPayload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorMsg = 'Error desconocido';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData?.message || errorData?.error || JSON.stringify(errorData);
+        } catch {}
         throw new HttpException(
-          `Error al crear suscripción: ${errorData.message || 'Error desconocido'}`,
+          `Error al crear suscripción: ${errorMsg}`,
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      return await response.json();
+      const result = await response.json();
+      // Log mínimo para trazabilidad (no loguear datos sensibles)
+      try {
+        console.log('MP preapproval created:', {
+          id: result?.id,
+          status: result?.status,
+          external_reference: result?.external_reference,
+        });
+      } catch {}
+      return result;
     } catch (error: any) {
       if (error instanceof HttpException) {
         throw error;
@@ -152,8 +166,9 @@ export class MercadoPagoService {
   async cancelSubscription(subscriptionId: string): Promise<any> {
     try {
       // Configurar idempotency key único
+      const idemKey = `cancel-subscription-${subscriptionId}-${Date.now()}`;
       if (this.client.options) {
-        this.client.options.idempotencyKey = `cancel-subscription-${subscriptionId}-${Date.now()}`;
+        this.client.options.idempotencyKey = idemKey;
       }
 
       // Usar la API de suscripciones de MercadoPago para cancelar
@@ -164,6 +179,7 @@ export class MercadoPagoService {
           headers: {
             Authorization: `Bearer ${this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN')}`,
             'Content-Type': 'application/json',
+            'X-Idempotency-Key': idemKey,
           },
           body: JSON.stringify({
             status: 'cancelled',

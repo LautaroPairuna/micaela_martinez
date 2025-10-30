@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import useSWR from 'swr'
 import { adminApi } from '@/lib/sdk/adminApi'
 import { getForeignKey } from '../utils/foreignKeys'
+import { useAllTableUpdates } from '@/hooks/useTableUpdates'
 
 /* ───────────────────────── Tipos auxiliares ───────────────────────── */
 
@@ -135,7 +136,7 @@ export function useMultipleChildCounts(
           .join(',')}`
       : null
 
-  const { data, error, isLoading } = useSWR<Record<Id, Record<string, number>>>(
+  const { data, error, isLoading, mutate } = useSWR<Record<Id, Record<string, number>>>(
     cacheKey,
     async () => {
       // Preparar requests para el endpoint batch
@@ -233,6 +234,18 @@ export function useMultipleChildCounts(
       dedupingInterval: 15000,
     }
   )
+
+  // Integrar actualizaciones CRUD en tiempo real
+  const refreshCounts = useCallback(() => {
+    mutate()
+  }, [mutate])
+
+  // Suscribirse a actualizaciones de las tablas hijas
+  // IMPORTANTE: Los Hooks deben llamarse siempre, no condicionalmente
+  useAllTableUpdates(refreshCounts, {
+    tables: enabled && childTables.length > 0 ? childTables : [],
+    debounce: 500
+  })
 
   return {
     counts: data || {},

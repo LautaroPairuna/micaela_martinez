@@ -6,11 +6,12 @@ import { AdminService } from './admin.service';
 import { AuditService } from './audit.service';
 import { AdminAuditInterceptor } from './interceptors/audit.interceptor';
 import { HierarchicalDetectorService } from './utils/hierarchical-detector.service';
+import { WebsocketsModule } from '../websockets/websockets.module';
 
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule, ConfigModule],
+  imports: [PrismaModule, ConfigModule, WebsocketsModule],
   controllers: [AdminController],
   providers: [
     AdminService,

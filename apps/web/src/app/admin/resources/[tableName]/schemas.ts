@@ -62,7 +62,6 @@ export const ProductoSchema = z.object({
   id: zCuid.optional(),
   slug: z.string().min(1),
   titulo: z.string().min(1),
-  sku: z.string().min(1),
   precio: zInt.nonnegative(),
   stock: zInt.nonnegative().default(0),
   publicado: zBool.default(false),

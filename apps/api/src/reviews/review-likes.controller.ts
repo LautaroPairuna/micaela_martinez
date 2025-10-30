@@ -21,7 +21,7 @@ export class ReviewLikesController {
       tipo: dto.tipo,
     };
 
-    return this.reviewLikesService.toggleLike(user.sub, createDto);
+    return this.reviewLikesService.toggleLike(String(user.sub), createDto);
   }
 
   @Get(':id/likes')
@@ -35,7 +35,7 @@ export class ReviewLikesController {
     @Param('id') resenaId: string,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.reviewLikesService.getUserLike(resenaId, user.sub);
+    return this.reviewLikesService.getUserLike(resenaId, String(user.sub));
   }
 
   @Get(':id/details')
@@ -44,6 +44,6 @@ export class ReviewLikesController {
     @CurrentUser() user?: JwtUser,
   ) {
     const usuarioId = user?.sub;
-    return this.reviewLikesService.getResenaWithLikes(resenaId, usuarioId);
+    return this.reviewLikesService.getResenaWithLikes(resenaId, usuarioId ? String(usuarioId) : undefined);
   }
 }

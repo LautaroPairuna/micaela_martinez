@@ -57,10 +57,24 @@ async function bootstrap() {
   // API prefix
   app.setGlobalPrefix('api');
 
-  // CORS - Configuración simplificada
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['*'];
+  // CORS - Configuración robusta
+  const whitelist = (process.env.CORS_ORIGIN || '').split(',').filter(Boolean);
+  console.log(`Orígenes CORS permitidos: ${whitelist.join(', ') || 'Cualquiera (fallback)'}`);
+
   app.enableCors({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+      // Permitir solicitudes sin origen (como Postman, apps móviles o curl)
+      if (!origin) {
+        return callback(null, true);
+      }
+      // Si la whitelist está vacía, permitir cualquier origen (útil para desarrollo local)
+      // O si el origen está en la whitelist
+      if (whitelist.length === 0 || whitelist.indexOf(origin) !== -1) {
+        callback(null, true); // Refleja el origen solicitado
+      } else {
+        callback(new Error('Origen no permitido por la política CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Disposition'],

@@ -26,6 +26,9 @@ async function verifyAdminAuth() {
   }
 }
 
+export const dynamic = 'force-dynamic'; // Deshabilitar cacheo para todas las rutas
+export const revalidate = 0; // No cachear
+
 /**
  * Proxy para endpoints administrativos
  * Redirige todas las llamadas a /api/admin/* al backend real

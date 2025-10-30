@@ -1,6 +1,6 @@
 // src/auth/types/jwt-user.ts
 export type JwtPayload = {
-  sub: string;
+  sub: number;
   email?: string;
   name?: string;
   roles?: string[];
@@ -9,7 +9,7 @@ export type JwtPayload = {
 };
 
 export type JwtUser = {
-  sub: string;
+  sub: number;
   email?: string;
   name?: string;
   roles: string[];

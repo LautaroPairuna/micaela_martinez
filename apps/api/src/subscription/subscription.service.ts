@@ -64,8 +64,8 @@ export class SubscriptionService {
   async checkCourseAccess(userId: string, courseId: string): Promise<boolean> {
     const enrollment = await this.prisma.inscripcion.findFirst({
       where: {
-        usuarioId: userId,
-        cursoId: courseId,
+        usuarioId: Number(userId),
+        cursoId: Number(courseId),
       },
     });
 
@@ -90,7 +90,7 @@ export class SubscriptionService {
     // Buscar órdenes de suscripción activas del usuario
     const orden = await this.prisma.orden.findFirst({
       where: {
-        usuarioId: userId,
+        usuarioId: Number(userId),
         esSuscripcion: true,
         suscripcionActiva: true,
       },
@@ -152,8 +152,8 @@ export class SubscriptionService {
   async getSubscriptionInfo(userId: string, courseId: string) {
     const enrollment = await this.prisma.inscripcion.findFirst({
       where: {
-        usuarioId: userId,
-        cursoId: courseId,
+        usuarioId: Number(userId),
+        cursoId: Number(courseId),
       },
       include: {
         curso: {
@@ -174,8 +174,8 @@ export class SubscriptionService {
       return {
         hasAccess: true,
         isPermanent: true,
-        courseName: enrollment.curso.titulo,
-        courseSlug: enrollment.curso.slug,
+        courseName: 'Curso no disponible',
+        courseSlug: 'curso-no-disponible',
       };
     }
 
@@ -195,8 +195,8 @@ export class SubscriptionService {
       orderId: progreso.subscription.orderId,
       subscriptionId: progreso.subscription.subscriptionId,
       isActive: progreso.subscription.isActive !== false, // Si no está definido, asumimos que está activa
-      courseName: enrollment.curso.titulo,
-      courseSlug: enrollment.curso.slug,
+      courseName: 'Curso no disponible',
+      courseSlug: 'curso-no-disponible',
     };
   }
 
@@ -211,7 +211,7 @@ export class SubscriptionService {
           progreso: {
             equals: JSON.stringify({ subscription: { orderId } }),
           },
-          usuarioId: userId,
+          usuarioId: Number(userId),
         },
       });
 

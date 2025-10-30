@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -69,7 +67,7 @@ enum TipoNotificacion {
  */
 
 model Usuario {
-  id                String    @id @default(cuid()) @db.Char(25)
+  id                Int       @id @default(autoincrement())
   email             String    @unique @db.VarChar(191)
   nombre            String?   @db.VarChar(255)
   passwordHash      String    @map("password_hash") @db.VarChar(72)
@@ -92,12 +90,11 @@ model Usuario {
   auditLogs                AuditLog[]
   pagosSuscripcion         PagoSuscripcion[]
 
-
   @@map("usuario")
 }
 
 model Role {
-  id        String       @id @default(cuid()) @db.Char(25)
+  id        Int          @id @default(autoincrement())
   slug      String       @unique @db.VarChar(64)
   name      String       @db.VarChar(128)
   createdAt DateTime     @default(now()) @map("created_at")
@@ -107,8 +104,8 @@ model Role {
 }
 
 model UsuarioRol {
-  usuarioId String @map("usuario_id") @db.Char(25)
-  roleId    String @map("role_id") @db.Char(25)
+  usuarioId Int    @map("usuario_id")
+  roleId    Int    @map("role_id")
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -119,9 +116,9 @@ model UsuarioRol {
 }
 
 model Favorito {
-  id         String   @id @default(cuid()) @db.Char(25)
-  usuarioId  String   @map("usuario_id") @db.Char(25)
-  productoId String   @map("producto_id") @db.Char(25)
+  id         Int      @id @default(autoincrement())
+  usuarioId  Int      @map("usuario_id")
+  productoId Int      @map("producto_id")
   creadoEn   DateTime @default(now()) @map("creado_en")
 
   usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -137,14 +134,14 @@ model Favorito {
  */
 
 model Curso {
-  id            String  @id @default(cuid()) @db.Char(25)
-  slug          String  @unique @db.VarChar(128)
-  titulo        String  @db.VarChar(255)
+  id            Int       @id @default(autoincrement())
+  slug          String    @unique @db.VarChar(128)
+  titulo        String    @db.VarChar(255)
   resumen       String?
-  descripcionMD String? @map("descripcion_md")
-  requisitos    String? @db.Text
+  descripcionMD String?   @map("descripcion_md")
+  requisitos    String?   @db.Text
   precio        Int
-  publicado     Boolean @default(false)
+  publicado     Boolean   @default(false)
 
   nivel        NivelCurso @default(BASICO)
   portada      String?    @map("portada_archivo") @db.VarChar(255)
@@ -160,7 +157,7 @@ model Curso {
   inscripciones Inscripcion[]
   borradores    ResenaBorrador[]
 
-  instructorId String?  @map("instructor_id") @db.Char(25)
+  instructorId Int?     @map("instructor_id")
   instructor   Usuario? @relation("CursoInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
 
   @@index([publicado, destacado, creadoEn])
@@ -169,9 +166,9 @@ model Curso {
 }
 
 model Inscripcion {
-  id            String            @id @default(cuid()) @db.Char(25)
-  usuarioId     String            @map("usuario_id") @db.Char(25)
-  cursoId       String            @map("curso_id") @db.Char(25)
+  id            Int               @id @default(autoincrement())
+  usuarioId     Int               @map("usuario_id")
+  cursoId       Int               @map("curso_id")
   estado        EstadoInscripcion @default(ACTIVADA)
   progreso      Json
   creadoEn      DateTime          @default(now()) @map("creado_en")
@@ -184,12 +181,13 @@ model Inscripcion {
   @@map("inscripcion")
 }
 
+
 model Modulo {
-  id       String  @id @default(cuid()) @db.Char(25)
-  cursoId  String  @map("curso_id") @db.Char(25)
+  id       Int     @id @default(autoincrement())
+  cursoId  Int     @map("curso_id")
   titulo   String
   orden    Int
-  parentId String? @map("parent_id") @db.Char(25)
+  parentId Int?    @map("parent_id")
 
   curso     Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
   parent    Modulo?   @relation("ModuloSelf", fields: [parentId], references: [id], onDelete: SetNull)
@@ -201,11 +199,9 @@ model Modulo {
   @@map("modulo")
 }
 
-
-
 model Leccion {
-  id          String    @id @default(cuid()) @db.Char(25)
-  moduloId    String      @map("modulo_id") @db.Char(25)
+  id          Int         @id @default(autoincrement())
+  moduloId    Int         @map("modulo_id")
   titulo      String
   duracionS   Int         @default(0) @map("duracion_s")
   rutaSrc     String?     @map("ruta_src")
@@ -225,10 +221,9 @@ model Leccion {
  */
 
 model Producto {
-  id            String   @id @default(cuid()) @db.Char(25)
+  id            Int      @id @default(autoincrement())
   slug          String   @unique @db.VarChar(128)
   titulo        String   @db.VarChar(255)
-  sku           String   @unique @db.VarChar(64)
   precio        Int
   stock         Int      @default(0)
   publicado     Boolean  @default(false)
@@ -240,8 +235,8 @@ model Producto {
   ratingConteo  Int      @default(0) @map("rating_conteo")
   creadoEn      DateTime @default(now()) @map("creado_en")
 
-  marcaId     String? @map("marca_id") @db.Char(25)
-  categoriaId String? @map("categoria_id") @db.Char(25)
+  marcaId     Int? @map("marca_id")
+  categoriaId Int? @map("categoria_id")
 
   marca      Marca?           @relation(fields: [marcaId], references: [id], onDelete: SetNull)
   categoria  Categoria?       @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
@@ -250,16 +245,23 @@ model Producto {
   favoritos  Favorito[]
   borradores ResenaBorrador[]
 
-  @@index([publicado, destacado, creadoEn])
-  @@index([marcaId])
-  @@index([categoriaId])
-  @@fulltext([titulo])
+  // ✅ Índices optimizados para consultas frecuentes
+  @@index([publicado, destacado, creadoEn]) // Consultas de productos publicados y destacados
+  @@index([publicado, precio]) // Filtros por precio en productos publicados
+  @@index([publicado, marcaId, precio]) // Filtros combinados marca + precio
+  @@index([publicado, categoriaId, precio]) // Filtros combinados categoría + precio
+  @@index([publicado, marcaId, categoriaId]) // Filtros combinados marca + categoría
+  @@index([marcaId]) // Consultas por marca
+  @@index([categoriaId]) // Consultas por categoría
+  @@index([ratingProm, ratingConteo]) // Ordenamiento por rating
+  @@index([stock]) // Consultas de disponibilidad
+  @@fulltext([titulo]) // Búsqueda de texto completo
   @@map("producto")
 }
 
 model ProductoImagen {
-  id         String  @id @default(cuid()) @db.Char(25)
-  productoId String  @map("producto_id") @db.Char(25)
+  id         Int     @id @default(autoincrement())
+  productoId Int     @map("producto_id")
   archivo    String  @db.VarChar(255)
   alt        String? @db.VarChar(255)
   orden      Int     @default(0)
@@ -271,7 +273,7 @@ model ProductoImagen {
 }
 
 model Marca {
-  id       String   @id @default(cuid()) @db.Char(25)
+  id       Int      @id @default(autoincrement())
   slug     String   @unique @db.VarChar(128)
   nombre   String   @db.VarChar(191)
   imagen   String?  @map("imagen_archivo") @db.VarChar(255)
@@ -286,7 +288,7 @@ model Marca {
 }
 
 model Categoria {
-  id          String   @id @default(cuid()) @db.Char(25)
+  id          Int      @id @default(autoincrement())
   slug        String   @unique @db.VarChar(128)
   nombre      String   @db.VarChar(191)
   descripcion String?  @db.VarChar(512)
@@ -295,7 +297,7 @@ model Categoria {
   orden       Int      @default(0)
   creadoEn    DateTime @default(now()) @map("creado_en")
 
-  parentId String?     @map("parent_id") @db.Char(25)
+  parentId Int?        @map("parent_id")
   parent   Categoria?  @relation("CategoriaSelf", fields: [parentId], references: [id], onDelete: SetNull)
   hijos    Categoria[] @relation("CategoriaSelf")
 
@@ -310,8 +312,8 @@ model Categoria {
  */
 
 model Orden {
-  id                        String      @id @default(cuid()) @db.Char(25)
-  usuarioId                 String      @map("usuario_id") @db.Char(25)
+  id                        Int         @id @default(autoincrement())
+  usuarioId                 Int         @map("usuario_id")
   estado                    EstadoOrden @default(PENDIENTE)
   total                     Int
   moneda                    String      @default("ARS")
@@ -325,8 +327,8 @@ model Orden {
   suscripcionTipoFrecuencia String?     @map("suscripcion_tipo_frecuencia")
   metadatos                 Json?
 
-  direccionEnvioId       String? @map("direccion_envio_id") @db.Char(25)
-  direccionFacturacionId String? @map("direccion_facturacion_id") @db.Char(25)
+  direccionEnvioId       Int? @map("direccion_envio_id")
+  direccionFacturacionId Int? @map("direccion_facturacion_id")
 
   direccionEnvio       Direccion? @relation("OrdenEnvio", fields: [direccionEnvioId], references: [id], onDelete: SetNull)
   direccionFacturacion Direccion? @relation("OrdenFacturacion", fields: [direccionFacturacionId], references: [id], onDelete: SetNull)
@@ -344,10 +346,10 @@ model Orden {
 }
 
 model ItemOrden {
-  id             String        @id @default(cuid()) @db.Char(25)
-  ordenId        String        @map("orden_id") @db.Char(25)
+  id             Int           @id @default(autoincrement())
+  ordenId        Int           @map("orden_id")
   tipo           TipoItemOrden
-  refId          String        @map("ref_id") @db.Char(25)
+  refId          Int           @map("ref_id") // ← ahora Int: productoId o cursoId según tipo
   titulo         String        @db.VarChar(255)
   cantidad       Int           @default(1)
   precioUnitario Int           @map("precio_unitario")
@@ -364,9 +366,9 @@ model ItemOrden {
  */
 
 model PagoSuscripcion {
-  id             String   @id @default(cuid()) @db.Char(25)
-  ordenId        String   @map("orden_id") @db.Char(25)
-  usuarioId      String   @map("usuario_id") @db.Char(25)
+  id             Int      @id @default(autoincrement())
+  ordenId        Int      @map("orden_id")
+  usuarioId      Int      @map("usuario_id")
   referenciaPago String   @map("referencia_pago")
   monto          Decimal  @db.Decimal(10, 2)
   estado         String
@@ -390,8 +392,8 @@ model PagoSuscripcion {
  */
 
 model Direccion {
-  id             String  @id @default(cuid()) @db.Char(25)
-  usuarioId      String  @map("usuario_id") @db.Char(25)
+  id             Int     @id @default(autoincrement())
+  usuarioId      Int     @map("usuario_id")
   usuario        Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   etiqueta       String? @db.VarChar(64)
   nombre         String  @db.VarChar(191)
@@ -420,7 +422,7 @@ model Direccion {
  */
 
 model Slider {
-  id            String   @id @default(cuid()) @db.Char(25)
+  id            Int      @id @default(autoincrement())
   titulo        String   @db.VarChar(255)
   alt           String   @db.VarChar(255)
   archivo       String   @db.VarChar(255)
@@ -438,10 +440,10 @@ model Slider {
  */
 
 model Resena {
-  id         String   @id @default(cuid()) @db.Char(25)
-  cursoId    String?  @map("curso_id") @db.Char(25)
-  productoId String?  @map("producto_id") @db.Char(25)
-  usuarioId  String   @map("usuario_id") @db.Char(25)
+  id         Int      @id @default(autoincrement())
+  cursoId    Int?     @map("curso_id")
+  productoId Int      @map("producto_id")
+  usuarioId  Int      @map("usuario_id")
   puntaje    Int
   comentario String?
   creadoEn   DateTime @default(now()) @map("creado_en")
@@ -461,9 +463,9 @@ model Resena {
 }
 
 model ResenaLike {
-  id        String   @id @default(cuid()) @db.Char(25)
-  resenaId  String   @map("resena_id") @db.Char(25)
-  usuarioId String   @map("usuario_id") @db.Char(25)
+  id        Int      @id @default(autoincrement())
+  resenaId  Int      @map("resena_id")
+  usuarioId Int      @map("usuario_id")
   tipo      TipoLike
   creadoEn  DateTime @default(now()) @map("creado_en")
 
@@ -477,10 +479,10 @@ model ResenaLike {
 }
 
 model ResenaRespuesta {
-  id            String   @id @default(cuid()) @db.Char(25)
-  resenaId      String   @map("resena_id") @db.Char(25)
-  usuarioId     String   @map("usuario_id") @db.Char(25)
-  parentId      String?  @map("parent_id") @db.Char(25)
+  id            Int      @id @default(autoincrement())
+  resenaId      Int      @map("resena_id")
+  usuarioId     Int      @map("usuario_id")
+  parentId      Int?     @map("parent_id")
   contenido     String   @db.Text
   eliminado     Boolean  @default(false)
   creadoEn      DateTime @default(now()) @map("creado_en")
@@ -498,8 +500,8 @@ model ResenaRespuesta {
 }
 
 model Notificacion {
-  id        String           @id @default(cuid()) @db.Char(25)
-  usuarioId String           @map("usuario_id") @db.Char(25)
+  id        Int              @id @default(autoincrement())
+  usuarioId Int              @map("usuario_id")
   tipo      TipoNotificacion
   titulo    String           @db.VarChar(255)
   mensaje   String           @db.Text
@@ -518,18 +520,18 @@ model Notificacion {
 }
 
 model PreferenciasNotificacion {
-  id        String @id @default(cuid()) @db.Char(25)
-  usuarioId String @unique @map("usuario_id") @db.Char(25)
+  id        Int  @id @default(autoincrement())
+  usuarioId Int  @unique @map("usuario_id")
 
-  nuevaResena            Boolean @default(true) @map("nueva_resena")
-  respuestaResena        Boolean @default(true) @map("respuesta_resena")
-  actualizacionesSistema Boolean @default(true) @map("actualizaciones_sistema")
+  nuevaResena            Boolean @default(true)  @map("nueva_resena")
+  respuestaResena        Boolean @default(true)  @map("respuesta_resena")
+  actualizacionesSistema Boolean @default(true)  @map("actualizaciones_sistema")
   mantenimiento          Boolean @default(true)
-  reporteContenido       Boolean @default(true) @map("reporte_contenido")
-  contenidoPendiente     Boolean @default(true) @map("contenido_pendiente")
+  reporteContenido       Boolean @default(true)  @map("reporte_contenido")
+  contenidoPendiente     Boolean @default(true)  @map("contenido_pendiente")
 
   resumenDiario              Boolean @default(false) @map("resumen_diario")
-  notificacionesInstantaneas Boolean @default(true) @map("notificaciones_instantaneas")
+  notificacionesInstantaneas Boolean @default(true)  @map("notificaciones_instantaneas")
 
   creadoEn      DateTime @default(now()) @map("creado_en")
   actualizadoEn DateTime @updatedAt @map("actualizado_en")
@@ -540,10 +542,10 @@ model PreferenciasNotificacion {
 }
 
 model ResenaBorrador {
-  id            String   @id @default(cuid()) @db.Char(25)
-  usuarioId     String   @map("usuario_id") @db.Char(25)
-  cursoId       String?  @map("curso_id") @db.Char(25)
-  productoId    String?  @map("producto_id") @db.Char(25)
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int      @map("usuario_id")
+  cursoId       Int?     @map("curso_id")
+  productoId    Int?     @map("producto_id")
   puntaje       Int?
   comentario    String?  @db.Text
   creadoEn      DateTime @default(now()) @map("creado_en")
@@ -562,16 +564,16 @@ model ResenaBorrador {
 }
 
 model AuditLog {
-  id        String   @id @default(cuid()) @db.Char(25)
+  id        Int      @id @default(autoincrement())
   tableName String   @map("table_name") @db.VarChar(50)
-  recordId  String   @map("record_id") @db.VarChar(50)
+  recordId  String   @map("record_id")  @db.VarChar(50)
   action    String   @db.VarChar(20)
   oldData   Json?    @map("old_data")
   newData   Json?    @map("new_data")
-  userId    String   @map("user_id") @db.Char(25)
+  userId    Int      @map("user_id")
   userAgent String?  @map("user_agent") @db.Text
   ipAddress String?  @map("ip_address") @db.VarChar(45)
-  endpoint  String?  @db.VarChar(255)
+  endpoint  String?  @map("endpoint")   @db.VarChar(255)
   timestamp DateTime @default(now())
 
   user Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)

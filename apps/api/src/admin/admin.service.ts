@@ -5,9 +5,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { CacheService } from '../common/cache/cache.service';
 import { HierarchicalDetectorService } from './utils/hierarchical-detector.service';
 import { AuditService } from './audit.service';
 import { ActivityType, ActivitySource } from './activity.dto';
+import { WebsocketGateway } from '../websockets/websocket.gateway';
 
 @Injectable()
 export class AdminService {
@@ -15,7 +17,47 @@ export class AdminService {
     private prisma: PrismaService,
     private hierarchicalDetector: HierarchicalDetectorService,
     private auditService: AuditService,
+    private websocketGateway: WebsocketGateway,
+    private cacheService: CacheService,
   ) {}
+
+  /**
+   * Intenta convertir el ID proveniente de la URL al tipo correcto.
+   * La mayoría de los modelos usan ID numérico (Int). Si el valor es
+   * numérico, se retorna como Number; de lo contrario, se deja como string.
+   */
+  private coerceId(_resource: string, id: string): number | string {
+    if (id === undefined || id === null) return id as any;
+    const n = Number(id);
+    return Number.isFinite(n) ? n : id;
+  }
+
+  /**
+   * Normaliza el payload de entrada convirtiendo strings numéricos a números
+   * y la cadena 'null' a valor null. Se aplica de forma superficial para evitar
+   * conversiones inesperadas en objetos anidados complejos.
+   */
+  private normalizeDataInput<T = any>(data: T): T {
+    if (!data || typeof data !== 'object') return data;
+    const normalized: Record<string, any> = Array.isArray(data) ? [] : {};
+    for (const [key, value] of Object.entries(data as Record<string, any>)) {
+      if (typeof value === 'string') {
+        if (value === 'null') {
+          normalized[key] = null;
+          continue;
+        }
+        const maybeNum = Number(value);
+        if (value.trim() !== '' && Number.isFinite(maybeNum)) {
+          normalized[key] = maybeNum;
+        } else {
+          normalized[key] = value;
+        }
+      } else {
+        normalized[key] = value;
+      }
+    }
+    return normalized as T;
+  }
 
   // Mapeo de nombres de recursos a modelos de Prisma
   private getModel(resource: string) {
@@ -184,14 +226,31 @@ export class AdminService {
     for (const [key, value] of Object.entries(filters)) {
       if (value === undefined || value === null || value === '') continue;
 
+      // Validación específica para campos jerárquicos
+      if (key === 'parentId' && value !== null) {
+        const numericValue = Number(value);
+        if (isNaN(numericValue)) {
+          console.warn(`Valor inválido para parentId: ${value}, ignorando filtro`);
+          continue;
+        }
+        processedFilters[key] = numericValue;
+        continue;
+      }
+
       // Tratar strings: igualdad para claves tipo ID/slug, contains para el resto
       if (typeof value === 'string') {
         const k = key.toLowerCase();
         const isIdLike = k === 'id' || k.endsWith('id') || k.includes('id');
         const isSlug = k === 'slug' || k.endsWith('slug');
+        
         if (isIdLike || isSlug) {
-          // Igualdad exacta para evitar coincidencias parciales en FKs/IDs/slug
-          processedFilters[key] = value;
+          // Para campos ID, intentar conversión numérica si es apropiado
+          if (isIdLike && !isNaN(Number(value))) {
+            processedFilters[key] = Number(value);
+          } else {
+            // Igualdad exacta para evitar coincidencias parciales en FKs/IDs/slug
+            processedFilters[key] = value;
+          }
         } else {
           // Búsqueda parcial solo para campos de texto no identificadores
           processedFilters[key] = { contains: value };
@@ -204,7 +263,11 @@ export class AdminService {
         processedFilters[key] = value;
       } else if (Array.isArray(value) && value.length > 0) {
         // Para arrays, usar 'in' para múltiples valores
-        processedFilters[key] = { in: value };
+        // Validar que todos los elementos sean del tipo correcto
+        const validValues = value.filter(v => v !== null && v !== undefined && v !== '');
+        if (validValues.length > 0) {
+          processedFilters[key] = { in: validValues };
+        }
       } else if (typeof value === 'object' && value !== null) {
         // Para objetos, asumir que ya están en formato Prisma
         processedFilters[key] = value;
@@ -217,105 +280,146 @@ export class AdminService {
     filters: Record<string, any>,
     processedFilters: any,
   ): Promise<void> {
-    // Verificar si el recurso tiene relaciones jerárquicas
-    const hierarchyInfo =
-      this.hierarchicalDetector.getHierarchicalInfo(resource);
-    if (!hierarchyInfo.hasHierarchy) return;
+    try {
+      // Verificar si el recurso tiene relaciones jerárquicas
+      const hierarchyInfo =
+        this.hierarchicalDetector.getHierarchicalInfo(resource);
+      if (!hierarchyInfo.hasHierarchy) return;
 
-    const {
-      esHija,
-      esPadre,
-      nivelJerarquia,
-      padreId,
-      _directChildrenOnly,
-      _parentSpecific,
-      ...otherFilters
-    } = filters;
-    const model = this.getModel(resource);
+      const {
+        esHija,
+        esPadre,
+        nivelJerarquia,
+        padreId,
+        _directChildrenOnly,
+        _parentSpecific,
+        ...otherFilters
+      } = filters;
+      const model = this.getModel(resource);
 
-    // Log para depuración
-    console.log(
-      `🔍 [DEBUG] processHierarchicalFilters - Resource: ${resource}, Filters:`,
-      JSON.stringify(filters, null, 2),
-    );
+      // Log para depuración
+      console.log(
+        `🔍 [DEBUG] processHierarchicalFilters - Resource: ${resource}, Filters:`,
+        JSON.stringify(filters, null, 2),
+      );
 
-    // Filtro "Es Hija" (tiene padre)
-    if (esHija !== undefined) {
-      const parentField = hierarchyInfo.parentField!;
-      if (esHija === 'true' || esHija === true) {
-        processedFilters[parentField] = { not: null };
-      } else if (esHija === 'false' || esHija === false) {
-        processedFilters[parentField] = null;
-      }
-    }
-
-    // Filtro "Es Padre" (tiene hijos)
-    if (esPadre !== undefined) {
-      const childrenField = hierarchyInfo.childrenField!;
-
-      if (esPadre === 'true' || esPadre === true) {
-        // Buscar registros que tengan al menos un hijo
-        const recordsWithChildren = await model.findMany({
-          where: {
-            [childrenField]: {
-              some: {},
-            },
-          },
-          select: { id: true },
-        });
-
-        const idsWithChildren = recordsWithChildren.map(
-          (record: { id: any }) => record.id,
+      // Validación de campos jerárquicos
+      if (!hierarchyInfo.parentField || !hierarchyInfo.childrenField) {
+        throw new BadRequestException(
+          `Configuración jerárquica incompleta para ${resource}: faltan campos parent/children`
         );
-        if (idsWithChildren.length > 0) {
-          processedFilters.id = { in: idsWithChildren };
+      }
+
+      // Filtro "Es Hija" (tiene padre)
+      if (esHija !== undefined) {
+        const parentField = hierarchyInfo.parentField;
+        if (esHija === 'true' || esHija === true) {
+          processedFilters[parentField] = { not: null };
+        } else if (esHija === 'false' || esHija === false) {
+          processedFilters[parentField] = null;
         } else {
-          // Si no hay registros con hijos, asegurar que no se devuelva nada
-          processedFilters.id = { in: [] };
-        }
-      } else if (esPadre === 'false' || esPadre === false) {
-        // Buscar registros que NO tengan hijos
-        const recordsWithChildren = await model.findMany({
-          where: {
-            [childrenField]: {
-              some: {},
-            },
-          },
-          select: { id: true },
-        });
-
-        const idsWithChildren = recordsWithChildren.map(
-          (record: { id: any }) => record.id,
-        );
-        if (idsWithChildren.length > 0) {
-          processedFilters.id = { notIn: idsWithChildren };
+          throw new BadRequestException(
+            `Valor inválido para filtro 'esHija': ${esHija}. Debe ser true o false`
+          );
         }
       }
-    }
 
-    // Filtro por padre específico
-    if (padreId !== undefined) {
-      const parentField = hierarchyInfo.parentField!;
-      if (padreId === null || padreId === 'null') {
-        processedFilters[parentField] = null;
-      } else {
-        processedFilters[parentField] = padreId;
+      // Filtro "Es Padre" (tiene hijos)
+      if (esPadre !== undefined) {
+        const childrenField = hierarchyInfo.childrenField;
+
+        if (esPadre === 'true' || esPadre === true) {
+          // Buscar registros que tengan al menos un hijo
+          try {
+            const recordsWithChildren = await model.findMany({
+              where: {
+                [childrenField]: {
+                  some: {},
+                },
+              },
+              select: { id: true },
+            });
+
+            const idsWithChildren = recordsWithChildren.map(
+              (record: { id: any }) => record.id,
+            );
+            if (idsWithChildren.length > 0) {
+              processedFilters.id = { in: idsWithChildren };
+            } else {
+              // Si no hay registros con hijos, asegurar que no se devuelva nada
+              processedFilters.id = { in: [] };
+            }
+          } catch (dbError) {
+            throw new BadRequestException(
+              `Error al consultar registros padre para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`
+            );
+          }
+        } else if (esPadre === 'false' || esPadre === false) {
+          // Buscar registros que NO tengan hijos
+          try {
+            const recordsWithChildren = await model.findMany({
+              where: {
+                [childrenField]: {
+                  some: {},
+                },
+              },
+              select: { id: true },
+            });
+
+            const idsWithChildren = recordsWithChildren.map(
+              (record: { id: any }) => record.id,
+            );
+            if (idsWithChildren.length > 0) {
+              processedFilters.id = { notIn: idsWithChildren };
+            }
+          } catch (dbError) {
+            throw new BadRequestException(
+              `Error al consultar registros sin hijos para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`
+            );
+          }
+        } else {
+          throw new BadRequestException(
+            `Valor inválido para filtro 'esPadre': ${esPadre}. Debe ser true o false`
+          );
+        }
       }
-    }
+
+      // Filtro por padre específico
+      if (padreId !== undefined) {
+        const parentField = hierarchyInfo.parentField;
+        if (padreId === null || padreId === 'null') {
+          processedFilters[parentField] = null;
+        } else {
+          // Validar que el padreId sea un número válido
+          const parentIdNum = typeof padreId === 'string' ? parseInt(padreId, 10) : padreId;
+          if (isNaN(parentIdNum) || parentIdNum <= 0) {
+            throw new BadRequestException(
+              `ID de padre inválido: ${padreId}. Debe ser un número positivo`
+            );
+          }
+          processedFilters[parentField] = parentIdNum;
+        }
+      }
 
     // Filtro por nivel jerárquico (0 = raíz, 1 = primer nivel, etc.)
     if (nivelJerarquia !== undefined) {
       const nivel = parseInt(nivelJerarquia.toString());
-      if (!isNaN(nivel)) {
+      if (isNaN(nivel) || nivel < 0) {
+        throw new BadRequestException(
+          `Nivel jerárquico inválido: ${nivelJerarquia}. Debe ser un número entero no negativo`
+        );
+      }
+
+      try {
         if (nivel === 0) {
           // Nivel 0: elementos raíz (sin padre)
-          const parentField = hierarchyInfo.parentField!;
+          const parentField = hierarchyInfo.parentField;
           processedFilters[parentField] = null;
         } else {
           // Para otros niveles, necesitamos una consulta más compleja
           // Por ahora, implementamos solo nivel 1 (hijos directos de raíz)
           if (nivel === 1) {
-            const parentField = hierarchyInfo.parentField!;
+            const parentField = hierarchyInfo.parentField;
             // Buscar elementos que tengan padre pero cuyos padres no tengan padre
             const rootParents = await model.findMany({
               where: {
@@ -330,8 +434,20 @@ export class AdminService {
             } else {
               processedFilters.id = { in: [] };
             }
+          } else {
+            // Para niveles > 1, por ahora no implementado
+            throw new BadRequestException(
+              `Filtro por nivel jerárquico ${nivel} no implementado. Solo se soportan niveles 0 y 1`
+            );
           }
         }
+      } catch (dbError) {
+        if (dbError instanceof BadRequestException) {
+          throw dbError;
+        }
+        throw new BadRequestException(
+          `Error al procesar filtro de nivel jerárquico para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`
+        );
       }
     }
 
@@ -375,6 +491,17 @@ export class AdminService {
 
     // Agregar otros filtros
     Object.assign(processedFilters, otherFilters);
+    } catch (error) {
+      // Si es una BadRequestException, la re-lanzamos tal como está
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      
+      // Para cualquier otro error, lo envolvemos en una BadRequestException
+      throw new BadRequestException(
+        `Error al procesar filtros jerárquicos para ${resource}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   async findAll(
@@ -386,14 +513,34 @@ export class AdminService {
     sortBy?: string,
     sortDir?: 'asc' | 'desc',
   ) {
+    // ✅ Implementar caché para consultas frecuentes
+    const cacheKey = this.cacheService.generateAdminKey(
+      resource,
+      page,
+      limit,
+      search,
+      filters,
+      sortBy,
+      sortDir,
+    );
+
+    // Intentar obtener del caché primero
+    const cachedResult = this.cacheService.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+
     const model = this.getModel(resource);
     const skip = (page - 1) * limit;
 
     try {
-      console.log(
-        `🔍 [DEBUG] findAll - Resource: ${resource}, Filters:`,
-        JSON.stringify(filters, null, 2),
-      );
+      // ✅ Optimización: Limitar logs de debug solo en desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `🔍 [DEBUG] findAll - Resource: ${resource}, Filters:`,
+          JSON.stringify(filters, null, 2),
+        );
+      }
 
       // Extraer parámetros globales
       const {
@@ -416,7 +563,9 @@ export class AdminService {
 
       // Procesar filtros OR especiales
       if (regularFilters.OR && Array.isArray(regularFilters.OR)) {
-        console.log(`🔍 [DEBUG] Procesando filtros OR para ${resource}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🔍 [DEBUG] Procesando filtros OR para ${resource}`);
+        }
 
         // Procesar cada filtro OR individualmente
         const processedOrFilters = await Promise.all(
@@ -434,13 +583,15 @@ export class AdminService {
 
         // Reemplazar los filtros OR originales con los procesados
         (processedFilters as Record<string, any>).OR = processedOrFilters;
-        console.log(
-          `🔍 [DEBUG] Filtros OR procesados:`,
-          JSON.stringify((processedFilters as Record<string, any>).OR, null, 2),
-        );
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            `🔍 [DEBUG] Filtros OR procesados:`,
+            JSON.stringify((processedFilters as Record<string, any>).OR, null, 2),
+          );
+        }
       }
 
-      // Configurar búsqueda según el recurso
+      // ✅ Optimización: Configurar búsqueda con índices optimizados
       let where: any = { ...processedFilters };
       if (search) {
         let searchCondition: any = {};
@@ -454,12 +605,23 @@ export class AdminService {
             };
             break;
           case 'Producto':
-            searchCondition = {
-              OR: [
-                { titulo: { contains: search } },
-                { sku: { contains: search } },
-              ],
-            };
+            // ✅ Usar búsqueda de texto completo cuando sea posible
+            if (search.length > 2) {
+              searchCondition = {
+                OR: [
+                  { titulo: { search: search } }, // Búsqueda de texto completo
+                  { titulo: { contains: search } }, // Fallback para búsquedas cortas
+                  { sku: { contains: search } },
+                ],
+              };
+            } else {
+              searchCondition = {
+                OR: [
+                  { titulo: { contains: search } },
+                  { sku: { contains: search } },
+                ],
+              };
+            }
             break;
           case 'Curso':
             searchCondition = {
@@ -476,7 +638,7 @@ export class AdminService {
           default:
             // Para otros recursos, buscar por ID si es numérico
             if (!isNaN(Number(search))) {
-              searchCondition = { id: search };
+              searchCondition = { id: Number(search) };
             }
         }
 
@@ -488,7 +650,7 @@ export class AdminService {
         }
       }
 
-      // Configurar include según el recurso
+      // ✅ Optimización: Configurar include selectivo para reducir datos transferidos
       let include: any = {};
       if (resource === 'Orden') {
         include = {
@@ -502,7 +664,7 @@ export class AdminService {
         };
       }
 
-      // Incluir lecciones para módulos
+      // ✅ Optimización: Incluir solo campos necesarios para módulos
       if (resource === 'Modulo') {
         include.lecciones = {
           select: {
@@ -513,10 +675,11 @@ export class AdminService {
             tipo: true,
           },
           orderBy: { orden: 'asc' },
+          take: 50, // ✅ Limitar número de lecciones por módulo
         };
       }
 
-      // Incluir relaciones jerárquicas si el modelo las tiene
+      // ✅ Optimización: Incluir relaciones jerárquicas con límites
       if (this.hasParentChildRelation(resource)) {
         const hierarchicalInfo =
           this.hierarchicalDetector.getHierarchicalInfo(resource);
@@ -530,6 +693,7 @@ export class AdminService {
               ...(resource === 'ResenaRespuesta' && { contenido: true }),
               ...(resource === 'Modulo' && { titulo: true, orden: true }),
             },
+            take: 100, // ✅ Limitar número de hijos
           };
         }
       }
@@ -542,6 +706,7 @@ export class AdminService {
         orderBy = this.getOrderBy(resource);
       }
 
+      // ✅ Optimización: Usar transacción para consultas paralelas
       const [data, total] = await Promise.all([
         model.findMany({
           where,
@@ -553,7 +718,7 @@ export class AdminService {
         model.count({ where }),
       ]);
 
-      return {
+      const result = {
         data,
         meta: {
           total,
@@ -562,6 +727,11 @@ export class AdminService {
           totalPages: Math.ceil(total / limit),
         },
       };
+
+      // ✅ Guardar resultado en caché (TTL: 2 minutos para datos administrativos)
+      this.cacheService.set(cacheKey, result, 120000);
+
+      return result;
     } catch (error) {
       throw new BadRequestException(
         `Error al obtener ${resource}: ${error instanceof Error ? error.message : String(error)}`,
@@ -575,7 +745,7 @@ export class AdminService {
 
     try {
       const record = await model.findUnique({
-        where: { id },
+        where: { id: this.coerceId(resource, id) },
       });
 
       if (!record) {
@@ -598,9 +768,23 @@ export class AdminService {
     const model = this.getModel(resource);
 
     try {
-      return await model.create({
+      const result = await model.create({
         data,
       });
+
+      // ✅ Invalidar caché relacionado al recurso
+      this.cacheService.deletePattern(`admin:${resource}:`);
+
+      // Emitir evento WebSocket para actualización en tiempo real
+      console.log(`[AdminService] Emitiendo evento WebSocket: create para ${resource}`);
+      this.websocketGateway.emitToAll('crud-update', {
+        action: 'create',
+        resource,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+
+      return result;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -623,10 +807,35 @@ export class AdminService {
     const model = this.getModel(resource);
 
     try {
-      return await model.update({
-        where: { id },
-        data,
+      const normalized = this.normalizeDataInput(data);
+      // No permitir actualizar claves primarias ni timestamps
+      if (normalized && typeof normalized === 'object') {
+        delete (normalized as any).id;
+        delete (normalized as any).creadoEn;
+        delete (normalized as any).actualizadoEn;
+        delete (normalized as any).createdAt;
+        delete (normalized as any).updatedAt;
+      }
+      
+      const result = await model.update({
+        where: { id: this.coerceId(resource, id) },
+        data: normalized,
       });
+
+      // ✅ Invalidar caché relacionado al recurso
+      this.cacheService.deletePattern(`admin:${resource}:`);
+
+      // Emitir evento WebSocket para actualización en tiempo real
+      console.log(`[AdminService] Emitiendo evento WebSocket: update para ${resource} ID ${id}`);
+      this.websocketGateway.emitToAll('crud-update', {
+        action: 'update',
+        resource,
+        id,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+
+      return result;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -652,9 +861,24 @@ export class AdminService {
     const model = this.getModel(resource);
 
     try {
-      return await model.delete({
-        where: { id },
+      const result = await model.delete({
+        where: { id: this.coerceId(resource, id) },
       });
+
+      // ✅ Invalidar caché relacionado al recurso
+      this.cacheService.deletePattern(`admin:${resource}:`);
+
+      // Emitir evento WebSocket para actualización en tiempo real
+      console.log(`[AdminService] Emitiendo evento WebSocket: delete para ${resource} ID ${id}`);
+      this.websocketGateway.emitToAll('crud-update', {
+        action: 'delete',
+        resource,
+        id,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+
+      return result;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -739,8 +963,17 @@ export class AdminService {
       // Convertir logs de auditoría a formato de actividad
       const auditActivities = auditLogs.map((log) => ({
         id: `audit-${log.id}`,
-        type: this.mapAuditActionToActivityType(log.action, log.tableName),
-        description: this.generateAuditDescription(log),
+        type: this.mapAuditActionToActivityType(log.action, log.tableName, {
+          newData: (log as any).newData,
+          oldData: (log as any).oldData,
+        }),
+        description: this.generateAuditDescription({
+          action: log.action,
+          tableName: log.tableName,
+          user: log.user,
+          newData: (log as any).newData,
+          oldData: (log as any).oldData,
+        }),
         timestamp: log.timestamp.toISOString(),
         user: log.user.nombre || log.user.email,
         source: 'admin' as const,
@@ -839,20 +1072,28 @@ export class AdminService {
   private mapAuditActionToActivityType(
     action: string,
     tableName: string,
+    log?: { newData?: any; oldData?: any }
   ): string {
     const actionMap: Record<string, Record<string, string>> = {
       CREATE: {
         Usuario: 'user_registered',
         Curso: 'course_created',
         Producto: 'content_updated',
-        Orden: 'payment_received',
+        // Para órdenes creadas (efectivo/transferencia) reflejamos actividad genérica
+        // en lugar de “payment_received”
+        Orden: 'user_activity',
         Inscripcion: 'enrollment',
       },
       UPDATE: {
         Usuario: 'user_activity',
         Curso: 'content_updated',
         Producto: 'content_updated',
-        Orden: 'payment_received',
+        // En actualización de orden, solo marcamos payment_received
+        // cuando el estado cambió a PAGADO. Caso contrario: actividad genérica
+        Orden: ((): string => {
+          const estado = log?.newData?.estado ?? log?.oldData?.estado;
+          return estado === 'PAGADO' ? 'payment_received' : 'user_activity';
+        })(),
       },
       DELETE: {
         default: 'system_event',
@@ -879,6 +1120,8 @@ export class AdminService {
     action: string;
     tableName: string;
     user: { nombre?: string | null; email: string };
+    oldData?: any;
+    newData?: any;
   }): string {
     const { action, tableName, user } = log;
     const userName = user.nombre || user.email;
@@ -888,7 +1131,8 @@ export class AdminService {
         Usuario: `${userName} creó un nuevo usuario`,
         Curso: `${userName} creó un nuevo curso`,
         Producto: `${userName} agregó un nuevo producto`,
-        Orden: `${userName} procesó una nueva orden`,
+        // Órdenes creadas quedan pendentes hasta verificar pago
+        Orden: `${userName} creó una nueva orden (pendiente)`,
         Inscripcion: `${userName} procesó una nueva inscripción`,
         default: `${userName} creó un registro en ${tableName}`,
       },
@@ -896,7 +1140,11 @@ export class AdminService {
         Usuario: `${userName} actualizó información de usuario`,
         Curso: `${userName} modificó un curso`,
         Producto: `${userName} actualizó un producto`,
-        Orden: `${userName} actualizó una orden`,
+        // Si pasó a PAGADO, reflejar explícitamente el cobro
+        Orden:
+          log?.newData?.estado === 'PAGADO'
+            ? `${userName} confirmó pago de una orden`
+            : `${userName} actualizó una orden`,
         default: `${userName} actualizó un registro en ${tableName}`,
       },
       DELETE: {

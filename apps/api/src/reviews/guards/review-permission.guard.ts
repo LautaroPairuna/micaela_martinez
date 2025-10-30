@@ -45,8 +45,8 @@ export class ReviewPermissionGuard implements CanActivate {
     // Verificar que el usuario esté inscrito en el curso
     const enrollment = await this.prisma.inscripcion.findFirst({
       where: {
-        usuarioId: userId,
-        cursoId: cursoId,
+        usuarioId: Number(userId),
+        cursoId: Number(cursoId),
         estado: 'ACTIVADA', // Solo inscripciones activas
       },
     });
@@ -63,9 +63,9 @@ export class ReviewPermissionGuard implements CanActivate {
     const purchase = await this.prisma.itemOrden.findFirst({
       where: {
         tipo: 'PRODUCTO',
-        refId: productoId,
+        refId: Number(productoId),
         orden: {
-          usuarioId: userId,
+          usuarioId: Number(userId),
           estado: 'PAGADO', // Solo órdenes pagadas
         },
       },

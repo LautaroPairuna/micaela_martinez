@@ -35,6 +35,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useRelations } from './hooks/useRelations'
 import { useMultipleChildCounts } from './hooks/useChildCounts'
 import { useServerTable } from './hooks/useServerTable'
+import { useTableUpdates } from '@/hooks/useTableUpdates'
 
 import { Modal } from './components/Modal'
 import { ConfirmModal } from './components/ConfirmModal'
@@ -52,6 +53,7 @@ import { getDefaultColumns, getHiddenColumns } from './utils/adminColumns'
 import { buildFD, sanitize } from './utils/formData'
 import { getForeignKey } from './utils/foreignKeys'
 import type { Row, IdLike, Json } from './types'
+import { useNotifications } from '@/hooks/useNotifications'
 
 /* ───────────────────────── 2. HELPERS / CONSTANTES ──────────────────────── */
 const fetcher = (u: string) =>
@@ -186,8 +188,12 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
   // Hooks de datos
   const { data: parentResp, error: parentError, isValidating: loadingParent } =
     useSWR<any>(`/api/admin/tables/${tableName}/records?page=1&pageSize=50`, fetcher, {
-      revalidateOnFocus: false,
+      revalidateOnFocus: false, // ❌ Desactivar revalidación en focus
+      revalidateOnReconnect: true, // ✅ Mantener revalidación en reconexión
       keepPreviousData: true,
+      dedupingInterval: 30000, // ✅ Aumentar deduplicación a 30s
+      errorRetryCount: 2, // ✅ Limitar reintentos
+      errorRetryInterval: 5000, // ✅ Esperar 5s entre reintentos
     })
   
   const relations = useRelations(tableName)
@@ -286,12 +292,28 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
   const refreshAll = useCallback(() => {
     serverTableRefresh()
   }, [serverTableRefresh])
+
+  // Notificaciones del sistema (panel unificado)
+  const { pushNotification } = useNotifications()
+
+  // Integrar actualizaciones CRUD en tiempo real
+  useTableUpdates(resource, refreshAll, {
+    debounce: 300
+  })
   
   // CRUD Callbacks
   const doUpdate = useCallback(
     async (id: IdLike, body: Record<string, Json>) => {
       const url  = `/api/admin/tables/${resource}/records/${id}`
-      const data = sanitize(body)
+      // Sanitizar y evitar enviar campos de solo lectura o llave primaria
+      const data = (() => {
+        const d = sanitize(body)
+        // Nunca intentar actualizar el id ni timestamps
+        delete (d as any).id
+        delete (d as any).creadoEn
+        delete (d as any).actualizadoEn
+        return d
+      })()
       const init: RequestInit =
         data.foto instanceof File
           ? { method: 'PUT', body: buildFD(data), headers: csrfHdr() }
@@ -315,6 +337,15 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
           delete c.id
           return c
         })()
+        
+        // Debug: Log de datos procesados
+        console.log('=== FRONTEND CREATE DEBUG ===');
+        console.log('Raw data:', JSON.stringify(raw, null, 2));
+        console.log('Sanitized data:', JSON.stringify(clean, null, 2));
+        console.log('Resource:', resource);
+        console.log('Has file:', clean.foto instanceof File);
+        console.log('==============================');
+        
         const endpoint = `/api/admin/tables/${resource}/records`
         const init: RequestInit =
           clean.foto instanceof File
@@ -345,6 +376,14 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         }
         
         toast.success('Registro creado')
+        // Notificación local para el panel de eventos
+        pushNotification({
+          titulo: 'Contenido actualizado',
+          mensaje: `Nuevo ${resource} creado: "${String(clean.nombre || clean.titulo || 'Sin nombre')}"`,
+          tipo: 'SISTEMA',
+          url: `/admin/resources/${tableName}`,
+          metadata: { action: 'CREATE', resource, data: clean }
+        })
         dispatch({ type: 'openCreate', open: false })
         refreshAll()
       } catch (e: any) {
@@ -376,6 +415,14 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         }
         
         toast.success(`Registro ${id} actualizado`)
+        // Notificación local para el panel de eventos
+        pushNotification({
+          titulo: 'Contenido actualizado',
+          mensaje: `${resource} actualizado: ID ${String(id)} - "${String((raw as any).nombre || (raw as any).titulo || 'Sin nombre')}"`,
+          tipo: 'SISTEMA',
+          url: `/admin/resources/${tableName}`,
+          metadata: { action: 'UPDATE', resource, id, data: raw }
+        })
         dispatch({ type: 'openEdit', row: null })
         refreshAll()
       } catch (e: any) {
@@ -395,6 +442,14 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         const failed = results.filter(r => r.status === 'rejected')
         if (failed.length) toast.error(`Fallaron ${failed.length} de ${results.length}`)
         else toast.success(`Actualizados ${ui.selected.length} registro(s)`)
+        // Notificación local de edición en lote
+        pushNotification({
+          titulo: 'Edición en lote',
+          mensaje: `Actualizados ${ui.selected.length} registro(s) en ${resource} (campo "${field}")`,
+          tipo: 'SISTEMA',
+          url: `/admin/resources/${tableName}`,
+          metadata: { action: 'BULK_UPDATE', resource, field, value: val, ids: ui.selected }
+        })
         dispatch({ type: 'openEdit', row: null })
         dispatch({ type: 'resetSelect' })
         refreshAll()
@@ -432,6 +487,29 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
       const failed = results.filter(r => r.status === 'rejected')
       if (failed.length) toast.error(`Fallaron ${failed.length} de ${results.length}`)
       else toast.success(`Eliminados ${ui.confirmRows.length} registro(s)`)
+      // Registrar evento de eliminación en el sistema (persistente)
+      try {
+        await fetch('/api/admin/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'system_event',
+            description: `Eliminados ${ui.confirmRows.length} registro(s) de ${resource}`,
+            source: 'admin',
+            metadata: { action: 'DELETE', resource, ids: ui.confirmRows.map(r => r.id) }
+          }),
+        })
+      } catch (activityError) {
+        console.error('Error al registrar actividad (DELETE):', activityError)
+      }
+      // Notificación local de eliminación
+      pushNotification({
+        titulo: 'Contenido eliminado',
+        mensaje: `Eliminados ${ui.confirmRows.length} registro(s) de ${resource}`,
+        tipo: 'SISTEMA',
+        url: `/admin/resources/${tableName}`,
+        metadata: { action: 'DELETE', resource, ids: ui.confirmRows.map(r => r.id) }
+      })
       dispatch({ type: 'confirmDelete', rows: null })
       refreshAll()
     } catch (e: any) {
@@ -464,6 +542,13 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         if (typeof value !== 'string' || !value.trim()) return false
         
         const lowerField = fieldName.toLowerCase()
+        
+        // Excluir campos de fecha explícitamente
+        const dateFields = ['creadoen', 'actualizadoen', 'createdat', 'updatedat', 'fecha', 'date', 'time']
+        if (dateFields.some(dateField => lowerField.includes(dateField))) {
+          return false
+        }
+        
         const filePatterns = [
           'foto', 'imagen', 'portada', 'archivo', 'rutasrc', 'src', 'url',
           'productoImagen', 'imagenArchivo', 'portadaArchivo', 'video', 'audio',
@@ -536,13 +621,32 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
       if (isFileField(col) && typeof val === 'string' && val.trim())
         return <FotoCell tableName={tableName} childRelation={child} fileName={val} />
 
-      if (val instanceof Date)
+      // Manejo de fechas - verificar tanto Date objects como strings de fecha
+      if (val instanceof Date) {
         return (
           <span className="flex items-center">
             <Calendar className="h-4 w-4 mr-1 text-blue-400" />
             {dateFmt.format(val)}
           </span>
         )
+      }
+
+      // Detectar strings que parecen fechas ISO
+      if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+        try {
+          const date = new Date(val)
+          if (!isNaN(date.getTime())) {
+            return (
+              <span className="flex items-center">
+                <Calendar className="h-4 w-4 mr-1 text-blue-400" />
+                {dateFmt.format(date)}
+              </span>
+            )
+          }
+        } catch (e) {
+          // Si falla el parsing, continuar con el renderizado normal
+        }
+      }
 
       // Manejo especial para contenido JSON de lecciones
         if (resource === 'Leccion' && col === 'contenido') {
@@ -786,6 +890,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
           resource={resource}
           filters={uiFilters}
           setFilters={setFiltersSmart}
+          child={child}
         />
 
         {/* Los filtros ahora están en el modal del Toolbar */}
@@ -936,9 +1041,16 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
                             key={'c-' + rel.childTable}
                             className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b border-indigo-100"
                           >
-                            <Link
-                              href={`/admin/resources/${rel.childTable}?filters=${encodeURIComponent(JSON.stringify({ [guessFK(rel.childTable, tableName)]: row.id }))}`}
-                              className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs hover:bg-green-200 transition flex items-center gap-1"
+                            <button
+                              onClick={() => {
+                                const foreignKey = guessFK(rel.childTable, tableName);
+                                setChild({
+                                  childTable: rel.childTable,
+                                  foreignKey: foreignKey,
+                                  parentId: row.id
+                                });
+                              }}
+                              className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs hover:bg-green-200 transition flex items-center gap-1 cursor-pointer"
                               aria-label={`Ver ${
                                 relationLabels[rel.childTable as keyof typeof relationLabels] ?? rel.childTable
                               } de ${row.id}`}
@@ -958,7 +1070,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
                                    {multiChildCounts?.[row.id]?.[rel.childTable] || 0}
                                  </span>
                                )}
-                            </Link>
+                            </button>
                           </td>
                         ))
                         return [td, ...childrenTds]
@@ -974,12 +1086,15 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
                         className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b border-gray-200"
                       >
                         <button
-                              onClick={() => setChild({
-                                childTable: rel.childTable,
-                                foreignKey: guessFK(rel.childTable, tableName),
-                                parentId: row.id
-                              })}
-                              className="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-200 transition-colors duration-150 shadow-sm flex items-center gap-2"
+                              onClick={() => {
+                                const foreignKey = guessFK(rel.childTable, tableName);
+                                setChild({
+                                  childTable: rel.childTable,
+                                  foreignKey: foreignKey,
+                                  parentId: row.id
+                                });
+                              }}
+                              className="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-200 transition-colors duration-150 shadow-sm flex items-center gap-2 cursor-pointer"
                               aria-label={`Ver ${
                                 relationLabels[rel.childTable as keyof typeof relationLabels] ?? rel.childTable
                               } de ${row.id}`}

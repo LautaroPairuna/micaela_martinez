@@ -27,6 +27,6 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard)
   @Get('cursos/:slug/contenido')
   getCourseContent(@Param('slug') slug: string, @CurrentUser() user: JwtUser) {
-    return this.service.getCourseContentForUser(slug, user.sub);
+    return this.service.getCourseContentForUser(slug, user.sub.toString());
   }
 }

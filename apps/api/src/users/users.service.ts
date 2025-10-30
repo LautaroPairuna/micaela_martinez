@@ -4,7 +4,7 @@ import { EstadoOrden } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type UserForAuth = {
-  id: string;
+  id: number;
   email: string;
   nombre: string | null;
   roles: string[]; // slugs: ['CUSTOMER', 'INSTRUCTOR', ...]
@@ -21,7 +21,7 @@ export class UsersService {
     roles: { select: { role: { select: { slug: true } } } },
   } satisfies Prisma.UsuarioSelect;
 
-  async findById(id: string | undefined): Promise<UserForAuth | null> {
+  async findById(id: number | undefined): Promise<UserForAuth | null> {
     // Si el ID es undefined, retornar null inmediatamente
     if (!id) {
       console.error('Error: ID de usuario indefinido en findById');
@@ -29,15 +29,15 @@ export class UsersService {
     }
 
     const u = await this.prisma.usuario.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       select: this.selectAuth,
     });
     if (!u) return null;
     return {
-      id: u.id,
+      id: Number(u.id),
       email: u.email,
       nombre: u.nombre,
-      roles: u.roles.map((ur) => ur.role.slug),
+      roles: u.roles ? u.roles.map((ur: any) => ur.role.slug) : [],
     };
   }
 
@@ -48,15 +48,15 @@ export class UsersService {
     });
     if (!u) return null;
     return {
-      id: u.id,
+      id: Number(u.id),
       email: u.email,
       nombre: u.nombre,
-      roles: u.roles.map((ur) => ur.role.slug),
+      roles: u.roles.map((ur: any) => ur.role.slug),
     };
   }
 
   /** Utilidad para asignar roles por slug (idempotente). */
-  async grantRoles(userId: string, roleSlugs: string[]): Promise<void> {
+  async grantRoles(userId: number, roleSlugs: string[]): Promise<void> {
     if (!roleSlugs.length) return;
     const roles = await this.prisma.role.findMany({
       where: { slug: { in: roleSlugs } },
@@ -67,16 +67,16 @@ export class UsersService {
     await this.prisma.$transaction(
       roles.map((r) =>
         this.prisma.usuarioRol.upsert({
-          where: { usuarioId_roleId: { usuarioId: userId, roleId: r.id } },
+          where: { usuarioId_roleId: { usuarioId: Number(userId), roleId: r.id } },
           update: {},
-          create: { usuarioId: userId, roleId: r.id },
+          create: { usuarioId: Number(userId), roleId: r.id },
         }),
       ),
     );
   }
 
   /** Remueve roles por slug. */
-  async revokeRoles(userId: string, roleSlugs: string[]): Promise<void> {
+  async revokeRoles(userId: number, roleSlugs: string[]): Promise<void> {
     if (!roleSlugs.length) return;
     const roles = await this.prisma.role.findMany({
       where: { slug: { in: roleSlugs } },
@@ -85,13 +85,13 @@ export class UsersService {
     if (!roles.length) return;
 
     await this.prisma.usuarioRol.deleteMany({
-      where: { usuarioId: userId, roleId: { in: roles.map((r) => r.id) } },
+      where: { usuarioId: Number(userId), roleId: { in: roles.map((r) => r.id) } },
     });
   }
 
-  async findEnrollments(userId: string) {
+  async findEnrollments(userId: number) {
     return this.prisma.inscripcion.findMany({
-      where: { usuarioId: userId },
+      where: { usuarioId: Number(userId) },
       include: {
         curso: {
           select: {
@@ -105,17 +105,37 @@ export class UsersService {
                 modulos: true,
               },
             },
+            modulos: {
+              select: {
+                id: true,
+                titulo: true,
+                orden: true,
+                lecciones: {
+                  select: {
+                    id: true,
+                    titulo: true,
+                    orden: true,
+                  },
+                  orderBy: {
+                    orden: 'asc',
+                  },
+                },
+              },
+              orderBy: {
+                orden: 'asc',
+              },
+            },
           },
         },
       },
     });
   }
 
-  async getSubscriptionInfo(userId: string) {
+  async getSubscriptionInfo(userId: number) {
     // Buscar la orden más reciente con suscripción activa
     const activeSubscription = await this.prisma.orden.findFirst({
       where: {
-        usuarioId: userId,
+        usuarioId: Number(userId),
         esSuscripcion: true,
         suscripcionActiva: true,
         estado: EstadoOrden.PAGADO,

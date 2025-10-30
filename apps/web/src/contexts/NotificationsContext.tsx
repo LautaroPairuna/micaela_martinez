@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { initializeSocket, type Socket } from '@/lib/socket';
 
 // Definimos nuestro propio tipo Notification
 export interface Notification {
@@ -13,6 +15,7 @@ export interface Notification {
   creadoEn: string;
   url?: string;
   titulo?: string;
+  metadata?: any;
 }
 
 // Función auxiliar para llamadas a la API
@@ -63,6 +66,7 @@ export interface NotificationsState {
     totalPages: number;
   };
   filter: 'all' | 'unread';
+  live: boolean; // conexión websocket activa
 }
 
 // Acciones del reducer
@@ -85,7 +89,9 @@ type NotificationsAction =
   | { type: 'MARK_AS_READ'; payload: string }
   | { type: 'MARK_ALL_AS_READ' }
   | { type: 'DELETE_NOTIFICATION'; payload: string }
-  | { type: 'UPDATE_UNREAD_COUNT'; payload: number };
+  | { type: 'UPDATE_UNREAD_COUNT'; payload: number }
+  | { type: 'PUSH_NOTIFICATION'; payload: Notification }
+  | { type: 'UPDATE_LIVE_STATUS'; payload: boolean };
 
 const initialState: NotificationsState = {
   notifications: [],
@@ -94,6 +100,7 @@ const initialState: NotificationsState = {
   error: null,
   pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
   filter: 'all',
+  live: false,
 };
 
 function notificationsReducer(state: NotificationsState, action: NotificationsAction): NotificationsState {
@@ -153,6 +160,20 @@ function notificationsReducer(state: NotificationsState, action: NotificationsAc
     }
     case 'UPDATE_UNREAD_COUNT':
       return { ...state, unreadCount: action.payload };
+    case 'PUSH_NOTIFICATION': {
+      const notif = action.payload;
+      const notifications = [notif, ...state.notifications];
+      const total = state.pagination.total + 1;
+      const totalPages = Math.max(1, Math.ceil(total / state.pagination.limit));
+      return {
+        ...state,
+        notifications,
+        pagination: { ...state.pagination, total, totalPages },
+        unreadCount: notif.leida ? state.unreadCount : state.unreadCount + 1,
+      };
+    }
+    case 'UPDATE_LIVE_STATUS':
+      return { ...state, live: action.payload };
     default:
       return state;
   }
@@ -168,6 +189,7 @@ interface NotificationsContextType {
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
+  pushNotification: (payload: Partial<Notification>) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -175,6 +197,8 @@ const NotificationsContext = createContext<NotificationsContextType | undefined>
 // Provider
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(notificationsReducer, initialState);
+  const { user } = useAuth();
+  const socketRef = useRef<Socket | null>(null);
 
   const fetchNotifications = useCallback(
     async (page = 1, loadMore = false) => {
@@ -282,6 +306,56 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     fetchUnreadCount();
   }, [fetchUnreadCount]);
 
+  // Conexión a WebSocket para notificaciones en vivo
+  useEffect(() => {
+    // Conectar solo si hay usuario
+    if (!user?.id) return;
+
+    try {
+      const socket = initializeSocket(String(user.id));
+      socketRef.current = socket;
+
+      const onConnect = () => dispatch({ type: 'UPDATE_LIVE_STATUS', payload: true });
+      const onDisconnect = () => dispatch({ type: 'UPDATE_LIVE_STATUS', payload: false });
+      const onNewNotification = (payload: any) => {
+        // Normalizar payload al tipo Notification que espera el contexto
+        const normalized: Notification = {
+          id: String(payload.id ?? crypto.randomUUID()),
+          mensaje: String(payload.mensaje ?? ''),
+          leida: Boolean(payload.leida ?? false),
+          tipo: String(payload.tipo ?? 'SISTEMA'),
+          fecha: String(payload.creadoEn ?? payload.fecha ?? new Date().toISOString()),
+          usuarioId: String(payload.usuarioId ?? user.id),
+          creadoEn: String(payload.creadoEn ?? new Date().toISOString()),
+          url: payload.url ?? undefined,
+          titulo: payload.titulo ?? undefined,
+          metadata: payload.metadata ?? undefined,
+        };
+        dispatch({ type: 'PUSH_NOTIFICATION', payload: normalized });
+      };
+
+      socket.on('connect', onConnect);
+      socket.on('disconnect', onDisconnect);
+      socket.on('nueva-notificacion', onNewNotification);
+
+      // Refrescar la lista inicial tras conectar para sincronizar
+      fetchNotifications(1, false);
+
+      return () => {
+        socket.off('connect', onConnect);
+        socket.off('disconnect', onDisconnect);
+        socket.off('nueva-notificacion', onNewNotification);
+        socket.disconnect();
+        socketRef.current = null;
+        dispatch({ type: 'UPDATE_LIVE_STATUS', payload: false });
+      };
+    } catch (e) {
+      console.error('WebSocket connection error:', e);
+      dispatch({ type: 'UPDATE_LIVE_STATUS', payload: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   const contextValue: NotificationsContextType = {
     state,
     fetchNotifications,
@@ -291,6 +365,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    pushNotification: (payload: Partial<Notification>) => {
+      const normalized: Notification = {
+        id: String(payload.id ?? crypto.randomUUID()),
+        mensaje: String(payload.mensaje ?? ''),
+        leida: Boolean(payload.leida ?? false),
+        tipo: String(payload.tipo ?? 'SISTEMA'),
+        fecha: String(payload.fecha ?? new Date().toISOString()),
+        usuarioId: String(payload.usuarioId ?? user?.id ?? 'admin'),
+        creadoEn: String(payload.creadoEn ?? new Date().toISOString()),
+        url: payload.url,
+        titulo: payload.titulo,
+        metadata: payload.metadata,
+      }
+      dispatch({ type: 'PUSH_NOTIFICATION', payload: normalized })
+    },
   };
 
   return (

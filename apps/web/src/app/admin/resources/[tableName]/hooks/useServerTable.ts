@@ -1,19 +1,21 @@
 // src/app/admin/resources/[tableName]/hooks/useServerTable.ts
 'use client'
 import useSWR from 'swr'
+import { useTableUpdates } from '@/hooks/useTableUpdates'
+import { useCallback } from 'react'
 
 export type Primitive = string | number | boolean
 export type FilterValue = Primitive | Primitive[]
 export type Filters = Record<string, FilterValue>
 
-export type ServerTableParams = {
+export interface ServerTableParams {
   page: number
   pageSize: number
   sortBy?: string
   sortDir?: 'asc' | 'desc'
   search?: string
   qFields?: string[]
-  filters?: Filters
+  filters?: Record<string, unknown>
 }
 
 export interface ServerTableResult<T> {
@@ -102,13 +104,36 @@ export function useServerTable<T extends Record<string, unknown>>(
   const { data, isValidating, mutate } = useSWR<{ data: T[]; meta: { total: number } }>(
     key,
     customFetcher,
-    { keepPreviousData: true, revalidateOnFocus: false }
+    { 
+      keepPreviousData: true, 
+      revalidateOnFocus: false, // ❌ Desactivar revalidación en focus para evitar consultas innecesarias
+      revalidateOnReconnect: true, // ✅ Mantener revalidación en reconexión
+      refreshInterval: 0, // ❌ Sin polling automático - usamos WebSocket para actualizaciones
+      dedupingInterval: 30000, // ✅ Aumentar deduplicación a 30s para evitar consultas duplicadas
+      focusThrottleInterval: 60000, // ✅ Aumentar throttle a 1 minuto
+      errorRetryCount: 2, // ✅ Limitar reintentos en caso de error
+      errorRetryInterval: 5000, // ✅ Esperar 5s entre reintentos
+      shouldRetryOnError: (error) => {
+        // ✅ No reintentar en errores 4xx (problemas de permisos/datos)
+        if (error?.status >= 400 && error?.status < 500) return false;
+        return true;
+      }
+    }
   )
+
+  // Integrar actualizaciones CRUD en tiempo real
+  const refreshData = useCallback(() => {
+    console.log(`[useServerTable] Refrescando datos para tabla: ${resource}`);
+    void mutate()
+  }, [mutate, resource])
+
+  // Suscribirse a actualizaciones de la tabla específica con debug habilitado
+  useTableUpdates(resource, refreshData, { debug: true })
 
   return {
     rows: data?.data ?? [],
     total: data?.meta?.total ?? 0,
     validating: isValidating,
-    refresh: () => { void mutate() },
+    refresh: refreshData,
   }
 }

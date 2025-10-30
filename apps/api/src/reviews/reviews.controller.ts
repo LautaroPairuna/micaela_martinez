@@ -64,7 +64,7 @@ export class ReviewsController {
 
     try {
       const result = await this.reviewsService.createReview(
-        user.sub,
+        user.sub.toString(),
         createReviewDto,
       );
       
@@ -124,7 +124,7 @@ export class ReviewsController {
     @Body() updateReviewDto: UpdateReviewDto,
   ) {
     return this.reviewsService.updateReview(
-      user.sub,
+      user.sub.toString(),
       reviewId,
       updateReviewDto,
     );
@@ -138,7 +138,7 @@ export class ReviewsController {
     @Body() updateReviewDto: UpdateReviewDto,
   ) {
     return this.reviewsService.updateReview(
-      user.sub,
+      user.sub.toString(),
       reviewId,
       updateReviewDto,
     );
@@ -150,7 +150,7 @@ export class ReviewsController {
     @CurrentUser() user: JwtUser,
     @Param('id') reviewId: string,
   ) {
-    return this.reviewsService.deleteReview(user.sub, reviewId);
+    return this.reviewsService.deleteReview(user.sub.toString(), reviewId);
   }
 
   @Get('product/:productId')
@@ -178,6 +178,6 @@ export class ReviewsController {
     @Query('cursoId') cursoId?: string,
     @Query('productoId') productoId?: string,
   ) {
-    return this.reviewsService.getUserReview(user.sub, cursoId, productoId);
+    return this.reviewsService.getUserReview(user.sub.toString(), cursoId, productoId);
   }
 }

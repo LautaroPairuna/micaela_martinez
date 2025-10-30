@@ -1,4 +1,3 @@
-// apps/web/src/app/admin/resources/[tableName]/components/Form.tsx
 'use client'
 import React, { memo, FormEvent } from 'react'
 import { FkSelect } from './FkSelect'
@@ -35,12 +34,15 @@ import { useToast } from '@/contexts/ToastContext'
 type TipoLeccion = 'TEXTO' | 'VIDEO' | 'QUIZ' | 'DOCUMENTO'
 
 type FormP = {
-  initial: Record<string, unknown>
+  initial?: {
+    id?: string;
+    // puede venir como storedAs plano o como JSON string { videoUrl }
+    videoSrc?: string | null;
+  };
+  resource: string;               // p.ej. 'Leccion' | 'Producto' ...
+  onSubmit: (data: Record<string, Json>) => void;  // contrato fuerte
   columns: string[]
   fixedFk?: string
-  onSubmit: (d: Record<string, Json>) => void
-  /** nombre del recurso Prisma: p.ej. 'Producto', 'Leccion' */
-  resource?: string
 }
 
 /** Tipo de una pregunta del quiz (lo mínimo que validamos) */
@@ -116,13 +118,24 @@ function validateLessonForm(formData: Record<string, unknown>): string | null {
 
   switch (tipoLeccion) {
     case 'VIDEO': {
-      if (!rutaSrc) return 'La URL o archivo del video es obligatorio'
+      // Aceptamos fuente de video desde rutaSrc o desde contenido con JSON { videoUrl }
+      let hasVideoSrc = !!rutaSrc
+      if (!hasVideoSrc && typeof contenido === 'string') {
+        const parsed = parseJsonSafe<Record<string, unknown>>(contenido)
+        const videoUrl = parsed?.videoUrl
+        if (typeof videoUrl === 'string' && videoUrl.trim()) {
+          hasVideoSrc = true
+        }
+      }
+
+      if (!hasVideoSrc) return 'Debes subir un archivo de video (se autocompleta la URL al subir).'
       if (duracionS <= 0) return 'La duración del video debe ser mayor a 0 segundos'
 
-      if (typeof rutaSrc === 'string') {
+      if (typeof rutaSrc === 'string' && rutaSrc.trim()) {
         if (rutaSrc.startsWith('http')) {
           try {
             // valida URL
+            // eslint-disable-next-line no-new
             new URL(rutaSrc)
           } catch {
             return 'La URL del video no es válida'
@@ -226,12 +239,14 @@ function validateLessonForm(formData: Record<string, unknown>): string | null {
       const textData = parseJsonSafe<unknown>(contenido)
       if (!textData || !isRecord(textData)) {
         return 'El contenido de la lección debe ser JSON válido'
-      }
+        }
       const ok =
-        (Array.isArray(textData.bloques) && textData.bloques.length > 0) ||
-        (typeof textData.contenido === 'string' &&
-          textData.contenido.trim() !== '') ||
-        (typeof textData.texto === 'string' && textData.texto.trim() !== '')
+        (Array.isArray((textData as Record<string, unknown>).bloques) &&
+          ((textData as Record<string, unknown>).bloques as unknown[]).length > 0) ||
+        (typeof (textData as Record<string, unknown>).contenido === 'string' &&
+          String((textData as Record<string, unknown>).contenido).trim() !== '') ||
+        (typeof (textData as Record<string, unknown>).texto === 'string' &&
+          String((textData as Record<string, unknown>).texto).trim() !== '')
       if (!ok) {
         return 'La lección de texto debe contener contenido válido (bloques/contenido/texto)'
       }
@@ -267,8 +282,15 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
     return `/images/${folder}/thumbs/${rest.join('/')}`
   }
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    // Debug: Log de datos del formulario
+    console.log('=== FORM SUBMIT DEBUG ===');
+    console.log('Form data:', JSON.stringify(form, null, 2));
+    console.log('Resource:', resource);
+    console.log('Initial data:', JSON.stringify(initial, null, 2));
+    console.log('=========================');
 
     if (resource === 'Leccion') {
       const validationError = validateLessonForm(form)
@@ -280,7 +302,7 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
 
     const processed: Record<string, unknown> = { ...form }
     const tableForUpload = normalizeTableForUploads(resource)
-    const uploads: Promise<void>[] = []
+    const uploads: Array<Promise<void>> = []
 
     for (const field of Object.keys(form)) {
       const v = form[field]
@@ -301,7 +323,7 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
                 : fallbackTitle
 
             const recordId =
-              typeof initial.id === 'string' && initial.id.trim()
+              typeof initial?.id === 'string' && initial.id.trim()
                 ? initial.id
                 : undefined
 
@@ -311,7 +333,10 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
               recordId,
               title,
               alt: title,
+              intent: 'replace', // ← importante si estás editando
             })
+
+            // Validar respuesta segura
             const storedAs =
               (isRecord(res) &&
                 isRecord(res.data) &&
@@ -326,6 +351,28 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
 
     try {
       if (uploads.length) await Promise.all(uploads)
+
+      // Autocompletar rutaSrc desde contenido para lecciones de VIDEO
+      if (resource === 'Leccion' && processed['tipo'] === 'VIDEO') {
+        const c = processed['contenido']
+        if (typeof c === 'string') {
+          const parsed = parseJsonSafe<Record<string, unknown>>(c)
+          const videoFile = parsed?.videoFile
+          const legacyUrl = parsed?.videoUrl
+          const candidate = typeof videoFile === 'string' && videoFile.trim()
+            ? videoFile
+            : (typeof legacyUrl === 'string' && legacyUrl.trim() ? legacyUrl : '')
+          if (candidate) {
+            processed['rutaSrc'] = candidate
+          }
+        }
+      }
+      
+      // Debug: Log de datos procesados antes de enviar
+      console.log('=== PROCESSED DATA DEBUG ===');
+      console.log('Processed data:', JSON.stringify(processed, null, 2));
+      console.log('============================');
+      
       onSubmit(processed as Record<string, Json>)
     } catch (err) {
       console.error('Error al subir archivos:', err)
@@ -372,7 +419,7 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
             col={col}
             value={String(form[col] ?? '')}
             fixed={fixed}
-            onChange={v => handle(col, v)}
+            onChange={(v: string) => handle(col, v)}
           />
         </div>
       )
@@ -417,9 +464,9 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
           )}
           <MediaDropzone
             value={dzValue}
-            onChange={(v) => handle(col, v)}
+            onChange={(v: File | string | null) => handle(col, v)}
             allowedTypes={allowedTypes}
-            resolvePreviewSrc={(storedAsOrUrl) => {
+            resolvePreviewSrc={(storedAsOrUrl: string) => {
               if (/^(\/|https?:\/\/)/.test(storedAsOrUrl)) return storedAsOrUrl
               return toThumbFromStoredAs(storedAsOrUrl)
             }}
@@ -471,8 +518,18 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
                 <VideoContentEditor
                   value={typeof parsed === 'string' ? parsed : JSON.stringify(parsed ?? '')}
                   onChange={(v) => {
+                    // Guardamos el JSON del editor y, si incluye {videoUrl}, sincronizamos rutaSrc
                     handle(col, v)
+                    const parsedVideo = parseJsonSafe<Record<string, unknown>>(v)
+                    const videoUrl = parsedVideo?.videoUrl
+                    if (typeof videoUrl === 'string' && videoUrl.trim()) {
+                      handle('rutaSrc', videoUrl)
+                    }
                   }}
+                  tableName="Leccion"
+                  fieldName="videoSrc"
+                  recordId={typeof form.id === 'string' ? form.id : (initial?.id ?? undefined)}
+                  titleHint={typeof form.titulo === 'string' ? form.titulo : undefined}
                 />
               </div>
             ) : tipo === 'DOCUMENTO' ? (
@@ -539,7 +596,7 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
                   type="text"
                   value={String(form['rutaSrc'] ?? '')}
                   onChange={e => handle('rutaSrc', e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="(Solo archivos subidos; no se aceptan URLs externas)"
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 />
               </div>
@@ -570,7 +627,7 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
                   type="text"
                   value={String(form['rutaSrc'] ?? '')}
                   onChange={e => handle('rutaSrc', e.target.value)}
-                  placeholder="https://drive.google.com/file/d/..."
+                  placeholder="(Solo archivos subidos; no se aceptan URLs externas)"
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 />
               </div>
@@ -687,9 +744,10 @@ export function Form({ initial, columns, fixedFk, onSubmit, resource }: FormP) {
 /* ───────────────────────────── BulkForm (opcional) ───────────────────────────── */
 
 type BulkValue = string | number | boolean
+type BulkItem = Record<string, unknown>
 type BulkP = { 
   onSubmit: (field: string, value: BulkValue) => void,
-  selectedItems?: Record<string, unknown>[] // Elementos seleccionados para edición múltiple
+  selectedItems?: BulkItem[] // Elementos seleccionados para edición múltiple
 }
 
 export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }: BulkP) {
@@ -698,7 +756,7 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
   const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({})
   
   // Asegurarse de que selectedItems sea un array
-  const items = selectedItems || []
+  const items: BulkItem[] = selectedItems || []
 
   // Expandir/colapsar un elemento específico
   const toggleItem = (itemId: string) => {
@@ -708,7 +766,7 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
     }))
   }
 
-  const send = (e: FormEvent) => {
+  const send = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     onSubmit(field, value as unknown as BulkValue)
   }
@@ -790,7 +848,7 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
         <h3 className="text-md font-semibold text-gray-900">Elementos seleccionados</h3>
         
         {items.map((item, index) => {
-          const itemId = String(item.id || `item-${index}`)
+          const itemId = String(item.id ?? `item-${index}`)
           const isExpanded = expandedItems[itemId] || false
           
           return (
@@ -828,13 +886,14 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
                 <div className="p-4 bg-gray-50 border-t border-gray-200">
                   {/* Formulario individual para este elemento */}
                   <form 
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      // Aplicar cambios solo a este elemento
-                      const itemData = { ...item };
-                      itemData[field] = value;
+                    onSubmit={(ev: FormEvent<HTMLFormElement>) => {
+                      ev.preventDefault()
+                      const itemData: BulkItem = { ...item }
+                      itemData[field] = value
                       // Aquí deberías implementar la lógica para actualizar solo este elemento
-                      console.log(`Actualizando elemento ${itemId}:`, { [field]: value });
+                      // (dejamos console para debug local)
+                      // eslint-disable-next-line no-console
+                      console.log(`Actualizando elemento ${itemId}:`, { [field]: value })
                     }} 
                     className="mb-4 p-4 bg-white rounded-lg border border-gray-200"
                   >
@@ -874,7 +933,7 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
                         <div key={key} className="flex flex-col">
                           <span className="text-xs font-medium text-gray-500">{key}</span>
                           <span className="text-sm text-gray-900 truncate">
-                            {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                            {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
                           </span>
                         </div>
                       )

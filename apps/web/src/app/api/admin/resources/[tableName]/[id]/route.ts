@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export const dynamic = 'force-dynamic'; // Deshabilitar cacheo para todas las rutas
+export const revalidate = 0; // No cachear
+
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -17,15 +20,16 @@ const resourceToTable: Record<string, string> = {
   Usuario: 'Usuario',
   UsuarioRol: 'UsuarioRol',
   Favorito: 'Favorito',
-
+  
   // Cursos y contenido educativo
   Curso: 'Curso',
   Inscripcion: 'Inscripcion',
   Modulo: 'Modulo',
   Leccion: 'Leccion',
-
+  
   // Productos y e-commerce
   Producto: 'Producto',
+  producto: 'Producto', // Mapeo para minúscula (fix para errores 404)
   ProductoImagen: 'ProductoImagen',
   Marca: 'Marca',
   Categoria: 'Categoria',

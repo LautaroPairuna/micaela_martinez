@@ -118,8 +118,11 @@ export function GenericHierarchicalSelect({
     `admin-hierarchical-${tableName}`,
     () => adminApi.getTableData(tableName, { page: 1, limit: 1000 }),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000 // Cache por 30 segundos
+      revalidateOnFocus: false, // ❌ Desactivar revalidación en focus
+      revalidateOnReconnect: true, // ✅ Mantener revalidación en reconexión
+      dedupingInterval: 30000, // ✅ Cache por 30 segundos
+      errorRetryCount: 2, // ✅ Limitar reintentos
+      errorRetryInterval: 5000, // ✅ Esperar 5s entre reintentos
     }
   )
 

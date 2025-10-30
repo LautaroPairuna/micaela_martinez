@@ -28,7 +28,7 @@ export function Button({ asChild, className, variant='solid', tone='neutral', si
       ? 'border border-default text-[var(--pink)] hover:bg-subtle'
       : 'text-[var(--pink)] hover:bg-subtle',
     gold: variant === 'solid'
-      ? 'bg-[var(--gold)] text-black hover:bg-[var(--gold-600)]'
+      ? 'bg-[var(--gold)] text-black hover:bg-[var(--gold-600)] hover:text-white'
       : variant === 'outline'
       ? 'border border-default text-[var(--gold)] hover:bg-subtle'
       : 'text-[var(--gold)] hover:bg-subtle',

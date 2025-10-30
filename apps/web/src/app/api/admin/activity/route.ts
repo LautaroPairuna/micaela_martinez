@@ -45,3 +45,31 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/**
+ * GET /api/admin/activity
+ * Devuelve el historial de actividad reciente del sistema (auditoría)
+ * Proxy hacia el backend: GET /admin/audit-logs/recent
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const jar = await cookies();
+    const token = jar.get('mp_session')?.value;
+    if (!token) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'No autenticado - Token requerido', errorType: 'auth' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Permitir pasar ?limit=n desde el query, si existe
+    // El proxy ya conserva los query params, así que solo cambiamos el path destino
+    return proxy(request, '/admin/audit-logs/recent');
+  } catch (error) {
+    console.error('Error en GET /api/admin/activity:', error);
+    return NextResponse.json(
+      { success: false, error: 'Error interno del servidor', details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}

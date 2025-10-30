@@ -6,6 +6,7 @@ import { FkSelect } from './FkSelect'
 import { HierarchicalCategorySelect } from './HierarchicalCategorySelect'
 import { GenericHierarchicalSelect } from '@/components/admin/GenericHierarchicalSelect'
 import { getTableFilters, hasTableFilters, type FilterField } from '../config/filterConfig'
+import { fkConfig, relationLabels } from '../config'
 import { createPortal } from 'react-dom'
 
 export type Filters = Record<string, string | number | boolean | undefined | null>
@@ -17,6 +18,11 @@ type Props = {
   setFilters: (f: Filters) => void
   isOpen: boolean
   onClose: () => void
+  child?: {
+    childTable: string
+    foreignKey: string
+    parentId: string | number
+  } | null
 }
 
 /* Utils */
@@ -55,8 +61,8 @@ function TriToggle({
 
 /* Componente FilterChip para mostrar filtros activos */
 function FilterChip({
-  field, value, onRemove,
-}: { field: FilterField; value: FilterValue; onRemove: (key: string) => void }) {
+  field, value, onRemove, child,
+}: { field: FilterField; value: FilterValue; onRemove: (key: string) => void; child?: Props['child'] }) {
   const displayValue = (): string => {
     if (field.type === 'boolean') {
       return value === true ? 'Sí' : value === false ? 'No' : 'Todos'
@@ -68,14 +74,31 @@ function FilterChip({
     return String(value ?? '')
   }
 
+  const getFieldLabel = (): string => {
+    // Si es un filtro de tabla hija, mostrar información más descriptiva
+    if (child && field.key === child.foreignKey) {
+      const childLabel = relationLabels[child.childTable as keyof typeof relationLabels] ?? child.childTable
+      const parentLabel = relationLabels[child.childTable.replace(/s$/, '') as keyof typeof relationLabels] ?? 'Elemento'
+      return `${childLabel} de ${parentLabel} #${child.parentId}`
+    }
+
+    // Si hay configuración FK para este campo, usar su etiqueta
+    const fkEntry = fkConfig[field.key as keyof typeof fkConfig]
+    if (fkEntry?.fieldLabel) {
+      return fkEntry.fieldLabel
+    }
+
+    return field.label
+  }
+
   return (
     <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg text-sm font-medium">
       {field.icon && <field.icon className="h-3 w-3" />}
-      <span>{field.label}: {displayValue()}</span>
+      <span>{getFieldLabel()}: {displayValue()}</span>
       <button
         onClick={() => onRemove(field.key)}
         className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-        aria-label={`Remover filtro ${field.label}`}
+        aria-label={`Remover filtro ${getFieldLabel()}`}
       >
         <X className="h-3 w-3" />
       </button>
@@ -84,7 +107,7 @@ function FilterChip({
 }
 
 /* Componente principal */
-export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onClose }: Props) {
+export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onClose, child }: Props) {
   const [draft, setDraft] = useState<Filters>(filters)
   const filterFields = getTableFilters(resource)
   const hasFilters = hasTableFilters(resource)
@@ -162,6 +185,7 @@ export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onCl
                     field={field}
                     value={value as FilterValue}
                     onRemove={onRemoveChip}
+                    child={child}
                   />
                 ))}
               </div>
@@ -186,7 +210,7 @@ export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onCl
                         placeholder={field.placeholder}
                         value={String(draft[field.key] ?? '')}
                         onChange={e => set(field.key, e.target.value || undefined)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium bg-white text-gray-900"
                       />
                     )}
 
@@ -199,7 +223,7 @@ export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onCl
                         max={field.max}
                         value={String(draft[field.key] ?? '')}
                         onChange={e => set(field.key, e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium bg-white text-gray-900"
                       />
                     )}
 
@@ -217,7 +241,7 @@ export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onCl
                       <select
                         value={String(draft[field.key] ?? '')}
                         onChange={e => set(field.key, e.target.value || undefined)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium bg-white"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium bg-white text-gray-900"
                       >
                         <option value="">Todos</option>
                         {field.options.map(option => (
@@ -267,7 +291,7 @@ export function DynamicFilterModal({ resource, filters, setFilters, isOpen, onCl
                         type="date"
                         value={String(draft[field.key] ?? '')}
                         onChange={e => set(field.key, e.target.value || undefined)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 font-medium bg-white text-gray-900"
                       />
                     )}
                   </div>

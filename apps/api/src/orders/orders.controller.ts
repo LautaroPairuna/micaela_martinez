@@ -57,10 +57,10 @@ export class OrdersController {
   @Get(':id')
   async getOrderById(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: string,
+    @Param('id') id: number,
   ) {
     try {
-      const order = await this.ordersService.getOrderById(orderId, user.sub);
+      const order = await this.ordersService.getOrderById(id, user.sub);
 
       if (!order) {
         throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
@@ -81,12 +81,12 @@ export class OrdersController {
   @Post(':id/status')
   async updateOrderStatus(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: string,
+    @Param('id') id: number,
     @Body() updateStatusDto: UpdateOrderStatusDto,
   ) {
     try {
       return await this.ordersService.updateOrderStatus(
-        orderId,
+        id,
         user.sub,
         updateStatusDto.estado,
         updateStatusDto.referenciaPago,
@@ -102,7 +102,7 @@ export class OrdersController {
   @Post(':id/payment/mercadopago')
   async processMercadoPagoPayment(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: string,
+    @Param('id') orderId: number,
     @Body() paymentData: MercadoPagoPaymentDto,
   ) {
     try {
@@ -122,7 +122,7 @@ export class OrdersController {
   @Post(':id/subscription/mercadopago')
   async createMercadoPagoSubscription(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: string,
+    @Param('id') orderId: number,
     @Body() subscriptionData: MercadoPagoSubscriptionDto,
   ) {
     try {
@@ -143,7 +143,7 @@ export class OrdersController {
   @Post(':id/subscription/cancel')
   async cancelSubscription(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: string,
+    @Param('id') orderId: number,
   ) {
     try {
       return await this.ordersService.cancelSubscription(orderId, user.sub);
@@ -159,13 +159,53 @@ export class OrdersController {
   async handleMercadoPagoWebhook(
     @Body() webhookData: any,
     @Query('type') eventType: string,
-    @Query('data.id') dataId: string,
+    @Query('data.id') dataId: number,
   ) {
     try {
       return await this.ordersService.processMercadoPagoWebhook(
         eventType,
         dataId,
         webhookData,
+      );
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message || 'Error al procesar el webhook',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('mercadopago/webhook')
+  async handleMercadoPagoDirectWebhook(
+    @Query('type') type: string,
+    @Query('id') id: number,
+    @Body() data: any
+  ) {
+    try {
+      return await this.ordersService.processMercadoPagoWebhook(
+        type,
+        id,
+        data,
+      );
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message || 'Error al procesar el webhook',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('mercadopago/subscription-webhook')
+  async handleMercadoPagoSubscriptionWebhook(
+    @Query('type') type: string,
+    @Query('id') id: number,
+    @Body() data: any
+  ) {
+    try {
+      return await this.ordersService.processMercadoPagoWebhook(
+        type,
+        id,
+        data,
       );
     } catch (error) {
       throw new HttpException(

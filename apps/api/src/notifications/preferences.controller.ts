@@ -17,7 +17,7 @@ export class NotificationPreferencesController {
   async getPreferences(
     @CurrentUser() user: JwtUser,
   ): Promise<NotificationPreferencesResponseDto> {
-    return this.notificationsService.getUserPreferences(user.sub);
+    return this.notificationsService.getUserPreferences(user.sub.toString());
   }
 
   @Put()
@@ -25,7 +25,7 @@ export class NotificationPreferencesController {
     @CurrentUser() user: JwtUser,
     @Body() updateDto: UpdateNotificationPreferencesDto,
   ): Promise<NotificationPreferencesResponseDto> {
-    return this.notificationsService.updateUserPreferences(user.sub, updateDto);
+    return this.notificationsService.updateUserPreferences(user.sub.toString(), updateDto);
   }
 
   @Get('stats')

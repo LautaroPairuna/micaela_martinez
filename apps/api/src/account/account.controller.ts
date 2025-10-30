@@ -8,7 +8,8 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IsString, IsOptional, IsBoolean, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsObject, IsInt } from 'class-validator';
+import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { AccountService } from './account.service';
 import { OrdersService } from '../orders/orders.service';
@@ -28,8 +29,7 @@ class UpdateProfileDto {
 
 class UpsertAddressDto {
   @IsOptional()
-  @IsString()
-  id?: string;
+  id?: number;
 
   @IsOptional()
   @IsString()
@@ -72,19 +72,21 @@ class UpsertAddressDto {
 }
 
 class AddFavoriteDto {
-  @IsString({ message: 'productoId debe ser un string válido' })
-  productoId!: string;
+  productoId!: number;
 }
 
 class UpdateLessonProgressDto {
-  @IsString()
-  enrollmentId!: string;
+  @IsInt()
+  @Type(() => Number)
+  enrollmentId!: number;
 
-  @IsString()
-  moduleId!: string;
+  @IsInt()
+  @Type(() => Number)
+  moduleId!: number;
 
-  @IsString()
-  lessonId!: string;
+  @IsInt()
+  @Type(() => Number)
+  lessonId!: number;
 
   @IsOptional()
   @IsObject()
@@ -122,7 +124,7 @@ export class AccountController {
   }
 
   @Delete('addresses/:id')
-  deleteAddress(@CurrentUser() user: JwtUser, @Param('id') id: string) {
+  deleteAddress(@CurrentUser() user: JwtUser, @Param('id') id: number) {
     return this.svc.deleteAddress(user.sub, id);
   }
 
@@ -140,7 +142,7 @@ export class AccountController {
   @Delete('favorites/:productId')
   removeFavorite(
     @CurrentUser() user: JwtUser,
-    @Param('productId') productId: string,
+    @Param('productId') productId: number,
   ) {
     return this.svc.removeFavorite(user.sub, productId);
   }

@@ -2,10 +2,42 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewResponseDto } from './dto/create-review-response.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Prisma } from '@prisma/client';
+
+const toInt = (v: unknown, label = 'id'): number => {
+  if (v === null || v === undefined || v === '') {
+    throw new BadRequestException(`${label} es requerido`);
+  }
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new BadRequestException(`${label} inválido`);
+  return n;
+};
+
+// Tipo con include para que TS “vea” hijos/parent/usuario/_count
+type ResenaRespuestaWithRelations = Prisma.ResenaRespuestaGetPayload<{
+  include: {
+    usuario: { select: { id: true; nombre: true; email: true } };
+    parent: {
+      select: {
+        id: true;
+        contenido: true;
+        usuario: { select: { id: true; nombre: true } };
+      };
+    };
+    hijos: {
+      include: {
+        usuario: { select: { id: true; nombre: true; email: true } };
+        _count: { select: { hijos: true } };
+      };
+    };
+    _count: { select: { hijos: true } };
+  };
+}>;
 
 @Injectable()
 export class ReviewResponsesService {
@@ -19,22 +51,26 @@ export class ReviewResponsesService {
     usuarioId: string,
     createResponseDto: CreateReviewResponseDto,
   ) {
+    const resenaIdNum = toInt(resenaId, 'resenaId');
+    const usuarioIdNum = toInt(usuarioId, 'usuarioId');
+    const parentIdNum =
+      createResponseDto.parentId !== undefined &&
+      createResponseDto.parentId !== null
+        ? toInt(createResponseDto.parentId, 'parentId')
+        : null;
+
     // Verificar que la reseña existe
     const resena = await this.prisma.resena.findUnique({
-      where: { id: resenaId },
+      where: { id: resenaIdNum },
     });
+    if (!resena) throw new NotFoundException('Reseña no encontrada');
 
-    if (!resena) {
-      throw new NotFoundException('Reseña no encontrada');
-    }
-
-    // Si es una respuesta a otra respuesta, verificar que existe
-    if (createResponseDto.parentId) {
+    // Si es respuesta a otra respuesta, verificar que existe y pertenece a la misma reseña
+    if (parentIdNum !== null) {
       const respuestaPadre = await this.prisma.resenaRespuesta.findUnique({
-        where: { id: createResponseDto.parentId },
+        where: { id: parentIdNum },
       });
-
-      if (!respuestaPadre || respuestaPadre.resenaId !== resenaId) {
+      if (!respuestaPadre || respuestaPadre.resenaId !== resenaIdNum) {
         throw new NotFoundException('Respuesta padre no encontrada');
       }
     }
@@ -42,47 +78,31 @@ export class ReviewResponsesService {
     const respuesta = await this.prisma.resenaRespuesta.create({
       data: {
         contenido: createResponseDto.contenido,
-        resenaId,
-        usuarioId,
-        parentId: createResponseDto.parentId,
+        resenaId: resenaIdNum,
+        usuarioId: usuarioIdNum,
+        parentId: parentIdNum,
       },
       include: {
-        usuario: {
-          select: {
-            id: true,
-            nombre: true,
-            email: true,
-          },
-        },
+        usuario: { select: { id: true, nombre: true, email: true } },
         parent: {
           select: {
             id: true,
             contenido: true,
-            usuario: {
-              select: {
-                id: true,
-                nombre: true,
-              },
-            },
+            usuario: { select: { id: true, nombre: true } },
           },
         },
-        _count: {
-          select: {
-            hijos: true,
-          },
-        },
+        _count: { select: { hijos: true } },
       },
     });
 
-    // Crear notificación para el autor de la reseña
+    // Crear notificación (la API espera strings)
     try {
       await this.notificationsService.notifyReviewResponse(
-        resenaId,
-        respuesta.id,
-        usuarioId,
+        String(resenaIdNum),
+        String(respuesta.id),
+        String(usuarioIdNum),
       );
     } catch (error) {
-      // Log del error pero no fallar la creación de la respuesta
       console.error('Error al crear notificación de respuesta:', error);
     }
 
@@ -90,203 +110,130 @@ export class ReviewResponsesService {
   }
 
   async getResponsesByReview(resenaId: string) {
+    const resenaIdNum = toInt(resenaId, 'resenaId');
+
     // Verificar que la reseña existe
     const resena = await this.prisma.resena.findUnique({
-      where: { id: resenaId },
+      where: { id: resenaIdNum },
     });
+    if (!resena) throw new NotFoundException('Reseña no encontrada');
 
-    if (!resena) {
-      throw new NotFoundException('Reseña no encontrada');
-    }
-
-    // Obtener todas las respuestas de la reseña organizadas por threading
-    const respuestas = await this.prisma.resenaRespuesta.findMany({
-      where: {
-        resenaId,
-        eliminado: false,
-      },
+    // Obtener todas las respuestas con relaciones
+    const respuestas = (await this.prisma.resenaRespuesta.findMany({
+      where: { resenaId: resenaIdNum, eliminado: false },
       include: {
-        usuario: {
-          select: {
-            id: true,
-            nombre: true,
-            email: true,
-          },
-        },
+        usuario: { select: { id: true, nombre: true, email: true } },
         parent: {
           select: {
             id: true,
             contenido: true,
-            usuario: {
-              select: {
-                id: true,
-                nombre: true,
-              },
-            },
+            usuario: { select: { id: true, nombre: true } },
           },
         },
         hijos: {
           include: {
-            usuario: {
-              select: {
-                id: true,
-                nombre: true,
-                email: true,
-              },
-            },
-            _count: {
-              select: {
-                hijos: true,
-              },
-            },
+            usuario: { select: { id: true, nombre: true, email: true } },
+            _count: { select: { hijos: true } },
           },
-          orderBy: {
-            creadoEn: 'asc',
-          },
+          orderBy: { creadoEn: 'asc' },
         },
-        _count: {
-          select: {
-            hijos: true,
-          },
-        },
+        _count: { select: { hijos: true } },
       },
-      orderBy: {
-        creadoEn: 'asc',
-      },
-    });
+      orderBy: { creadoEn: 'asc' },
+    })) as ResenaRespuestaWithRelations[];
 
-    // Agregar información de edición a cada respuesta
-    const respuestasConEdicion = respuestas.map((respuesta) => ({
-      ...respuesta,
-      editado:
-        respuesta.creadoEn.getTime() !== respuesta.actualizadoEn.getTime(),
-      hijos: respuesta.hijos.map((hijo) => ({
-        ...hijo,
-        editado: hijo.creadoEn.getTime() !== hijo.actualizadoEn.getTime(),
+    // Agregar flag de edición
+    const respuestasConEdicion = respuestas.map((r) => ({
+      ...r,
+      editado: r.creadoEn.getTime() !== r.actualizadoEn.getTime(),
+      hijos: r.hijos.map((h) => ({
+        ...h,
+        editado: h.creadoEn.getTime() !== h.actualizadoEn.getTime(),
       })),
     }));
 
-    // Organizar en estructura de árbol
+    // Respuestas raíz (sin parent)
     const respuestasRaiz = respuestasConEdicion.filter((r) => !r.parentId);
 
     return this.buildResponseTree(respuestasRaiz, respuestasConEdicion);
   }
 
   private buildResponseTree(
-    respuestasRaiz: any[],
-    todasLasRespuestas: any[],
-  ): any[] {
-    return respuestasRaiz.map((respuesta: any) => {
-      const hijosRespuestas = todasLasRespuestas.filter(
-        (r) => r.parentId === respuesta.id,
-      );
-
+    respuestasRaiz: ResenaRespuestaWithRelations[],
+    todas: ResenaRespuestaWithRelations[],
+  ): ResenaRespuestaWithRelations[] {
+    return respuestasRaiz.map((resp) => {
+      const hijosRespuestas = todas.filter((r) => r.parentId === resp.id);
       return {
-        ...respuesta,
+        ...resp,
         hijos:
           hijosRespuestas.length > 0
-            ? this.buildResponseTree(hijosRespuestas, todasLasRespuestas)
+            ? (this.buildResponseTree(hijosRespuestas, todas) as any)
             : [],
-      };
+      } as ResenaRespuestaWithRelations;
     });
   }
 
-  async updateResponse(
-    responseId: string,
-    usuarioId: string,
-    contenido: string,
-  ) {
+  async updateResponse(responseId: string, usuarioId: string, contenido: string) {
+    const responseIdNum = toInt(responseId, 'responseId');
+    const usuarioIdNum = toInt(usuarioId, 'usuarioId');
+
     const respuesta = await this.prisma.resenaRespuesta.findUnique({
-      where: { id: responseId },
+      where: { id: responseIdNum },
     });
+    if (!respuesta) throw new NotFoundException('Respuesta no encontrada');
 
-    if (!respuesta) {
-      throw new NotFoundException('Respuesta no encontrada');
-    }
-
-    if (respuesta.usuarioId !== usuarioId) {
-      throw new ForbiddenException(
-        'No tienes permisos para editar esta respuesta',
-      );
+    if (respuesta.usuarioId !== usuarioIdNum) {
+      throw new ForbiddenException('No tienes permisos para editar esta respuesta');
     }
 
     return this.prisma.resenaRespuesta.update({
-      where: { id: responseId },
+      where: { id: responseIdNum },
       data: { contenido },
       include: {
-        usuario: {
-          select: {
-            id: true,
-            nombre: true,
-            email: true,
-          },
-        },
+        usuario: { select: { id: true, nombre: true, email: true } },
         parent: {
           select: {
             id: true,
             contenido: true,
-            usuario: {
-              select: {
-                id: true,
-                nombre: true,
-              },
-            },
+            usuario: { select: { id: true, nombre: true } },
           },
         },
-        _count: {
-          select: {
-            hijos: true,
-          },
-        },
+        _count: { select: { hijos: true } },
       },
     });
   }
 
   async deleteResponse(responseId: string, usuarioId: string) {
+    const responseIdNum = toInt(responseId, 'responseId');
+    const usuarioIdNum = toInt(usuarioId, 'usuarioId');
+
     const respuesta = await this.prisma.resenaRespuesta.findUnique({
-      where: { id: responseId },
-      include: {
-        _count: {
-          select: {
-            hijos: true,
-          },
-        },
-      },
+      where: { id: responseIdNum },
+      include: { _count: { select: { hijos: true } } },
     });
+    if (!respuesta) throw new NotFoundException('Respuesta no encontrada');
 
-    if (!respuesta) {
-      throw new NotFoundException('Respuesta no encontrada');
+    if (respuesta.usuarioId !== usuarioIdNum) {
+      throw new ForbiddenException('No tienes permisos para eliminar esta respuesta');
     }
 
-    if (respuesta.usuarioId !== usuarioId) {
-      throw new ForbiddenException(
-        'No tienes permisos para eliminar esta respuesta',
-      );
-    }
-
-    // Si tiene respuestas hijas, solo marcar como eliminada
     if (respuesta._count.hijos > 0) {
+      // marcar como eliminada
       return this.prisma.resenaRespuesta.update({
-        where: { id: responseId },
-        data: {
-          contenido: '[Respuesta eliminada]',
-          eliminado: true,
-        },
+        where: { id: responseIdNum },
+        data: { contenido: '[Respuesta eliminada]', eliminado: true },
       });
     }
 
-    // Si no tiene respuestas hijas, eliminar completamente
-    return this.prisma.resenaRespuesta.delete({
-      where: { id: responseId },
-    });
+    // eliminar definitivamente
+    return this.prisma.resenaRespuesta.delete({ where: { id: responseIdNum } });
   }
 
   async getResponsesCount(resenaId: string): Promise<number> {
+    const resenaIdNum = toInt(resenaId, 'resenaId');
     return this.prisma.resenaRespuesta.count({
-      where: {
-        resenaId,
-        eliminado: false,
-      },
+      where: { resenaId: resenaIdNum, eliminado: false },
     });
   }
 }

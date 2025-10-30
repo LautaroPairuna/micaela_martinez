@@ -129,15 +129,24 @@ export function useAuth() {
       const { authCache } = await import('../lib/auth-cache');
       authCache.invalidateAll();
       
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      // El endpoint correcto para borrar la cookie de sesión es /api/session (DELETE)
+      await fetch('/api/session', { method: 'DELETE', credentials: 'include' });
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
       // Limpiar estado local independientemente del resultado
       localStorage.removeItem('auth_token');
+      // Limpiar posibles restos de sesión en storage
+      try {
+        sessionStorage.clear();
+        // Limpiar progresos locales/estado sensible vinculado al usuario
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('auth') || key.includes('session') || key.includes('token'))) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {}
       adminApi.clearToken();
       setAuthState({
         user: null,

@@ -25,6 +25,7 @@ export interface UseNotificationsReturn extends NotificationsData {
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
+  pushNotification: (payload: Partial<AppNotification>) => void;
 }
 
 /**
@@ -39,6 +40,7 @@ export function useNotifications(): UseNotificationsReturn {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    pushNotification,
   } = useNotificationsContext();
 
   return {
@@ -52,6 +54,7 @@ export function useNotifications(): UseNotificationsReturn {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    pushNotification,
   };
 }
 

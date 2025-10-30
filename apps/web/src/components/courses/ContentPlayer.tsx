@@ -16,6 +16,7 @@ type QuizQuestion = {
   opciones: string[];
   respuestaCorrecta: number;
   explicacion?: string;
+  retroalimentacion?: string; // alias opcional
 };
 
 type ContentObj =
@@ -66,7 +67,32 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
   const textContent = useMemo<string | null>(() => {
     const c = lesson.contenido;
     if (!c) return null;
-    if (typeof c === 'string') return c;
+    // Si viene como string, intentamos parsear JSON para extraer "contenido"/"texto"
+    if (typeof c === 'string') {
+      const raw = c.trim();
+      if (raw.startsWith('{') || raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw) as unknown;
+          if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'contenido' in (parsed as Record<string, unknown>) &&
+            typeof (parsed as Record<string, unknown>).contenido === 'string'
+          ) {
+            return (parsed as Record<string, string>).contenido;
+          }
+          if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'texto' in (parsed as Record<string, unknown>) &&
+            typeof (parsed as Record<string, unknown>).texto === 'string'
+          ) {
+            return (parsed as Record<string, string>).texto;
+          }
+        } catch {}
+      }
+      return c; // texto plano
+    }
     if (c.tipo === 'TEXTO' && c.data?.contenido) return c.data.contenido;
     if (c.texto) return c.texto;
     return null;
@@ -97,7 +123,23 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
   // ---- Normalización QUIZ ----
   const quizQuestions = useMemo<QuizQuestion[]>(() => {
     const c = lesson.contenido;
-    if (!c || typeof c === 'string') return [];
+    if (!c) return [];
+
+    // Si viene como string, intentamos parsear JSON
+    if (typeof c === 'string') {
+      const raw = c.trim();
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw) as any;
+        if (parsed?.tipo === 'QUIZ' && Array.isArray(parsed?.data?.preguntas)) {
+          return parsed.data.preguntas as QuizQuestion[];
+        }
+        if (Array.isArray(parsed?.preguntas)) return parsed.preguntas as QuizQuestion[];
+        if (parsed?.quiz) return [parsed.quiz as QuizQuestion];
+      } catch {}
+      return [];
+    }
+
     if (c.tipo === 'QUIZ' && Array.isArray(c.data?.preguntas)) return c.data.preguntas!;
     if (Array.isArray(c.preguntas)) return c.preguntas;
     if (c.quiz) return [c.quiz];
@@ -114,6 +156,7 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answeredMap, setAnsweredMap] = useState<Record<number, number | null>>({});
   const [resultMap, setResultMap] = useState<Record<number, boolean>>({});
+  const [hasAttempted, setHasAttempted] = useState<boolean>(false);
 
   const totalQuestions = quizQuestions.length;
   const currentQuestion = totalQuestions ? quizQuestions[currentQuestionIndex] : null;
@@ -124,6 +167,7 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
     setAnsweredMap((prev) => ({ ...prev, [currentQuestionIndex]: answerIndex }));
     const isCorrect = answerIndex === currentQuestion.respuestaCorrecta;
     setResultMap((prev) => ({ ...prev, [currentQuestionIndex]: isCorrect }));
+    setHasAttempted(true);
 
     const allAnswered = Object.keys({ ...answeredMap, [currentQuestionIndex]: answerIndex }).length === totalQuestions;
     const allCorrect = allAnswered && Object.values({ ...resultMap, [currentQuestionIndex]: isCorrect }).every(Boolean);
@@ -131,6 +175,12 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
     if (allCorrect) {
       onProgress?.(100);
       onComplete?.();
+    }
+    // Reportar progreso aproximado si hay varias preguntas
+    if (totalQuestions > 1) {
+      const answeredCount = Object.keys({ ...answeredMap, [currentQuestionIndex]: answerIndex }).length;
+      const progressPct = Math.round((answeredCount / totalQuestions) * 100);
+      onProgress?.(progressPct);
     }
   };
 
@@ -278,17 +328,31 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
     const answered = answeredMap[currentQuestionIndex] ?? null;
     const isAnswered = answered !== null && answered !== undefined;
     const isCorrect = resultMap[currentQuestionIndex] ?? false;
+    const rawExplanation = (currentQuestion?.explicacion ?? currentQuestion?.retroalimentacion ?? '');
+    const explanation = typeof rawExplanation === 'string' ? rawExplanation.trim() : '';
+
+    const answeredCount = Object.keys(answeredMap).length;
+    const progressPct = totalQuestions ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
     return (
       <div className="flex-1 overflow-auto bg-white">
         <Header
           label="Evaluación"
           icon={<HelpCircle className="w-5 h-5 text-purple-600" />}
-          extra={<span className="flex items-center gap-1">❓ {totalQuestions} {totalQuestions === 1 ? 'pregunta' : 'preguntas'}</span>}
+          extra={
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">❓ {totalQuestions} {totalQuestions === 1 ? 'pregunta' : 'preguntas'}</span>
+              {totalQuestions > 0 && (
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-2 bg-purple-500" style={{ width: `${progressPct}%` }} />
+                </div>
+              )}
+            </div>
+          }
         />
         <div className="px-6 py-8">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12">
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12 shadow-sm">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{currentQuestion?.pregunta}</h3>
                 {totalQuestions > 1 && (
@@ -303,9 +367,9 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => !isAnswered && handleAnswer(idx)}
+                      onClick={() => handleAnswer(idx)}
                       className={cn(
-                        'w-full text-left p-5 rounded-xl border-2 transition-all',
+                        'w-full text-left p-5 rounded-xl border transition-all flex items-center gap-4',
                         isAnswered
                           ? selected
                             ? isCorrect
@@ -317,6 +381,10 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
                           : 'border-gray-300 bg-white hover:border-purple-300'
                       )}
                     >
+                      <span className={cn('inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold',
+                        isAnswered ? (selected ? (isCorrect ? 'bg-green-600 text-white' : 'bg-red-600 text-white') : 'bg-gray-200 text-gray-700') : (selected ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'))}>
+                        {String.fromCharCode(65 + idx)}
+                      </span>
                       <span className="text-gray-900 text-base leading-relaxed font-medium">{op}</span>
                     </button>
                   );
@@ -324,39 +392,93 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
               </div>
 
               {isAnswered && (
-                <div className={cn('p-6 rounded-xl border-2', isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200')}>
+                <div className={cn('p-6 rounded-xl border', isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200')}>
                   <div className="flex items-center gap-3 mb-4">
                     <CheckCircle className={cn('h-6 w-6', isCorrect ? 'text-green-600' : 'text-red-600')} />
                     <span className={cn('font-bold text-xl', isCorrect ? 'text-green-800' : 'text-red-800')}>
                       {isCorrect ? '🎉 ¡Correcto!' : '❌ Incorrecto'}
                     </span>
                   </div>
-                  {currentQuestion?.explicacion && (
+                  {(!isCorrect || explanation.length > 0) && (
                     <div className="bg-white/60 p-4 rounded-xl">
-                      <p className="text-gray-700 leading-relaxed">
-                        <strong>Explicación:</strong> {currentQuestion.explicacion}
-                      </p>
+                      {explanation.length > 0 ? (
+                        <p className="text-gray-700 leading-relaxed">
+                          <strong>Explicación:</strong>{' '}
+                          {explanation}
+                        </p>
+                      ) : (
+                        !isCorrect && (
+                          <p className="text-gray-700 leading-relaxed">
+                            <strong>Respuesta correcta:</strong>{' '}
+                            {typeof currentQuestion?.respuestaCorrecta === 'number' &&
+                              currentQuestion?.opciones?.[currentQuestion.respuestaCorrecta]}
+                          </p>
+                        )
+                      )}
                     </div>
                   )}
 
-                  {totalQuestions > 1 && (
-                    <div className="flex justify-between mt-6">
-                      <Button variant="outline" disabled={currentQuestionIndex === 0} onClick={() => setCurrentQuestionIndex((i) => Math.max(0, i - 1))}>
-                        Anterior
+                  <div className="flex flex-wrap gap-3 mt-6 justify-between">
+                    <div className="flex gap-3">
+                      {totalQuestions > 1 && (
+                        <Button variant="outline" disabled={currentQuestionIndex === 0} onClick={() => setCurrentQuestionIndex((i) => Math.max(0, i - 1))}>
+                          Anterior
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAnsweredMap((prev) => {
+                            const next = { ...prev };
+                            delete next[currentQuestionIndex];
+                            return next;
+                          });
+                          setResultMap((prev) => {
+                            const next = { ...prev };
+                            delete next[currentQuestionIndex];
+                            return next;
+                          });
+                          setHasAttempted(false);
+                        }}
+                      >
+                        Reintentar
                       </Button>
+                    </div>
+                    {totalQuestions > 1 && (
                       <Button disabled={currentQuestionIndex === totalQuestions - 1} onClick={() => setCurrentQuestionIndex((i) => Math.min(totalQuestions - 1, i + 1))}>
                         Siguiente
+                      </Button>
+                    )}
+                  </div>
+
+                  {totalQuestions === 1 && (
+                    <div className="flex justify-center mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAnsweredMap({});
+                          setResultMap({});
+                          setHasAttempted(false);
+                        }}
+                      >
+                        Reintentar
                       </Button>
                     </div>
                   )}
                 </div>
               )}
 
-              {Object.keys(answeredMap).length === totalQuestions && totalQuestions > 1 && (
+              {answeredCount === totalQuestions && totalQuestions > 1 && (
                 <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-200 text-center">
                   <h4 className="text-xl font-bold text-gray-900 mb-2">Resumen del Quiz</h4>
-                  <div className="text-3xl font-bold text-purple-600">
-                    {Object.values(resultMap).filter(Boolean).length} / {totalQuestions}
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="text-3xl font-bold text-purple-600">
+                      {Object.values(resultMap).filter(Boolean).length} / {totalQuestions}
+                    </div>
+                    <div className="w-64 h-2 bg-purple-200 rounded-full overflow-hidden">
+                      <div className="h-2 bg-purple-600" style={{ width: `${Math.round((Object.values(resultMap).filter(Boolean).length / totalQuestions) * 100)}%` }} />
+                    </div>
+                    <p className="text-gray-600 mt-1">Puntuación</p>
                   </div>
                   <p className="text-gray-600 mt-1">Respuestas correctas</p>
 
@@ -366,16 +488,15 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
                         setAnsweredMap({});
                         setResultMap({});
                         setCurrentQuestionIndex(0);
+                        setHasAttempted(false);
                       }}
                       className="px-6"
                     >
                       Reiniciar
                     </Button>
-                    {Object.values(resultMap).every(Boolean) && (
-                      <Button className="px-6 bg-green-600 hover:bg-green-700 text-white" onClick={() => onComplete?.()}>
-                        Continuar
-                      </Button>
-                    )}
+                    <Button className="px-6 bg-green-600 hover:bg-green-700 text-white" onClick={() => onComplete?.()}>
+                      Finalizar
+                    </Button>
                   </div>
                 </div>
               )}

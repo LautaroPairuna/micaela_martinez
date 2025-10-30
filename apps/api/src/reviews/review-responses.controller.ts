@@ -30,7 +30,7 @@ export class ReviewResponsesController {
     try {
       const result = await this.reviewResponsesService.createResponse(
         reviewId,
-        user.sub,
+        String(user.sub),
         createResponseDto,
       );
       return result;
@@ -63,7 +63,7 @@ export class ReviewResponsesController {
   ) {
     return this.reviewResponsesService.updateResponse(
       responseId,
-      user.sub,
+      String(user.sub),
       contenido,
     );
   }
@@ -74,6 +74,6 @@ export class ReviewResponsesController {
     @Param('responseId') responseId: string,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.reviewResponsesService.deleteResponse(responseId, user.sub);
+    return this.reviewResponsesService.deleteResponse(responseId, String(user.sub));
   }
 }

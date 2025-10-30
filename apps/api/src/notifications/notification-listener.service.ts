@@ -71,8 +71,37 @@ export class NotificationListenerService {
         break;
     }
 
-    const excludeUserId = toStr(payload.userId);
-    await this.createNotificationForAdmins({ title, url, excludeUserId });
+    // Obtener información del actor (administrador que realizó la acción)
+    const actorId = toStr(payload.userId);
+    let actorName: string | undefined;
+    if (actorId) {
+      try {
+        const actor = await this.prisma.usuario.findUnique({
+          where: { id: Number(actorId) },
+          select: { nombre: true, email: true },
+        });
+        actorName = actor?.nombre || actor?.email || undefined;
+      } catch (e) {
+        this.logger.warn(`No se pudo obtener el nombre del actor ${actorId}: ${e instanceof Error ? e.message : e}`);
+      }
+    }
+
+    // Importante: NO excluir al actor. El mismo admin debe ver su propia actividad.
+    await this.createNotificationForAdmins({
+      title,
+      url,
+      // excludeUserId: undefined,
+      actorId,
+      actorName,
+      meta: {
+        action,
+        resourceType,
+        resourceId,
+        resourceName,
+        actorId,
+        actorName,
+      },
+    });
   }
 
   private deriveResourceMeta(payload: ResourceEventPayload) {
@@ -91,14 +120,17 @@ export class NotificationListenerService {
   private async createNotificationForAdmins(data: {
     title: string;
     url: string;
-    excludeUserId?: string;
+    excludeUserId?: string; // se mantiene por compatibilidad, pero no se usa para eventos de recurso
+    actorId?: string;
+    actorName?: string;
+    meta?: Record<string, any>;
   }) {
     const admins = await this.prisma.usuario.findMany({
       where: {
         roles: {
           some: { role: { slug: 'admin' } },
         },
-        ...(data.excludeUserId ? { id: { not: data.excludeUserId } } : {}),
+        ...(data.excludeUserId ? { id: { not: Number(data.excludeUserId) } } : {}),
       },
       select: { id: true },
     });
@@ -108,19 +140,35 @@ export class NotificationListenerService {
       return;
     }
 
+    const toSpanishVerb = (a: 'created' | 'updated' | 'deleted') =>
+      a === 'created' ? 'creó' : a === 'updated' ? 'actualizó' : 'eliminó';
+
     for (const admin of admins) {
+      const isActor = data.actorId ? admin.id === Number(data.actorId) : false;
+      const displayActor = isActor ? 'Tú' : data.actorName || 'Administrador';
+      const resourceLabel = data.meta?.resourceName || `#${data.meta?.resourceId ?? ''}`;
+      const actionVerb = data.meta?.action ? toSpanishVerb(data.meta.action) : 'actualizó';
+
+      const message = `${displayActor} ${actionVerb} ${String(data.meta?.resourceType || 'recurso').toLowerCase()} ${resourceLabel}`;
+
       const notification = await this.prisma.notificacion.create({
         data: {
           usuarioId: admin.id,
           tipo: 'SISTEMA' as TipoNotificacion,
           titulo: data.title,
-          mensaje: data.title, // Usar título como mensaje por simplicidad
+          mensaje: message,
           url: data.url,
+          metadata: {
+            ...(data.meta || {}),
+            displayActor,
+            isActor,
+            createdAt: new Date().toISOString(),
+          },
         },
       });
 
       this.websocketGateway.emitToUser(
-        notification.usuarioId,
+        String(notification.usuarioId),
         'nueva-notificacion',
         notification,
       );

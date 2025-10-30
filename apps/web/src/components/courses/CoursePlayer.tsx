@@ -10,7 +10,7 @@ import { CourseHeader } from './CourseHeader';
 import { CourseProgress } from './CourseProgress';
 import { ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { updateLessonProgress } from '@/lib/sdk/userApi';
+import { useProgress } from '@/components/courses/ProgressContext';
 import { getSecureVideoUrl } from '@/lib/media-utils';
 import { Course, Module, Lesson, Enrollment } from '@/types/course';
 
@@ -45,8 +45,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 type CoursePlayerProps = {
   course: Course;
   enrollment: Enrollment;
-  currentLessonId?: string;
-  currentModuleId?: string;
+  children?: React.ReactNode;
 };
 
 type EnrollmentProgress = Record<
@@ -72,8 +71,7 @@ const isEnrollmentProgress = (u: unknown): u is EnrollmentProgress => {
 export function CoursePlayer({
   course,
   enrollment,
-  currentLessonId,
-  currentModuleId,
+  children,
 }: CoursePlayerProps) {
   const router = useRouter();
   const params = useParams<{ modulo?: string; leccion?: string }>();
@@ -81,7 +79,8 @@ export function CoursePlayer({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [currentModule, setCurrentModule] = useState<Module | null>(null);
-  const [lessonProgress, setLessonProgress] = useState<Record<string, boolean>>({});
+  // Progreso desde contexto (persistente entre navegación dentro del curso)
+  const { lessonProgress, getLessonProgressKey, markLessonComplete: ctxMarkLessonComplete, toggleLessonComplete: ctxToggleLessonComplete } = useProgress();
   const [contentError, setContentError] = useState<string | null>(null);
   const [actualVideoDuration, setActualVideoDuration] = useState<number | null>(null);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
@@ -104,6 +103,15 @@ export function CoursePlayer({
   const [miniPlayerLesson, setMiniPlayerLesson] = useState<Lesson | null>(null);
   const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string>('');
   const [preloadedContent, setPreloadedContent] = useState<Record<string, boolean>>({});
+  // Control de cache local opcional (producción puede desactivarlo):
+  // Habilitado por defecto. Para desactivar explícitamente: NEXT_PUBLIC_PROGRESS_CACHE=0
+  const ENABLE_LOCAL_PROGRESS_CACHE = (process.env.NEXT_PUBLIC_PROGRESS_CACHE === '0') ? false : true;
+
+  // Persistencia local (opcional) para suavizar remounts durante la navegación
+  // El progreso se maneja en el contexto; no dependemos de localStorage en producción
+  const PROGRESS_STORAGE_KEY = `course-progress-${course.id}-${enrollment.id}`;
+  const loadProgressFromStorage = useCallback((): Record<string, boolean> => ({}), [PROGRESS_STORAGE_KEY]);
+  const saveProgressToStorage = useCallback((_progress: Record<string, boolean>) => {}, [PROGRESS_STORAGE_KEY]);
 
   // Helpers slug
   const getLessonSlug = useCallback((lesson: Lesson) => `leccion-${lesson.orden}`, []);
@@ -115,13 +123,39 @@ export function CoursePlayer({
     return getSecureVideoUrl(rutaSrc);
   }, []);
 
+  // Extraer source de video desde la lección (rutaSrc o contenido.videoFile/videoUrl)
+  const getRawVideoSrc = useCallback((lesson?: Lesson | null): string | null => {
+    if (!lesson) return null;
+    if (lesson.rutaSrc) return lesson.rutaSrc;
+    const c = (lesson as any).contenido;
+    if (!c) return null;
+    try {
+      if (typeof c === 'string') {
+        const raw = c.trim();
+        if (raw.startsWith('{') || raw.startsWith('[')) {
+          const parsed = JSON.parse(raw) as any;
+          // Preferimos filename (videoFile); compatibilidad con videoUrl legacy
+          if (typeof parsed?.videoFile === 'string') return parsed.videoFile;
+          if (typeof parsed?.videoUrl === 'string') return parsed.videoUrl;
+        }
+      } else if (typeof c === 'object' && c !== null) {
+        if (typeof (c as any)?.videoFile === 'string') return (c as any).videoFile;
+        if (typeof (c as any)?.data?.videoFile === 'string') return (c as any).data.videoFile;
+        if (typeof (c as any)?.videoUrl === 'string') return (c as any).videoUrl;
+        if (typeof (c as any)?.data?.videoUrl === 'string') return (c as any).data.videoUrl;
+      }
+    } catch {}
+    return null;
+  }, []);
+
   // Resolver URL de video cuando cambia la lección
   useEffect(() => {
     let isCancelled = false;
     const resolveVideoUrl = async () => {
-      if (currentLesson?.tipo === 'VIDEO' && currentLesson.rutaSrc) {
+      const rawSrc = currentLesson?.tipo === 'VIDEO' ? getRawVideoSrc(currentLesson) : null;
+      if (currentLesson?.tipo === 'VIDEO' && rawSrc) {
         try {
-          const url = await getVideoUrl(currentLesson.rutaSrc);
+          const url = await getVideoUrl(rawSrc);
           if (!isCancelled) setResolvedVideoUrl(url);
         } catch (err) {
           console.error('Error resolving video URL:', err);
@@ -135,12 +169,7 @@ export function CoursePlayer({
     return () => {
       isCancelled = true;
     };
-  }, [currentLesson?.rutaSrc, currentLesson?.tipo, getVideoUrl]);
-
-  // Clave de progreso módulo-lección
-  const getLessonProgressKey = useCallback((moduleId: string, lessonId: string) => {
-    return `${moduleId}-${lessonId}`;
-  }, []);
+  }, [currentLesson, currentLesson?.tipo, getVideoUrl, getRawVideoSrc]);
 
   // Duración real de video (cache)
   const handleVideoDurationUpdate = useCallback(
@@ -170,7 +199,8 @@ export function CoursePlayer({
       course.modulos.forEach((m) => {
         m.lecciones?.forEach((l) => {
           if (l.tipo === 'VIDEO' && !videoDurationsCache[l.id]) {
-            if (l.rutaSrc) videoLessons.push(l);
+            const rawSrc = getRawVideoSrc(l);
+            if (rawSrc) videoLessons.push(l);
             else videosWithoutSrc.push(l);
           }
         });
@@ -220,7 +250,8 @@ export function CoursePlayer({
                 video.onerror = cleanup;
                 video.onabort = cleanup;
                 document.body.appendChild(video);
-                getVideoUrl(lesson.rutaSrc).then((url) => (video.src = url)).catch(cleanup);
+                const rawSrc = getRawVideoSrc(lesson);
+                getVideoUrl(rawSrc).then((url) => (video.src = url)).catch(cleanup);
               })
           )
         );
@@ -244,7 +275,7 @@ export function CoursePlayer({
     } finally {
       setIsDurationsLoaded(true);
     }
-  }, [course.modulos, course.id, videoDurationsCache, isDurationsLoaded, getVideoUrl]);
+  }, [course.modulos, course.id, videoDurationsCache, isDurationsLoaded, getVideoUrl, getRawVideoSrc]);
 
   // Duración visible de una lección
   const getLessonDuration = useCallback(
@@ -275,24 +306,10 @@ export function CoursePlayer({
     }
   }, [currentLesson?.id, videoDurationsCache]);
 
-  // Inicializar progreso desde enrollment
+  // El progreso inicial se maneja en ProgressProvider (layout). No hacemos merge aquí.
   useEffect(() => {
-    const prog = enrollment?.progreso ?? {};
-    if (!isEnrollmentProgress(prog)) return;
-
-    const initial: Record<string, boolean> = {};
-    for (const modKey of Object.keys(prog)) {
-      const mod = prog[modKey];
-      if (!mod) continue;
-      for (const lessonKey of Object.keys(mod)) {
-        const lessonData = mod[lessonKey];
-        if (lessonData?.completed) {
-          initial[getLessonProgressKey(modKey, lessonKey)] = true;
-        }
-      }
-    }
-    setLessonProgress(initial);
-  }, [enrollment?.id, enrollment?.progreso, getLessonProgressKey]);
+    // noop
+  }, [enrollment?.id, enrollment?.progreso]);
 
   // Adyacentes: memoizar para deps estables
   const getAdjacentLesson = useCallback(
@@ -433,9 +450,9 @@ export function CoursePlayer({
       }
     }
 
-    if (currentLessonId && currentModuleId) {
-      const targetModule = course.modulos.find((m) => m.id === currentModuleId) ?? null;
-      const targetLesson = targetModule?.lecciones?.find((l) => l.id === currentLessonId) ?? null;
+    if (currentLesson?.id && currentModule?.id) {
+      const targetModule = course.modulos.find((m) => m.id === currentModule.id) ?? null;
+      const targetLesson = targetModule?.lecciones?.find((l) => l.id === currentLesson.id) ?? null;
 
       if (targetLesson && targetModule) {
         setCurrentModule(targetModule);
@@ -458,8 +475,8 @@ export function CoursePlayer({
     course.modulos,
     params.modulo,
     params.leccion,
-    currentLessonId,
-    currentModuleId,
+    currentLesson?.id,
+    currentModule?.id,
     preloadLessonContent,
     preloadAdjacentLessons,
     currentLesson,
@@ -489,64 +506,22 @@ export function CoursePlayer({
   // Progreso: completar
   const markLessonComplete = async (lessonId: string) => {
     if (!currentModule) return;
-    if (!enrollment.id || enrollment.id === 'temp') {
-      console.warn('⚠️ No hay inscripción válida para actualizar progreso');
-      return;
-    }
-    try {
-      const progressKey = getLessonProgressKey(currentModule.id, lessonId);
-      setLessonProgress((prev) => ({ ...prev, [progressKey]: true }));
-      await updateLessonProgress(enrollment.id, currentModule.id, lessonId, {
-        completedAt: new Date().toISOString(),
-        lessonTitle: currentLesson?.titulo,
-        moduleTitle: currentModule.titulo,
-      });
-    } catch (err) {
-      console.error('❌ Error updating lesson progress:', err);
-      const progressKey = getLessonProgressKey(currentModule.id, lessonId);
-      setLessonProgress((prev) => ({ ...prev, [progressKey]: false }));
-    }
+    await ctxMarkLessonComplete(currentModule.id, lessonId, {
+      completedAt: new Date().toISOString(),
+      lessonTitle: currentLesson?.titulo,
+      moduleTitle: currentModule.titulo,
+    });
   };
 
   // Progreso: toggle
   const toggleLessonComplete = async (lessonId: string) => {
-    if (!enrollment.id || enrollment.id === 'temp') {
-      console.warn('⚠️ No hay inscripción válida para actualizar progreso');
-      return;
-    }
-    const lessonModule =
-      course.modulos?.find((m) => m.lecciones?.some((l) => l.id === lessonId)) ?? null;
-    if (!lessonModule) {
-      console.error('❌ No se encontró el módulo para la lección:', lessonId);
-      return;
-    }
-    const lesson = lessonModule.lecciones?.find((l) => l.id === lessonId) ?? null;
-    const progressKey = getLessonProgressKey(lessonModule.id, lessonId);
-    const isCompleted = !!lessonProgress[progressKey];
-    const newState = !isCompleted;
-
-    try {
-      setLessonProgress((prev) => ({ ...prev, [progressKey]: newState }));
-      await updateLessonProgress(
-        enrollment.id,
-        lessonModule.id,
-        lessonId,
-        newState
-          ? {
-              completedAt: new Date().toISOString(),
-              lessonTitle: lesson?.titulo,
-              moduleTitle: lessonModule.titulo,
-            }
-          : {
-              completedAt: null,
-              lessonTitle: lesson?.titulo,
-              moduleTitle: lessonModule.titulo,
-            }
-      );
-    } catch (err) {
-      console.error('❌ Error toggling lesson progress:', err);
-      setLessonProgress((prev) => ({ ...prev, [progressKey]: isCompleted }));
-    }
+    const lessonModule = course.modulos?.find((m) => m.lecciones?.some((l) => l.id === lessonId)) ?? null;
+    const lesson = lessonModule?.lecciones?.find((l) => l.id === lessonId) ?? null;
+    if (!lessonModule) return;
+    await ctxToggleLessonComplete(lessonModule.id, lessonId, {
+      lessonTitle: lesson?.titulo,
+      moduleTitle: lessonModule.titulo,
+    });
   };
 
   // Theater mode
@@ -569,16 +544,18 @@ export function CoursePlayer({
   // Mini-player: navegación
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (currentLesson?.tipo === 'VIDEO' && currentLesson.rutaSrc && miniPlayerCurrentTime > 0) {
+      const rawSrc = getRawVideoSrc(currentLesson);
+      if (currentLesson?.tipo === 'VIDEO' && rawSrc && miniPlayerCurrentTime > 0) {
         setShowMiniPlayer(true);
-        getVideoUrl(currentLesson.rutaSrc).then((url) => setMiniPlayerVideoUrl(url));
+        getVideoUrl(rawSrc).then((url) => setMiniPlayerVideoUrl(url));
         setMiniPlayerLesson(currentLesson);
       }
     };
     const handleVisibilityChange = () => {
-      if (document.hidden && currentLesson?.tipo === 'VIDEO' && currentLesson.rutaSrc) {
+      const rawSrc = getRawVideoSrc(currentLesson);
+      if (document.hidden && currentLesson?.tipo === 'VIDEO' && rawSrc) {
         setShowMiniPlayer(true);
-        getVideoUrl(currentLesson.rutaSrc).then((url) => setMiniPlayerVideoUrl(url));
+        getVideoUrl(rawSrc).then((url) => setMiniPlayerVideoUrl(url));
         setMiniPlayerLesson(currentLesson);
       } else if (!document.hidden) {
         setShowMiniPlayer(false);
@@ -590,7 +567,7 @@ export function CoursePlayer({
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [currentLesson, miniPlayerCurrentTime, getVideoUrl]);
+  }, [currentLesson, miniPlayerCurrentTime, getVideoUrl, getRawVideoSrc]);
 
   if (!currentLesson || !currentModule) {
     return (
@@ -641,7 +618,7 @@ export function CoursePlayer({
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 bg-black overflow-hidden">
               <div className="relative w-full h-full flex flex-col">
-                {currentLesson.tipo === 'VIDEO' && currentLesson.rutaSrc ? (
+                {currentLesson.tipo === 'VIDEO' && getRawVideoSrc(currentLesson) ? (
                   <CourseVideoPlayer
                     videoUrl={resolvedVideoUrl}
                     lesson={currentLesson}
@@ -802,6 +779,9 @@ export function CoursePlayer({
           )}
         </div>
       </div>
+
+      {/* Renderizar children (páginas de lecciones) */}
+      {children}
 
       {miniPlayerLesson && (
         <MiniPlayer

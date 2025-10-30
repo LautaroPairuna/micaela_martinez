@@ -197,7 +197,7 @@ export class AuditListenerService {
           tableName: input.tableName,
           recordId: input.recordId,
           action: input.action,
-          userId: input.userId,
+          userId: Number(input.userId),
           endpoint: input.endpoint,
           oldData: input.oldData as any,
           newData: input.newData as any,

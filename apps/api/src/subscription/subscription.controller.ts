@@ -14,14 +14,14 @@ export class SubscriptionController {
     @GetUser() user: Usuario,
     @Param('courseId') courseId: string,
   ) {
-    return this.subscriptionService.getSubscriptionInfo(user.id, courseId);
+    return this.subscriptionService.getSubscriptionInfo(String(user.id), courseId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getUserSubscriptionInfo(@GetUser() user: Usuario) {
     // Usamos el método getUserInfo que no requiere courseId
-    return this.subscriptionService.getUserInfo(user.id);
+    return this.subscriptionService.getUserInfo(String(user.id));
   }
 
   @UseGuards(JwtAuthGuard)
@@ -31,7 +31,7 @@ export class SubscriptionController {
     @Param('courseId') courseId: string,
   ) {
     const hasAccess = await this.subscriptionService.checkCourseAccess(
-      user.id,
+      String(user.id),
       courseId,
     );
     return { hasAccess };

@@ -5,7 +5,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "email": {
           "type": "string"
@@ -133,7 +133,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "slug": {
           "type": "string"
@@ -161,10 +161,10 @@
       "type": "object",
       "properties": {
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "roleId": {
-          "type": "string"
+          "type": "integer"
         },
         "usuario": {
           "$ref": "#/definitions/Usuario"
@@ -182,13 +182,13 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "productoId": {
-          "type": "string"
+          "type": "integer"
         },
         "creadoEn": {
           "type": "string",
@@ -210,7 +210,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "slug": {
           "type": "string"
@@ -312,7 +312,7 @@
         },
         "instructorId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -337,13 +337,13 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "cursoId": {
-          "type": "string"
+          "type": "integer"
         },
         "estado": {
           "type": "string",
@@ -390,10 +390,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "cursoId": {
-          "type": "string"
+          "type": "integer"
         },
         "titulo": {
           "type": "string"
@@ -403,7 +403,7 @@
         },
         "parentId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -443,10 +443,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "moduloId": {
-          "type": "string"
+          "type": "integer"
         },
         "titulo": {
           "type": "string"
@@ -504,15 +504,12 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "slug": {
           "type": "string"
         },
         "titulo": {
-          "type": "string"
-        },
-        "sku": {
           "type": "string"
         },
         "precio": {
@@ -564,13 +561,13 @@
         },
         "marcaId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
         "categoriaId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -622,7 +619,6 @@
       "required": [
         "slug",
         "titulo",
-        "sku",
         "precio"
       ]
     },
@@ -630,10 +626,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "productoId": {
-          "type": "string"
+          "type": "integer"
         },
         "archivo": {
           "type": "string"
@@ -661,7 +657,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "slug": {
           "type": "string"
@@ -703,7 +699,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "slug": {
           "type": "string"
@@ -737,7 +733,7 @@
         },
         "parentId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -773,10 +769,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "estado": {
           "type": "string",
@@ -850,13 +846,13 @@
         },
         "direccionEnvioId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
         "direccionFacturacionId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -906,10 +902,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "ordenId": {
-          "type": "string"
+          "type": "integer"
         },
         "tipo": {
           "type": "string",
@@ -919,7 +915,7 @@
           ]
         },
         "refId": {
-          "type": "string"
+          "type": "integer"
         },
         "titulo": {
           "type": "string"
@@ -947,13 +943,13 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "ordenId": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "referenciaPago": {
           "type": "string"
@@ -1002,10 +998,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "usuario": {
           "$ref": "#/definitions/Usuario"
@@ -1092,7 +1088,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "titulo": {
           "type": "string"
@@ -1131,22 +1127,19 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "cursoId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
         "productoId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "puntaje": {
           "type": "integer"
@@ -1198,6 +1191,7 @@
         }
       },
       "required": [
+        "productoId",
         "usuarioId",
         "puntaje"
       ]
@@ -1206,13 +1200,13 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "resenaId": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "tipo": {
           "type": "string",
@@ -1242,17 +1236,17 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "resenaId": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "parentId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -1305,10 +1299,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "tipo": {
           "type": "string",
@@ -1364,10 +1358,10 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "nuevaResena": {
           "type": "boolean",
@@ -1422,20 +1416,20 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "usuarioId": {
-          "type": "string"
+          "type": "integer"
         },
         "cursoId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
         "productoId": {
           "type": [
-            "string",
+            "integer",
             "null"
           ]
         },
@@ -1492,7 +1486,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "integer"
         },
         "tableName": {
           "type": "string"
@@ -1524,7 +1518,7 @@
           ]
         },
         "userId": {
-          "type": "string"
+          "type": "integer"
         },
         "userAgent": {
           "type": [

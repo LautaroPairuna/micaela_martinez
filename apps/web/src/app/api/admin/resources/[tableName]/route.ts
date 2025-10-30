@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export const dynamic = 'force-dynamic'; // Deshabilitar cacheo para todas las rutas
+export const revalidate = 0; // No cachear
+
 import { NextRequest, NextResponse } from 'next/server'
 
 import fs                            from 'fs/promises'
@@ -26,6 +29,7 @@ const resourceToTable: Record<string, string> = {
   
   // Productos y e-commerce
   Producto: 'Producto',
+  producto: 'Producto', // Mapeo para minúscula (fix para errores 404)
   ProductoImagen: 'ProductoImagen',
   Marca: 'Marca',
   Categoria: 'Categoria',
@@ -477,12 +481,13 @@ export async function POST(req: NextRequest,
       } else if (fileType === 'video') {
         // Guardar video directamente
         const ext = path.extname((file as File).name || '.mp4')
-        const name = `${slug}-${makeTimestamp()}${ext}`
+        const baseName = `${slug}-${makeTimestamp()}`
+        const name = `${baseName}${ext}`
         const fullPath = path.join(dir, name)
         await fs.writeFile(fullPath, buf)
         
         // Generar thumbnail del video de forma asíncrona
-        const thumbName = `${slug}-${makeTimestamp()}.jpg`
+        const thumbName = `${baseName}.jpg`
         const thumbPath = path.join(thumbsDir, thumbName)
         
         // Importar función de generación de thumbnails
@@ -627,12 +632,13 @@ export async function PUT(
         } else if (fileType === 'video') {
           // Guardar video directamente
           const ext = path.extname((file as File).name || '.mp4')
-          const name = `${slug}-${makeTimestamp()}${ext}`
+          const baseName = `${slug}-${makeTimestamp()}`
+          const name = `${baseName}${ext}`
           const fullPath = path.join(dir, name)
           await fs.writeFile(fullPath, buf)
           
           // Generar thumbnail del video de forma asíncrona
-          const thumbName = `${slug}-${makeTimestamp()}.jpg`
+          const thumbName = `${baseName}.jpg`
           const thumbPath = path.join(thumbsDir, thumbName)
           
           const { generateVideoThumbnail } = await import('@/lib/thumbnailGenerator')
@@ -706,15 +712,31 @@ export async function DELETE(
     if (existingRecord) {
       for (const field in existingRecord) {
         if (isFileField(field) && existingRecord[field]) {
-           const fileName = existingRecord[field] as string
-           const fileType = getFileType(fileName)
-           const baseFolder = getFolderByFileType(fileType)
-           const keyDir = (allFolderNames as Record<string, string>)[tableName] || tableName.toLowerCase()
-           const dir = path.join(process.cwd(), 'public', baseFolder, keyDir)
-           const thumbs = path.join(dir, 'thumbs')
-           await fs.rm(path.join(dir, fileName), { force: true }).catch(() => {})
-           await fs.rm(path.join(thumbs, fileName), { force: true }).catch(() => {})
-         }
+          const fileName = existingRecord[field] as string
+          const fileType = getFileType(fileName)
+          const baseFolder = getFolderByFileType(fileType)
+          const keyDir = (allFolderNames as Record<string, string>)[resourceName] || tableName.toLowerCase()
+          
+          let dir: string
+          if (fileType === 'image') {
+            dir = path.join(process.cwd(), 'public', baseFolder, keyDir)
+          } else {
+            dir = path.join(process.cwd(), 'public', baseFolder)
+          }
+          const thumbsDir = path.join(dir, 'thumbs')
+
+          // Eliminar archivo principal
+          await fs.rm(path.join(dir, fileName), { force: true }).catch(() => {})
+
+          // Eliminar thumbnail
+          if (fileType === 'video') {
+            const thumbName = `${path.parse(fileName).name}.jpg`
+            await fs.rm(path.join(thumbsDir, thumbName), { force: true }).catch(() => {})
+          } else {
+            // Para imágenes (y otros tipos si aplica), el thumbnail tiene el mismo nombre
+            await fs.rm(path.join(thumbsDir, fileName), { force: true }).catch(() => {})
+          }
+        }
       }
     }
 

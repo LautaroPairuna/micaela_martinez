@@ -145,6 +145,16 @@ export type Inscripcion = {
     portadaUrl?: string | null;
     instructor?: { nombre: string } | null;
     _count?: { modulos: number };
+    modulos?: {
+      id: number;
+      titulo: string;
+      orden: number;
+      lecciones: {
+        id: number;
+        titulo: string;
+        orden: number;
+      }[];
+    }[];
   };
 };
 
@@ -567,6 +577,16 @@ type BackendEnrollment = {
     portadaUrl?: string | null;
     instructor?: { nombre: string } | null;
     _count?: { modulos: number };
+    modulos?: {
+      id: number;
+      titulo: string;
+      orden: number;
+      lecciones: {
+        id: number;
+        titulo: string;
+        orden: number;
+      }[];
+    }[];
   };
   Curso?: { 
     id: string; 
@@ -575,6 +595,16 @@ type BackendEnrollment = {
     portadaUrl?: string | null;
     instructor?: { nombre: string } | null;
     _count?: { modulos: number };
+    modulos?: {
+      id: number;
+      titulo: string;
+      orden: number;
+      lecciones: {
+        id: number;
+        titulo: string;
+        orden: number;
+      }[];
+    }[];
   };
 };
 
@@ -597,7 +627,18 @@ export async function listEnrollments(opts?: NextOpts) {
         titulo: c.titulo, 
         portadaUrl: c.portadaUrl,
         instructor: c.instructor,
-        _count: c._count
+        _count: c._count,
+        // Incluimos los módulos y lecciones si vienen desde el backend
+        modulos: c.modulos?.map((m) => ({
+          id: m.id,
+          titulo: m.titulo,
+          orden: m.orden,
+          lecciones: m.lecciones?.map((l) => ({
+            id: l.id,
+            titulo: l.titulo,
+            orden: l.orden,
+          })) ?? [],
+        }))
       } : undefined,
     } satisfies Inscripcion;
   });
@@ -640,21 +681,23 @@ export async function checkUserEnrollment(
    Progreso de lecciones
 ──────────────────────────── */
 export async function updateLessonProgress(
-  enrollmentId: string,
-  moduleId: string,
-  lessonId: string,
+  enrollmentId: string | number,
+  moduleId: string | number,
+  lessonId: string | number,
   progressData?: Record<string, unknown>,
   opts?: NextOpts
 ) {
+  const payload = {
+    enrollmentId: Number(enrollmentId),
+    moduleId: Number(moduleId),
+    lessonId: Number(lessonId),
+    progressData,
+  };
+
   return apiProxy<{ id: string; progreso: unknown; actualizadoEn: string }>('/users/me/enrollments/progress', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      enrollmentId,
-      moduleId,
-      lessonId,
-      progressData,
-    }),
+    body: JSON.stringify(payload),
     ...opts,
   });
 }

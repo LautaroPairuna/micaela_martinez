@@ -42,8 +42,8 @@ const getNotificationColor = (tipo: AppNotification['tipo']) => {
 
 const getEnhancedMessage = (notification: AppNotification) => {
   const baseMessage = notification.mensaje;
-  const timeAgo = formatDistanceToNow(new Date(notification.creadoEn), {
-    addSuffix: false,
+  const withSuffix = formatDistanceToNow(new Date(notification.creadoEn), {
+    addSuffix: true,
     locale: es,
   });
 
@@ -54,6 +54,9 @@ const getEnhancedMessage = (notification: AppNotification) => {
       return `${baseMessage} • Tu contenido está generando interés en la comunidad.`;
     case 'MENCION':
       return `${baseMessage} • Alguien quiere tu atención en esta conversación.`;
+    case 'SISTEMA':
+      // Notificaciones administrativas: mostrar tiempo explícitamente en el mensaje
+      return `${baseMessage} • ${withSuffix}`;
     default:
       return `${baseMessage} • Mantente al día con las últimas actualizaciones.`;
   }

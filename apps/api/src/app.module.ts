@@ -28,6 +28,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadsModule } from './admin/uploads/uploads.module';
 import { MediaModule } from './media/media.module';
+import { CacheModule as CustomCacheModule } from './common/cache/cache.module';
+import { WebsocketsModule } from './websockets/websockets.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { MediaModule } from './media/media.module';
     AdminModule, // panel de administración
     UploadsModule, // sistema de subida de archivos
     MediaModule, // sistema de gestión de medios
+    CustomCacheModule, // sistema de caché personalizado
+    WebsocketsModule, // sistema de WebSockets
     CacheModule.register({
       isGlobal: true,
       ttl: 60 * 1000, // 1 minuto por defecto

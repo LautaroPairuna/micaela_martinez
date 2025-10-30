@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Prisma, NivelCurso, EstadoInscripcion } from '@prisma/client';
+import { Prisma,  EstadoInscripcion } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryCourseDto } from './dto/query-course.dto';
 import { getSkipTake } from '../common/utils/pagination';
@@ -147,7 +147,7 @@ export class CoursesService {
     const [instructor, resenas, modulos, estudiantesCount] = await Promise.all([
       // Instructor
       this.prisma.usuario.findUnique({
-        where: { id: cursoBase.instructorId || '' },
+        where: { id: Number(cursoBase.instructorId || '0') },
         select: { id: true, nombre: true },
       }),
 
@@ -263,7 +263,7 @@ export class CoursesService {
     // Verificar que el usuario tiene una inscripción válida
     const inscripcion = await this.prisma.inscripcion.findFirst({
       where: {
-        usuarioId: userId,
+        usuarioId: parseInt(userId),
         cursoId: curso.id,
         estado: {
           in: [EstadoInscripcion.ACTIVADA, EstadoInscripcion.PAUSADA],

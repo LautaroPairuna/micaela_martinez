@@ -18,38 +18,38 @@ export const fkConfig = {
   },
 
   // Cursos
-  cursoId: {
+  curso_id: {
     resource: 'Curso',
     labelKey: 'titulo',
     fieldLabel: 'Curso'
   },
 
   // Módulos
-  moduloId: {
+  modulo_id: {
     resource: 'Modulo',
     labelKey: 'titulo',
     fieldLabel: 'Módulo'
   },
 
   // Usuarios
-  usuarioId: {
-    resource: 'Usuario',
-    labelKey: 'email',
-    fieldLabel: 'Usuario'
-  },
-
-  // Órdenes
   usuario_id: {
     resource: 'Usuario',
     labelKey: 'email',
     fieldLabel: 'Usuario'
   },
 
-  // Inscripciones
-  curso_id: {
-    resource: 'Curso',
-    labelKey: 'titulo',
-    fieldLabel: 'Curso'
+  // Productos
+  producto_id: {
+    resource: 'Producto',
+    labelKey: 'nombre',
+    fieldLabel: 'Producto'
+  },
+
+  // Órdenes y otros
+  orden_id: {
+    resource: 'Orden',
+    labelKey: 'id',
+    fieldLabel: 'Orden'
   }
 }
 

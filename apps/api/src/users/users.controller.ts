@@ -15,7 +15,7 @@ import { Request as ExpressRequest } from 'express';
 // Definir la interfaz para el usuario autenticado
 interface RequestWithUser extends ExpressRequest {
   user: {
-    sub: string;
+    sub: number;
     email?: string;
     name?: string;
     roles?: string[];

@@ -78,9 +78,9 @@ export class NotificationsService {
 
     try {
       const [likedByUser, review] = await Promise.all([
-        this.prisma.usuario.findUnique({ where: { id: likedByUserId } }),
+        this.prisma.usuario.findUnique({ where: { id: Number(likedByUserId) } }),
         this.prisma.resena.findUnique({ 
-          where: { id: reviewId },
+          where: { id: Number(reviewId) },
           include: { producto: { select: { titulo: true } } }
         }),
       ]);
@@ -109,9 +109,9 @@ export class NotificationsService {
 
     try {
       const [respondedByUser, response] = await Promise.all([
-        this.prisma.usuario.findUnique({ where: { id: respondedByUserId } }),
+        this.prisma.usuario.findUnique({ where: { id: Number(respondedByUserId) } }),
         this.prisma.resenaRespuesta.findUnique({ 
-          where: { id: responseId },
+          where: { id: Number(responseId) },
           include: { 
             resena: { 
               include: { producto: { select: { titulo: true } } }
@@ -177,12 +177,12 @@ export class NotificationsService {
     });
 
     if (recentSimilar) {
-      return this.updateGroupedNotification(recentSimilar.id, data);
+      return this.updateGroupedNotification(Number(recentSimilar.id), data);
     }
 
     return this.prisma.notificacion.create({
       data: {
-        usuarioId: data.usuarioId,
+        usuarioId: Number(data.usuarioId),
         tipo: data.tipo,
         titulo: data.titulo,
         mensaje: data.mensaje,
@@ -201,7 +201,7 @@ export class NotificationsService {
     options: { page: number; limit: number; onlyUnread: boolean },
   ) {
     const { page, limit, onlyUnread } = options;
-    const where = { usuarioId, ...(onlyUnread && { leida: false }) };
+    const where = { usuarioId: Number(usuarioId), ...(onlyUnread && { leida: false }) };
 
     const [notificaciones, total] = await this.prisma.$transaction([
       this.prisma.notificacion.findMany({
@@ -229,27 +229,27 @@ export class NotificationsService {
 
   async getUnreadCount(usuarioId: string): Promise<number> {
     return this.prisma.notificacion.count({
-      where: { usuarioId, leida: false },
+      where: { usuarioId: Number(usuarioId), leida: false },
     });
   }
 
-  async markAsRead(id: string, userId: string) {
-    return this.prisma.notificacion.updateMany({
-      where: { id, usuarioId: userId },
+  async markAsRead(notificationId: string) {
+    return this.prisma.notificacion.update({
+      where: { id: Number(notificationId) },
       data: { leida: true },
     });
   }
 
   async markAllAsRead(userId: string) {
     return this.prisma.notificacion.updateMany({
-      where: { usuarioId: userId, leida: false },
+      where: { usuarioId: Number(userId) },
       data: { leida: true },
     });
   }
 
-  async deleteNotification(id: string, usuarioId: string) {
-    return this.prisma.notificacion.deleteMany({
-      where: { id, usuarioId },
+  async deleteNotification(notificationId: string) {
+    return this.prisma.notificacion.delete({
+      where: { id: Number(notificationId) },
     });
   }
 
@@ -301,6 +301,12 @@ export class NotificationsService {
     }
   }
 
+  async deleteAllNotifications(userId: string) {
+    return this.prisma.notificacion.deleteMany({
+      where: { usuarioId: Number(userId) },
+    });
+  }
+
   private async findRecentSimilarNotification(groupKey: {
     usuarioId: string;
     tipo: TipoNotificacion;
@@ -311,7 +317,7 @@ export class NotificationsService {
 
     return this.prisma.notificacion.findFirst({
       where: {
-        usuarioId: groupKey.usuarioId,
+        usuarioId: Number(groupKey.usuarioId),
         tipo: groupKey.tipo,
         creadoEn: { gte: twoHoursAgo },
         leida: false,
@@ -324,7 +330,7 @@ export class NotificationsService {
   }
 
   private async updateGroupedNotification(
-    notificationId: string,
+    notificationId: number,
     newData: CreateNotificationDto,
   ) {
     const existing = await this.prisma.notificacion.findUnique({

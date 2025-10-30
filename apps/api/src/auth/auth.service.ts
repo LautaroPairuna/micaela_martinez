@@ -12,7 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EventTypes, AuthEventPayload } from '../events/event.types';
 
 type JwtPayload = {
-  sub: string;
+  sub: number;
   email?: string;
   name?: string;
   roles?: string[];
@@ -41,7 +41,7 @@ export class AuthService {
   }
 
   private signAccessToken(user: {
-    id: string;
+    id: number;
     email: string;
     nombre: string | null;
     roles: string[];
@@ -56,7 +56,7 @@ export class AuthService {
     return this.jwt.sign(payload, { expiresIn: '3h' });
   }
 
-  private signRefreshToken(user: { id: string; roles: string[] }) {
+  private signRefreshToken(user: { id: number; roles: string[] }) {
     const payload: JwtPayload = { sub: user.id, roles: user.roles };
     return this.jwt.sign(payload, { expiresIn: '7d' });
   }
@@ -89,12 +89,12 @@ export class AuthService {
 
     return {
       accessToken: this.signAccessToken({
-        id: user.id,
+        id: Number(user.id),
         email: user.email,
         nombre: user.nombre,
         roles,
       }),
-      refreshToken: this.signRefreshToken({ id: user.id, roles }),
+      refreshToken: this.signRefreshToken({ id: Number(user.id), roles }),
       user: { id: user.id, email: user.email, nombre: user.nombre, roles },
     };
   }
@@ -144,18 +144,18 @@ export class AuthService {
 
     return {
       accessToken: this.signAccessToken({
-        id: created.id,
+        id: Number(created.id),
         email: created.email,
         nombre: created.nombre,
         roles,
       }),
-      refreshToken: this.signRefreshToken({ id: created.id, roles }),
+      refreshToken: this.signRefreshToken({ id: Number(created.id), roles }),
       user: { ...created, roles },
     };
   }
 
   /** Refresh tokens con roles actuales en DB */
-  async refreshTokens(userId: string) {
+  async refreshTokens(userId: number) {
     const user = await this.prisma.usuario.findUnique({
       where: { id: userId },
       select: {
@@ -170,12 +170,12 @@ export class AuthService {
     const roles = this.toRoleSlugs(user);
     return {
       accessToken: this.signAccessToken({
-        id: user.id,
+        id: Number(user.id),
         email: user.email,
         nombre: user.nombre,
         roles,
       }),
-      refreshToken: this.signRefreshToken({ id: user.id, roles }),
+      refreshToken: this.signRefreshToken({ id: Number(user.id), roles }),
     };
   }
 }

@@ -76,11 +76,14 @@ export class AuditInterceptor implements NestInterceptor {
 
           if (finalRecordId) {
             try {
+              // Validar userId antes de llamar al servicio de auditoría
+              const validUserId = userId && !isNaN(Number(userId)) && Number(userId) > 0 ? userId : 'system';
+              
               await this.auditService.logCrudAction(
                 auditAction,
                 tableName,
                 finalRecordId,
-                userId || 'system', // Asegurar que userId nunca sea undefined
+                validUserId,
                 undefined, // oldData - se podría implementar para UPDATE
                 requestData,
                 request,
@@ -115,8 +118,29 @@ export class AuditInterceptor implements NestInterceptor {
    * Extrae el ID del usuario del request (desde JWT o sesión)
    */
   private extractUserId(request: Request): string | undefined {
-    // Asumiendo que el usuario está en request.user después de la autenticación JWT
-    return (request as any).user?.id || (request as any).user?.sub;
+    // El JWT strategy almacena el usuario con la propiedad 'sub'
+    const user = (request as any).user;
+    const userId = user?.sub;
+    
+    // Debug log para identificar el problema
+    if (user) {
+      console.log('🔍 [AuditInterceptor] Usuario en request:', {
+        sub: user.sub,
+        email: user.email,
+        name: user.name,
+        roles: user.roles,
+        fullUser: user
+      });
+    }
+    
+    // Validar que el userId sea un número válido antes de devolverlo
+    if (userId && !isNaN(Number(userId)) && Number(userId) > 0) {
+      return String(userId);
+    }
+    
+    // Si no hay userId válido, devolver undefined para que no se audite
+    console.warn('⚠️ [AuditInterceptor] userId inválido:', userId, 'Usuario completo:', user);
+    return undefined;
   }
 
   /**

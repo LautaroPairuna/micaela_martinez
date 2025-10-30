@@ -8,6 +8,7 @@ import { Menu, X, LogOut, ChevronRight, BarChart3, Clock, ShieldAlert, Shield } 
 import { AdminSidebar } from './resources/[tableName]/components/AdminSidebar'
 import { SidebarProvider } from '@/contexts/SidebarContext'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { CrudUpdatesProvider } from '@/contexts/CrudUpdatesContext'
 
 type AdminUser = {
   id?: string
@@ -21,7 +22,9 @@ type AdminUser = {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
+      <CrudUpdatesProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </CrudUpdatesProvider>
     </SidebarProvider>
   )
 }
@@ -135,10 +138,8 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
       const { authCache } = await import('@/lib/auth-cache');
       authCache.invalidateAll();
       
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      })
+      // Usar el endpoint estandar para borrar cookie de sesión
+      await fetch('/api/session', { method: 'DELETE', credentials: 'include' })
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     } finally {

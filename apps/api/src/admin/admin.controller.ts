@@ -71,10 +71,10 @@ export class AdminController {
     @GetUser() user: Usuario,
   ) {
     this.checkAdminPermissions(user);
-    // Si no se proporciona un usuario en el DTO, usar el nombre del usuario autenticado
-    if (!activityDto.user) {
-      activityDto.user = user.nombre || user.email;
-    }
+    // Registrar SIEMPRE con el ID numérico del usuario autenticado
+    // El sistema de auditoría requiere un userId válido (número),
+    // por lo que usamos el ID del usuario en lugar de nombre/email.
+    activityDto.user = String(user.id);
     return this.adminService.createActivity(activityDto);
   }
 
@@ -156,6 +156,15 @@ export class AdminController {
     @GetUser() user?: Usuario,
   ) {
     this.checkAdminPermissions(user!);
+    
+    // Debug: Log de datos recibidos
+    console.log('=== CREATE RECORD DEBUG ===');
+    console.log('Table Name:', tableName);
+    console.log('Request Body:', JSON.stringify(createDto, null, 2));
+    console.log('Body type:', typeof createDto);
+    console.log('Body keys:', Object.keys(createDto || {}));
+    console.log('===============================');
+    
     return this.adminService.create(tableName, createDto);
   }
 
