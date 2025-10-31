@@ -15,7 +15,7 @@ export interface Notification {
   creadoEn: string;
   url?: string;
   titulo?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 // Función auxiliar para llamadas a la API
@@ -317,7 +317,18 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
       const onConnect = () => dispatch({ type: 'UPDATE_LIVE_STATUS', payload: true });
       const onDisconnect = () => dispatch({ type: 'UPDATE_LIVE_STATUS', payload: false });
-      const onNewNotification = (payload: any) => {
+      const onNewNotification = (payload: {
+        id?: string | number;
+        mensaje?: string;
+        leida?: boolean;
+        tipo?: string;
+        fecha?: string;
+        usuarioId?: string;
+        creadoEn?: string;
+        url?: string;
+        titulo?: string;
+        metadata?: Record<string, unknown>;
+      }) => {
         // Normalizar payload al tipo Notification que espera el contexto
         const normalized: Notification = {
           id: String(payload.id ?? crypto.randomUUID()),

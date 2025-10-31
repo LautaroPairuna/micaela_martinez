@@ -20,8 +20,8 @@ export default function SystemEventsPage() {
         const data = await res.json()
         const arr = Array.isArray(data?.recentActivity) ? data.recentActivity : []
         setEvents(arr as ActivityItem[])
-      } catch (e: any) {
-        setError(e.message || 'Error al cargar eventos')
+      } catch (e: Error | unknown) {
+        setError(e instanceof Error ? e.message : 'Error al cargar eventos')
       } finally {
         setLoading(false)
       }

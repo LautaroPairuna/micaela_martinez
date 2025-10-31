@@ -130,7 +130,12 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
       const raw = c.trim();
       if (!raw) return [];
       try {
-        const parsed = JSON.parse(raw) as any;
+        const parsed = JSON.parse(raw) as {
+          tipo?: string;
+          data?: { preguntas?: QuizQuestion[] };
+          preguntas?: QuizQuestion[];
+          quiz?: QuizQuestion;
+        };
         if (parsed?.tipo === 'QUIZ' && Array.isArray(parsed?.data?.preguntas)) {
           return parsed.data.preguntas as QuizQuestion[];
         }

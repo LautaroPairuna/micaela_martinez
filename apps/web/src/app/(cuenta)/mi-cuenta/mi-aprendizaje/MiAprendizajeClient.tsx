@@ -39,7 +39,13 @@ type SubscriptionInfo = {
   frequency: string | null;
   frequencyType: string | null;
   orderId?: string | null;
-  includedCourses: any[];
+  includedCourses: Array<{
+    id: string;
+    slug?: string;
+    titulo?: string;
+    portadaUrl?: string;
+    [key: string]: unknown;
+  }>;
 };
 
 type MiAprendizajeClientProps = {
@@ -68,7 +74,15 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
       )}
 
       {subscriptionInfo.isActive && subscriptionInfo.includedCourses.length > 0 && (
-        <SubscriptionCoursesList courses={subscriptionInfo.includedCourses} className="mb-8" />
+        <SubscriptionCoursesList 
+          courses={subscriptionInfo.includedCourses.map(course => ({
+            id: course.id,
+            title: course.titulo || '',
+            slug: course.slug || '',
+            image: course.portadaUrl
+          }))} 
+          className="mb-8" 
+        />
       )}
 
       <PageHeader

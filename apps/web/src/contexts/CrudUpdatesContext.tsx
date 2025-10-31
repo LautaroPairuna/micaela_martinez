@@ -9,7 +9,7 @@ export interface CrudUpdateEvent {
   type: 'create' | 'update' | 'delete';
   tableName: string;
   recordId: string | number;
-  data?: any;
+  data?: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -64,13 +64,19 @@ export function CrudUpdatesProvider({ children }: { children: React.ReactNode })
   }, []);
 
   // Manejar eventos CRUD recibidos
-  const handleCrudUpdate = useCallback((payload: any) => {
+  const handleCrudUpdate = useCallback((payload: {
+    action: string;
+    resource: string;
+    id?: string | number;
+    data?: Record<string, unknown>;
+    timestamp: string;
+  }) => {
     try {
       // Procesar el evento
       const event: CrudUpdateEvent = {
-        type: payload.action,
+        type: payload.action as 'create' | 'update' | 'delete',
         tableName: payload.resource,
-        recordId: payload.id || payload.data?.id,
+        recordId: payload.id || (payload.data as Record<string, unknown>)?.id as string | number,
         data: payload.data,
         timestamp: payload.timestamp,
       };
@@ -127,14 +133,22 @@ export function CrudUpdatesProvider({ children }: { children: React.ReactNode })
         setIsConnected(false);
       };
 
-      const onConnectError = (error: any) => {
+      const onConnectError = (error: Error | string) => {
         console.error(`[CrudUpdatesContext] ❌ Error de conexión WebSocket:`, error);
         setIsConnected(false);
       };
 
       const onCrudUpdate = (data: CrudUpdateEvent) => {
         console.log('[CrudUpdatesContext] 📡 Evento CRUD recibido:', data);
-        handleCrudUpdate(data);
+        // Convertir CrudUpdateEvent al formato esperado por handleCrudUpdate
+        const payload = {
+          action: data.type,
+          resource: data.tableName,
+          id: data.recordId,
+          data: data.data,
+          timestamp: data.timestamp,
+        };
+        handleCrudUpdate(payload);
       };
 
       // Escuchar eventos CRUD

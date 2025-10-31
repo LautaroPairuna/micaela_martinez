@@ -226,11 +226,11 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
             systemNotifications.map((n) => {
               const time = n.creadoEn || n.fecha
               const timeAgo = time ? getTimeAgo(String(time)) : ''
-              const actorName = (n.metadata as any)?.actorName ?? undefined
-              const resourceName = (n.metadata as any)?.resourceName ?? undefined
+              const actorName = (n.metadata as Record<string, unknown>)?.actorName as string | undefined
+              const resourceName = (n.metadata as Record<string, unknown>)?.resourceName as string | undefined
               const title = n.titulo || 'Actividad del sistema'
               const message = n.mensaje || [actorName, title, resourceName].filter(Boolean).join(' ')
-              const source = ((n.metadata as any)?.source as string) || 'admin'
+              const source = ((n.metadata as Record<string, unknown>)?.source as string) || 'admin'
 
               const color = 'bg-indigo-100 text-indigo-700 border-indigo-200'
               const icon = <Settings className="h-3 w-3 sm:h-3.5 sm:w-3.5" />

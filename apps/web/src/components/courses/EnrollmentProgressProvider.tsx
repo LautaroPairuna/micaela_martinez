@@ -20,7 +20,17 @@ type EnrollmentProgressContextType = {
 
 const EnrollmentProgressContext = createContext<EnrollmentProgressContextType | null>(null);
 
-function flattenEnrollmentProgress(enrollments: any[]): { 
+function flattenEnrollmentProgress(enrollments: Array<{
+  cursoId?: string | number;
+  curso?: {
+    id?: string | number;
+    modulos?: Array<{
+      id: string | number;
+      lecciones?: Array<{ id: string | number }>;
+    }>;
+  };
+  progreso?: unknown;
+}>): { 
   lessonProgress: LessonProgressMap; 
   courseModules: Record<string, CourseModule[]> 
 } {
@@ -33,9 +43,9 @@ function flattenEnrollmentProgress(enrollments: any[]): {
 
     // Extraer módulos del curso si están disponibles
     if (enrollment.curso?.modulos) {
-      courseModules[courseId] = enrollment.curso.modulos.map((mod: any) => ({
+      courseModules[courseId] = enrollment.curso.modulos.map((mod) => ({
         id: String(mod.id),
-        lecciones: mod.lecciones?.map((lesson: any) => ({ id: String(lesson.id) })) || []
+        lecciones: mod.lecciones?.map((lesson) => ({ id: String(lesson.id) })) || []
       }));
     }
 
@@ -48,11 +58,11 @@ function flattenEnrollmentProgress(enrollments: any[]): {
         Object.keys(progreso).forEach((key) => {
           if (key === 'porcentaje' || key === 'subscription') return;
           
-          const moduleData = progreso[key];
+          const moduleData = (progreso as Record<string, unknown>)[key];
           if (moduleData && typeof moduleData === 'object') {
-            Object.keys(moduleData).forEach((lessonKey) => {
-              const lessonData = moduleData[lessonKey];
-              if (lessonData && typeof lessonData === 'object' && lessonData.completed) {
+            Object.keys(moduleData as Record<string, unknown>).forEach((lessonKey) => {
+              const lessonData = (moduleData as Record<string, unknown>)[lessonKey];
+              if (lessonData && typeof lessonData === 'object' && 'completed' in lessonData && (lessonData as { completed: boolean }).completed) {
                 lessonProgress[`${key}-${lessonKey}`] = true;
               }
             });
@@ -97,7 +107,7 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
   // Cargar datos iniciales
   useEffect(() => {
     refreshEnrollments();
-  }, []);
+  }, [updateProgress]);
 
   // Escuchar cambios de progreso desde otros componentes
   useEffect(() => {
@@ -119,7 +129,7 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
     getLessonProgressKey,
     updateProgress,
     refreshEnrollments,
-  }), [lessonProgress, courseModules]);
+  }), [lessonProgress, courseModules, updateProgress]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Cargando progreso...</div>;

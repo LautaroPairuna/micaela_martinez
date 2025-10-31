@@ -18,10 +18,12 @@ type EnrollmentProgreso = {
 } | null;
 
 type CursoLight = {
+  id?: string | number | null;
   slug?: string | null;
   titulo?: string | null;
   portadaUrl?: string | null;
   _count?: { modulos?: number | null } | null;
+  modulos?: Array<{ id: string | number }> | null;
 } | null;
 
 type EnrollmentRow = {
@@ -49,7 +51,7 @@ async function MiAprendizajePage() {
     const summary = { modulesWithProgress: 0, lessonsCompleted: 0, sampleKeys: [] as string[] };
     if (!prog || typeof prog !== 'object') return summary;
     try {
-      const obj = prog as Record<string, any>;
+      const obj = prog as Record<string, Record<string, unknown>>;
       for (const modKey of Object.keys(obj)) {
         if (modKey === 'porcentaje' || modKey === 'subscription' || modKey === 'completado') continue;
         const mod = obj[modKey];
@@ -58,8 +60,8 @@ async function MiAprendizajePage() {
           if (lessonKeys.length > 0) {
             summary.modulesWithProgress++;
             for (const lessonKey of lessonKeys) {
-              const entry = mod[lessonKey];
-              if (entry && entry.completed) {
+              const entry = (mod as Record<string, unknown>)[lessonKey];
+              if (entry && typeof entry === 'object' && 'completed' in entry && (entry as { completed: boolean }).completed) {
                 summary.lessonsCompleted++;
                 if (summary.sampleKeys.length < 8) {
                   summary.sampleKeys.push(`${modKey}-${lessonKey}`);
@@ -75,7 +77,7 @@ async function MiAprendizajePage() {
 
   const consolidated = enrollments.map((e) => {
     const prog = summarizeProgress(e.progreso);
-    const course = e.curso as any;
+    const course = e.curso as CursoLight;
     return {
       enrollmentId: e.id,
       cursoId: e.cursoId,

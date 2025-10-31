@@ -127,22 +127,31 @@ export function CoursePlayer({
   const getRawVideoSrc = useCallback((lesson?: Lesson | null): string | null => {
     if (!lesson) return null;
     if (lesson.rutaSrc) return lesson.rutaSrc;
-    const c = (lesson as any).contenido;
+    const c = (lesson as Lesson & { contenido?: unknown }).contenido;
     if (!c) return null;
     try {
       if (typeof c === 'string') {
         const raw = c.trim();
         if (raw.startsWith('{') || raw.startsWith('[')) {
-          const parsed = JSON.parse(raw) as any;
+          const parsed = JSON.parse(raw) as {
+            videoFile?: string;
+            videoUrl?: string;
+            data?: { videoFile?: string; videoUrl?: string };
+          };
           // Preferimos filename (videoFile); compatibilidad con videoUrl legacy
           if (typeof parsed?.videoFile === 'string') return parsed.videoFile;
           if (typeof parsed?.videoUrl === 'string') return parsed.videoUrl;
         }
       } else if (typeof c === 'object' && c !== null) {
-        if (typeof (c as any)?.videoFile === 'string') return (c as any).videoFile;
-        if (typeof (c as any)?.data?.videoFile === 'string') return (c as any).data.videoFile;
-        if (typeof (c as any)?.videoUrl === 'string') return (c as any).videoUrl;
-        if (typeof (c as any)?.data?.videoUrl === 'string') return (c as any).data.videoUrl;
+        const contentObj = c as {
+          videoFile?: string;
+          videoUrl?: string;
+          data?: { videoFile?: string; videoUrl?: string };
+        };
+        if (typeof contentObj?.videoFile === 'string') return contentObj.videoFile;
+        if (typeof contentObj?.data?.videoFile === 'string') return contentObj.data.videoFile;
+        if (typeof contentObj?.videoUrl === 'string') return contentObj.videoUrl;
+        if (typeof contentObj?.data?.videoUrl === 'string') return contentObj.data.videoUrl;
       }
     } catch {}
     return null;

@@ -27,13 +27,13 @@ function flattenServerProgress(input: unknown): LessonProgressMap {
   const out: LessonProgressMap = {}
   if (!input || typeof input !== 'object') return out
   try {
-    const prog = input as Record<string, any>
+    const prog = input as Record<string, Record<string, unknown>>
     for (const modKey of Object.keys(prog)) {
       const mod = prog[modKey]
       if (!mod || typeof mod !== 'object') continue
       for (const lessonKey of Object.keys(mod)) {
         const lessonData = mod[lessonKey]
-        const completed = !!(lessonData && typeof lessonData === 'object' && lessonData.completed)
+        const completed = !!(lessonData && typeof lessonData === 'object' && 'completed' in lessonData && (lessonData as { completed: boolean }).completed)
         out[`${modKey}-${lessonKey}`] = completed
       }
     }

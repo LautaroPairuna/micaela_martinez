@@ -55,14 +55,14 @@ function flattenServerProgress(input: unknown): Record<string, boolean> {
   const out: Record<string, boolean> = {}
   if (!input || typeof input !== 'object') return out
   try {
-    const prog = input as Record<string, any>
+    const prog = input as Record<string, Record<string, unknown>>
     for (const modKey of Object.keys(prog)) {
       if (modKey === 'porcentaje' || modKey === 'subscription' || modKey === 'completado') continue;
       const mod = prog[modKey]
       if (!mod || typeof mod !== 'object') continue
       for (const lessonKey of Object.keys(mod)) {
         const lessonData = mod[lessonKey]
-        const completed = !!(lessonData && typeof lessonData === 'object' && lessonData.completed)
+        const completed = !!(lessonData && typeof lessonData === 'object' && 'completed' in lessonData && (lessonData as { completed: boolean }).completed)
         out[`${modKey}-${lessonKey}`] = completed
       }
     }
@@ -90,7 +90,10 @@ export function EnrollmentCard({
       enrollmentId: string | number;
       modulesSource: 'course.modulos' | 'courseModules' | 'none';
       serverProgress: Record<string, boolean>;
-      modulesToUse: any[];
+      modulesToUse: Array<{
+        id: string | number;
+        lecciones?: Array<{ id: string | number }>;
+      }>;
       totals: { percentage: number; completedLessons: number; totalLessons: number };
       lessonProgress?: Record<string, boolean>;
     }
@@ -100,11 +103,11 @@ export function EnrollmentCard({
         (k) => params.serverProgress[k]
       );
       // Muestra un muestreo compacto de módulos/lecciones (para evitar logs gigantes)
-      const sampleModules = (params.modulesToUse || []).slice(0, 3).map((m: any) => ({
+      const sampleModules = (params.modulesToUse || []).slice(0, 3).map((m) => ({
         id: m?.id,
         lessons: (m?.lecciones || [])
           .slice(0, 5)
-          .map((l: any) => {
+          .map((l) => {
             const key = getLessonProgressKey
               ? getLessonProgressKey(String(m?.id), String(l?.id))
               : `${m?.id}-${l?.id}`;
@@ -150,9 +153,9 @@ export function EnrollmentCard({
     let totalLessons = 0;
     let completedLessons = 0;
 
-    modulesToUse.forEach((module: any, moduleIndex: number) => {
+    modulesToUse.forEach((module) => {
       if (module.lecciones?.length) {
-        module.lecciones.forEach((lesson: any, lessonIndex: number) => {
+        module.lecciones.forEach((lesson) => {
           totalLessons++;
           const progressKey = getLessonProgressKey ? getLessonProgressKey(String(module.id), String(lesson.id)) : `${module.id}-${lesson.id}`;
           
@@ -182,7 +185,7 @@ export function EnrollmentCard({
     });
     
     return { percentage, completedLessons, totalLessons };
-  }, [enrollment.progreso, course?.modulos, serverProgress, courseModules, lessonProgress, getLessonProgressKey]);
+  }, [course?.modulos, serverProgress, courseModules, lessonProgress, getLessonProgressKey, enrollment.id, logProgressSummary]);
 
   const progressPct = realTimeProgress.percentage;
 

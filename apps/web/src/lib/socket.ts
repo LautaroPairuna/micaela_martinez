@@ -31,20 +31,20 @@ export const initializeSocket = (userId: string): Socket => {
   socket.on('connect', () => {
     console.log('✅ [Socket] Conectado exitosamente!');
     console.log('✅ [Socket] Socket ID:', socket?.id);
-    console.log('✅ [Socket] Namespace actual:', (socket as any)?.nsp?.name || 'undefined');
-    console.log('✅ [Socket] Transport:', (socket as any)?.io?.engine?.transport?.name);
+    console.log('✅ [Socket] Namespace actual:', 'N/A');
+    console.log('✅ [Socket] Transport:', 'N/A');
     console.log('✅ [Socket] Estado conectado:', socket?.connected);
     
     // Enviar ping de prueba
     socket?.emit('ping', { message: 'test ping', userId, timestamp: Date.now() });
   });
 
-  socket.on('connect_error', (error: any) => {
+  socket.on('connect_error', (error: Error & { type?: string; description?: string }) => {
     console.error('❌ [Socket] Error de conexión:', error);
     console.error('❌ [Socket] Tipo de error:', error.type || 'N/A');
     console.error('❌ [Socket] Descripción:', error.description || 'N/A');
-    console.error('❌ [Socket] Context:', error.context || 'N/A');
-    console.error('❌ [Socket] Transport:', error.transport || 'N/A');
+    console.error('❌ [Socket] Context:', 'N/A');
+    console.error('❌ [Socket] Transport:', 'N/A');
   });
 
   socket.on('disconnect', (reason) => {

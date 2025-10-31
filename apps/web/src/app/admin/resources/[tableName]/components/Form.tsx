@@ -135,7 +135,7 @@ function validateLessonForm(formData: Record<string, unknown>): string | null {
         if (rutaSrc.startsWith('http')) {
           try {
             // valida URL
-            // eslint-disable-next-line no-new
+             
             new URL(rutaSrc)
           } catch {
             return 'La URL del video no es válida'
@@ -892,7 +892,7 @@ export const BulkForm = memo(function BulkForm({ onSubmit, selectedItems = [] }:
                       itemData[field] = value
                       // Aquí deberías implementar la lógica para actualizar solo este elemento
                       // (dejamos console para debug local)
-                      // eslint-disable-next-line no-console
+                       
                       console.log(`Actualizando elemento ${itemId}:`, { [field]: value })
                     }} 
                     className="mb-4 p-4 bg-white rounded-lg border border-gray-200"
