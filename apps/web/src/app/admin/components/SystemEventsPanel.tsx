@@ -17,6 +17,7 @@ type ActivityType =
   | 'content_updated'
   | 'admin_login'
   | 'system_event'
+  | 'system_notification'
   | 'order_created'
   | 'order_updated'
   | 'product_created'
@@ -54,6 +55,41 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
     [notifications]
   )
 
+  // Unificar y ordenar cronológicamente todos los eventos
+  const unifiedEvents = useMemo(() => {
+    const notificationEvents = systemNotifications.map(n => ({
+      id: `notification-${n.id}`,
+      type: 'system_notification' as ActivityType,
+      description: n.mensaje || n.titulo || 'Notificación del sistema',
+      timestamp: String(n.creadoEn || n.fecha || new Date().toISOString()),
+      user: (n.metadata as Record<string, unknown>)?.actorName as string || 'Sistema',
+      source: ((n.metadata as Record<string, unknown>)?.source as string) || 'admin',
+      metadata: {
+        ...n.metadata,
+        originalNotification: n,
+        isNotification: true
+      }
+    }))
+
+    const activityEvents = (recentActivity || []).map(activity => ({
+      ...activity,
+      id: activity.id || `activity-${Math.random()}`,
+      metadata: {
+        ...activity.metadata,
+        isNotification: false
+      }
+    }))
+
+    const allEvents = [...notificationEvents, ...activityEvents]
+    
+    // Ordenar por timestamp descendente (más reciente primero)
+    return allEvents.sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime()
+      const timeB = new Date(b.timestamp).getTime()
+      return timeB - timeA
+    }).slice(0, 8) // Limitar a 8 eventos para controlar altura
+  }, [systemNotifications, recentActivity])
+
   const getEnhancedActivityMessage = (act: ActivityItem): string => {
     const baseMessage = act.description || 'Evento del sistema'
     const isEnhanced =
@@ -72,6 +108,9 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
     if (isEnhanced) return baseMessage
 
     switch (act.type) {
+      case 'system_notification':
+        // Para notificaciones del sistema, usar el mensaje tal como viene
+        return `🔔 ${baseMessage}`
       case 'user_registered':
         if (act.user && (act.metadata as Record<string, unknown> | undefined)?.email) {
           return `👤 Nuevo usuario: ${act.user} (${String((act.metadata as Record<string, unknown>).email)})`
@@ -149,6 +188,8 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
   const getActivityConfig = (type: ActivityType, source?: ActivitySource) => {
     const baseConfig = (() => {
       switch (type) {
+        case 'system_notification':
+          return { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: <Bell className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: 'Notificación' }
         case 'user_registered':
           return { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <UserPlus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />, label: 'Usuario' }
         case 'course_completed':
@@ -185,7 +226,7 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-      {/* Header igual que el panel original de Actividad */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Activity className="h-6 w-6 text-gray-700" />
@@ -196,78 +237,36 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span>En vivo</span>
           </div>
+          <div className="text-xs text-gray-600">{unreadCount} sin leer</div>
           <Link href="/admin/activity" className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:gap-2 transition-all px-3 py-2 rounded-lg hover:bg-blue-50">
             Ver historial
-            {/* Arrow icon inline to avoid import duplication */}
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17l9-9m0 0H8m8 0v8" /></svg>
           </Link>
         </div>
       </div>
 
-      {/* Bloque superior: Últimas notificaciones del sistema (estilo unificado y badge Admin) */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
-            <Bell className="h-5 w-5 text-blue-600" />
+      {/* Estados de carga y error */}
+      {loading && <div className="text-sm text-gray-600 mb-4">Cargando eventos...</div>}
+      {error && <div className="text-sm text-red-600 mb-4">Error: {error}</div>}
+
+      {/* Lista unificada de eventos */}
+      <div className="space-y-4">
+        {unifiedEvents.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Activity className="h-8 w-8 text-gray-400" />
+            </div>
+            <p className="text-gray-600 text-base font-semibold mb-1">No hay actividad reciente</p>
+            <p className="text-gray-500 text-sm">Los eventos del sistema aparecerán aquí en tiempo real</p>
           </div>
-          {/* Subtítulo reducido para evitar doble título prominente dentro de la card */}
-          <div className="text-sm">
-            <div className="font-semibold text-gray-900">Últimas notificaciones</div>
-            <div className="text-gray-600">Eventos administrativos y del sistema</div>
-          </div>
-          <div className="ml-auto text-xs text-gray-600">{unreadCount} sin leer</div>
-        </div>
-        {loading && <div className="text-sm text-gray-600">Cargando…</div>}
-        {error && <div className="text-sm text-red-600">Error: {error}</div>}
-        <div className="space-y-4">
-          {systemNotifications.length === 0 ? (
-            <div className="text-sm text-gray-600">No hay notificaciones de sistema.</div>
-          ) : (
-            systemNotifications.map((n) => {
-              const time = n.creadoEn || n.fecha
-              const timeAgo = time ? getTimeAgo(String(time)) : ''
-              const actorName = (n.metadata as Record<string, unknown>)?.actorName as string | undefined
-              const resourceName = (n.metadata as Record<string, unknown>)?.resourceName as string | undefined
-              const title = n.titulo || 'Actividad del sistema'
-              const message = n.mensaje || [actorName, title, resourceName].filter(Boolean).join(' ')
-              const source = ((n.metadata as Record<string, unknown>)?.source as string) || 'admin'
-
-              const color = 'bg-indigo-100 text-indigo-700 border-indigo-200'
-              const icon = <Settings className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              const label = 'Admin'
-              const sourceIndicator = ({ web: '🌐', admin: '⚙️', system: '🔧' } as Record<string, string>)[source] ?? '⚙️'
-
-              return (
-                <div key={n.id} className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all duration-200 border border-gray-100 hover:border-gray-200">
-                  <div className={`rounded-xl p-3 border-2 ${color} flex-shrink-0`}>
-                    {icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${color}`}>
-                        {sourceIndicator} {label}
-                      </span>
-                      <span className="text-xs text-gray-500 font-medium">{timeAgo}</span>
-                    </div>
-                    {/* Mensaje principal sin duplicar el título de la card */}
-                    <p className="text-sm font-semibold text-gray-900 leading-relaxed">{message}</p>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Lista de actividad (igual que el panel original) */}
-      <div className="max-h-[600px] overflow-y-auto space-y-4">
-        {recentActivity && recentActivity.length > 0 ? (
-          recentActivity.map((activity: ActivityItem, index: number) => {
-            const enhancedMessage = getEnhancedActivityMessage(activity)
-            const config = getActivityConfig(activity.type, activity.source)
-            const timeAgo = getTimeAgo(activity.timestamp)
+        ) : (
+          unifiedEvents.map((event) => {
+            const enhancedMessage = getEnhancedActivityMessage(event)
+            const config = getActivityConfig(event.type, event.source)
+            const timeAgo = getTimeAgo(event.timestamp)
+            
             return (
-              <div key={`activity-${activity.id || index}`} className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all duration-200 border border-gray-100 hover:border-gray-200">
+              <div key={event.id} className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all duration-200 border border-gray-100 hover:border-gray-200">
                 <div className={`rounded-xl p-3 border-2 ${config.color} flex-shrink-0`}>
                   {config.icon}
                 </div>
@@ -279,21 +278,13 @@ export default function SystemEventsPanel({ recentActivity }: { recentActivity: 
                     <span className="text-xs text-gray-500 font-medium">{timeAgo}</span>
                   </div>
                   <p className="text-sm font-semibold text-gray-900 leading-relaxed">{enhancedMessage}</p>
-                  {activity.user && activity.user !== 'Sistema' && (
-                    <p className="text-xs text-gray-600 mt-1 font-medium">por {activity.user}</p>
+                  {event.user && event.user !== 'Sistema' && (
+                    <p className="text-xs text-gray-600 mt-1 font-medium">por {event.user}</p>
                   )}
                 </div>
               </div>
             )
           })
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Activity className="h-8 w-8 text-gray-400" />
-            </div>
-            <p className="text-gray-600 text-base font-semibold mb-1">No hay actividad reciente</p>
-            <p className="text-gray-500 text-sm">Los eventos del sistema aparecerán aquí en tiempo real</p>
-          </div>
         )}
       </div>
     </div>

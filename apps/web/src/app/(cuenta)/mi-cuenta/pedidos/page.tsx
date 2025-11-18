@@ -75,7 +75,6 @@ const getStatusColor = (estado: string) => {
 
 export default function PedidosPage() {
   const [orders, setOrders] = useState<Orden[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Orden | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -107,8 +106,6 @@ export default function PedidosPage() {
         setOrders(Array.isArray(items) ? items : []);
       } catch (error) {
         console.error("Error fetching orders:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -270,8 +267,8 @@ export default function PedidosPage() {
                       <button onClick={() => handleOpenModal(o)} className="px-4 py-2 text-sm font-bold text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)]">
                         Ver detalles
                       </button>
-                      <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)] rounded-xl transition-all duration-200 border border-[var(--border)] hover:border-[var(--gold)]/30 flex items-center gap-2">
-                        <RotateCcw className="h-4 w-4" />
+                      <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)] rounded-xl transition-all duration-200 border border-[var(--pink)]/30 hover:border-[var(--pink)] flex items-center gap-2">
+                        <RotateCcw className="h-4 w-4 text-[var(--pink)]" />
                         Repetir
                       </button>
                     </div>

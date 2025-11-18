@@ -7,13 +7,11 @@ import { useAuth } from '@/contexts/AuthContext'
 export default function SystemEventsPage() {
   const { user } = useAuth()
   const [events, setEvents] = useState<ActivityItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
-        setLoading(true)
         setError(null)
         const res = await fetch('/api/admin/dashboard/stats')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -23,7 +21,7 @@ export default function SystemEventsPage() {
       } catch (e: Error | unknown) {
         setError(e instanceof Error ? e.message : 'Error al cargar eventos')
       } finally {
-        setLoading(false)
+        // noop
       }
     }
     load()

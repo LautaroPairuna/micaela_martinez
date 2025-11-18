@@ -115,7 +115,7 @@ export function useChildCounts(
     }
 
     fetchAllCounts()
-  }, [enabled, parentId, parentTable, childTablesKey, childTables.length, fetchChildCount])
+  }, [enabled, parentId, parentTable, childTablesKey, childTables.length, childTables, fetchChildCount])
 
   return { counts, loading, error }
 }

@@ -3,21 +3,23 @@
 
 import Link from 'next/link';
 import { useFavorites } from '@/store/favorites';
-import { listFavoriteProducts, removeFavorite, type ProductMinimal } from '@/lib/sdk/userApi';
+import { listFavoriteProducts, type ProductMinimal } from '@/lib/sdk/userApi';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Price } from '@/components/ui/Price';
 import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { AddProductButton } from '@/components/cart/AddProductButton';
-import { Heart, ShoppingBag, Trash2, ExternalLink, Star, Loader2 } from 'lucide-react';
+import { Heart, ShoppingBag, ExternalLink, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function FavoritosPage() {
-  const { removeFromFavorites, isLoading: storeLoading } = useFavorites();
+  const { removeFromFavorites } = useFavorites();
   const [favoriteProducts, setFavoriteProducts] = useState<ProductMinimal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const { success: showSuccess, error: showError } = useToast();
 
   // Cargar productos favoritos completos
   useEffect(() => {
@@ -37,18 +39,20 @@ export default function FavoritosPage() {
     loadFavoriteProducts();
   }, []);
 
-  const handleRemoveFavorite = async (productId: string, productTitle: string) => {
+  const handleRemoveFavorite = async (productId: string | number, productTitle: string) => {
     try {
-      setRemovingIds(prev => new Set(prev).add(productId));
+      const idStr = String(productId);
+      setRemovingIds(prev => new Set(prev).add(idStr));
       await removeFromFavorites(productId, productTitle);
-      // Actualizar la lista local
-      setFavoriteProducts(prev => prev.filter(p => p.id !== productId));
+      setFavoriteProducts(prev => prev.filter(p => String(p.id) !== idStr));
+      showSuccess('Producto eliminado de favoritos', `Se quitó "${productTitle}" de tus favoritos`);
     } catch (error) {
       console.error('❌ Error al quitar de favoritos:', error);
+      showError('Error al eliminar favorito', 'No se pudo quitar el producto de tus favoritos');
     } finally {
       setRemovingIds(prev => {
         const newSet = new Set(prev);
-        newSet.delete(productId);
+        newSet.delete(String(productId));
         return newSet;
       });
     }
@@ -59,9 +63,9 @@ export default function FavoritosPage() {
     return (
       <div className="space-y-8">
         <div className="flex items-center gap-4">
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
-            <Heart className="h-8 w-8 text-black" />
-          </div>
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
+          <Heart className="h-8 w-8 text-[var(--pink)]" />
+        </div>
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-[var(--fg)] tracking-tight">
               Mis Favoritos
@@ -73,7 +77,7 @@ export default function FavoritosPage() {
         </div>
         
         <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--pink)]" />
         </div>
       </div>
     );
@@ -86,7 +90,7 @@ export default function FavoritosPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
-          <Heart className="h-8 w-8 text-black" />
+          <Heart className="h-8 w-8 text-[var(--pink)]" />
         </div>
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold text-[var(--fg)] tracking-tight">
@@ -115,7 +119,7 @@ export default function FavoritosPage() {
               Explora nuestro catálogo y guarda los productos que más te gusten para encontrarlos fácilmente después.
             </p>
           </div>
-          <Link href="/productos">
+          <Link href="/tienda">
             <Button className="bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
               <ShoppingBag className="h-5 w-5 mr-2" />
               Explorar Productos
@@ -137,18 +141,19 @@ export default function FavoritosPage() {
                   />
                   
                   {/* Remove from Favorites Button */}
-                  <Button
+                  <button
                     onClick={() => handleRemoveFavorite(product.id, product.titulo)}
-                    disabled={removingIds.has(product.id)}
-                    className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white text-red-500 hover:text-red-600 rounded-full shadow-lg transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-red-200"
-                    size="sm"
+                    disabled={removingIds.has(String(product.id))}
+                    className="absolute z-10 top-3 right-3 pointer-events-auto p-2.5 rounded-full bg-gray-800/95 backdrop-blur-md shadow-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 border border-gray-600/20"
+                    title="Eliminar de favoritos"
+                    aria-label="Eliminar de favoritos"
                   >
-                    {removingIds.has(product.id) ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    {removingIds.has(String(product.id)) ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-[var(--pink)]" />
                     ) : (
-                      <Trash2 className="h-4 w-4" />
+                      <Heart className="h-4 w-4 fill-[var(--pink)] text-[var(--pink)]" />
                     )}
-                  </Button>
+                  </button>
                 </div>
 
                 {/* Product Info */}
@@ -156,7 +161,7 @@ export default function FavoritosPage() {
                   {/* Title */}
                   <Link 
                     href={`/tienda/${product.slug}`}
-                    className="block group-hover:text-[var(--gold)] transition-colors duration-200"
+                    className="block group-hover:text-[var(--pink)] transition-colors duration-200"
                   >
                     <h3 className="font-semibold text-base text-[var(--fg)] line-clamp-2 leading-tight min-h-[2.5rem]">
                       {product.titulo}

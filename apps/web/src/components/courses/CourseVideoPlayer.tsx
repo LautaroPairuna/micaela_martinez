@@ -300,12 +300,13 @@ export function CourseVideoPlayer({
 
   // Cleanup al cambiar URL
   useEffect(() => {
+    const v = videoRef.current;
     return () => {
-      if (videoRef.current) {
+      if (v) {
         try {
-          videoRef.current.pause();
-          videoRef.current.removeAttribute('src');
-          videoRef.current.load();
+          v.pause();
+          v.removeAttribute('src');
+          v.load();
         } catch {}
       }
       setIsLoading(false);

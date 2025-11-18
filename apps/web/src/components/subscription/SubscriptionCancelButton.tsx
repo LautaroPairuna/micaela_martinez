@@ -14,16 +14,16 @@ import { toast } from 'sonner';
 import { 
   MoreHorizontal, 
   XCircle, 
-  Settings, 
   HelpCircle, 
   AlertCircle 
 } from 'lucide-react';
 
 interface SubscriptionCancelButtonProps {
   orderId: string;
+  onCancelled?: () => void;
 }
 
-export function SubscriptionCancelButton({ orderId }: SubscriptionCancelButtonProps) {
+export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionCancelButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +35,9 @@ export function SubscriptionCancelButton({ orderId }: SubscriptionCancelButtonPr
       await cancelSubscription(orderId);
       toast.success('Suscripción cancelada exitosamente');
       setIsOpen(false);
+      if (typeof onCancelled === 'function') {
+        onCancelled();
+      }
       // Recargar la página después de cancelar
       window.location.reload();
     } catch (error) {

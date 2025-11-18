@@ -66,10 +66,9 @@ export class AccountService {
 
     if (!u) throw new NotFoundException('Usuario no encontrado');
 
-    const roleSlugs =
-      Array.isArray(u.roles)
-        ? (u.roles as RoleSlugItem[]).map((r) => r.role.slug)
-        : [];
+    const roleSlugs = Array.isArray(u.roles)
+      ? (u.roles as RoleSlugItem[]).map((r) => r.role.slug)
+      : [];
 
     return {
       id: u.id,
@@ -223,9 +222,7 @@ export class AccountService {
     });
 
     // Si tu relación se llama distinto (p.ej. "productoRef"), cambia aquí:
-    return favs
-      .map((f) => f.producto)
-      .filter(Boolean);
+    return favs.map((f) => f.producto).filter(Boolean);
   }
 
   async addFavorite(userId: number, dto: AddFavoriteInput) {
@@ -246,15 +243,13 @@ export class AccountService {
   }
 
   async removeFavorite(userId: number, productId: number) {
-    await this.prisma.favorito.delete({
+    await this.prisma.favorito.deleteMany({
       where: {
-        usuarioId_productoId: {
-          usuarioId: userId, // <-- number
-          productoId: productId, // <-- number
-        },
+        usuarioId: userId,
+        productoId: productId,
       },
-      select: { usuarioId: true },
     });
+    return { ok: true };
   }
 
   /** Órdenes (resumen) */
@@ -348,7 +343,7 @@ export class AccountService {
     const enrollment = await this.prisma.inscripcion.findFirst({
       where: {
         id: Number(dto.enrollmentId),
-        usuarioId: userId
+        usuarioId: userId,
       },
     });
 
@@ -357,8 +352,13 @@ export class AccountService {
     }
 
     // Obtener progreso actual
-    const currentProgress: Record<string, Record<string, LessonProgressEntry>> =
-      (enrollment.progreso as Record<string, Record<string, LessonProgressEntry>>) ?? {};
+    const currentProgress: Record<
+      string,
+      Record<string, LessonProgressEntry>
+    > = (enrollment.progreso as Record<
+      string,
+      Record<string, LessonProgressEntry>
+    >) ?? {};
 
     // Normalizar claves a string (evita inconsistencias number vs string)
     const moduleKey = String(dto.moduleId);
@@ -384,21 +384,22 @@ export class AccountService {
           : undefined) || new Date().toISOString();
 
       // Aseguramos que completedAt sea siempre un string no nulo
-      const safeCompletedAt: string = completedAt !== null && completedAt !== undefined 
-        ? String(completedAt) 
-        : new Date().toISOString();
-      
+      const safeCompletedAt: string =
+        completedAt !== null && completedAt !== undefined
+          ? String(completedAt)
+          : new Date().toISOString();
+
       // Creamos un objeto con las propiedades base
       const lessonProgress: LessonProgressEntry = {
         completed: true,
         completedAt: safeCompletedAt,
       };
-      
+
       // Añadimos las propiedades adicionales de progressData si existen
       if (dto.progressData) {
         Object.assign(lessonProgress, dto.progressData);
       }
-      
+
       currentProgress[moduleKey][lessonKey] = lessonProgress;
     }
 
@@ -419,7 +420,9 @@ export class AccountService {
     console.log('[Enrollments] updateLessonProgress:resp', {
       id: updated.id,
       actualizadoEn: updated.actualizadoEn,
-      progresoKeys: Object.keys((updated.progreso as Record<string, unknown>) || {}),
+      progresoKeys: Object.keys(
+        (updated.progreso as Record<string, unknown>) || {},
+      ),
     });
 
     return updated;

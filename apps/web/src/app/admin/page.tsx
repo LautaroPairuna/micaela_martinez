@@ -24,25 +24,6 @@ import { dashboardService, DashboardStats } from '@/lib/services/dashboard.servi
 import { useAuth } from '@/contexts/AuthContext'
 import SystemEventsPanel from './components/SystemEventsPanel'
 
-// Tipado de los eventos de actividad (alineado con el uso)
-type ActivitySource = 'web' | 'admin' | 'system' | string
-type ActivityType =
-  | 'user_registered'
-  | 'course_completed'
-  | 'user_activity'
-  | 'enrollment'
-  | 'payment_received'
-  | 'course_created'
-  | 'content_updated'
-  | 'admin_login'
-  | 'system_event'
-  | 'order_created'
-  | 'order_updated'
-  | 'product_created'
-  | 'review_created'
-  | 'database_sync'
-  | 'cache_cleared'
-  | string
 
 export default function AdminDashboard() {
   const { user } = useAuth()

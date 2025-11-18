@@ -6,6 +6,7 @@ import {
   EventTypes,
   ResourceEventPayload,
   AuthEventPayload,
+  AuditCreatedPayload,
 } from '../events/event.types';
 import { PrismaService } from '../prisma/prisma.service';
 // Importación corregida del WebsocketGateway
@@ -17,6 +18,7 @@ const toStr = (v: string | number | null | undefined): string | undefined =>
 @Injectable()
 export class NotificationListenerService {
   private readonly logger = new Logger(NotificationListenerService.name);
+  private readonly auditCorrelationMap = new Map<string, number>(); // Mapa temporal para correlacionar eventos
 
   constructor(
     private readonly prisma: PrismaService,
@@ -47,6 +49,24 @@ export class NotificationListenerService {
     await this.createNotificationForAdmins({ title, url, excludeUserId });
   }
 
+  @OnEvent(EventTypes.AUDIT_CREATED)
+  async handleAuditCreated(payload: AuditCreatedPayload) {
+    this.logger.debug(
+      `Audit created with ID: ${payload.auditId} for ${payload.tableName}:${payload.recordId}`,
+    );
+
+    // Crear clave de correlación basada en el evento original
+    const correlationKey = `${payload.tableName}:${payload.recordId}:${payload.action}:${payload.userId}`;
+
+    // Almacenar el auditId para correlación con notificaciones
+    this.auditCorrelationMap.set(correlationKey, payload.auditId);
+
+    // Limpiar la correlación después de 30 segundos para evitar memory leaks
+    setTimeout(() => {
+      this.auditCorrelationMap.delete(correlationKey);
+    }, 30000);
+  }
+
   private async handleResourceEvent(
     action: 'created' | 'updated' | 'deleted',
     payload: ResourceEventPayload,
@@ -71,6 +91,9 @@ export class NotificationListenerService {
         break;
     }
 
+    // Obtener auditId correlacionado
+    const auditId = this.getCorrelatedAuditId(payload, action);
+
     // Obtener información del actor (administrador que realizó la acción)
     const actorId = toStr(payload.userId);
     let actorName: string | undefined;
@@ -82,7 +105,9 @@ export class NotificationListenerService {
         });
         actorName = actor?.nombre || actor?.email || undefined;
       } catch (e) {
-        this.logger.warn(`No se pudo obtener el nombre del actor ${actorId}: ${e instanceof Error ? e.message : e}`);
+        this.logger.warn(
+          `No se pudo obtener el nombre del actor ${actorId}: ${e instanceof Error ? e.message : e}`,
+        );
       }
     }
 
@@ -93,6 +118,7 @@ export class NotificationListenerService {
       // excludeUserId: undefined,
       actorId,
       actorName,
+      auditId, // Incluir auditId para correlación
       meta: {
         action,
         resourceType,
@@ -102,6 +128,14 @@ export class NotificationListenerService {
         actorName,
       },
     });
+  }
+
+  private getCorrelatedAuditId(
+    payload: ResourceEventPayload,
+    action: 'created' | 'updated' | 'deleted',
+  ): number | undefined {
+    const correlationKey = `${payload.tableName}:${payload.recordId}:${action}:${payload.userId}`;
+    return this.auditCorrelationMap.get(correlationKey);
   }
 
   private deriveResourceMeta(payload: ResourceEventPayload) {
@@ -124,13 +158,16 @@ export class NotificationListenerService {
     actorId?: string;
     actorName?: string;
     meta?: Record<string, any>;
+    auditId?: number; // ID del log de auditoría para correlación
   }) {
     const admins = await this.prisma.usuario.findMany({
       where: {
         roles: {
-          some: { role: { slug: 'admin' } },
+          some: { role: { slug: 'ADMIN' } },
         },
-        ...(data.excludeUserId ? { id: { not: Number(data.excludeUserId) } } : {}),
+        ...(data.excludeUserId
+          ? { id: { not: Number(data.excludeUserId) } }
+          : {}),
       },
       select: { id: true },
     });
@@ -146,8 +183,11 @@ export class NotificationListenerService {
     for (const admin of admins) {
       const isActor = data.actorId ? admin.id === Number(data.actorId) : false;
       const displayActor = isActor ? 'Tú' : data.actorName || 'Administrador';
-      const resourceLabel = data.meta?.resourceName || `#${data.meta?.resourceId ?? ''}`;
-      const actionVerb = data.meta?.action ? toSpanishVerb(data.meta.action) : 'actualizó';
+      const resourceLabel =
+        data.meta?.resourceName || `#${data.meta?.resourceId ?? ''}`;
+      const actionVerb = data.meta?.action
+        ? toSpanishVerb(data.meta.action)
+        : 'actualizó';
 
       const message = `${displayActor} ${actionVerb} ${String(data.meta?.resourceType || 'recurso').toLowerCase()} ${resourceLabel}`;
 
@@ -163,6 +203,7 @@ export class NotificationListenerService {
             displayActor,
             isActor,
             createdAt: new Date().toISOString(),
+            ...(data.auditId ? { auditId: data.auditId } : {}), // Correlación con auditoría
           },
         },
       });

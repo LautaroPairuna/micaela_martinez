@@ -6,8 +6,9 @@ export function formatCurrency(v: number, currency='ARS', locale='es-AR') {
     const formatted = rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return `$${formatted}`;
   }
-  // Fallback simple para otras monedas
-  return `${currency} ${Math.round(v)}`;
+  // Fallback con formato local simple
+  const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.round(v));
+  return `${currency} ${formatted}`;
 }
 export function cn(...xs: (string | false | undefined | null | Record<string, boolean>)[]) {
   return xs

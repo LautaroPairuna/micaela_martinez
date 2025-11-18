@@ -119,8 +119,6 @@ export default async function CoursePage({
         course={course as NonNullable<CourseBasic>}
         session={null}
         hasAccess={false}
-        leccionSlug={leccion}
-        moduloSlug={modulo}
       />
     );
   }
@@ -150,8 +148,6 @@ export default async function CoursePage({
       course={course as NonNullable<CourseData>}
       session={session}
       hasAccess={hasAccess}
-      leccionSlug={leccion}
-      moduloSlug={modulo}
     />
   );
 }

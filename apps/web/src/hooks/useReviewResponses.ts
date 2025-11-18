@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/hooks/useSession';
 
 interface ReviewResponse {
@@ -41,162 +42,108 @@ interface UseReviewResponsesReturn {
 
 export function useReviewResponses(resenaId: string): UseReviewResponsesReturn {
   const { me: session } = useSession();
-  const [responses, setResponses] = useState<ReviewResponse[]>([]);
-  const [responsesCount, setResponsesCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchResponses = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
+  const query = useQuery<{ responses: ReviewResponse[]; count: number }>({
+    queryKey: ['reviewResponses', resenaId],
+    queryFn: async () => {
       const [responsesRes, countRes] = await Promise.all([
         fetch(`/api/reviews/${resenaId}/responses`),
-        fetch(`/api/reviews/${resenaId}/responses/count`)
+        fetch(`/api/reviews/${resenaId}/responses/count`),
       ]);
-
-      // Manejar caso donde no hay respuestas (404) como válido
       if (responsesRes.status === 404 || countRes.status === 404) {
-        setResponses([]);
-        setResponsesCount(0);
-        return;
+        return { responses: [], count: 0 };
       }
-
       if (!responsesRes.ok || !countRes.ok) {
         const errorStatus = !responsesRes.ok ? responsesRes.status : countRes.status;
         const errorText = !responsesRes.ok ? responsesRes.statusText : countRes.statusText;
         throw new Error(`Error al cargar respuestas: ${errorStatus} ${errorText}`);
       }
+      const responsesData = (await responsesRes.json()) as ReviewResponse[];
+      const countData = (await countRes.json()) as { count?: number };
+      return { responses: responsesData || [], count: Number(countData?.count ?? 0) };
+    },
+    enabled: !!resenaId,
+    staleTime: 30_000,
+  });
 
-      const responsesData = await responsesRes.json();
-      const countData = await countRes.json();
-
-      setResponses(responsesData || []);
-      setResponsesCount(countData?.count || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error fetching responses:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addResponse = async (contenido: string, respuestaAPadreId?: string) => {
-    if (!session) {
-      setError('Debes iniciar sesión para responder');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
+  const addMutation = useMutation<Response, unknown, { contenido: string; parentId?: string }>({
+    mutationFn: async (payload) => {
       const response = await fetch(`/api/reviews/${resenaId}/responses`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contenido,
-          parentId: respuestaAPadreId,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear respuesta');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData as any).error || 'Error al crear respuesta');
       }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviewResponses', resenaId] });
+    },
+  });
 
-      // Refrescar las respuestas después de agregar una nueva
-      await fetchResponses();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error adding response:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const updateResponse = async (responseId: string, contenido: string) => {
-    if (!session) {
-      setError('Debes iniciar sesión para editar');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
+  const updateMutation = useMutation<Response, unknown, { responseId: string; contenido: string }>({
+    mutationFn: async ({ responseId, contenido }) => {
       const response = await fetch(`/api/reviews/${resenaId}/responses/${responseId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contenido }),
       });
-
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al actualizar respuesta');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData as any).error || 'Error al actualizar respuesta');
       }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviewResponses', resenaId] });
+    },
+  });
 
-      // Refrescar las respuestas después de actualizar
-      await fetchResponses();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error updating response:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const deleteResponse = async (responseId: string) => {
-    if (!session) {
-      setError('Debes iniciar sesión para eliminar');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
+  const deleteMutation = useMutation<Response, unknown, { responseId: string }>({
+    mutationFn: async ({ responseId }) => {
       const response = await fetch(`/api/reviews/${resenaId}/responses/${responseId}`, {
         method: 'DELETE',
       });
-
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar respuesta');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData as any).error || 'Error al eliminar respuesta');
       }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviewResponses', resenaId] });
+    },
+  });
 
-      // Refrescar las respuestas después de eliminar
-      await fetchResponses();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error deleting response:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const addResponse = async (contenido: string, respuestaAPadreId?: string) => {
+    if (!session) throw new Error('Debes iniciar sesión para responder');
+    await addMutation.mutateAsync({ contenido, parentId: respuestaAPadreId });
+  };
+
+  const updateResponse = async (responseId: string, contenido: string) => {
+    if (!session) throw new Error('Debes iniciar sesión para editar');
+    await updateMutation.mutateAsync({ responseId, contenido });
+  };
+
+  const deleteResponse = async (responseId: string) => {
+    if (!session) throw new Error('Debes iniciar sesión para eliminar');
+    await deleteMutation.mutateAsync({ responseId });
   };
 
   const refreshResponses = async () => {
-    await fetchResponses();
+    await query.refetch();
   };
 
-  useEffect(() => {
-    if (resenaId) {
-      fetchResponses();
-    }
-  }, [resenaId]);
-
   return {
-    responses,
-    responsesCount,
-    isLoading,
-    isSubmitting,
-    error,
+    responses: query.data?.responses ?? [],
+    responsesCount: query.data?.count ?? 0,
+    isLoading: query.isLoading,
+    isSubmitting: addMutation.isPending || updateMutation.isPending || deleteMutation.isPending,
+    error: query.error ? (query.error instanceof Error ? query.error.message : 'Error desconocido') : null,
     addResponse,
     updateResponse,
     deleteResponse,

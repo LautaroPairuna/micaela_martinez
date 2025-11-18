@@ -59,7 +59,6 @@ export function ReviewForm({
   });
 
   const {
-    register,
     handleSubmit,
     watch,
     setValue,
@@ -97,7 +96,7 @@ export function ReviewForm({
         setValue('comentario', draft.comentario, { shouldValidate: false });
       }
     }
-  }, [draft?.lastSaved, isEditing, existingReview]); // Solo depender de lastSaved para evitar bucles
+  }, [draft, getValues, setValue, isEditing, existingReview]);
 
   // Auto-guardar cambios (con debounce implícito)
   useEffect(() => {
@@ -116,7 +115,7 @@ export function ReviewForm({
         });
       }
     }
-  }, [watchedRating, watchedComment, isEditing, saveDraft]);
+  }, [watchedRating, watchedComment, isEditing, saveDraft, draft]);
 
   const handleRatingClick = (rating: number) => {
     setValue('puntaje', rating, { shouldValidate: true });

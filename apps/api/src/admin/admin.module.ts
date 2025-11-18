@@ -3,11 +3,11 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
-import { AuditService } from './audit.service';
+import { UnifiedAuditService } from './unified-audit.service';
+import { AuditListenerService } from './audit-listener.service';
 import { AdminAuditInterceptor } from './interceptors/audit.interceptor';
 import { HierarchicalDetectorService } from './utils/hierarchical-detector.service';
 import { WebsocketsModule } from '../websockets/websockets.module';
-
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
@@ -15,13 +15,14 @@ import { PrismaModule } from '../prisma/prisma.module';
   controllers: [AdminController],
   providers: [
     AdminService,
-    AuditService,
+    UnifiedAuditService,
+    AuditListenerService, // Mantenemos por compatibilidad temporal
     HierarchicalDetectorService,
     {
       provide: APP_INTERCEPTOR,
       useClass: AdminAuditInterceptor,
     },
   ],
-  exports: [AdminService, AuditService, HierarchicalDetectorService],
+  exports: [AdminService, UnifiedAuditService, HierarchicalDetectorService],
 })
 export class AdminModule {}

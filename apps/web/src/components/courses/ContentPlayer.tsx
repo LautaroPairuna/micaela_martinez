@@ -5,7 +5,6 @@ import { FileText, BookOpen, HelpCircle, Download, ExternalLink, CheckCircle } f
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { getSecureDocumentUrl } from '@/lib/media-utils';
-import { useSession } from '@/hooks/useSession';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -61,7 +60,6 @@ const minutesFromSeconds = (s?: number | null) =>
   typeof s === 'number' && s > 0 ? Math.ceil(s / 60) : null;
 
 export function ContentPlayer({ lesson, onComplete, onProgress, className }: ContentPlayerProps) {
-  const { me } = useSession();
 
   // ---- Normalización TEXTO ----
   const textContent = useMemo<string | null>(() => {
@@ -161,7 +159,6 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answeredMap, setAnsweredMap] = useState<Record<number, number | null>>({});
   const [resultMap, setResultMap] = useState<Record<number, boolean>>({});
-  const [hasAttempted, setHasAttempted] = useState<boolean>(false);
 
   const totalQuestions = quizQuestions.length;
   const currentQuestion = totalQuestions ? quizQuestions[currentQuestionIndex] : null;
@@ -172,7 +169,6 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
     setAnsweredMap((prev) => ({ ...prev, [currentQuestionIndex]: answerIndex }));
     const isCorrect = answerIndex === currentQuestion.respuestaCorrecta;
     setResultMap((prev) => ({ ...prev, [currentQuestionIndex]: isCorrect }));
-    setHasAttempted(true);
 
     const allAnswered = Object.keys({ ...answeredMap, [currentQuestionIndex]: answerIndex }).length === totalQuestions;
     const allCorrect = allAnswered && Object.values({ ...resultMap, [currentQuestionIndex]: isCorrect }).every(Boolean);
@@ -443,7 +439,7 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
                             delete next[currentQuestionIndex];
                             return next;
                           });
-                          setHasAttempted(false);
+                          
                         }}
                       >
                         Reintentar
@@ -463,7 +459,7 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
                         onClick={() => {
                           setAnsweredMap({});
                           setResultMap({});
-                          setHasAttempted(false);
+                          
                         }}
                       >
                         Reintentar
@@ -493,7 +489,7 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
                         setAnsweredMap({});
                         setResultMap({});
                         setCurrentQuestionIndex(0);
-                        setHasAttempted(false);
+                        
                       }}
                       className="px-6"
                     >

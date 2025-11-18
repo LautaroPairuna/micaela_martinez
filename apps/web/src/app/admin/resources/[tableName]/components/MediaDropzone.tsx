@@ -106,10 +106,10 @@ export default function MediaDropzone({
       if (/^(\/|https?:\/\/|data:|blob:)/.test(value)) return value
       // Si es storedAs (p.ej. 'leccion/archivo.webp'), usar la ruta relativa
       // que será manejada por el proxy de Next.js
-      return `/api/images/${value}`
+      return resolvePreviewSrc ? resolvePreviewSrc(value) : `/api/images/${value}`
     }
     return null
-  }, [value, blobUrl])
+  }, [value, blobUrl, resolvePreviewSrc])
 
   const fileType: FileType = React.useMemo(() => {
     if (value instanceof File) return getFileTypeFromMime(value.type)

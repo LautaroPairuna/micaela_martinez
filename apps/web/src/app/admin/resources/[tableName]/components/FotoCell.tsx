@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import Image from 'next/image'
-import { Play, FileText, Volume2 } from 'lucide-react'
+import { Play, Volume2 } from 'lucide-react'
 import { getFileTypeFromExtension, type FileType } from '../utils/fileFieldDetection'
 
 /** Placeholder inline para imágenes */

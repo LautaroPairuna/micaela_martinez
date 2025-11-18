@@ -1,5 +1,6 @@
 // next.config.ts
 import type { NextConfig } from 'next';
+import path from 'path';
 import { IMAGE_PUBLIC_URL, DOC_PUBLIC_URL } from './src/lib/adminConstants';
 
 // 1) Resolver BACKEND con fallbacks (runtime interno del cluster)
@@ -55,6 +56,9 @@ const nextConfig: NextConfig = {
   },
 
   serverExternalPackages: ['sharp'],
+
+  // Silenciar advertencia de root en workspaces monorepo
+  outputFileTracingRoot: path.resolve(__dirname, '..', '..'),
 };
 
 export default nextConfig;

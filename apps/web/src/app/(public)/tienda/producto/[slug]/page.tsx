@@ -301,15 +301,9 @@ export default async function ProductoPage({ params }: { params: Promise<Params>
                 </div>
               )}
               {typeof p.stock === 'number' && (
-                <div className="flex justify-between items-center py-2 border-b border-default/50">
+                <div className="flex justify-between items-center py-2">
                   <dt className="text-sm font-medium text-muted">Stock disponible</dt>
                   <dd className="text-sm font-semibold text-[var(--fg)]">{p.stock} unidades</dd>
-                </div>
-              )}
-              {(p.slug ?? slug) && (
-                <div className="flex justify-between items-center py-2">
-                  <dt className="text-sm font-medium text-muted">SKU</dt>
-                  <dd className="text-sm font-mono text-[var(--fg)]">{p.slug ?? slug}</dd>
                 </div>
               )}
             </dl>

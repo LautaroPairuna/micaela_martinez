@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, X, ArrowLeft, Clock, User } from 'lucide-react';
+import { Menu, X, ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatDuration } from '@/lib/utils';
 
 type Course = {
   id: string;
   titulo: string;
+  slug?: string;
   instructor?: {
     id: string;
     nombre: string;
@@ -59,14 +60,14 @@ export function CourseHeader({
           {/* Lado izquierdo - Navegación y título */}
           <div className="flex items-center gap-4 flex-1 min-w-0">
             {/* Botón volver */}
-            <Link href="/mi-cuenta/mi-aprendizaje">
+            <Link href={course.slug ? `/cursos/detalle/${course.slug}` : '/mi-cuenta/mi-aprendizaje'}>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="flex items-center gap-2 text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline font-medium">Volver</span>
+                <span className="hidden sm:inline font-medium">Volver al curso</span>
               </Button>
             </Link>
 

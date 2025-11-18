@@ -3,8 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-// Si ya usas lucide-react en el proyecto, descomenta:
-// import { AlertTriangle, RefreshCw, Home, Clipboard } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, Clipboard, MessageCircle } from 'lucide-react';
 
 type ErrorProps = {
   error: Error & { digest?: string };
@@ -64,64 +63,73 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
         aria-live="polite"
         className={[
           'w-full max-w-xl',
-          'rounded-xl2 border border-default bg-[var(--bg)]/95 backdrop-blur p-6',
+          'rounded-3xl border border-default bg-[var(--bg)]/90 backdrop-blur p-7',
           'shadow-[0_8px_24px_rgba(0,0,0,0.25)]',
         ].join(' ')}
       >
-        <header className="flex items-start gap-3">
-          {/* <AlertTriangle className="mt-0.5 h-6 w-6 opacity-80" aria-hidden /> */}
+        <header className="flex items-start gap-4">
+          <div className="grid place-items-center size-10 rounded-xl bg-[var(--pink)]/15 text-[var(--pink)]">
+            <AlertTriangle className="h-6 w-6" aria-hidden />
+          </div>
           <div className="flex-1">
-            <h2 className="font-display text-xl leading-tight">Ups, algo salió mal</h2>
+            <h2 className="font-display text-xl leading-tight">Ups, algo no salió como esperábamos</h2>
             <p className="mt-1 text-sm text-muted">{msg}</p>
-            {error?.digest && (
-              <p className="mt-1 text-xs text-muted/80">
-                ID del error: <span className="font-mono">{error.digest}</span>
-              </p>
-            )}
           </div>
         </header>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={reset}
-            className="rounded-xl2 border border-default px-3 py-1.5 text-sm hover:bg-subtle focus:outline-none focus:ring-2 focus:ring-offset-0"
+            className="inline-flex items-center gap-2 rounded-xl2 px-4 py-2 text-sm bg-[var(--pink)] text-black hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2"
             aria-label="Reintentar"
           >
-            {/* <RefreshCw className="mr-1 inline-block h-4 w-4" aria-hidden /> */}
+            <RefreshCw className="h-4 w-4" aria-hidden />
             Reintentar
           </button>
 
           <Link
             href="/"
-            className="rounded-xl2 border border-default px-3 py-1.5 text-sm hover:bg-subtle focus:outline-none focus:ring-2 focus:ring-offset-0"
+            className="inline-flex items-center gap-2 rounded-xl2 px-4 py-2 text-sm border border-[var(--gold)] text-[var(--gold)] hover:bg-[var(--gold)]/10 focus:outline-none focus:ring-2"
             aria-label="Ir al inicio"
           >
-            {/* <Home className="mr-1 inline-block h-4 w-4" aria-hidden /> */}
+            <Home className="h-4 w-4" aria-hidden />
             Ir al inicio
           </Link>
 
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="rounded-xl2 border border-default px-3 py-1.5 text-sm hover:bg-subtle focus:outline-none focus:ring-2 focus:ring-offset-0"
-            aria-label="Copiar detalles técnicos"
+          <Link
+            href="/contacto"
+            className="inline-flex items-center gap-2 rounded-xl2 px-4 py-2 text-sm border border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)]/10 focus:outline-none focus:ring-2"
+            aria-label="Contactar soporte"
           >
-            {/* <Clipboard className="mr-1 inline-block h-4 w-4" aria-hidden /> */}
-            {copied ? '¡Copiado!' : 'Copiar detalles'}
-          </button>
+            <MessageCircle className="h-4 w-4" aria-hidden />
+            Contactar soporte
+          </Link>
         </div>
 
-        {/* Panel de detalles técnicos: visible en dev */}
         {isDev && (
-          <details className="mt-5 group">
-            <summary className="cursor-pointer text-sm text-muted hover:underline">
-              Detalles técnicos (solo dev)
-            </summary>
-            <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-black/40 p-3 text-xs leading-relaxed">
-{error?.stack ?? '(sin stack)'}
-            </pre>
-          </details>
+          <div className="mt-5 space-y-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-2 rounded-xl2 border border-default px-3 py-1.5 text-xs hover:bg-subtle focus:outline-none focus:ring-2"
+                aria-label="Copiar detalles técnicos"
+              >
+                <Clipboard className="h-3.5 w-3.5" aria-hidden />
+                {copied ? '¡Copiado!' : 'Copiar detalles técnicos'}
+              </button>
+              {error?.digest && (
+                <span className="text-xs text-muted">
+                  ID: <span className="font-mono">{error.digest}</span>
+                </span>
+              )}
+            </div>
+            <details className="group">
+              <summary className="cursor-pointer text-sm text-muted hover:underline">Detalles técnicos</summary>
+              <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-black/40 p-3 text-xs leading-relaxed">{error?.stack ?? '(sin stack)'}</pre>
+            </details>
+          </div>
         )}
       </div>
     </div>

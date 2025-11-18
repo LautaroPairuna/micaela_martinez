@@ -1,0 +1,244 @@
+
+> @app/web@0.1.0 lint D:\wamp64\www\mica_pestanas\apps\web
+> eslint
+
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\configuracion-notificaciones\page.tsx
+  81:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\favoritos\page.tsx
+   6:32  warning  'removeFavorite' is defined but never used         @typescript-eslint/no-unused-vars
+  13:52  warning  'Star' is defined but never used                   @typescript-eslint/no-unused-vars
+  17:43  warning  'storeLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\mi-aprendizaje\MiAprendizajeClient.tsx
+  12:6  warning  'EnrollmentProgreso' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\mi-aprendizaje\page.tsx
+  13:6  warning  'EnrollmentProgreso' is defined but never used  @typescript-eslint/no-unused-vars
+  29:6  warning  'EnrollmentRow' is defined but never used       @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\mis-borradores\page.tsx
+  6:10  warning  'useReviewDraft' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\pedidos\OrderDetailsModal.tsx
+  166:9  warning  'envioFmt' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\pedidos\page.tsx
+  78:10  warning  'isLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(cuenta)\mi-cuenta\perfil\page.tsx
+  44:6  warning  React Hook useEffect has a missing dependency: 'reset'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\(public)\page.tsx
+  8:10  warning  'getProducts' is defined but never used  @typescript-eslint/no-unused-vars
+  8:23  warning  'getCourses' is defined but never used   @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\activity\page.tsx
+  10:10  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\layout.tsx
+  7:72  warning  'Shield' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\page.tsx
+  28:6  warning  'ActivitySource' is defined but never used  @typescript-eslint/no-unused-vars
+  29:6  warning  'ActivityType' is defined but never used    @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\ResourceDetailClient.tsx
+   24:18  warning  'mutate' is defined but never used                                                                                                                    @typescript-eslint/no-unused-vars
+  393:5   warning  React Hook useCallback has missing dependencies: 'pushNotification' and 'tableName'. Either include them or remove the dependency array               react-hooks/exhaustive-deps
+  432:5   warning  React Hook useCallback has missing dependencies: 'pushNotification' and 'tableName'. Either include them or remove the dependency array               react-hooks/exhaustive-deps
+  460:5   warning  React Hook useCallback has missing dependencies: 'pushNotification', 'resource', and 'tableName'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  518:6   warning  React Hook useCallback has missing dependencies: 'pushNotification' and 'tableName'. Either include them or remove the dependency array               react-hooks/exhaustive-deps
+  646:18  warning  'e' is defined but never used                                                                                                                         @typescript-eslint/no-unused-vars
+  730:20  warning  'e' is defined but never used                                                                                                                         @typescript-eslint/no-unused-vars
+  779:5   warning  React Hook useCallback has a missing dependency: 'data'. Either include it or remove the dependency array                                             react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\ConfirmModal.tsx
+  4:10  warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+  4:25  warning  'Trash2' is defined but never used         @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\DocContentEditor.tsx
+  29:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\FiltersBar.tsx
+  6:8  warning  'FolderOpen' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\FotoCell.tsx
+  4:16  warning  'FileText' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\HierarchicalSelect.tsx
+  45:9  warning  The 'records' logical expression could make the dependencies of useMemo Hook (at line 59) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'records' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\MediaDropzone.tsx
+  42:3  warning  'resolvePreviewSrc' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\components\PdfCell.tsx
+  4:10  warning  'FileText' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\config\filterConfig.ts
+  4:62  warning  'Calendar' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\hooks\useChildCounts.ts
+  118:6  warning  React Hook useEffect has a missing dependency: 'childTables'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\admin\resources\[tableName]\hooks\useServerTable.ts
+  77:32  warning  'swrKey' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\api\admin\[[...rest]]\route.ts
+   6:16  warning  'verifyAdminAuth' is defined but never used  @typescript-eslint/no-unused-vars
+  24:12  warning  'error' is defined but never used            @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\api\admin\resources\[tableName]\route.ts
+   12:83  warning  'FileType' is defined but never used          @typescript-eslint/no-unused-vars
+  392:15  warning  'orderBy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  394:9   warning  'skip' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  559:9   warning  'key' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\api\auth\me\route.ts
+  18:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\api\debug\env\route.ts
+  6:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\api\media\docs\[id]\route.ts
+  105:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  183:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\app\api\security\report\route.ts
+  128:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\account\AccountSidebar.tsx
+  4:23  warning  'useRouter' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\admin\AdminHeader.tsx
+  16:3  warning  'avatarUrl' is defined but never used  @typescript-eslint/no-unused-vars
+  17:3  warning  'onSignOut' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\checkout\ConfirmationStep.tsx
+   9:43  warning  'Lock' is defined but never used            @typescript-eslint/no-unused-vars
+  17:9   warning  'total' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\ContentPlayer.tsx
+   64:11  warning  'me' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  164:10  warning  'hasAttempted' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\CourseConsumptionPage.tsx
+  12:46  warning  'User' is defined but never used         @typescript-eslint/no-unused-vars
+  60:3   warning  'leccionSlug' is defined but never used  @typescript-eslint/no-unused-vars
+  61:3   warning  'moduloSlug' is defined but never used   @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\CourseDetailClient.tsx
+  14:11  warning  'navigateToComment' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  19:25  warning  'reviewId' is defined but never used                    @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\CourseHeader.tsx
+  4:37  warning  'User' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\CoursePlayer.tsx
+   31:35  warning  '_' is defined but never used                                                                                                   @typescript-eslint/no-unused-vars
+   58:7   warning  'isEnrollmentProgress' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  108:9   warning  'ENABLE_LOCAL_PROGRESS_CACHE' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  113:9   warning  'loadProgressFromStorage' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  113:84  warning  React Hook useCallback has an unnecessary dependency: 'PROGRESS_STORAGE_KEY'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  114:9   warning  'saveProgressToStorage' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+  114:46  warning  '_progress' is defined but never used                                                                                           @typescript-eslint/no-unused-vars
+  114:89  warning  React Hook useCallback has an unnecessary dependency: 'PROGRESS_STORAGE_KEY'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  385:6   warning  React Hook useCallback has a missing dependency: 'preloadLessonContent'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  675:42  warning  '_progress' is defined but never used                                                                                           @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\CourseProgress.tsx
+  50:15  warning  '_enrollment' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\CourseVideoPlayer.tsx
+  308:20  warning  The ref value 'videoRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'videoRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\EnrollmentCard.tsx
+  88:9  warning  The 'logProgressSummary' function makes the dependencies of useMemo Hook (at line 188) change on every render. Move it inside the useMemo callback. Alternatively, wrap the definition of 'logProgressSummary' in its own useCallback() Hook  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\EnrollmentProgressProvider.tsx
+  111:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  126:6  warning  React Hook useEffect has a missing dependency: 'updateProgress'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\MiniPlayer.tsx
+  36:3  warning  'duration' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\courses\ProgressContext.tsx
+  182:7  warning  React Hook useMemo has missing dependencies: 'isLessonCompleted', 'markLessonComplete', and 'toggleLessonComplete'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\layout\Header.tsx
+  88:9   warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  90:24  warning  'setMe' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\notifications\NotificationsList.tsx
+  30:7  warning  'getNotificationColor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\reviews\DraftsList.tsx
+  121:6  warning  React Hook useEffect has a missing dependency: 'loadDrafts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\reviews\MarkdownEditor.tsx
+  3:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\reviews\ReviewForm.tsx
+   62:5  warning  'register' is assigned a value but never used                                                                                                @typescript-eslint/no-unused-vars
+  100:6  warning  React Hook useEffect has missing dependencies: 'draft', 'getValues', and 'setValue'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+  119:6  warning  React Hook useEffect has missing dependencies: 'draft?.comentario' and 'draft?.puntaje'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\reviews\ReviewsList.tsx
+  72:11  warning  'navigateToComment' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\subscription\SubscriptionCancelButton.tsx
+  17:3  warning  'Settings' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\subscription\SubscriptionInfoCard.tsx
+  31:9  warning  'handleCancelled' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\ui\Dialog.tsx
+  5:10  warning  'X' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\ui\SafeImage.tsx
+  144:9  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\wamp64\www\mica_pestanas\apps\web\src\components\ui\Toast.tsx
+  60:6  warning  React Hook useEffect has a missing dependency: 'handleClose'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\contexts\AuthContext.tsx
+  5:10  warning  'getMe' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\hooks\useAuth.ts
+  115:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\hooks\useHierarchicalSelect.ts
+   78:5  warning  React Hook useMemo has a missing dependency: 'response'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  130:5  warning  Expected an assignment or function call and instead saw an expression                                      @typescript-eslint/no-unused-expressions
+
+D:\wamp64\www\mica_pestanas\apps\web\src\hooks\useReviewResponses.ts
+  192:6  warning  React Hook useEffect has a missing dependency: 'fetchResponses'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\hooks\useScrollToComment.ts
+  129:6  warning  React Hook useEffect has a missing dependency: 'handleHashChange'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\wamp64\www\mica_pestanas\apps\web\src\lib\format.ts
+  1:59  warning  'locale' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\lib\media-utils.ts
+   77:3  warning  '_userId' is defined but never used  @typescript-eslint/no-unused-vars
+  106:3  warning  '_userId' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\lib\routes.ts
+  122:17  warning  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  202:17  warning  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\lib\sdk\userApi.ts
+  418:44  warning  'opts' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\lib\services\FileProcessingService.ts
+    8:10  warning  'allFolderNames' is defined but never used    @typescript-eslint/no-unused-vars
+  108:10  warning  'generateFilename' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\wamp64\www\mica_pestanas\apps\web\src\lib\services\dashboard.service.ts
+  156:58  warning  '_sesiones' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 106 problems (0 errors, 106 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

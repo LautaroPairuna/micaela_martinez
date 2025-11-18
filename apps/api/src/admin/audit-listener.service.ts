@@ -1,6 +1,6 @@
 // src/admin/audit-listener.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
+import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   EventTypes,
@@ -40,7 +40,10 @@ const asDict = (obj: unknown): Dict | undefined =>
 export class AuditListenerService {
   private readonly logger = new Logger(AuditListenerService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   // ========== RESOURCE EVENTS ==========
   @OnEvent(EventTypes.RESOURCE_CREATED, { async: true })
@@ -56,7 +59,19 @@ export class AuditListenerService {
       userAgent: payload.userAgent,
       ipAddress: payload.ipAddress,
     };
-    await this.save(input);
+    const auditId = await this.save(input);
+
+    // Emitir evento de correlación si se creó el audit log
+    if (auditId) {
+      this.eventEmitter.emit(EventTypes.AUDIT_CREATED, {
+        auditId,
+        tableName: input.tableName,
+        recordId: input.recordId,
+        action: input.action,
+        userId: input.userId,
+        originalEvent: payload,
+      });
+    }
   }
 
   @OnEvent(EventTypes.RESOURCE_UPDATED, { async: true })
@@ -189,10 +204,10 @@ export class AuditListenerService {
     await this.save(input);
   }
 
-  private async save(input: AuditInput) {
+  private async save(input: AuditInput): Promise<number | null> {
     try {
       // Ajustá el nombre del modelo/tabla si difiere (AuditLog, AuditTrail, etc.)
-      await this.prisma.auditLog.create({
+      const auditLog = await this.prisma.auditLog.create({
         data: {
           tableName: input.tableName,
           recordId: input.recordId,
@@ -206,9 +221,11 @@ export class AuditListenerService {
           // createdAt lo maneja Prisma por default si está en el schema
         },
       });
+      return auditLog.id;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       this.logger.error(`Error al guardar auditoría: ${msg}`);
+      return null;
     }
   }
 }

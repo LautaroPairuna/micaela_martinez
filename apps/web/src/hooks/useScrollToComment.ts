@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface UseScrollToCommentOptions {
@@ -15,7 +15,7 @@ export function useScrollToComment({
   const router = useRouter();
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const scrollToElement = (elementId: string, retries = 0) => {
+  const scrollToElement = useCallback((elementId: string, retries = 0) => {
     const element = document.getElementById(elementId);
     
     if (element) {
@@ -41,9 +41,9 @@ export function useScrollToComment({
     }
     
     return false;
-  };
+  }, []);
 
-  const handleHashChange = () => {
+  const handleHashChange = useCallback(() => {
     const hash = window.location.hash.substring(1); // Remover el #
     
     if (!hash) return;
@@ -108,7 +108,7 @@ export function useScrollToComment({
         scrollToElement(hash);
       }, 100);
     }
-  };
+  }, [onExpandReview, onExpandResponses, scrollToElement]);
 
   useEffect(() => {
     // Manejar el hash inicial al cargar la página
@@ -126,7 +126,7 @@ export function useScrollToComment({
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [onExpandReview, onExpandResponses]);
+  }, [handleHashChange]);
 
   // Función para navegar a un comentario específico
   const navigateToComment = (commentId: string, type: 'review' | 'response' = 'review') => {

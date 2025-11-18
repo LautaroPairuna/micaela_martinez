@@ -18,7 +18,12 @@ import {
   EstadoInscripcion,
 } from '@prisma/client';
 
-type SubscriptionStatus = 'active' | 'paused' | 'cancelled' | 'expired' | string;
+type SubscriptionStatus =
+  | 'active'
+  | 'paused'
+  | 'cancelled'
+  | 'expired'
+  | string;
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 const toInt = (v: string | number | null | undefined): number => {
@@ -299,8 +304,14 @@ export class OrdersService {
         action: 'update',
         recordId: updated.id,
         userId: Number(userId),
-        previousData: { estado: order.estado, referenciaPago: order.referenciaPago },
-        data: { estado: updated.estado, referenciaPago: updated.referenciaPago },
+        previousData: {
+          estado: order.estado,
+          referenciaPago: order.referenciaPago,
+        },
+        data: {
+          estado: updated.estado,
+          referenciaPago: updated.referenciaPago,
+        },
         endpoint: '/orders/update-status',
       });
     } catch (e) {
@@ -664,7 +675,8 @@ export class OrdersService {
     _data: Record<string, unknown>,
   ) {
     try {
-      const paymentDetails = await this.mercadoPagoService.getPayment(paymentId);
+      const paymentDetails =
+        await this.mercadoPagoService.getPayment(paymentId);
       if (!paymentDetails || paymentDetails.status !== 'approved') {
         return {
           processed: false,
@@ -731,7 +743,9 @@ export class OrdersService {
           subscription.durationType === 'mes' ||
           subscription.durationType === 'meses'
         ) {
-          endDate.setMonth(endDate.getMonth() + parseInt(subscription.duration));
+          endDate.setMonth(
+            endDate.getMonth() + parseInt(subscription.duration),
+          );
         } else if (
           subscription.durationType === 'día' ||
           subscription.durationType === 'días'
@@ -770,9 +784,9 @@ export class OrdersService {
     );
     if (!courseItems.length) return;
 
-    await Promise.all(
-      courseItems.map((i) =>
-        this.prisma.inscripcion.upsert({
+    const enrollmentResults = await Promise.all(
+      courseItems.map(async (i) => {
+        const enrollment = await this.prisma.inscripcion.upsert({
           where: {
             usuarioId_cursoId: {
               usuarioId: Number(userId),
@@ -789,8 +803,25 @@ export class OrdersService {
             estado: EstadoInscripcion.ACTIVADA,
             progreso: json({}),
           },
-        }),
-      ),
+        });
+
+        // Emitir evento para auditoría y notificaciones
+        this.eventEmitter.emit(EventTypes.RESOURCE_CREATED, {
+          tableName: 'Inscripcion',
+          recordId: String(enrollment.id),
+          userId: String(userId),
+          data: {
+            usuarioId: enrollment.usuarioId,
+            cursoId: enrollment.cursoId,
+            estado: enrollment.estado,
+            orderId: orderId,
+          },
+        });
+
+        return enrollment;
+      }),
     );
+
+    return enrollmentResults;
   }
 }

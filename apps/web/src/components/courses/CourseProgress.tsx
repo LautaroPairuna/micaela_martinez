@@ -51,6 +51,7 @@ export function CourseProgress({
   lessonProgress,
   getLessonProgressKey
 }: CourseProgressProps) {
+  void _enrollment;
   const stats = useMemo(() => {
     if (!course.modulos?.length) {
       return {

@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { buildTiendaPrettyPath } from '@/lib/routes';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
-import { useFavorites } from '@/store/favorites';
+import { useFavoritesClient } from '@/hooks/useFavoritesData';
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { Heart, Star } from 'lucide-react';
 
@@ -17,13 +18,13 @@ type ProductMinimal = {
   precio: number;
   precioLista?: number | null;
   imagen?: string | null;
-  imagenes?: { url: string }[];
+  imagenes?: { url: string }[] | null;
   destacado?: boolean | null;
   stock?: number | null;
   ratingProm?: number | string | null;
   ratingConteo?: number | null;
-  marca?: { nombre?: string | null } | null;
-  categoria?: { nombre?: string | null } | null;
+  marca?: { nombre?: string | null; slug?: string | null } | null;
+  categoria?: { nombre?: string | null; slug?: string | null } | null;
   /** opcional, si tu API ya manda la URL resuelta */
   imagenUrl?: string;
 };
@@ -78,6 +79,14 @@ export function resolveProductOriginal(src?: string | null): string | undefined 
 export function ProductCard({ p }: { p: ProductMinimal }) {
   const [mounted, setMounted] = useState(false);
 
+  const slugify = (s?: string | null) =>
+    String(s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
   // Origen de imagen: prioridad imagenUrl → primera de imagenes → imagen
   const rawImg: string | null =
     p.imagenUrl ??
@@ -95,30 +104,24 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
     : 0;
   const outOfStock = typeof p.stock === 'number' && p.stock <= 0;
 
-  const { isFavorite, toggleFavorite, isLoading } = useFavorites();
-  const isFav = mounted && p.id ? isFavorite(p.id) : false;
+  const { isFavorite, toggleFavorite, isLoading } = useFavoritesClient();
+  const numericId = p.id && /^\d+$/.test(p.id) ? Number(p.id) : undefined;
+  const isFav = mounted && numericId ? isFavorite(numericId) : false;
 
   useEffect(() => setMounted(true), []);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (p.id && !isLoading) {
-      await toggleFavorite(p.id, p.titulo);
+    if (!numericId) return;
+    if (!isLoading) {
+      await toggleFavorite(numericId, p.titulo);
     }
-  };
-
-  // Navegación por click a toda la tarjeta (manteniendo el Link del CTA)
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('a')) return;
-    window.location.href = `/tienda/producto/${p.slug}`;
   };
 
   return (
     <Card
-      className="group h-full flex flex-col border border-gray-700 bg-gray-900 backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation cursor-pointer"
-      onClick={handleCardClick}
+      className="group h-full flex flex-col border border-gray-700 bg-gray-900 backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation"
     >
       {/* Imagen */}
       <div className="relative overflow-hidden rounded-t-xl">
@@ -136,14 +139,14 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
               </span>
             ) : null}
             {hasDiscount && (
-              <span className="rounded-full bg-red-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+              <span className="rounded-full bg-[var(--pink)] px-2.5 py-1 text-xs font-bold text-black shadow-lg border border-[var(--pink-strong)]/30">
                 -{offPct}%
               </span>
             )}
           </div>
 
           {/* Botón de favoritos */}
-          {p.id && (
+          {numericId && (
             <button
               onClick={handleFavoriteClick}
               disabled={isLoading}
@@ -153,8 +156,8 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
               <Heart
                 className={`h-4 w-4 transition-all duration-300 ${
                   isFav
-                    ? 'fill-red-500 text-red-500 animate-pulse'
-                    : 'text-gray-300 group-hover/fav:text-red-500 group-hover/fav:scale-110'
+                    ? 'fill-[var(--pink)] text-[var(--pink)] animate-pulse'
+                    : 'text-gray-300 group-hover/fav:text-[var(--pink)] group-hover/fav:scale-110'
                 }`}
               />
             </button>
@@ -175,25 +178,31 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
       <CardBody className="flex flex-col gap-3 flex-1 p-4 sm:p-5">
         {/* Precio */}
         <div className="flex items-baseline justify-between">
-          <Price value={p.precio} compareAt={compareAt ?? undefined} />
+          <Price value={p.precio} compareAt={compareAt ?? undefined} tone="pink" />
         </div>
 
         {/* Título */}
-        <h3 className="text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white">
+        <h3 className="relative text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">
           {p.titulo}
         </h3>
 
         {/* Meta */}
         <div className="flex flex-wrap gap-2 min-h-[2rem]">
           {p.marca?.nombre ? (
-            <span className="inline-flex items-center rounded-full bg-[var(--gold)]/10 border border-[var(--gold)]/30 px-3 py-1 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/20">
+            <Link
+              href={buildTiendaPrettyPath({ marca: p.marca.slug || slugify(p.marca.nombre) })}
+              className="inline-flex items-center rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/30 px-3 py-1 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/25"
+            >
               {p.marca.nombre}
-            </span>
+            </Link>
           ) : null}
           {p.categoria?.nombre ? (
-            <span className="inline-flex items-center rounded-full bg-gray-700 border border-gray-600 px-3 py-1 text-xs font-medium text-gray-300 transition-all duration-200 hover:bg-gray-600">
+            <Link
+              href={buildTiendaPrettyPath({ categoria: p.categoria.slug || slugify(p.categoria.nombre) })}
+              className="inline-flex items-center rounded-full bg-[var(--pink)]/10 border border-[var(--pink)]/25 px-3 py-1 text-xs font-medium text-[var(--pink)] transition-all duration-200 hover:bg-[var(--pink)]/20"
+            >
               {p.categoria.nombre}
-            </span>
+            </Link>
           ) : null}
         </div>
 
@@ -220,14 +229,13 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
               imagen: img,          // usamos la misma url normalizada
               imagenes: p.imagenes,
             }}
-            className="w-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] text-black font-bold hover:from-[var(--gold-dark)] hover:to-[var(--gold)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-[var(--pink)] text-black font-bold px-4 py-2 transition-all duration-300 hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <Link
             href={`/tienda/producto/${p.slug}`}
-            className="block w-full rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 border border-gray-600 px-4 py-2 text-center transition-all duration-300 group-hover:from-gray-700 group-hover:to-gray-600 group-hover:border-[var(--gold)]/50 group-hover:shadow-md"
-            onClick={(e) => e.stopPropagation()}
+            className="block w-full rounded-xl border border-[var(--gold)] px-4 py-2 text-center transition-all duration-300 text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black hover:shadow-md"
           >
-            <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-200 transition-colors group-hover:text-[var(--gold)]">
+            <div className="flex items-center justify-center gap-2 text-sm font-semibold">
               <span>Ver detalles</span>
             </div>
           </Link>

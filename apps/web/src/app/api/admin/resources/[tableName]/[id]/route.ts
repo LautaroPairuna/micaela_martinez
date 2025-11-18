@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const dynamic = 'force-dynamic'; // Deshabilitar cacheo para todas las rutas
 export const revalidate = 0; // No cachear
 

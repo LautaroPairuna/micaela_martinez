@@ -55,10 +55,7 @@ export class OrdersController {
   }
 
   @Get(':id')
-  async getOrderById(
-    @CurrentUser() user: JwtUser,
-    @Param('id') id: number,
-  ) {
+  async getOrderById(@CurrentUser() user: JwtUser, @Param('id') id: number) {
     try {
       const order = await this.ordersService.getOrderById(id, user.sub);
 
@@ -179,14 +176,10 @@ export class OrdersController {
   async handleMercadoPagoDirectWebhook(
     @Query('type') type: string,
     @Query('id') id: number,
-    @Body() data: any
+    @Body() data: any,
   ) {
     try {
-      return await this.ordersService.processMercadoPagoWebhook(
-        type,
-        id,
-        data,
-      );
+      return await this.ordersService.processMercadoPagoWebhook(type, id, data);
     } catch (error) {
       throw new HttpException(
         (error as Error).message || 'Error al procesar el webhook',
@@ -199,14 +192,10 @@ export class OrdersController {
   async handleMercadoPagoSubscriptionWebhook(
     @Query('type') type: string,
     @Query('id') id: number,
-    @Body() data: any
+    @Body() data: any,
   ) {
     try {
-      return await this.ordersService.processMercadoPagoWebhook(
-        type,
-        id,
-        data,
-      );
+      return await this.ordersService.processMercadoPagoWebhook(type, id, data);
     } catch (error) {
       throw new HttpException(
         (error as Error).message || 'Error al procesar el webhook',

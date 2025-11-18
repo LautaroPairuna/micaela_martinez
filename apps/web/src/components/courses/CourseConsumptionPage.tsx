@@ -9,7 +9,7 @@ import { Price } from '@/components/ui/Price';
 import { BuyCourseButton } from '@/components/cart/BuyCourseButton';
 import { useEffect, useState } from 'react';
 import { getUserSubscriptionInfo } from '@/lib/services/subscription.service';
-import { Lock, Play, Clock, BookOpen, Award, User, CheckCircle } from 'lucide-react';
+import { Lock, Play, Clock, BookOpen, Award, CheckCircle } from 'lucide-react';
 
 type CourseDetail = {
   id: string;
@@ -49,16 +49,12 @@ type CourseConsumptionPageProps = {
   course: CourseDetail;
   session: ServerSession;
   hasAccess: boolean;
-  leccionSlug?: string;
-  moduloSlug?: string;
 };
 
 export function CourseConsumptionPage({
   course,
   session,
   hasAccess,
-  leccionSlug,
-  moduloSlug,
 }: CourseConsumptionPageProps) {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   

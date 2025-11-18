@@ -8,7 +8,13 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IsString, IsOptional, IsBoolean, IsObject, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+  IsInt,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { AccountService } from './account.service';
@@ -72,6 +78,8 @@ class UpsertAddressDto {
 }
 
 class AddFavoriteDto {
+  @IsInt()
+  @Type(() => Number)
   productoId!: number;
 }
 
@@ -98,7 +106,7 @@ class UpdateLessonProgressDto {
 export class AccountController {
   constructor(
     private readonly svc: AccountService,
-    private readonly ordersService: OrdersService
+    private readonly ordersService: OrdersService,
   ) {}
 
   /** Perfil (incluye roles) */

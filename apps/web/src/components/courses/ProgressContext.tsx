@@ -54,12 +54,12 @@ export function ProgressProvider({
     flattenServerProgress(initialProgress)
   )
 
-  const getLessonProgressKey = (moduleId: string, lessonId: string) => `${moduleId}-${lessonId}`
-  const isLessonCompleted = (moduleId: string, lessonId: string) => {
+  const getLessonProgressKey = React.useCallback((moduleId: string, lessonId: string) => `${moduleId}-${lessonId}`, [])
+  const isLessonCompleted = React.useCallback((moduleId: string, lessonId: string) => {
     return !!lessonProgress[getLessonProgressKey(moduleId, lessonId)]
-  }
+  }, [lessonProgress, getLessonProgressKey])
 
-  const markLessonComplete = async (
+  const markLessonComplete = React.useCallback(async (
     moduleId: string,
     lessonId: string,
     meta?: { completedAt?: string | null; lessonTitle?: string; moduleTitle?: string }
@@ -113,9 +113,9 @@ export function ProgressProvider({
         }));
       }
     }
-  }
+  }, [enrollmentId, getLessonProgressKey])
 
-  const toggleLessonComplete = async (
+  const toggleLessonComplete = React.useCallback(async (
     moduleId: string,
     lessonId: string,
     meta?: { completedAt?: string | null; lessonTitle?: string; moduleTitle?: string }
@@ -171,7 +171,7 @@ export function ProgressProvider({
         }));
       }
     }
-  }
+  }, [enrollmentId, getLessonProgressKey, lessonProgress])
 
   const value = useMemo<ProgressContextType>(() => ({
     lessonProgress,
@@ -179,7 +179,7 @@ export function ProgressProvider({
     isLessonCompleted,
     markLessonComplete,
     toggleLessonComplete,
-  }), [lessonProgress])
+  }), [lessonProgress, getLessonProgressKey, isLessonCompleted, markLessonComplete, toggleLessonComplete])
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>
 }

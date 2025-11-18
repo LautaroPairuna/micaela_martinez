@@ -112,7 +112,7 @@ export function useAuth() {
         
         return { success: false, error: errorMessage };
       }
-    } catch (error) {
+    } catch {
       const errorMessage = 'Error de conexión';
       setAuthState(prev => ({
         ...prev,

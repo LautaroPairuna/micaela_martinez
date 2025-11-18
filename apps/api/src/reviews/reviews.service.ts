@@ -59,7 +59,8 @@ export class ReviewsService {
     }
 
     // Normalizar IDs
-    const cursoIdNum = dto.cursoId !== undefined ? toInt(dto.cursoId, 'cursoId') : undefined;
+    const cursoIdNum =
+      dto.cursoId !== undefined ? toInt(dto.cursoId, 'cursoId') : undefined;
 
     // productoId puede venir como número o como slug: lo normalizamos a number
     let productoIdNum: number | undefined = undefined;
@@ -72,7 +73,8 @@ export class ReviewsService {
           where: { slug: raw },
           select: { id: true },
         });
-        if (!producto) throw new BadRequestException(`Producto no encontrado: ${raw}`);
+        if (!producto)
+          throw new BadRequestException(`Producto no encontrado: ${raw}`);
         productoIdNum = producto.id;
       }
     }
@@ -137,7 +139,11 @@ export class ReviewsService {
     return { ...resena, isUpdate };
   }
 
-  async updateReview(userId: string | number, reviewId: string | number, dto: UpdateReviewDto) {
+  async updateReview(
+    userId: string | number,
+    reviewId: string | number,
+    dto: UpdateReviewDto,
+  ) {
     const userIdNum = toInt(userId, 'userId');
     const reviewIdNum = toInt(reviewId, 'reviewId');
 
@@ -251,7 +257,10 @@ export class ReviewsService {
     });
   }
 
-  private async validateCourseAccess(userId: string | number, cursoId: string | number) {
+  private async validateCourseAccess(
+    userId: string | number,
+    cursoId: string | number,
+  ) {
     const userIdNum = toInt(userId, 'userId');
     const cursoIdNum = toInt(cursoId, 'cursoId');
 

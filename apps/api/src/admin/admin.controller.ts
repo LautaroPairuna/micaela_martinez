@@ -156,7 +156,7 @@ export class AdminController {
     @GetUser() user?: Usuario,
   ) {
     this.checkAdminPermissions(user!);
-    
+
     // Debug: Log de datos recibidos
     console.log('=== CREATE RECORD DEBUG ===');
     console.log('Table Name:', tableName);
@@ -164,7 +164,7 @@ export class AdminController {
     console.log('Body type:', typeof createDto);
     console.log('Body keys:', Object.keys(createDto || {}));
     console.log('===============================');
-    
+
     return this.adminService.create(tableName, createDto);
   }
 

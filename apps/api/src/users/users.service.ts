@@ -67,7 +67,9 @@ export class UsersService {
     await this.prisma.$transaction(
       roles.map((r) =>
         this.prisma.usuarioRol.upsert({
-          where: { usuarioId_roleId: { usuarioId: Number(userId), roleId: r.id } },
+          where: {
+            usuarioId_roleId: { usuarioId: Number(userId), roleId: r.id },
+          },
           update: {},
           create: { usuarioId: Number(userId), roleId: r.id },
         }),
@@ -85,7 +87,10 @@ export class UsersService {
     if (!roles.length) return;
 
     await this.prisma.usuarioRol.deleteMany({
-      where: { usuarioId: Number(userId), roleId: { in: roles.map((r) => r.id) } },
+      where: {
+        usuarioId: Number(userId),
+        roleId: { in: roles.map((r) => r.id) },
+      },
     });
   }
 

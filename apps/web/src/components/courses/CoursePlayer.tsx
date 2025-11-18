@@ -28,7 +28,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     super(props);
     this.state = { hasError: false };
   }
-  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(_err: Error): ErrorBoundaryState {
+    void _err;
     return { hasError: true };
   }
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -48,25 +49,7 @@ type CoursePlayerProps = {
   children?: React.ReactNode;
 };
 
-type EnrollmentProgress = Record<
-  string, // moduleId
-  Record<
-    string, // lessonId
-    { completed?: boolean } | null | undefined
-  >
->;
-const isEnrollmentProgress = (u: unknown): u is EnrollmentProgress => {
-  if (typeof u !== 'object' || u === null) return false;
-  for (const modKey of Object.keys(u as Record<string, unknown>)) {
-    const mod = (u as Record<string, unknown>)[modKey];
-    if (typeof mod !== 'object' || mod === null) continue;
-    for (const lessonKey of Object.keys(mod as Record<string, unknown>)) {
-      const l = (mod as Record<string, unknown>)[lessonKey];
-      if (l !== null && l !== undefined && typeof l !== 'object') return false;
-    }
-  }
-  return true;
-};
+// removed unused type guard
 
 export function CoursePlayer({
   course,
@@ -105,13 +88,7 @@ export function CoursePlayer({
   const [preloadedContent, setPreloadedContent] = useState<Record<string, boolean>>({});
   // Control de cache local opcional (producción puede desactivarlo):
   // Habilitado por defecto. Para desactivar explícitamente: NEXT_PUBLIC_PROGRESS_CACHE=0
-  const ENABLE_LOCAL_PROGRESS_CACHE = (process.env.NEXT_PUBLIC_PROGRESS_CACHE === '0') ? false : true;
-
-  // Persistencia local (opcional) para suavizar remounts durante la navegación
-  // El progreso se maneja en el contexto; no dependemos de localStorage en producción
-  const PROGRESS_STORAGE_KEY = `course-progress-${course.id}-${enrollment.id}`;
-  const loadProgressFromStorage = useCallback((): Record<string, boolean> => ({}), [PROGRESS_STORAGE_KEY]);
-  const saveProgressToStorage = useCallback((_progress: Record<string, boolean>) => {}, [PROGRESS_STORAGE_KEY]);
+  
 
   // Helpers slug
   const getLessonSlug = useCallback((lesson: Lesson) => `leccion-${lesson.orden}`, []);
@@ -364,26 +341,6 @@ export function CoursePlayer({
     [course.modulos, currentLesson, currentModule]
   );
 
-  // Precargar lecciones adyacentes (sin param sin uso)
-  const preloadAdjacentLessons = useCallback(() => {
-    if (!course.modulos) return;
-    const nextData = getAdjacentLesson('next');
-    const prevData = getAdjacentLesson('prev');
-
-    if (nextData?.lesson && !preloadedContent[nextData.lesson.id]) {
-      preloadLessonContent(nextData.lesson).catch((err) =>
-        console.warn('Failed to preload next lesson:', (err as Error).message)
-      );
-    }
-    if (prevData?.lesson && !preloadedContent[prevData.lesson.id]) {
-      setTimeout(() => {
-        preloadLessonContent(prevData.lesson).catch((err) =>
-          console.warn('Failed to preload previous lesson:', (err as Error).message)
-        );
-      }, 200);
-    }
-  }, [course.modulos, preloadedContent, getAdjacentLesson]);
-
   // Precargar contenido específico por lección
   const preloadLessonContent = useCallback(
     async (lesson: Lesson): Promise<void> => {
@@ -419,6 +376,26 @@ export function CoursePlayer({
     },
     [preloadedContent, getVideoUrl]
   );
+
+  // Precargar lecciones adyacentes
+  const preloadAdjacentLessons = useCallback(() => {
+    if (!course.modulos) return;
+    const nextData = getAdjacentLesson('next');
+    const prevData = getAdjacentLesson('prev');
+
+    if (nextData?.lesson && !preloadedContent[nextData.lesson.id]) {
+      preloadLessonContent(nextData.lesson).catch((err) =>
+        console.warn('Failed to preload next lesson:', (err as Error).message)
+      );
+    }
+    if (prevData?.lesson && !preloadedContent[prevData.lesson.id]) {
+      setTimeout(() => {
+        preloadLessonContent(prevData.lesson).catch((err) =>
+          console.warn('Failed to preload previous lesson:', (err as Error).message)
+        );
+      }, 200);
+    }
+  }, [course.modulos, preloadedContent, getAdjacentLesson, preloadLessonContent]);
 
   // Navegación por URL
   useEffect(() => {
@@ -477,7 +454,7 @@ export function CoursePlayer({
       const firstModule = course.modulos[0];
       const firstLesson = firstModule?.lecciones?.[0];
       if (firstLesson && firstModule) {
-        router.push(`/cursos/${course.slug}/modulo-1/leccion-1`);
+        router.push(`/cursos/player/${course.slug}/modulo-1/leccion-1`);
       }
     }
   }, [
@@ -506,7 +483,7 @@ export function CoursePlayer({
       if (targetLesson && targetModule) {
         const moduleIndex = targetModule.orden;
         const lessonIndex = targetLesson.orden;
-        router.push(`/cursos/${course.slug}/modulo-${moduleIndex}/leccion-${lessonIndex}`);
+        router.push(`/cursos/player/${course.slug}/modulo-${moduleIndex}/leccion-${lessonIndex}`);
       }
     },
     [course.modulos, course.slug, currentLesson?.id, currentModule?.id, router]
@@ -673,6 +650,7 @@ export function CoursePlayer({
                             lesson={currentLesson}
                             onComplete={() => markLessonComplete(currentLesson.id)}
                             onProgress={(_progress) => {
+                              void _progress;
                               // Hook para tracking si lo necesitás
                             }}
                           />

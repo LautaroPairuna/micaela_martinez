@@ -62,8 +62,13 @@ export class ProductsService {
     // Resolver marca/categoría como slug o id
     let marcaId: number | undefined;
     if (marca) {
+      const or: Prisma.MarcaWhereInput[] = [{ slug: marca }];
+      const num = Number(marca);
+      if (Number.isFinite(num)) {
+        or.unshift({ id: num });
+      }
       const m = await this.prisma.marca.findFirst({
-        where: { OR: [{ id: Number(marca) }, { slug: marca }] },
+        where: { OR: or },
       });
       marcaId = m?.id;
       if (!marcaId) return { items: [], meta: { total: 0, page, perPage } };
@@ -71,8 +76,13 @@ export class ProductsService {
 
     let categoriaId: number | undefined;
     if (categoria) {
+      const or: Prisma.CategoriaWhereInput[] = [{ slug: categoria }];
+      const num = Number(categoria);
+      if (Number.isFinite(num)) {
+        or.unshift({ id: num });
+      }
       const c = await this.prisma.categoria.findFirst({
-        where: { OR: [{ id: Number(categoria) }, { slug: categoria }] },
+        where: { OR: or },
       });
       categoriaId = c?.id;
       if (!categoriaId) return { items: [], meta: { total: 0, page, perPage } };
@@ -90,6 +100,7 @@ export class ProductsService {
       ...(categoriaId ? { categoriaId } : {}),
       ...(priceFilter ? { precio: priceFilter } : {}),
     };
+
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.producto.findMany({
@@ -123,16 +134,22 @@ export class ProductsService {
             imagenUrl: ImageUrlUtil.getCategoryImageUrl(item.categoria.imagen),
           }
         : null,
-      imagenes: item.imagenes.map((img) => ({
-        ...img,
-        url: ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
-      })),
+      imagenes: item.imagenes
+        .filter(
+          (img) =>
+            typeof img.archivo === 'string' && img.archivo.trim().length > 0,
+        )
+        .map((img) => ({
+          ...img,
+          url: ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
+        })),
     }));
 
     const result = {
       items: transformedItems,
       meta: { total, page, perPage, pages: Math.ceil(total / perPage!) },
     };
+
 
     // ✅ Guardar resultado en caché (TTL: 5 minutos para catálogo público)
     this.cacheService.set(cacheKey, result, 300000);
@@ -144,19 +161,27 @@ export class ProductsService {
     const { q, categoria, marca, minPrice, maxPrice } = dto;
 
     // base where sin marca/categoría (para facetear cada dimensión)
+    const priceFilterFacets =
+      minPrice != null || maxPrice != null
+        ? { gte: minPrice ?? 0, ...(maxPrice != null ? { lte: maxPrice } : {}) }
+        : undefined;
+
     const baseWhere: Prisma.ProductoWhereInput = {
       publicado: true,
       ...(q ? { titulo: { contains: q } } : {}),
-      ...(minPrice != null || maxPrice != null
-        ? { precio: { gte: minPrice ?? 0, lte: maxPrice ?? undefined } }
-        : {}),
+      ...(priceFilterFacets ? { precio: priceFilterFacets } : {}),
     };
 
     // filtrar por categoría para facetear marcas
     const whereForBrands: Prisma.ProductoWhereInput = { ...baseWhere };
     if (categoria) {
+      const or: Prisma.CategoriaWhereInput[] = [{ slug: categoria }];
+      const num = Number(categoria);
+      if (Number.isFinite(num)) {
+        or.unshift({ id: num });
+      }
       const c = await this.prisma.categoria.findFirst({
-        where: { OR: [{ id: Number(categoria) }, { slug: categoria }] },
+        where: { OR: or },
       });
       if (c) whereForBrands.categoriaId = c.id;
       else whereForBrands.categoriaId = -1; // Usando -1 en lugar de '__none__'
@@ -165,12 +190,18 @@ export class ProductsService {
     // filtrar por marca para facetear categorías
     const whereForCategories: Prisma.ProductoWhereInput = { ...baseWhere };
     if (marca) {
+      const or: Prisma.MarcaWhereInput[] = [{ slug: marca }];
+      const num = Number(marca);
+      if (Number.isFinite(num)) {
+        or.unshift({ id: num });
+      }
       const m = await this.prisma.marca.findFirst({
-        where: { OR: [{ id: Number(marca) }, { slug: marca }] },
+        where: { OR: or },
       });
       if (m) whereForCategories.marcaId = m.id;
       else whereForCategories.marcaId = -1; // Usando -1 en lugar de '__none__'
     }
+
 
     const byBrand = await this.prisma.producto.groupBy({
       by: ['marcaId'],
@@ -217,6 +248,7 @@ export class ProductsService {
         count: c._count._all,
       }))
       .sort((a, b) => b.count - a.count);
+
 
     return { marcas: brandFacets, categorias: categoryFacets };
   }

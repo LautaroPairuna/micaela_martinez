@@ -1,7 +1,6 @@
 'use client'
 import React, { memo } from 'react'
 import { Modal } from './Modal'
-import { AlertTriangle, Trash2 } from 'lucide-react'
 import type { Row } from '../types'
 
 type ConfirmP = {

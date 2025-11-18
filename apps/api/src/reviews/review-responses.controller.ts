@@ -74,6 +74,9 @@ export class ReviewResponsesController {
     @Param('responseId') responseId: string,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.reviewResponsesService.deleteResponse(responseId, String(user.sub));
+    return this.reviewResponsesService.deleteResponse(
+      responseId,
+      String(user.sub),
+    );
   }
 }

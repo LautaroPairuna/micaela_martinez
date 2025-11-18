@@ -9,6 +9,7 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import { FavoritesProvider } from '@/components/providers/FavoritesProvider';
 import { AddressProvider } from '@/components/providers/AddressProvider';
 import { auth } from '@/lib/server-auth';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 
 export const metadata: Metadata = {
   title: { default: 'Micaela Pestañas', template: '%s | Micaela Pestañas' },
@@ -40,17 +41,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="es" className={`${montserrat.variable} ${tanAegean.variable}`}>
       <body className="min-h-dvh antialiased bg-[var(--bg)] text-[var(--fg)]">
-        <ToastProvider>
-          <AuthProvider initialUser={initialUser}>
-            <NotificationsProvider>
-              <FavoritesProvider>
-                <AddressProvider>
-                  {children}
-                </AddressProvider>
-              </FavoritesProvider>
-            </NotificationsProvider>
-          </AuthProvider>
-        </ToastProvider>
+        <QueryProvider>
+          <ToastProvider>
+            <AuthProvider initialUser={initialUser}>
+              <NotificationsProvider>
+                <FavoritesProvider>
+                  <AddressProvider>
+                    {children}
+                  </AddressProvider>
+                </FavoritesProvider>
+              </NotificationsProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </QueryProvider>
       </body>
     </html>
   );

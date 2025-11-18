@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/hooks/useSession';
 import { toast } from 'sonner';
 
@@ -23,135 +24,85 @@ interface UseReviewLikesReturn {
 
 export function useReviewLikes(resenaId: string): UseReviewLikesReturn {
   const { me: session } = useSession();
-  const [likesData, setLikesData] = useState<LikesData>({
-    likes: 0,
-    dislikes: 0,
-    userLike: null,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Función para cargar datos de likes
-  const fetchLikesData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Obtener contadores de likes
+  const likesQuery = useQuery<LikesData>({
+    queryKey: ['reviewLikes', resenaId, session?.id ?? 'anon'],
+    queryFn: async () => {
       const likesResponse = await fetch(`/api/reviews/${resenaId}/likes`);
-      
       if (!likesResponse.ok) {
-        throw new Error(`Error ${likesResponse.status}: ${likesResponse.statusText}`);
+        return { likes: 0, dislikes: 0, userLike: null };
       }
-      
-      const likesCount = await likesResponse.json();
-      
-      let userLike = null;
-      
-      // Si el usuario está autenticado, obtener su like
+      const likesCount = (await likesResponse.json()) as { likes?: number; dislikes?: number };
+
+      let userLike: TipoLike | null = null;
       if (session) {
         try {
-          const userLikeResponse = await fetch(`/api/reviews/${resenaId}/user-like`, {
-            credentials: 'include' // Enviar cookies para autenticación
-          });
-          
+          const userLikeResponse = await fetch(`/api/reviews/${resenaId}/user-like`, { credentials: 'include' });
           if (userLikeResponse.ok) {
-            const userData = await userLikeResponse.json();
-            userLike = userData.userLike;
+            const userData = (await userLikeResponse.json()) as { userLike?: TipoLike | null };
+            userLike = userData.userLike ?? null;
           }
-        } catch (userLikeError) {
-          // Error al obtener like del usuario no es crítico
-          console.warn('Error fetching user like:', userLikeError);
+        } catch (e) {
+          console.warn('Error fetching user like:', e);
         }
       }
-      
-      setLikesData({
-        likes: likesCount.likes || 0,
-        dislikes: likesCount.dislikes || 0,
+      return {
+        likes: Number(likesCount.likes ?? 0),
+        dislikes: Number(likesCount.dislikes ?? 0),
         userLike,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al cargar likes';
-      setError(errorMessage);
-      console.error('Error fetching likes data:', error);
-      toast.error('Error al cargar los likes');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [resenaId, session]);
+      };
+    },
+    enabled: !!resenaId,
+    staleTime: 30_000,
+  });
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    if (resenaId) {
-      fetchLikesData();
-    }
-  }, [resenaId, fetchLikesData]);
-
-  const toggleLike = async (tipo: TipoLike) => {
-    if (!session || isSubmitting) return;
-
-    // Guardar estado anterior para rollback
-    const previousState = { ...likesData };
-    
-    // Actualización optimista
-    setLikesData(prev => {
-      const newData = { ...prev };
-      
-      // Si ya tiene el mismo tipo de like, lo removemos
-      if (prev.userLike === tipo) {
-        if (tipo === 'like') {
-          newData.likes = Math.max(0, newData.likes - 1);
-        } else {
-          newData.dislikes = Math.max(0, newData.dislikes - 1);
-        }
-        newData.userLike = null;
-      }
-      // Si tiene un like diferente, lo cambiamos
-      else if (prev.userLike && prev.userLike !== tipo) {
-        if (prev.userLike === 'like') {
-          newData.likes = Math.max(0, newData.likes - 1);
-          newData.dislikes += 1;
-        } else {
-          newData.dislikes = Math.max(0, newData.dislikes - 1);
-          newData.likes += 1;
-        }
-        newData.userLike = tipo;
-      }
-      // Si no tiene like, agregamos uno nuevo
-      else {
-        if (tipo === 'like') {
-          newData.likes += 1;
-        } else {
-          newData.dislikes += 1;
-        }
-        newData.userLike = tipo;
-      }
-      
-      return newData;
-    });
-
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      
+  const mutation = useMutation<{ action: string }, unknown, TipoLike>({
+    mutationFn: async (tipo) => {
       const response = await fetch(`/api/reviews/${resenaId}/like`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ tipo }),
       });
-
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
-
-      const result = await response.json();
-      
-      // Mostrar feedback positivo
+      return response.json() as Promise<{ action: string }>;
+    },
+    onMutate: async (tipo) => {
+      if (!session) return;
+      const key = ['reviewLikes', resenaId, session.id];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<LikesData>(key);
+      if (previous) {
+        const next: LikesData = { ...previous };
+        if (previous.userLike === tipo) {
+          // remove
+          next.userLike = null;
+          if (tipo === 'like') next.likes = Math.max(0, next.likes - 1);
+          else next.dislikes = Math.max(0, next.dislikes - 1);
+        } else if (previous.userLike && previous.userLike !== tipo) {
+          // switch
+          if (previous.userLike === 'like') {
+            next.likes = Math.max(0, next.likes - 1);
+            next.dislikes += 1;
+          } else {
+            next.dislikes = Math.max(0, next.dislikes - 1);
+            next.likes += 1;
+          }
+          next.userLike = tipo;
+        } else {
+          // add
+          if (tipo === 'like') next.likes += 1; else next.dislikes += 1;
+          next.userLike = tipo;
+        }
+        queryClient.setQueryData(key, next);
+      }
+      return { previousKey: key, previousData: previous } as unknown as void;
+    },
+    onSuccess: (result, tipo) => {
       if (result.action === 'created') {
         toast.success(tipo === 'like' ? '👍 ¡Te gusta esta reseña!' : '👎 Marcaste que no te gusta');
       } else if (result.action === 'updated') {
@@ -159,39 +110,35 @@ export function useReviewLikes(resenaId: string): UseReviewLikesReturn {
       } else if (result.action === 'removed') {
         toast.success('✨ Reacción eliminada');
       }
-      
-      // Verificar que el estado local coincida con el servidor
-      // (opcional: podrías hacer una verificación adicional aquí)
-      
-    } catch (error) {
-      // Rollback en caso de error
-      setLikesData(previousState);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Error al procesar like';
-      setError(errorMessage);
+      queryClient.invalidateQueries({ queryKey: ['reviewLikes', resenaId] });
+    },
+    onError: (error, _tipo, _context) => {
+      const msg = error instanceof Error ? error.message : 'Error al procesar like';
       console.error('Error toggling like:', error);
-      
-      // Mostrar error específico al usuario
-      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+      if (msg.includes('401') || msg.includes('Unauthorized')) {
         toast.error('🔒 Necesitas iniciar sesión para dar like');
-      } else if (errorMessage.includes('404')) {
+      } else if (msg.includes('404')) {
         toast.error('❌ Reseña no encontrada');
-      } else if (errorMessage.includes('429')) {
+      } else if (msg.includes('429')) {
         toast.error('⏳ Demasiadas solicitudes, intenta más tarde');
       } else {
         toast.error('❌ Error al procesar tu reacción');
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['reviewLikes', resenaId] });
+    },
+  });
+
+  const toggleLike = useCallback(async (tipo: TipoLike) => {
+    if (!session || mutation.isPending) return;
+    await mutation.mutateAsync(tipo);
+  }, [session, mutation]);
 
   return {
-    likesData,
-    isLoading,
+    likesData: likesQuery.data ?? { likes: 0, dislikes: 0, userLike: null },
+    isLoading: likesQuery.isLoading,
     toggleLike,
-    isSubmitting,
-    error,
-    refreshLikes: fetchLikesData,
+    isSubmitting: mutation.isPending,
+    error: likesQuery.error ? (likesQuery.error instanceof Error ? likesQuery.error.message : 'Error') : null,
+    refreshLikes: async () => { await likesQuery.refetch(); },
   };
 }

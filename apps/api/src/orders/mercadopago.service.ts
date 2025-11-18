@@ -128,7 +128,8 @@ export class MercadoPagoService {
         let errorMsg = 'Error desconocido';
         try {
           const errorData = await response.json();
-          errorMsg = errorData?.message || errorData?.error || JSON.stringify(errorData);
+          errorMsg =
+            errorData?.message || errorData?.error || JSON.stringify(errorData);
         } catch {}
         throw new HttpException(
           `Error al crear suscripción: ${errorMsg}`,

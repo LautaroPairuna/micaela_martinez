@@ -41,7 +41,7 @@ export default function PerfilPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [reset]);
 
   const handleFormSubmit = async (values: FormData) => {
     await updateMe({ nombre: values.nombre });
@@ -182,7 +182,7 @@ export default function PerfilPage() {
                         <Input 
                           placeholder="Ingresá tu nombre completo" 
                           {...register('nombre')}
-                          className="h-12 text-base transition-all duration-200 focus:ring-2 focus:ring-[var(--gold)]/20 focus:border-[var(--gold)]"
+                          className="h-12 text-base transition-all duration-200 focus:ring-2 focus:ring-[var(--pink)]/20 focus:border-[var(--pink)]"
                         />
                         {errors.nombre && (
                           <p className="text-sm text-red-600 mt-2 flex items-center gap-2">

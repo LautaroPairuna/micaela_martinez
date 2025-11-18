@@ -6,15 +6,12 @@ import { useSidebar } from '@/contexts/SidebarContext';
 interface AdminHeaderProps {
   title?: string;
   displayName: string;
-  avatarUrl: string;
-  onSignOut: () => void;
 }
 
 export default function AdminHeader({ 
   title = 'Dashboard', 
   displayName, 
-  avatarUrl,
-  onSignOut 
+ 
 }: AdminHeaderProps) {
   const { isOpen, toggle } = useSidebar();
 

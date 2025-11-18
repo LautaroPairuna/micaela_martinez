@@ -36,6 +36,7 @@ export function MiniPlayer({
   duration = 0,
   onTimeUpdate
 }: MiniPlayerProps) {
+  void duration;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);

@@ -75,7 +75,7 @@ export function useHierarchicalSelect({
   // Memo estable para records (evita que cambie la referencia en cada render)
   const records = useMemo<HierarchicalRecord[]>(
     () => (Array.isArray(response?.data) ? response!.data : []),
-    [response?.data]
+    [response]
   )
 
   // Detectar campo de parentId dinámicamente
@@ -127,7 +127,11 @@ export function useHierarchicalSelect({
 
   const toggleExpanded = (itemId: string) => {
     const next = new Set(expandedItems)
-    next.has(itemId) ? next.delete(itemId) : next.add(itemId)
+    if (next.has(itemId)) {
+      next.delete(itemId)
+    } else {
+      next.add(itemId)
+    }
     setExpandedItems(next)
   }
 

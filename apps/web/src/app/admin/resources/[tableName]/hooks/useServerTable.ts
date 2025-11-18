@@ -74,7 +74,8 @@ export function useServerTable<T extends Record<string, unknown>>(
   const key = baseUrl ? `${baseUrl}#${hasFilters ? stableStringify(filters) : ''}` : null
 
   // Función fetcher personalizada que maneja POST con filtros
-  const customFetcher = async (swrKey: string) => {
+  const customFetcher = async (_swrKey: string) => {
+    void _swrKey;
     if (!baseUrl) throw new Error('No resource specified')
     
     if (hasFilters) {

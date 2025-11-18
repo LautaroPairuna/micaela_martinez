@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { initializeSocket, type Socket } from '@/lib/socket';
 
@@ -199,12 +200,22 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [state, dispatch] = useReducer(notificationsReducer, initialState);
   const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
+  const queryClient = useQueryClient();
 
   const fetchNotifications = useCallback(
     async (page = 1, loadMore = false) => {
       dispatch({ type: 'FETCH_START' });
 
       try {
+        if (!user?.id) {
+          const pagination = { page: 1, limit: state.pagination.limit, total: 0, totalPages: 1 };
+          if (loadMore) {
+            dispatch({ type: 'FETCH_MORE_SUCCESS', payload: { notifications: [], pagination } });
+          } else {
+            dispatch({ type: 'FETCH_SUCCESS', payload: { notifications: [], pagination, unreadCount: 0 } });
+          }
+          return;
+        }
         const params = new URLSearchParams({
           page: String(page),
           limit: String(state.pagination.limit),
@@ -250,21 +261,26 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         console.error('Error fetching notifications:', err);
       }
     },
-    [state.pagination.limit, state.filter]
+    [state.pagination.limit, state.filter, user?.id]
   );
 
   const fetchUnreadCount = useCallback(async () => {
     try {
+      if (!user?.id) {
+        dispatch({ type: 'UPDATE_UNREAD_COUNT', payload: 0 });
+        return;
+      }
       const unreadData = await apiProxy<UnreadCountResponse>('/notifications/unread-count');
       dispatch({ type: 'UPDATE_UNREAD_COUNT', payload: unreadData.count });
-    } catch (err) {
-      console.error('Error fetching unread count:', err);
+    } catch {
+      dispatch({ type: 'UPDATE_UNREAD_COUNT', payload: 0 });
     }
-  }, []);
+  }, [user?.id]);
 
   const setFilter = useCallback((filter: 'all' | 'unread') => {
     dispatch({ type: 'SET_FILTER', payload: filter });
-  }, []);
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  }, [queryClient]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
@@ -272,28 +288,31 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         method: 'PUT',
       });
       dispatch({ type: 'MARK_AS_READ', payload: notificationId });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
-  }, []);
+  }, [queryClient]);
 
   const markAllAsRead = useCallback(async () => {
     try {
       await apiProxy('/notifications/read-all', { method: 'PUT' });
       dispatch({ type: 'MARK_ALL_AS_READ' });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
     }
-  }, []);
+  }, [queryClient]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       await apiProxy(`/notifications/${notificationId}`, { method: 'DELETE' });
       dispatch({ type: 'DELETE_NOTIFICATION', payload: notificationId });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (err) {
       console.error('Error deleting notification:', err);
     }
-  }, []);
+  }, [queryClient]);
 
   const loadMore = useCallback(() => {
     if (state.pagination.page < state.pagination.totalPages) {
@@ -343,6 +362,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
           metadata: payload.metadata ?? undefined,
         };
         dispatch({ type: 'PUSH_NOTIFICATION', payload: normalized });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
       };
 
       socket.on('connect', onConnect);
@@ -390,6 +410,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         metadata: payload.metadata,
       }
       dispatch({ type: 'PUSH_NOTIFICATION', payload: normalized })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   };
 

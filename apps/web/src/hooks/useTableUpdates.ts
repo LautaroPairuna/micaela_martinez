@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCrudUpdates, type CrudUpdateEvent } from '@/contexts/CrudUpdatesContext';
 
 /**
@@ -13,16 +14,15 @@ export function useTableUpdates(
   tableName: string,
   onUpdate: (event: CrudUpdateEvent) => void,
   options: {
-    // Filtrar por tipo de operación
     operations?: ('create' | 'update' | 'delete')[];
-    // Debounce en milisegundos para evitar actualizaciones excesivas
     debounce?: number;
-    // Habilitar logging para debugging
     debug?: boolean;
+    invalidateKeys?: (event: CrudUpdateEvent) => (readonly unknown[])[];
   } = {}
 ) {
   const { subscribe, isConnected } = useCrudUpdates();
-  const { operations, debounce = 0, debug = false } = options;
+  const { operations, debounce = 0, debug = false, invalidateKeys } = options;
+  const queryClient = useQueryClient();
 
   const handleUpdate = useCallback(
     (event: CrudUpdateEvent) => {
@@ -36,6 +36,17 @@ export function useTableUpdates(
       }
 
       // Aplicar debounce si se especifica
+      if (invalidateKeys) {
+        try {
+          const keys = invalidateKeys(event);
+          for (const key of keys) {
+            queryClient.invalidateQueries({ queryKey: key });
+          }
+        } catch (e) {
+          console.warn('[useTableUpdates] error invalidating keys:', e);
+        }
+      }
+
       if (debounce > 0) {
         const timeoutId = setTimeout(() => {
           onUpdate(event);
@@ -47,7 +58,7 @@ export function useTableUpdates(
         onUpdate(event);
       }
     },
-    [tableName, onUpdate, operations, debounce, debug]
+    [tableName, onUpdate, operations, debounce, debug, queryClient, invalidateKeys]
   );
 
   // Usar useEffect para manejar la suscripción correctamente

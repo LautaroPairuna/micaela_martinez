@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/hooks/useSession';
 import { apiProxy } from '@/lib/api-proxy';
 
@@ -29,32 +30,26 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 
 export function useNotificationPreferences(): UseNotificationPreferencesReturn {
   const { me: user } = useSession();
+  const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPreferences = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const { data, isLoading, error: queryError, refetch } = useQuery<NotificationPreferences>({
+    queryKey: ['notificationPreferences', user?.id],
+    queryFn: async () => apiProxy<NotificationPreferences>('/notifications/preferences'),
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
 
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiProxy<NotificationPreferences>('/notifications/preferences');
-      setPreferences(response);
-    } catch (err) {
-      console.error('Error loading notification preferences:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar las preferencias');
-      // Mantener valores por defecto en caso de error
-      setPreferences(DEFAULT_PREFERENCES);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (data) {
+      setPreferences(data);
     }
-  }, [user]);
+    if (queryError) {
+      const msg = queryError instanceof Error ? queryError.message : 'Error al cargar las preferencias';
+      setError(msg);
+    }
+  }, [data, queryError]);
 
   const updatePreference = useCallback((key: keyof NotificationPreferences, value: boolean) => {
     setPreferences(prev => ({
@@ -64,34 +59,35 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
     setError(null);
   }, []);
 
+  const mutation = useMutation<NotificationPreferences, unknown, NotificationPreferences>({
+    mutationFn: async (next) =>
+      apiProxy<NotificationPreferences>('/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      }),
+    onSuccess: (updated) => {
+      setPreferences(updated);
+      queryClient.setQueryData(['notificationPreferences', user?.id], updated);
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Error al guardar las preferencias';
+      setError(msg);
+    },
+  });
+
   const savePreferences = useCallback(async () => {
     if (!user) {
       setError('Usuario no autenticado');
       return;
     }
-
+    setError(null);
     try {
-      setSaving(true);
-      setError(null);
-      
-      const response = await apiProxy<NotificationPreferences>('/notifications/preferences', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(preferences),
-      });
-
-      // Actualizar con la respuesta del servidor
-      setPreferences(response);
+      await mutation.mutateAsync(preferences);
     } catch (err) {
-      console.error('Error saving notification preferences:', err);
-      setError(err instanceof Error ? err.message : 'Error al guardar las preferencias');
-      throw err; // Re-throw para que el componente pueda manejarlo
-    } finally {
-      setSaving(false);
+      throw err as unknown as Error;
     }
-  }, [user, preferences]);
+  }, [user, preferences, mutation]);
 
   const resetToDefaults = useCallback(() => {
     setPreferences(DEFAULT_PREFERENCES);
@@ -99,13 +95,11 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
   }, []);
 
   const refreshPreferences = useCallback(async () => {
-    await fetchPreferences();
-  }, [fetchPreferences]);
+    await refetch();
+  }, [refetch]);
 
-  // Cargar preferencias al montar el componente
-  useEffect(() => {
-    fetchPreferences();
-  }, [fetchPreferences]);
+  const saving = mutation.isPending;
+  const loading = isLoading;
 
   return {
     preferences,

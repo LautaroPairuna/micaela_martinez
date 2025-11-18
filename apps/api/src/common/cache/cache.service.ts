@@ -16,7 +16,7 @@ export class CacheService {
   constructor(private configService: ConfigService) {
     // TTL por defecto: 5 minutos
     this.defaultTTL = this.configService.get<number>('CACHE_TTL', 300000);
-    
+
     // Limpiar caché expirado cada 10 minutos
     setInterval(() => this.cleanExpiredCache(), 600000);
   }
@@ -26,7 +26,7 @@ export class CacheService {
    */
   get<T>(key: string): T | null {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       return null;
     }
@@ -109,7 +109,9 @@ export class CacheService {
     }
 
     if (cleanedCount > 0) {
-      this.logger.debug(`Limpiados ${cleanedCount} elementos expirados del caché`);
+      this.logger.debug(
+        `Limpiados ${cleanedCount} elementos expirados del caché`,
+      );
     }
   }
 

@@ -3,7 +3,6 @@ import { DraftsList } from '@/components/reviews/DraftsList';
 import { Card, CardBody } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FileText, Info, Clock, Save } from 'lucide-react';
-import { useReviewDraft } from '@/hooks/useReviewDraft';
 
 export default function MisBorradoresPage() {
   // Simulamos obtener la cantidad de borradores (esto debería venir del hook real)
@@ -49,8 +48,8 @@ export default function MisBorradoresPage() {
       <Card>
         <CardBody className="p-6">
           <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200">
-              <Info className="h-6 w-6 text-blue-600" />
+            <div className="p-3 rounded-xl bg-[var(--pink)]/10 border border-[var(--pink)]/30">
+              <Info className="h-6 w-6 text-[var(--pink)]" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-[var(--fg)] mb-3">
@@ -58,19 +57,19 @@ export default function MisBorradoresPage() {
               </h3>
               <div className="space-y-3 text-sm text-[var(--muted)]">
                 <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                  <span className="inline-block w-2 h-2 bg-[var(--pink)] rounded-full mt-2 flex-shrink-0"></span>
                   <p><strong className="text-[var(--fg)]">Autoguardado:</strong> Tus borradores se guardan automáticamente cada 3 segundos mientras escribes.</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                  <span className="inline-block w-2 h-2 bg-[var(--pink)] rounded-full mt-2 flex-shrink-0"></span>
                   <p><strong className="text-[var(--fg)]">Almacenamiento:</strong> Los borradores se almacenan localmente en tu dispositivo.</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                  <span className="inline-block w-2 h-2 bg-[var(--pink)] rounded-full mt-2 flex-shrink-0"></span>
                   <p><strong className="text-[var(--fg)]">Retención:</strong> Se eliminan automáticamente después de 7 días de inactividad.</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                  <span className="inline-block w-2 h-2 bg-[var(--pink)] rounded-full mt-2 flex-shrink-0"></span>
                   <p><strong className="text-[var(--fg)]">Recuperación:</strong> Puedes cargar un borrador en cualquier momento para continuar escribiendo.</p>
                 </div>
               </div>

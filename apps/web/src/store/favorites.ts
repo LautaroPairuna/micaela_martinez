@@ -4,17 +4,17 @@ import { create } from 'zustand';
 import { addFavorite, removeFavorite, listFavorites } from '@/lib/sdk/userApi';
 
 type FavoritesState = {
-  favorites: Set<string>; // IDs de productos favoritos
+  favorites: Set<string>;
   isLoading: boolean;
   isInitialized: boolean;
   
   // Acciones
-  setFavorites: (productIds: string[]) => void;
+  setFavorites: (productIds: Array<string | number>) => void;
   loadFavorites: (forceReload?: boolean) => Promise<void>;
-  addToFavorites: (productId: string, productTitle: string) => Promise<void>;
-  removeFromFavorites: (productId: string, productTitle: string) => Promise<void>;
-  toggleFavorite: (productId: string, productTitle: string) => Promise<void>;
-  isFavorite: (productId: string) => boolean;
+  addToFavorites: (productId: string | number, productTitle: string) => Promise<void>;
+  removeFromFavorites: (productId: string | number, productTitle: string) => Promise<void>;
+  toggleFavorite: (productId: string | number, productTitle: string) => Promise<void>;
+  isFavorite: (productId: string | number) => boolean;
   reset: () => void;
 };
 
@@ -23,8 +23,9 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
   isLoading: false,
   isInitialized: false,
 
-  setFavorites: (productIds: string[]) => {
-    set({ favorites: new Set(productIds), isInitialized: true });
+  setFavorites: (productIds: Array<string | number>) => {
+    const ids = productIds.map(id => String(id));
+    set({ favorites: new Set(ids), isInitialized: true });
   },
 
   loadFavorites: async (forceReload = false) => {
@@ -45,7 +46,7 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
         isArray: Array.isArray(favoriteProducts)
       });
       
-      const productIds = favoriteProducts.map(f => f.id);
+      const productIds = favoriteProducts.map(f => String(f.id));
       
       console.log('[FAVORITES STORE] IDs extraídos:', {
         productIds,
@@ -63,9 +64,10 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     }
   },
 
-  addToFavorites: async (productId: string, productTitle: string) => {
+  addToFavorites: async (productId: string | number, productTitle: string) => {
     const { favorites } = get();
-    if (favorites.has(productId)) {
+    const pid = String(productId);
+    if (favorites.has(pid)) {
       return;
     }
 
@@ -73,7 +75,7 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     try {
       await addFavorite(productId);
       const newFavorites = new Set(favorites);
-      newFavorites.add(productId);
+      newFavorites.add(pid);
       set({ favorites: newFavorites });
       
       // Importar dinámicamente react-toastify para evitar problemas de SSR
@@ -98,15 +100,16 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     }
   },
 
-  removeFromFavorites: async (productId: string, productTitle: string) => {
+  removeFromFavorites: async (productId: string | number, productTitle: string) => {
     const { favorites } = get();
-    if (!favorites.has(productId)) return;
+    const pid = String(productId);
+    if (!favorites.has(pid)) return;
 
     set({ isLoading: true });
     try {
       await removeFavorite(productId);
       const newFavorites = new Set(favorites);
-      newFavorites.delete(productId);
+      newFavorites.delete(pid);
       set({ favorites: newFavorites });
       
       const { toast } = await import('react-toastify');
@@ -130,17 +133,18 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
     }
   },
 
-  toggleFavorite: async (productId: string, productTitle: string) => {
+  toggleFavorite: async (productId: string | number, productTitle: string) => {
     const { favorites, addToFavorites, removeFromFavorites } = get();
-    if (favorites.has(productId)) {
-      await removeFromFavorites(productId, productTitle);
+    const pid = String(productId);
+    if (favorites.has(pid)) {
+      await removeFromFavorites(pid, productTitle);
     } else {
-      await addToFavorites(productId, productTitle);
+      await addToFavorites(pid, productTitle);
     }
   },
 
-  isFavorite: (productId: string) => {
-    return get().favorites.has(productId);
+  isFavorite: (productId: string | number) => {
+    return get().favorites.has(String(productId));
   },
 
   reset: () => {

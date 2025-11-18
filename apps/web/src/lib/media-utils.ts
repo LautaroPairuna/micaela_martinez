@@ -76,6 +76,7 @@ export async function getSecureVideoUrl(
   bustCache = false,
   _userId?: string // ← prefijo _ para evitar warning de var sin uso
 ): Promise<string> {
+  void _userId;
   if (!videoSrc || typeof videoSrc !== 'string') return '';
 
   // Externa -> no tocar
@@ -105,6 +106,7 @@ export async function getSecureDocumentUrl(
   bustCache = false,
   _userId?: string // ← prefijo _
 ): Promise<string> {
+  void _userId;
   if (!docSrc || typeof docSrc !== 'string') return '';
 
   // Externa -> no tocar

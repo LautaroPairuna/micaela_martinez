@@ -87,7 +87,7 @@ export function Footer() {
                 <li>
                   <Link 
                     href="/cursos" 
-                    className="group relative inline-flex items-center text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-gradient-to-r hover:from-[var(--gold)]/10 hover:to-transparent px-2 py-1 rounded-lg"
+                    className="group relative inline-flex items-center text-muted hover:text-[var(--pink-dark)] transition-all duration-200 hover:bg-[var(--pink)]/15 px-2 py-1 rounded-lg after:absolute after:left-2 after:right-2 after:bottom-0 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-full"
                   >
                     Cursos
                   </Link>
@@ -95,7 +95,7 @@ export function Footer() {
                 <li>
                   <Link 
                     href="/tienda" 
-                    className="group relative inline-flex items-center text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-gradient-to-r hover:from-[var(--gold)]/10 hover:to-transparent px-2 py-1 rounded-lg"
+                    className="group relative inline-flex items-center text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-[var(--gold)]/15 px-2 py-1 rounded-lg after:absolute after:left-2 after:right-2 after:bottom-0 after:h-[2px] after:w-0 after:bg-[var(--gold-strong)] after:rounded-full group-hover:after:w-full"
                   >
                     Tienda
                   </Link>
@@ -103,7 +103,7 @@ export function Footer() {
                 <li>
                   <AuthLink 
                     href="/mi-cuenta" 
-                    className="group relative inline-flex items-center text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-gradient-to-r hover:from-[var(--gold)]/10 hover:to-transparent px-2 py-1 rounded-lg"
+                    className="group relative inline-flex items-center text-muted hover:text-[var(--pink-dark)] transition-all duration-200 hover:bg-[var(--pink)]/15 px-2 py-1 rounded-lg after:absolute after:left-2 after:right-2 after:bottom-0 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-full"
                   >
                     Mi Cuenta
                   </AuthLink>
@@ -125,7 +125,7 @@ export function Footer() {
                   href={ig}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative p-2 rounded-lg text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-[var(--gold)]/10 hover:scale-105"
+                  className="group relative p-2 rounded-lg text-muted hover:text-[var(--pink-dark)] transition-all duration-200 hover:bg-[var(--pink)]/20 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40"
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
@@ -134,7 +134,7 @@ export function Footer() {
                   href={fb}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative p-2 rounded-lg text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-[var(--gold)]/10 hover:scale-105"
+                  className="group relative p-2 rounded-lg text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-[var(--gold)]/20 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/40"
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
@@ -143,7 +143,7 @@ export function Footer() {
                   href={tiktok}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative p-2 rounded-lg text-muted hover:text-[var(--gold-dark)] transition-all duration-200 hover:bg-[var(--gold)]/10 hover:scale-105"
+                  className="group relative p-2 rounded-lg text-muted hover:text-[var(--pink-dark)] transition-all duration-200 hover:bg-[var(--pink)]/20 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
@@ -152,7 +152,7 @@ export function Footer() {
               </div>
               <div className="pt-2">
                 <p className="text-xs text-muted">
-                  ¿Tienes preguntas? <Link href="/ayuda" className="text-[var(--gold-dark)] hover:text-[var(--gold)] hover:underline transition-colors">Contáctanos</Link>
+                  ¿Tienes preguntas? <Link href="/ayuda" className="text-[var(--pink-dark)] hover:text-[var(--pink-strong)] hover:underline decoration-[var(--pink-strong)] underline-offset-4 transition-colors">Contáctanos</Link>
                 </p>
               </div>
             </div>

@@ -9,13 +9,6 @@ import { GraduationCap, BookOpen } from 'lucide-react';
 import { EnrollmentProgressProvider, useEnrollmentProgress } from '@/components/courses/EnrollmentProgressProvider';
 import { EnrollmentCard } from '@/components/courses/EnrollmentCard';
 
-type EnrollmentProgreso = {
-  porcentaje?: number | null;
-  subscription?: {
-    duration?: string | number | null;
-  } | null;
-} | null;
-
 type CursoLight = {
   slug?: string | null;
   titulo?: string | null;

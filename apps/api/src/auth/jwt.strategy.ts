@@ -23,7 +23,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload): Promise<JwtUser> {
     // Convertir el sub a número ya que ahora los IDs son numéricos
-    const userId = typeof payload.sub === 'string' ? parseInt(payload.sub, 10) : payload.sub;
+    const userId =
+      typeof payload.sub === 'string' ? parseInt(payload.sub, 10) : payload.sub;
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException('Usuario inexistente');
 

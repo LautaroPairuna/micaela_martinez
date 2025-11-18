@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 /* ────────────────────────────── 1. IMPORTS ─────────────────────────────── */
@@ -21,7 +20,7 @@ function getItemLabel(row: Row): string {
 }
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import useSWR, { mutate } from 'swr'
+import useSWR from 'swr'
 import {
   ChevronLeft, ChevronRight,
   CheckCircle, XCircle, Calendar, FileText,
@@ -238,10 +237,6 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
     }
   }, [multiChildCounts])
 
-
-
-
-  
   // Effects
   useEffect(() => { 
     dispatch({ type: 'resetSelect' })
@@ -390,7 +385,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         toast.error(e.message)
       }
     },
-    [resource, refreshAll],
+    [resource, refreshAll, pushNotification, tableName],
   )
 
   const handleUpdate = useCallback(
@@ -429,7 +424,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         toast.error(e.message)
       }
     },
-    [doUpdate, refreshAll, resource],
+    [doUpdate, refreshAll, resource, pushNotification, tableName],
   )
 
   const handleBulk = useCallback(
@@ -457,7 +452,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         toast.error(e.message)
       }
     },
-    [ui.selected, doUpdate, refreshAll],
+    [ui.selected, doUpdate, refreshAll, pushNotification, resource, tableName],
   )
 
   const deleteOne = useCallback(
@@ -515,7 +510,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
     } catch (e: any) {
       toast.error(e.message)
     }
-  }, [ui.confirmRows, deleteOne, resource, refreshAll])
+  }, [ui.confirmRows, deleteOne, resource, refreshAll, pushNotification, tableName])
 
   // Render helpers
   const parsedDatos = useMemo(() => {
@@ -643,94 +638,94 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
               </span>
             )
           }
-        } catch (e) {
+        } catch {
           // Si falla el parsing, continuar con el renderizado normal
         }
       }
 
       // Manejo especial para contenido JSON de lecciones
-        if (resource === 'Leccion' && col === 'contenido') {
-          try {
-            let content: any
-            
-            if (typeof val === 'string') {
-              content = JSON.parse(val)
-            } else if (typeof val === 'object') {
-              content = val
-            } else {
-              throw new Error('Tipo no soportado')
-            }
-            
-            // Formato unificado: {tipo: 'QUIZ', data: {preguntas: [...]}}
-            if (content.tipo === 'QUIZ' && content.data?.preguntas) {
-              return (
-                <div className="flex items-center text-xs">
-                  <HelpCircle className="h-4 w-4 mr-1 text-purple-500" />
-                  <span className="text-purple-700 font-medium">
-                    Quiz: {content.data.preguntas.length} pregunta{content.data.preguntas.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              )
-            }
-            // Formato legacy: {preguntas: [...]}
-            else if (content.preguntas) {
-              return (
-                <div className="flex items-center text-xs">
-                  <HelpCircle className="h-4 w-4 mr-1 text-purple-500" />
-                  <span className="text-purple-700 font-medium">
-                    Quiz: {content.preguntas.length} pregunta{content.preguntas.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              )
-            } else if (content.contenido && Array.isArray(content.contenido)) {
-              // Formato nuevo: bloques estructurados
-              const totalText = content.contenido.map((b: any) => b.contenido || '').join(' ')
-              const preview = totalText.substring(0, 50)
-              return (
-                <div className="flex items-center text-xs">
-                  <FileText className="h-4 w-4 mr-1 text-green-500" />
-                  <span className="text-green-700 truncate" title={totalText}>
-                    Estructurado: {preview}{totalText.length > 50 ? '...' : ''}
-                  </span>
-                </div>
-              )
-            } else if (content.contenido && typeof content.contenido === 'string') {
-              // Formato legacy: contenido como string
-              const preview = content.contenido.substring(0, 50)
-              return (
-                <div className="flex items-center text-xs">
-                  <FileText className="h-4 w-4 mr-1 text-blue-500" />
-                  <span className="text-blue-700 truncate" title={content.contenido}>
-                    {preview}{content.contenido.length > 50 ? '...' : ''}
-                  </span>
-                </div>
-              )
-            } else if (content.texto) {
-              const preview = content.texto.substring(0, 50)
-              return (
-                <div className="flex items-center text-xs">
-                  <FileText className="h-4 w-4 mr-1 text-blue-500" />
-                  <span className="text-blue-700 truncate" title={content.texto}>
-                    {preview}{content.texto.length > 50 ? '...' : ''}
-                  </span>
-                </div>
-              )
-            } else if (content.bloques && Array.isArray(content.bloques)) {
-              const totalText = content.bloques.map((b: any) => b.contenido || b.texto || '').join(' ')
-              const preview = totalText.substring(0, 50)
-              return (
-                <div className="flex items-center text-xs">
-                  <FileText className="h-4 w-4 mr-1 text-blue-500" />
-                  <span className="text-blue-700 truncate" title={totalText}>
-                    {preview}{totalText.length > 50 ? '...' : ''}
-                  </span>
-                </div>
-              )
-            }
-          } catch (e) {
-            // Fallback para JSON malformado
+      if (resource === 'Leccion' && col === 'contenido') {
+        try {
+          let content: any
+          
+          if (typeof val === 'string') {
+            content = JSON.parse(val)
+          } else if (typeof val === 'object') {
+            content = val
+          } else {
+            throw new Error('Tipo no soportado')
           }
+          
+          // Formato unificado: {tipo: 'QUIZ', data: {preguntas: [...]}}
+          if (content.tipo === 'QUIZ' && content.data?.preguntas) {
+            return (
+              <div className="flex items-center text-xs">
+                <HelpCircle className="h-4 w-4 mr-1 text-purple-500" />
+                <span className="text-purple-700 font-medium">
+                  Quiz: {content.data.preguntas.length} pregunta{content.data.preguntas.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )
+          }
+          // Formato legacy: {preguntas: [...]}
+          else if (content.preguntas) {
+            return (
+              <div className="flex items-center text-xs">
+                <HelpCircle className="h-4 w-4 mr-1 text-purple-500" />
+                <span className="text-purple-700 font-medium">
+                  Quiz: {content.preguntas.length} pregunta{content.preguntas.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )
+          } else if (content.contenido && Array.isArray(content.contenido)) {
+            // Formato nuevo: bloques estructurados
+            const totalText = content.contenido.map((b: any) => b.contenido || '').join(' ')
+            const preview = totalText.substring(0, 50)
+            return (
+              <div className="flex items-center text-xs">
+                <FileText className="h-4 w-4 mr-1 text-green-500" />
+                <span className="text-green-700 truncate" title={totalText}>
+                  Estructurado: {preview}{totalText.length > 50 ? '...' : ''}
+                </span>
+              </div>
+            )
+          } else if (content.contenido && typeof content.contenido === 'string') {
+            // Formato legacy: contenido como string
+            const preview = content.contenido.substring(0, 50)
+            return (
+              <div className="flex items-center text-xs">
+                <FileText className="h-4 w-4 mr-1 text-blue-500" />
+                <span className="text-blue-700 truncate" title={content.contenido}>
+                  {preview}{content.contenido.length > 50 ? '...' : ''}
+                </span>
+              </div>
+            )
+          } else if (content.texto) {
+            const preview = content.texto.substring(0, 50)
+            return (
+              <div className="flex items-center text-xs">
+                <FileText className="h-4 w-4 mr-1 text-blue-500" />
+                <span className="text-blue-700 truncate" title={content.texto}>
+                  {preview}{content.texto.length > 50 ? '...' : ''}
+                </span>
+              </div>
+            )
+          } else if (content.bloques && Array.isArray(content.bloques)) {
+            const totalText = content.bloques.map((b: any) => b.contenido || b.texto || '').join(' ')
+            const preview = totalText.substring(0, 50)
+            return (
+              <div className="flex items-center text-xs">
+                <FileText className="h-4 w-4 mr-1 text-blue-500" />
+                <span className="text-blue-700 truncate" title={totalText}>
+                  {preview}{totalText.length > 50 ? '...' : ''}
+                </span>
+              </div>
+            )
+          }
+        } catch {
+          // Fallback para JSON malformado
         }
+      }
 
       if (typeof val === 'object')
         return (
@@ -776,7 +771,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
         </span>
       )
     },
-    [tableName, child, resource, parsedDatos],
+    [tableName, child, resource, parsedDatos, data],
   )
 
   /* ╭───────────────────────── UI / Títulos ─────────────────────╮ */
@@ -811,12 +806,12 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
   }
 
   const setSearchSafe = React.useCallback((next: string) => {
-  setSearch(prev => {
-    if (prev === next) return prev;  // no cambió => no resetear page
-    setPage(1);
-    return next;
-  });
-}, []);
+    setSearch(prev => {
+      if (prev === next) return prev;  // no cambió => no resetear page
+      setPage(1);
+      return next;
+    });
+  }, []);
 
   const setPageSizeSafe = React.useCallback((next: number) => {
     setPageSize(prev => {
@@ -1094,7 +1089,7 @@ export default function ResourceDetailClient({ tableName }: { tableName: string 
                                   parentId: row.id
                                 });
                               }}
-                              className="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-200 transition-colors duration-150 shadow-sm flex items-center gap-2 cursor-pointer"
+                              className="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-200 transition-colors duración-150 shadow-sm flex items-center gap-2 cursor-pointer"
                               aria-label={`Ver ${
                                 relationLabels[rel.childTable as keyof typeof relationLabels] ?? rel.childTable
                               } de ${row.id}`}

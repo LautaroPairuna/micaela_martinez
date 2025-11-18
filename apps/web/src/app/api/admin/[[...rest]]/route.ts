@@ -2,30 +2,6 @@ import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { proxy } from '../../_proxy';
 
-// Verificar autenticación y roles de admin
-async function verifyAdminAuth() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('mp_session');
-  
-  if (!sessionCookie?.value) {
-    return { authenticated: false, error: 'No autenticado - Token requerido' };
-  }
-
-  try {
-    // Decodificar el JWT para verificar roles
-    const payload = JSON.parse(atob(sessionCookie.value.split('.')[1]));
-    const hasAdminRole = payload.roles?.includes('ADMIN') || payload.roles?.includes('STAFF');
-    
-    if (!hasAdminRole) {
-      return { authenticated: false, error: 'Acceso denegado - Permisos insuficientes' };
-    }
-    
-    return { authenticated: true, user: payload };
-  } catch (error) {
-    return { authenticated: false, error: 'Token inválido' };
-  }
-}
-
 export const dynamic = 'force-dynamic'; // Deshabilitar cacheo para todas las rutas
 export const revalidate = 0; // No cachear
 

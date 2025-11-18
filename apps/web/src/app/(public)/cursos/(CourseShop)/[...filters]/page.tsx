@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Search } from 'lucide-react';
 import type { ComponentProps } from 'react';
+import { getMe, listEnrollments } from '@/lib/sdk/userApi';
+import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { CoursesGridClient } from '@/components/courses/CoursesGridClient';
 
 import { getCourses, getCourseFacets } from '@/lib/sdk/catalogApi';
 
@@ -109,7 +112,7 @@ export default async function CursosBuscarPage({
       q: query,
       sort: sortSanitized,
       page,
-      perPage: 12,
+      perPage: 6,
     }),
     getCourseFacets({ nivel, tag, q: query }),
   ]);
@@ -156,7 +159,12 @@ export default async function CursosBuscarPage({
     { value: 'rating_desc', label: 'Mejor valorados' },
   ];
 
-
+  const qc = new QueryClient();
+  const me = await getMe({ cache: 'no-store' });
+  const isLoggedIn = !!me?.id;
+  if (isLoggedIn) {
+    await qc.prefetchQuery({ queryKey: ['enrollments'], queryFn: () => listEnrollments({ cache: 'no-store' }) });
+  }
 
   return (
     <div className="min-h-screen w-full bg-[var(--bg)]">
@@ -218,7 +226,7 @@ export default async function CursosBuscarPage({
 
               {/* Barra de búsqueda */}
               <div className="relative max-w-md w-full lg:w-auto">
-                <form method="GET" action="/cursos/filtros">
+                <form method="GET" action="/cursos">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted)]" />
                     <input
@@ -280,15 +288,9 @@ export default async function CursosBuscarPage({
 
             {/* Grid de cursos */}
             {courses.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4 md:gap-6">
-                {courses.map((course) => (
-                  <CourseCard
-                    key={course.slug}
-                    c={course}
-                    inscripcion={typeof course.inscripcionActual === 'object' ? course.inscripcionActual : undefined}
-                  />
-                ))}
-              </div>
+              <HydrationBoundary state={dehydrate(qc)}>
+                <CoursesGridClient courses={courses} isLoggedIn={isLoggedIn} />
+              </HydrationBoundary>
             ) : (
               <EmptyState
                 title="No se encontraron cursos"

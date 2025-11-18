@@ -4,7 +4,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Menu, X, LogOut, ChevronRight, BarChart3, Clock, ShieldAlert, Shield } from 'lucide-react'
+import { Menu, X, LogOut, ChevronRight, BarChart3, Clock, ShieldAlert } from 'lucide-react'
 import { AdminSidebar } from './resources/[tableName]/components/AdminSidebar'
 import { SidebarProvider } from '@/contexts/SidebarContext'
 import { useSidebar } from '@/contexts/SidebarContext'
@@ -172,7 +172,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={avatarUrl ?? '/avatar-placeholder.svg'} 
             alt="Avatar" 
@@ -275,7 +274,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                 </div>
               </div>
               <div className="relative group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={avatarUrl} 
                   alt="Avatar" 

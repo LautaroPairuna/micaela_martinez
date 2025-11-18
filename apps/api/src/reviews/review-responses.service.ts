@@ -174,7 +174,11 @@ export class ReviewResponsesService {
     });
   }
 
-  async updateResponse(responseId: string, usuarioId: string, contenido: string) {
+  async updateResponse(
+    responseId: string,
+    usuarioId: string,
+    contenido: string,
+  ) {
     const responseIdNum = toInt(responseId, 'responseId');
     const usuarioIdNum = toInt(usuarioId, 'usuarioId');
 
@@ -184,7 +188,9 @@ export class ReviewResponsesService {
     if (!respuesta) throw new NotFoundException('Respuesta no encontrada');
 
     if (respuesta.usuarioId !== usuarioIdNum) {
-      throw new ForbiddenException('No tienes permisos para editar esta respuesta');
+      throw new ForbiddenException(
+        'No tienes permisos para editar esta respuesta',
+      );
     }
 
     return this.prisma.resenaRespuesta.update({
@@ -215,7 +221,9 @@ export class ReviewResponsesService {
     if (!respuesta) throw new NotFoundException('Respuesta no encontrada');
 
     if (respuesta.usuarioId !== usuarioIdNum) {
-      throw new ForbiddenException('No tienes permisos para eliminar esta respuesta');
+      throw new ForbiddenException(
+        'No tienes permisos para eliminar esta respuesta',
+      );
     }
 
     if (respuesta._count.hijos > 0) {

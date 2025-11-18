@@ -3,18 +3,17 @@
 
 import { useRouter } from 'next/navigation';
 import { useCheckout } from '@/store/checkout';
-import { useCart, cartSelectors } from '@/store/cart';
+import { useCart } from '@/store/cart';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { CheckCircle, Clock, AlertCircle, Lock } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 export function ConfirmationStep() {
   const router = useRouter();
 
   const { selectedPayment, reset, orderId } = useCheckout();
 
-  const { items, clear } = useCart();
-  const total = cartSelectors.subtotal(items); // Precio directo (si lo necesitás para mostrarlo, usá `total` en el UI)
+  const { clear } = useCart();
 
   // El pedido ya fue procesado y pagado en el PaymentStep
   // Solo necesitamos mostrar la confirmación y limpiar el estado

@@ -69,6 +69,7 @@ export function SubscriptionInfoCard({
             {subscriptionInfo.orderId && (
               <SubscriptionCancelButton 
                 orderId={subscriptionInfo.orderId}
+                onCancelled={handleCancelled}
               />
             )}
           </>

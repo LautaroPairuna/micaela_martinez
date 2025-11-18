@@ -9,14 +9,6 @@ import { MiAprendizajeClient } from './MiAprendizajeClient';
 export const dynamic = 'force-dynamic';
 // Se eliminó revalidate=0 porque causa conflicto con 'use client'
 
-/** Tipos mínimos necesarios para evitar any y cubrir el uso real en la UI */
-type EnrollmentProgreso = {
-  porcentaje?: number | null;
-  subscription?: {
-    duration?: string | number | null;
-  } | null;
-} | null;
-
 type CursoLight = {
   id?: string | number | null;
   slug?: string | null;
@@ -25,15 +17,6 @@ type CursoLight = {
   _count?: { modulos?: number | null } | null;
   modulos?: Array<{ id: string | number }> | null;
 } | null;
-
-type EnrollmentRow = {
-  id: string | number;
-  cursoId: string | number;
-  creadoEn?: string | Date | null;
-  estado: 'ACTIVADA' | 'DESACTIVADA' | string;
-  curso?: CursoLight;
-  progreso?: unknown;
-};
 
 async function MiAprendizajePage() {
   const user = await getMe();

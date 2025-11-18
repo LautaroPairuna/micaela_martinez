@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getCourseBySlug } from '@/lib/sdk/catalogApi';
+import { getCourseBySlug, getCourseContentBySlug } from '@/lib/sdk/catalogApi';
+import { auth } from '@/lib/server-auth';
 
 import { Price } from '@/components/ui/Price';
 import { courseJsonLd } from '@/lib/seo';
@@ -97,6 +98,17 @@ export default async function CursoPage({
   }
 
   const c = await getCourseBySlug(slug);
+
+  const session = await auth();
+  let hasAccess = false;
+  if (session?.user?.id) {
+    try {
+      await getCourseContentBySlug(slug);
+      hasAccess = true;
+    } catch {
+      hasAccess = false;
+    }
+  }
 
   // ✅ Normalizamos para que sea Nivel o undefined
   const nivel: Nivel | undefined =
@@ -358,12 +370,22 @@ export default async function CursoPage({
                     <p className="text-muted text-sm">Pago único • Acceso de por vida</p>
                   </div>
 
-                  {/* Botón de compra */}
-                  <BuyCourseButton c={c} className="w-full mb-4 py-6 font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black text-lg rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200" />
-                  
-                  <button className="w-full py-4 border border-default text-[var(--fg)] font-bold rounded-xl hover:bg-white/5 transition-colors mb-6">
-                    Añadir al carrito
-                  </button>
+                  {/* CTA dinámica según acceso */}
+                  {hasAccess ? (
+                    <Link
+                      href={`/cursos/player/${c.slug}/modulo-1/leccion-1`}
+                      className="w-full mb-4 py-6 font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black text-lg rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200 text-center block"
+                    >
+                      Continuar viendo
+                    </Link>
+                  ) : (
+                    <>
+                      <BuyCourseButton c={c} className="w-full mb-4 py-6 font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black text-lg rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200" />
+                      <button className="w-full py-4 border border-default text-[var(--fg)] font-bold rounded-xl hover:bg-white/5 transition-colors mb-6">
+                        Añadir al carrito
+                      </button>
+                    </>
+                  )}
 
                   <div className="text-center mb-6">
                     <p className="text-xs text-muted flex items-center justify-center gap-2">

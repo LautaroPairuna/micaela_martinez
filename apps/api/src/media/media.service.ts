@@ -68,7 +68,9 @@ export class MediaService {
       }
     }
     const uniquePaths = Array.from(new Set(paths));
-    this.logger.log(`Rutas candidatas para ${filename}: ${uniquePaths.join(', ')}`);
+    this.logger.log(
+      `Rutas candidatas para ${filename}: ${uniquePaths.join(', ')}`,
+    );
     return uniquePaths;
   }
 
@@ -94,28 +96,42 @@ export class MediaService {
     // Fallback: si llega "nombre-basico.mp4" intenta buscar última versión con sufijo -YYYYMMDD-HHMMSS-<rand>
     try {
       const base = filename.replace(/\.[^.]+$/, '');
-      const ext  = path.extname(filename) || '.mp4';
+      const ext = path.extname(filename) || '.mp4';
       const roots = this.roots();
       for (const root of roots) {
         const dir = path.resolve(root, 'media');
         if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) continue;
-        const files = fs.readdirSync(dir).filter((f) => f.startsWith(`${base}-`) && f.toLowerCase().endsWith(ext.toLowerCase()));
+        const files = fs
+          .readdirSync(dir)
+          .filter(
+            (f) =>
+              f.startsWith(`${base}-`) &&
+              f.toLowerCase().endsWith(ext.toLowerCase()),
+          );
         if (files.length > 0) {
           // Elegimos la última por orden lexicográfico (suele contener timestamp)
           const chosen = files.sort().pop() as string;
           const full = path.resolve(dir, chosen);
           if (fs.existsSync(full) && fs.statSync(full).isFile()) {
-            this.logger.warn(`Video no encontrado exacto: ${filename}. Usando coincidencia por prefijo: ${chosen}`);
+            this.logger.warn(
+              `Video no encontrado exacto: ${filename}. Usando coincidencia por prefijo: ${chosen}`,
+            );
             return full;
           }
         }
       }
     } catch (err) {
-      this.logger.warn(`Fallback por prefijo falló para ${filename}: ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn(
+        `Fallback por prefijo falló para ${filename}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
-    this.logger.error(`Video no encontrado: ${filename}. Rutas buscadas: ${candidates.join(', ')}`);
-    this.debugListDir(path.resolve(__dirname, '../../..', 'public', 'uploads', 'media'));
+    this.logger.error(
+      `Video no encontrado: ${filename}. Rutas buscadas: ${candidates.join(', ')}`,
+    );
+    this.debugListDir(
+      path.resolve(__dirname, '../../..', 'public', 'uploads', 'media'),
+    );
     throw new NotFoundException('Video no encontrado');
   }
 

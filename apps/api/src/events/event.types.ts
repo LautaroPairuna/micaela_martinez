@@ -14,6 +14,9 @@ export const EventTypes = {
 
   // Agrego este alias porque tu listener usa SYSTEM_EVENT
   SYSTEM_EVENT: 'system:event',
+
+  // Nuevo evento para correlación de auditoría
+  AUDIT_CREATED: 'audit:created',
 } as const;
 
 export type EventType = (typeof EventTypes)[keyof typeof EventTypes];
@@ -47,4 +50,12 @@ export type SystemEventPayload = BaseEventPayload & {
   message: string;
   id?: string | number; // el listener lo consulta
   data?: Dict; // opcional para adjuntos
+};
+
+export type AuditCreatedPayload = BaseEventPayload & {
+  auditId: number;
+  tableName: string;
+  recordId: string;
+  action: string;
+  originalEvent: ResourceEventPayload | AuthEventPayload | SystemEventPayload;
 };

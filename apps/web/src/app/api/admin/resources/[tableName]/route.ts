@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const dynamic = 'force-dynamic'; // Deshabilitar cacheo para todas las rutas
 export const revalidate = 0; // No cachear
 
@@ -9,7 +8,7 @@ import path                          from 'path'
 import slugify                       from 'slugify'
 import sharp                         from 'sharp'
 import { allFolderNames }               from '@/lib/adminConstants'
-import { isFileField, getFileTypeFromMime, getFileType, getFolderByFileType, type FileType } from '../../../../admin/resources/[tableName]/utils/fileFieldDetection'
+import { isFileField, getFileTypeFromMime, getFileType, getFolderByFileType } from '../../../../admin/resources/[tableName]/utils/fileFieldDetection'
 
 import { adminApi, AdminApiClient } from '@/lib/sdk/adminApi'
 import { existsSync, statSync, createReadStream } from 'fs'
@@ -387,11 +386,7 @@ export async function GET(
     where.OR = qFields.map(f => ({ [f]: like }))
   }
 
-  // 3) Orden con fallback
-  let orderBy: Record<string, 'asc' | 'desc'> | undefined
-  if (sortBy) orderBy = { [sortBy]: sortDir }
-
-  const skip = (page - 1) * pageSize
+  // 3) Orden con fallback (ya se envía como query param)
 
   try {
     const queryParams = new URLSearchParams({
@@ -556,7 +551,6 @@ export async function PUT(
   }
   
   const id = pathParts[idIndex]
-  const key = isNaN(+id) ? id : +id
 
   try {
     // Verificar si el registro existe

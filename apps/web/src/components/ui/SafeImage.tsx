@@ -139,45 +139,26 @@ export function SafeImage({
         />
       )}
 
-      {isSvg ? (
-        // Para SVGs usamos un enfoque diferente para evitar problemas con Next.js Image
-        <img
-          src={finalSrc}
-          alt={alt || 'imagen'}
-          className={[
-            fitCls,
-            'h-full w-full',
-            skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
-            'transition-opacity duration-200',
-            imgClassName,
-          ].join(' ')}
-          style={objectPosition ? { objectPosition } : undefined}
-          onError={() => setErr(true)}
-          onLoad={() => setLoaded(true)}
-          draggable={false}
-        />
-      ) : (
-        // Para imágenes normales usamos Next.js Image
-        <Image
-          src={finalSrc || PIXEL}
-          alt={alt || 'imagen'}
-          fill
-          sizes={sizes}
-          priority={priority}
-          onError={() => setErr(true)}
-          onLoad={() => setLoaded(true)}
-          draggable={false}
-          suppressHydrationWarning
-          className={[
-            fitCls,
-            'h-full w-full',
-            skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
-            'transition-opacity duration-200',
-            imgClassName,
-          ].join(' ')}
-          style={objectPosition ? { objectPosition } : undefined}
-        />
-      )}
+      <Image
+        src={finalSrc || PIXEL}
+        alt={alt || 'imagen'}
+        fill
+        sizes={sizes}
+        priority={priority}
+        onError={() => setErr(true)}
+        onLoad={() => setLoaded(true)}
+        draggable={false}
+        suppressHydrationWarning
+        className={[
+          fitCls,
+          'h-full w-full',
+          skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
+          'transition-opacity duration-200',
+          imgClassName,
+        ].join(' ')}
+        style={objectPosition ? { objectPosition } : undefined}
+        unoptimized={isSvg}
+      />
 
       <style jsx global>{`
         @keyframes shimmer {

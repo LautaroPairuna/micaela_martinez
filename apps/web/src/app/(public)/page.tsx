@@ -1,11 +1,15 @@
 // src/app/(public)/page.tsx
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import type { ComponentProps } from "react";
 import { Section } from "@/components/layout/Section";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { CourseCard } from "@/components/courses/CourseCard";
-import { getProducts, getCourses, safeGetCourses, safeGetProducts } from "@/lib/sdk/catalogApi";
+import { safeGetCourses, safeGetProducts } from "@/lib/sdk/catalogApi";
+import { getMe, listEnrollments } from "@/lib/sdk/userApi";
+import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { CoursesGridClient } from '@/components/courses/CoursesGridClient';
 import { HeroCarousel } from "@/components/ui/HeroCarousel";
 
 // Forzar renderizado dinámico para evitar errores con headers()
@@ -141,25 +145,39 @@ export default async function HomePage() {
   const compactWrap = (n: number, maxW: string) => (n <= 2 ? `mx-auto ${maxW}` : "");
   const compactPadY = (n: number) => (n <= 2 ? "py-10" : "");
 
+  const qc = new QueryClient();
+  const me = await getMe({ cache: 'no-store' });
+  const isLoggedIn = !!me?.id;
+  if (isLoggedIn) {
+    await qc.prefetchQuery({ queryKey: ['enrollments'], queryFn: () => listEnrollments({ cache: 'no-store' }) });
+  }
+
   return (
     <>
       {/* ───────── HERO ───────── */}
       <section className="w-full">
         <div className="grid lg:grid-cols-12 w-full">
-          {/* Sección de contenido - 4 columnas */}
-          <div className="lg:col-span-4 bg-[#111] flex items-center px-8 py-16">
+          <div className="lg:col-span-12 bg-[#111] flex items-center px-8 py-16">
             <div className="w-full">
-              <h1 className="font-display uppercase tracking-[.08em] leading-[1.45] text-2xl sm:text-3xl lg:text-4xl">
+              {/* <h1 className="font-display uppercase tracking-[.08em] leading-[1.45] text-2xl sm:text-3xl lg:text-4xl">
                 <span className="block text-white">Micaela Martinez - </span>
                 <span className="block text-[var(--gold)] mt-2">Extenciones de Pestañas</span>
-              </h1>
+              </h1> */}
+
+              <Image
+                src="/images/mica_pestanas_logo_blanco.svg"
+                alt="Micaela Pestañas"
+                width={600}
+                height={600}
+                className="mx-auto"
+              />
               
-              <p className="mt-6 text-lg text-white/90 max-w-prose leading-relaxed">
+              <p className="mt-6 text-lg text-white/90 leading-relaxed text-center">
                 Aprendé técnicas profesionales y encontrá productos curados. 
                 Minimalismo, elegancia y resultados.
               </p>
               
-              <div className="mt-8 flex flex-col gap-4">
+              <div className="mt-8 grid grid-cols-2 gap-4">
                 <Link
                   href="/cursos"
                   className="inline-flex items-center justify-center rounded-lg px-6 py-3
@@ -172,8 +190,8 @@ export default async function HomePage() {
                 <Link
                   href="/tienda"
                   className="inline-flex items-center justify-center rounded-lg px-6 py-3
-                             border border-white/20 text-white font-semibold
-                             transition-all duration-300 hover:bg-white/10"
+                             border border-[var(--pink)] text-[var(--pink)] font-semibold
+                             transition-all duration-300 hover:bg-[var(--pink)] hover:text-black"
                 >
                   Ver Tienda
                 </Link>
@@ -181,13 +199,14 @@ export default async function HomePage() {
             </div>
           </div>
           
-          {/* Carrusel de imágenes - 8 columnas */}
-          <div className="lg:col-span-8">
-            <HeroCarousel
-              autoPlay={true}
-              autoPlayInterval={6000}
-              className=""
-            />
+          <div className="lg:col-span-12">
+            <div className="w-full">
+              <HeroCarousel
+                autoPlay={true}
+                autoPlayInterval={6000}
+                className=""
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -202,11 +221,11 @@ export default async function HomePage() {
         innerClassName={compactPadY(courseCount)}
       >
         {courseCount > 0 ? (
-          <div className={`${compactWrap(courseCount, "max-w-3xl")} grid gap-5 grid-cols-1 md:grid-cols-2`}>
-            {courses.slice(0, courseCount).map((c, i) => (
-              <CourseCard key={courseKey(c, i)} c={c} />
-            ))}
-          </div>
+          <HydrationBoundary state={dehydrate(qc)}>
+            <div className={`${compactWrap(courseCount, "max-w-3xl")} grid gap-5 grid-cols-1`}>
+              <CoursesGridClient courses={courses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
+            </div>
+          </HydrationBoundary>
         ) : (
           <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
             Sin cursos por ahora. Estamos preparando novedades.

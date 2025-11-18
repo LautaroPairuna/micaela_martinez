@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getCourses, getProducts } from '@/lib/sdk/catalogApi';
 import type { CourseListItem, ProductListItem } from '@/lib/sdk/catalogApi';
 
@@ -25,31 +26,17 @@ const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS_PER_TYPE = 5;
 
 export function useSearchSuggestions(query: string) {
-  const [suggestions, setSuggestions] = useState<SearchSuggestions>({
-    courses: [],
-    products: [],
-    isLoading: false,
-    error: null,
-  });
+  const debouncedQuery = useMemo(() => query.trim(), [query]);
 
-  const searchData = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length < MIN_QUERY_LENGTH) {
-      setSuggestions({
-        courses: [],
-        products: [],
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
-
-    setSuggestions(prev => ({ ...prev, isLoading: true, error: null }));
-
-    try {
-      // Búsquedas paralelas
+  const q = useQuery<SearchSuggestions>({
+    queryKey: ['searchSuggestions', debouncedQuery],
+    queryFn: async () => {
+      if (debouncedQuery.length < MIN_QUERY_LENGTH) {
+        return { courses: [], products: [], isLoading: false, error: null };
+      }
       const [coursesResponse, productsResponse] = await Promise.allSettled([
-        getCourses({ q: searchQuery, perPage: MAX_RESULTS_PER_TYPE }),
-        getProducts({ q: searchQuery, perPage: MAX_RESULTS_PER_TYPE }),
+        getCourses({ q: debouncedQuery, perPage: MAX_RESULTS_PER_TYPE }),
+        getProducts({ q: debouncedQuery, perPage: MAX_RESULTS_PER_TYPE }),
       ]);
 
       const courses: SearchResult[] = coursesResponse.status === 'fulfilled'
@@ -78,31 +65,25 @@ export function useSearchSuggestions(query: string) {
           }))
         : [];
 
-      setSuggestions({
-        courses,
-        products,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      setSuggestions({
-        courses: [],
-        products: [],
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Error en la búsqueda',
-      });
-    }
-  }, []);
+      return { courses, products, isLoading: false, error: null };
+    },
+    enabled: debouncedQuery.length >= MIN_QUERY_LENGTH,
+    staleTime: 30_000,
+    gcTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchData(query.trim());
-    }, SEARCH_DELAY);
+    if (debouncedQuery.length < MIN_QUERY_LENGTH) return;
+    const t = setTimeout(() => { q.refetch(); }, SEARCH_DELAY);
+    return () => clearTimeout(t);
+  }, [debouncedQuery, q]);
 
-    return () => clearTimeout(timeoutId);
-  }, [query, searchData]);
-
-  return suggestions;
+  return {
+    courses: q.data?.courses ?? [],
+    products: q.data?.products ?? [],
+    isLoading: q.isLoading,
+    error: q.error ? (q.error instanceof Error ? q.error.message : 'Error en la búsqueda') : null,
+  } satisfies SearchSuggestions;
 }
 
 // Hook para términos de búsqueda populares dinámicos

@@ -119,8 +119,7 @@ export function buildTiendaPrettyPath(opts: {
 }
 
 export function buildTiendaPathResetPage(opts: Parameters<typeof buildTiendaPrettyPath>[0]) {
-  const { page: _, ...rest } = opts;
-  return buildTiendaPrettyPath({ ...rest, page: null });
+  return buildTiendaPrettyPath({ ...opts, page: null });
 }
 
 export function migrateTiendaLegacyToPretty(
@@ -184,11 +183,8 @@ export function buildCursosPrettyPath(opts: {
   const pageNum = opts.page != null ? POS_INT(opts.page) : 1;
   if (pageNum > 1) segs.push(`pagina-${pageNum}`);
 
-  // Si hay filtros o búsqueda, usar la ruta /cursos/filtros/
-  const hasFilters = segs.length > 0 || opts.q;
-  const base = hasFilters 
-    ? `/cursos/filtros${segs.length ? '/' + segs.join('/') : ''}` 
-    : '/cursos';
+  // Usar siempre base /cursos y codificar filtros como segmentos pretty
+  const base = `/cursos${segs.length ? '/' + segs.join('/') : ''}`;
 
   const qs = new URLSearchParams();
   const q = (opts.q ?? '').toString().trim();
@@ -199,8 +195,7 @@ export function buildCursosPrettyPath(opts: {
 }
 
 export function buildCursosPathResetPage(opts: Parameters<typeof buildCursosPrettyPath>[0]) {
-  const { page: _, ...rest } = opts;
-  return buildCursosPrettyPath({ ...rest, page: null });
+  return buildCursosPrettyPath({ ...opts, page: null });
 }
 
 export function migrateCursosLegacyToPretty(

@@ -2,7 +2,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 function computeApiBase() {
@@ -15,7 +15,7 @@ function computeApiBase() {
 }
 const API_BASE = computeApiBase();
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const jar = await cookies();
     const token = jar.get('mp_session')?.value;

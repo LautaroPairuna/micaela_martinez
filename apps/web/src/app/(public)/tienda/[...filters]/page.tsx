@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Search } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
-import { getProducts, getProductFacets } from '@/lib/sdk/catalogApi';
+import { safeGetProductsSmart, safeGetProductFacets } from '@/lib/sdk/catalogApi';
 import {
   buildTiendaPrettyPath,
   buildTiendaPathResetPage,
@@ -125,32 +125,70 @@ export default async function TiendaPage({
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
   const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
 
-  const [productsRes, facets] = (await Promise.all([
-    getProducts({ q, categoria, marca, minPrice, maxPrice, sort, page, perPage: PAGE_SIZE }),
-    // El endpoint devuelve { marcas[], categorias[] }; casteamos a la forma esperada por el Sidebar
-    getProductFacets({ q, categoria, marca, minPrice, maxPrice }) as Promise<Facets>,
-  ])) as [{ items: Product[]; meta?: { page?: number; pages?: number } }, Facets];
+  const facets = (await safeGetProductFacets({ q, categoria, marca, minPrice, maxPrice })) as Facets;
+
+  const appliedCategoria = Array.isArray(facets?.categorias) && facets.categorias.length > 0
+    ? (categoria && facets.categorias.some((c) => (c.slug ?? c.id) === categoria) ? categoria : undefined)
+    : undefined;
+  const appliedMarca = Array.isArray(facets?.marcas) && facets.marcas.length > 0
+    ? (marca && facets.marcas.some((m) => (m.slug ?? m.id) === marca) ? marca : undefined)
+    : undefined;
+
+  const productsRes = (await safeGetProductsSmart({
+    q,
+    categoria: appliedCategoria,
+    marca: appliedMarca,
+    minPrice,
+    maxPrice,
+    sort,
+    page,
+    perPage: PAGE_SIZE,
+  })) as unknown as { items: Product[]; meta?: { page?: number; pages?: number } };
 
   const { items, meta } = productsRes;
 
   const currentPage = meta?.page ?? page;
   const totalPages = meta?.pages ?? 1;
 
+  // debug logs removed for clean console
+
   // Chips (usar labels si existen)
-  const marcaLabel = marca ? findLabel(facets?.marcas, marca) : null;
-  const categoriaLabel = categoria ? findLabel(facets?.categorias, categoria) : null;
+  const useFacets: Facets = (() => {
+    const hasServer = (Array.isArray(facets?.marcas) && facets.marcas.length > 0) || (Array.isArray(facets?.categorias) && facets.categorias.length > 0);
+    if (hasServer) return facets;
+    const marcasMap = new Map<string, { id: string; slug?: string; nombre: string; count: number }>();
+    const categoriasMap = new Map<string, { id: string; slug?: string; nombre: string; count: number }>();
+    items.forEach((p: Product) => {
+      const m = p.marca?.nombre?.trim();
+      if (m) {
+        const prev = marcasMap.get(m) ?? { id: m, nombre: m, count: 0 };
+        prev.count += 1;
+        marcasMap.set(m, prev);
+      }
+      const c = p.categoria?.nombre?.trim();
+      if (c) {
+        const prev = categoriasMap.get(c) ?? { id: c, nombre: c, count: 0 };
+        prev.count += 1;
+        categoriasMap.set(c, prev);
+      }
+    });
+    return { marcas: Array.from(marcasMap.values()), categorias: Array.from(categoriasMap.values()) } as Facets;
+  })();
+
+  const marcaLabel = appliedMarca ? findLabel(useFacets?.marcas, appliedMarca) : null;
+  const categoriaLabel = appliedCategoria ? findLabel(useFacets?.categorias, appliedCategoria) : null;
 
   const chips: Array<{ label: string; href: string }> = [];
-  if (marca) {
+  if (appliedMarca) {
     chips.push({
       label: `Marca: ${marcaLabel}`,
-      href: buildTiendaPathResetPage({ categoria, marca: undefined, q, minPrice, maxPrice, sort }),
+      href: buildTiendaPathResetPage({ categoria: appliedCategoria, marca: undefined, q, minPrice, maxPrice, sort }),
     });
   }
-  if (categoria) {
+  if (appliedCategoria) {
     chips.push({
       label: `Categoría: ${categoriaLabel}`,
-      href: buildTiendaPathResetPage({ categoria: undefined, marca, q, minPrice, maxPrice, sort }),
+      href: buildTiendaPathResetPage({ categoria: undefined, marca: appliedMarca, q, minPrice, maxPrice, sort }),
     });
   }
   if (typeof minPrice === 'number' || typeof maxPrice === 'number') {
@@ -196,7 +234,7 @@ export default async function TiendaPage({
 
   // Badge del botón móvil
   const appliedCount =
-    (categoria ? 1 : 0) + (marca ? 1 : 0) + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (q ? 1 : 0);
+    (appliedCategoria ? 1 : 0) + (appliedMarca ? 1 : 0) + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (q ? 1 : 0);
 
   const sortOptions: { value: ProductoSort; label: string }[] = [
     { value: 'relevancia', label: 'Relevancia' },
@@ -214,19 +252,19 @@ export default async function TiendaPage({
           <div className="flex flex-col gap-4">
             {/* Breadcrumb */}
             <nav className="text-sm text-[var(--muted)]">
-              <Link href="/" className="hover:text-[var(--fg)]">
+              <Link href="/" className="hover:text-[var(--pink)]">
                 Inicio
               </Link>
               <span className="mx-2">›</span>
-              <Link href="/tienda" className="hover:text-[var(--fg)]">
+              <Link href="/tienda" className="hover:text-[var(--pink)]">
                 Tienda
               </Link>
-              {categoria && (
+              {appliedCategoria && (
                 <>
                   <span className="mx-2">›</span>
                   <Link
                     href={buildTiendaPrettyPath({
-                      categoria,
+                      categoria: appliedCategoria,
                       marca: undefined,
                       q: '',
                       minPrice: null,
@@ -234,28 +272,28 @@ export default async function TiendaPage({
                       sort: null,
                       page: null,
                     })}
-                    className="hover:text-[var(--fg)] underline"
+                    className="hover:text-[var(--pink)] underline"
                   >
-                    {findLabel(facets?.categorias, categoria) || 'Categoría'}
+                    {findLabel(facets?.categorias, appliedCategoria) || 'Categoría'}
                   </Link>
                 </>
               )}
-              {marca && (
+              {appliedMarca && (
                 <>
                   <span className="mx-2">›</span>
                   <Link
                     href={buildTiendaPrettyPath({
                       categoria: undefined,
-                      marca,
+                      marca: appliedMarca,
                       q: '',
                       minPrice: null,
                       maxPrice: null,
                       sort: null,
                       page: null,
                     })}
-                    className="hover:text-[var(--fg)] underline"
+                    className="hover:text-[var(--pink)] underline"
                   >
-                    {findLabel(facets?.marcas, marca) || 'Marca'}
+                    {findLabel(facets?.marcas, appliedMarca) || 'Marca'}
                   </Link>
                 </>
               )}
@@ -319,7 +357,7 @@ export default async function TiendaPage({
                       name="q"
                       defaultValue={q}
                       placeholder="Buscar productos..."
-                      className="w-full pl-10 pr-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--fg)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--fg)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)] focus:border-transparent"
                     />
                   </div>
                 </form>
@@ -336,8 +374,8 @@ export default async function TiendaPage({
             {/* Sidebar de filtros - Desktop */}
             <div className="hidden lg:block">
               <TiendaFiltersSidebar
-                facets={facets}
-                state={{ categoria, marca, q, minPrice, maxPrice, sort }}
+                facets={useFacets}
+                state={{ categoria: appliedCategoria, marca: appliedMarca, q, minPrice, maxPrice, sort }}
               />
             </div>
 
@@ -356,8 +394,8 @@ export default async function TiendaPage({
                           options={sortOptions}
                           hrefFor={(v) =>
                             buildTiendaPrettyPath({
-                              categoria,
-                              marca,
+                              categoria: appliedCategoria,
+                              marca: appliedMarca,
                               q,
                               minPrice,
                               maxPrice,
@@ -368,8 +406,8 @@ export default async function TiendaPage({
                         />
                         {/* FILTROS */}
                         <TiendaFiltersSidebar
-                          facets={facets}
-                          state={{ categoria, marca, q, minPrice, maxPrice, sort }}
+                          facets={useFacets}
+                          state={{ categoria: appliedCategoria, marca: appliedMarca, q, minPrice, maxPrice, sort }}
                         />
                       </div>
                     </FiltersDrawer>
@@ -387,8 +425,8 @@ export default async function TiendaPage({
                       options={sortOptions}
                       hrefFor={(v) =>
                         buildTiendaPrettyPath({
-                          categoria,
-                          marca,
+                          categoria: appliedCategoria,
+                          marca: appliedMarca,
                           q,
                           minPrice,
                           maxPrice,
@@ -426,8 +464,8 @@ export default async function TiendaPage({
                     totalPages={totalPages}
                     hrefFor={(page) =>
                       buildTiendaPrettyPath({
-                        categoria,
-                        marca,
+                        categoria: appliedCategoria,
+                        marca: appliedMarca,
                         q,
                         minPrice,
                         maxPrice,

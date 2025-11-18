@@ -44,6 +44,9 @@ export class ReviewLikesController {
     @CurrentUser() user?: JwtUser,
   ) {
     const usuarioId = user?.sub;
-    return this.reviewLikesService.getResenaWithLikes(resenaId, usuarioId ? String(usuarioId) : undefined);
+    return this.reviewLikesService.getResenaWithLikes(
+      resenaId,
+      usuarioId ? String(usuarioId) : undefined,
+    );
   }
 }

@@ -38,6 +38,8 @@ export function HeroCarousel({
   const [images, setImages] = useState<HeroImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchDeltaX, setTouchDeltaX] = useState(0);
 
   // Fetch images from API
   useEffect(() => {
@@ -115,7 +117,7 @@ export function HeroCarousel({
 
   if (loading) {
     return (
-      <div className={`w-full aspect-[4/3] xl:aspect-[16/9] 2xl:aspect-[21/9] bg-gray-200 ${className}`}>
+      <div className={`w-full xl:aspect-[21/9] aspect-[1/1] md:aspect-[16/9] bg-gray-200 ${className}`}>
         <div className="w-full h-full flex items-center justify-center">
           <div className="animate-pulse">
             <div className="w-16 h-16 bg-gray-300 rounded-full" />
@@ -127,7 +129,7 @@ export function HeroCarousel({
 
   if (error && images.length === 0) {
     return (
-      <div className={`w-full aspect-[4/3] xl:aspect-[16/9] 2xl:aspect-[21/9] bg-gray-200 ${className}`}>
+      <div className={`w-full xl:aspect-[21/9] aspect-[1/1] md:aspect-[16/9] bg-gray-200 ${className}`}>
         <div className="w-full h-full flex items-center justify-center text-center">
           <div>
             <p className="text-gray-500 mb-2">Error al cargar las imágenes</p>
@@ -140,7 +142,7 @@ export function HeroCarousel({
 
   if (images.length === 0) {
     return (
-      <div className={`w-full aspect-[4/3] xl:aspect-[16/9] 2xl:aspect-[21/9] bg-gray-200 ${className}`}>
+      <div className={`w-full xl:aspect-[21/9] aspect-[1/1] md:aspect-[16/9] bg-gray-200 ${className}`}>
         <div className="w-full h-full flex items-center justify-center text-gray-500">
           No hay imágenes disponibles
         </div>
@@ -150,9 +152,35 @@ export function HeroCarousel({
 
   return (
     <div
-      className={`relative w-full aspect-[4/3] xl:aspect-[16/9] 2xl:aspect-[21/9] overflow-hidden group ${className}`}
+      className={`relative w-full xl:aspect-[21/9] aspect-[1/1] md:aspect-[16/9] overflow-hidden group ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={(e) => {
+        if (e.touches && e.touches.length > 0) {
+          setIsHovered(true);
+          setTouchStartX(e.touches[0].clientX);
+          setTouchDeltaX(0);
+        }
+      }}
+      onTouchMove={(e) => {
+        if (touchStartX !== null && e.touches && e.touches.length > 0) {
+          const currentX = e.touches[0].clientX;
+          setTouchDeltaX(currentX - touchStartX);
+        }
+      }}
+      onTouchEnd={() => {
+        const SWIPE_THRESHOLD = 40;
+        if (Math.abs(touchDeltaX) > SWIPE_THRESHOLD) {
+          if (touchDeltaX < 0) {
+            goToNext();
+          } else {
+            goToPrevious();
+          }
+        }
+        setIsHovered(false);
+        setTouchStartX(null);
+        setTouchDeltaX(0);
+      }}
     >
       {/* Slides */}
       <div className="relative w-full h-full">

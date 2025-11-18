@@ -155,18 +155,12 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
   // Calcular subtotales
   const subtotalProductos = productos.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0);
   const subtotalCursos = cursos.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0);
-  const costoEnvio = productos.length > 0 ? 0 : 0; // Lógica de envío si es necesaria
   const subtotal = subtotalProductos + subtotalCursos;
 
   const subtotalFmt = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: order.moneda || 'ARS',
   }).format(subtotal);
-
-  const envioFmt = new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: order.moneda || 'ARS',
-  }).format(costoEnvio);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

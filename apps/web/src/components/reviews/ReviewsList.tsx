@@ -69,7 +69,7 @@ export function ReviewsList({
   const [showingActions, setShowingActions] = useState<string | null>(null);
 
   // Hook para manejar scroll a comentarios específicos
-  const { navigateToComment } = useScrollToComment({
+  useScrollToComment({
     onExpandReview: (reviewId: string) => {
       setExpandedReviews(prev => new Set([...prev, reviewId]));
     },

@@ -5,7 +5,6 @@ import path from 'path'
 import slugify from 'slugify'
 import sharp from 'sharp'
 import { generateVideoThumbnail } from '@/lib/thumbnailGenerator'
-import { allFolderNames } from '@/lib/adminConstants'
 import { videoOptimizationService, DEFAULT_VIDEO_OPTIONS } from './VideoOptimizationService'
 import { folderOrganizationService } from './FolderOrganizationService'
 
@@ -104,16 +103,6 @@ function makeTimestamp(clientTimestamp?: number): string {
   return (clientTimestamp || Date.now()).toString()
 }
 
-/** Fallback con hint + timestamp */
-function generateFilename(hint: string, fileType: FileType, originalExt?: string, includeDateTime = false, clientTimestamp?: number): string {
-  const slug = slugify(hint || 'archivo', { lower: true, strict: true })
-  const timestamp = makeTimestamp(clientTimestamp)
-  const dateForSuffix = clientTimestamp ? new Date(clientTimestamp) : new Date()
-  const dateTimeSuffix = includeDateTime ? `-${dateForSuffix.toISOString().slice(0, 19).replace(/[T:]/g, '-')}` : ''
-  if (fileType === 'image') return `${slug}-${timestamp}${dateTimeSuffix}.webp`
-  const ext = originalExt || getDefaultExtension(fileType)
-  return `${slug}-${timestamp}${dateTimeSuffix}${ext}`
-}
 function getDefaultExtension(fileType: FileType): string {
   switch (fileType) {
     case 'video': return '.mp4'

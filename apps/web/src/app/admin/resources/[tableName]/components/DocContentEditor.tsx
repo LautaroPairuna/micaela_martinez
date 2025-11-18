@@ -26,7 +26,7 @@ export const DocContentEditor: React.FC<DocContentEditorProps> = ({ value, onCha
     try {
       const parsed = typeof value === 'string' ? JSON.parse(value) : value
       setDocUrl(parsed.docUrl || '')
-    } catch (e) {
+    } catch {
       // Si no es JSON válido, intentar usar como URL directa
       if (typeof value === 'string' && value.trim()) {
         setDocUrl(value.trim())

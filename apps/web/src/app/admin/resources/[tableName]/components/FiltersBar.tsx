@@ -1,9 +1,8 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 import {
   Settings, X, DollarSign, Package,
-  Tag, FolderOpen, CheckCircle, Folder
+  Tag, CheckCircle, Folder
 } from 'lucide-react'
 import { FkSelect } from './FkSelect'
 import { fkConfig, relationLabels } from '../config'

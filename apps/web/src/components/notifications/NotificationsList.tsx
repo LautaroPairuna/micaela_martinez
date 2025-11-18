@@ -27,18 +27,6 @@ const getNotificationIcon = (tipo: AppNotification['tipo']) => {
   }
 };
 
-const getNotificationColor = (tipo: AppNotification['tipo']) => {
-  switch (tipo) {
-    case 'RESPUESTA_RESENA':
-      return 'text-blue-600';
-    case 'LIKE_RESENA':
-      return 'text-red-600';
-    case 'MENCION':
-      return 'text-purple-600';
-    default:
-      return 'text-gray-600';
-  }
-};
 
 const getEnhancedMessage = (notification: AppNotification) => {
   const baseMessage = notification.mensaje;

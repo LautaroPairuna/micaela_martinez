@@ -34,65 +34,74 @@ export class AuditService {
     try {
       // Validar campos requeridos
       if (!data.tableName || !data.recordId || !data.action) {
-        this.logger.warn('Missing required audit fields', { 
-          tableName: data.tableName, 
-          recordId: data.recordId, 
-          action: data.action 
+        this.logger.warn('Missing required audit fields', {
+          tableName: data.tableName,
+          recordId: data.recordId,
+          action: data.action,
         });
         return;
       }
 
       // Verificar si el userId existe o es nulo
       let userId = data.userId;
-      
+
       // Si no hay userId, intentamos usar un usuario administrador existente
       if (!userId) {
         try {
           // Buscar un usuario administrador para usar como fallback
-            const adminUser = await this.prisma.usuario.findFirst({
-              where: {
-                roles: {
-                  some: {
-                    role: {
-                      slug: 'admin'
-                    }
-                  }
-                }
+          const adminUser = await this.prisma.usuario.findFirst({
+            where: {
+              roles: {
+                some: {
+                  role: {
+                    slug: 'ADMIN',
+                  },
+                },
               },
-              select: {
-                id: true
-              }
-            });
-          
+            },
+            select: {
+              id: true,
+            },
+          });
+
           // Si encontramos un admin, usamos su ID
           if (adminUser) {
             userId = String(adminUser.id);
           } else {
             // Si no hay admin, omitimos el registro de auditoría
-            this.logger.warn('No se pudo registrar auditoría: no hay userId válido y no se encontró usuario admin');
+            this.logger.warn(
+              'No se pudo registrar auditoría: no hay userId válido y no se encontró usuario admin',
+            );
             return;
           }
         } catch (userError) {
           // Si hay error al buscar usuario, omitimos el registro
-          this.logger.warn('Error al buscar usuario admin para auditoría', userError);
+          this.logger.warn(
+            'Error al buscar usuario admin para auditoría',
+            userError,
+          );
           return;
         }
       } else {
         // Validar que userId es un número válido antes de hacer la consulta
         const userIdNumber = Number(userId);
         if (isNaN(userIdNumber) || userIdNumber <= 0) {
-          this.logger.warn(`No se pudo registrar auditoría: userId inválido '${userId}'`);
+          this.logger.warn(
+            `No se pudo registrar auditoría: userId inválido '${userId}'`,
+          );
           return;
         }
-        
+
         // Verificar que el usuario existe
         const userExists = await this.prisma.usuario.findUnique({
           where: { id: userIdNumber },
-          select: { id: true }
+          select: { id: true },
         });
-        
+
         if (!userExists) {
-          this.logger.warn(`No se pudo registrar auditoría: el usuario con ID ${userId} no existe`);
+          this.logger.warn(
+            `No se pudo registrar auditoría: el usuario con ID ${userId} no existe`,
+          );
           return;
         }
       }
@@ -140,14 +149,14 @@ export class AuditService {
   ): Promise<void> {
     // Validar campos requeridos
     if (!tableName || !recordId || !action) {
-      this.logger.warn('Missing required audit fields in logCrudAction', { 
-        tableName, 
-        recordId, 
-        action 
+      this.logger.warn('Missing required audit fields in logCrudAction', {
+        tableName,
+        recordId,
+        action,
       });
       return;
     }
-    
+
     const auditData: AuditLogData = {
       tableName,
       recordId,

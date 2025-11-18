@@ -11,12 +11,12 @@ interface CourseDetailClientProps {
 }
 
 export function CourseDetailClient({ cursoId, title, className }: CourseDetailClientProps) {
-  const { navigateToComment } = useScrollToComment({
+  useScrollToComment({
     onExpandReview: (reviewId: string) => {
       // Lógica para expandir reseña si es necesario
       console.log('Expanding review:', reviewId);
     },
-    onExpandResponses: (reviewId: string) => {
+    onExpandResponses: () => {
       // Lógica para expandir respuestas si es necesario
   
     }

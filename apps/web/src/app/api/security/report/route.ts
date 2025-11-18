@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
 }
 
 // Método GET para obtener estadísticas de seguridad (solo para admins)
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Validar sesión y permisos de admin
     const sessionResult = await validateSession();

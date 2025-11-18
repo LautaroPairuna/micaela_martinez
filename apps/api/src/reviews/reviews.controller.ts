@@ -67,7 +67,7 @@ export class ReviewsController {
         user.sub.toString(),
         createReviewDto,
       );
-      
+
       // Verificar si fue una actualización o creación
       if (result.isUpdate) {
         console.log('Review updated successfully:', result.id);
@@ -91,27 +91,28 @@ export class ReviewsController {
         'Error stack:',
         error instanceof Error ? error.stack : 'No stack trace available',
       );
-      
+
       // Manejar específicamente errores de restricción única
       if (
-        typeof error === 'object' && 
-        error !== null && 
-        'code' in error && 
-        error.code === 'P2002' && 
-        'meta' in error && 
-        error.meta && 
-        typeof error.meta === 'object' && 
-        'target' in error.meta && 
-        Array.isArray(error.meta.target) && 
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002' &&
+        'meta' in error &&
+        error.meta &&
+        typeof error.meta === 'object' &&
+        'target' in error.meta &&
+        Array.isArray(error.meta.target) &&
         error.meta.target.some((t: string) => t.includes('unique_resena'))
       ) {
         return {
           error: 'Ya has escrito una reseña para este elemento',
-          message: 'Ya has escrito una reseña para este elemento. Puedes editarla en su lugar.',
+          message:
+            'Ya has escrito una reseña para este elemento. Puedes editarla en su lugar.',
           statusCode: 409,
         };
       }
-      
+
       throw error;
     }
   }
@@ -178,6 +179,10 @@ export class ReviewsController {
     @Query('cursoId') cursoId?: string,
     @Query('productoId') productoId?: string,
   ) {
-    return this.reviewsService.getUserReview(user.sub.toString(), cursoId, productoId);
+    return this.reviewsService.getUserReview(
+      user.sub.toString(),
+      cursoId,
+      productoId,
+    );
   }
 }

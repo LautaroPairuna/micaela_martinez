@@ -1,7 +1,7 @@
 // src/components/account/AccountSidebar.tsx
 'use client';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { User, MapPin, Heart, Package, Edit3, LogOut, Menu, X, GraduationCap, ChevronRight, Bell, Home } from 'lucide-react';
 import { logout } from '@/lib/auth';

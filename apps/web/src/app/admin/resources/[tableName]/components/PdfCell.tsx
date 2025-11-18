@@ -1,7 +1,6 @@
 'use client'
 import React from 'react'
 import Image from 'next/image'
-import { FileText } from 'lucide-react'
 import { folderNames } from '@/lib/adminConstants'
 
 /** Placeholder inline para PDFs */

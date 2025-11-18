@@ -42,7 +42,8 @@ export function HierarchicalSelect({
     () => adminApi.getTableData(tableName, { page: 1, limit: 1000 })
   )
   
-  const records = (response?.data || []) as HierarchicalRecord[]
+  const data = response?.data as HierarchicalRecord[] | undefined
+  const records = useMemo(() => data ?? [], [data])
   
   // Organizar en estructura jerárquica
   const hierarchicalData = useMemo(() => {

@@ -41,7 +41,7 @@ function PreferenceToggle({ id, label, description, icon: Icon, checked, onChang
             />
             <div className={cn(
               "relative w-11 h-6 rounded-full peer transition-colors duration-200 ease-in-out",
-              "peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--gold)]/20",
+              "peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--pink)]/20",
               checked 
                 ? "bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)]" 
                 : "bg-[var(--border)]",
@@ -78,7 +78,7 @@ export default function NotificationSettingsPage() {
       await savePreferences();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (e) {
+    } catch {
       // Error ya manejado por el hook
     }
   };

@@ -59,7 +59,9 @@ async function bootstrap() {
 
   // CORS - Configuración robusta
   const whitelist = (process.env.CORS_ORIGIN || '').split(',').filter(Boolean);
-  console.log(`Orígenes CORS permitidos: ${whitelist.join(', ') || 'Cualquiera (fallback)'}`);
+  console.log(
+    `Orígenes CORS permitidos: ${whitelist.join(', ') || 'Cualquiera (fallback)'}`,
+  );
 
   app.enableCors({
     origin: (origin, callback) => {

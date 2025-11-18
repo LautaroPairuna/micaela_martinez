@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FileText, Trash2, Clock, Star } from 'lucide-react';
@@ -31,7 +31,7 @@ export function DraftsList({ onLoadDraft, className = '' }: DraftsListProps) {
   const { warning: showWarning, success: showSuccess, error: showError } = useToast();
 
   // Cargar todos los borradores del usuario
-  const loadDrafts = () => {
+  const loadDrafts = useCallback(() => {
     if (!me?.id || typeof window === 'undefined') {
       setDrafts([]);
       setIsLoading(false);
@@ -89,7 +89,7 @@ export function DraftsList({ onLoadDraft, className = '' }: DraftsListProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [me?.id]);
 
   // Eliminar borrador
   const deleteDraft = (draftKey: string) => {
@@ -118,7 +118,7 @@ export function DraftsList({ onLoadDraft, className = '' }: DraftsListProps) {
   // Cargar borradores al montar el componente
   useEffect(() => {
     loadDrafts();
-  }, [me?.id]);
+  }, [me?.id, loadDrafts]);
 
   if (isLoading) {
     return (

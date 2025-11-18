@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Prisma,  EstadoInscripcion } from '@prisma/client';
+import { Prisma, EstadoInscripcion } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryCourseDto } from './dto/query-course.dto';
 import { getSkipTake } from '../common/utils/pagination';

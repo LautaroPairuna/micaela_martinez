@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { UsuarioMe } from '@/lib/sdk/userApi';
-import { getMe, clearUserCache } from '@/lib/sdk/userApi';
+import { clearUserCache } from '@/lib/sdk/userApi';
 
 type AuthContextType = {
   user: UsuarioMe | null;

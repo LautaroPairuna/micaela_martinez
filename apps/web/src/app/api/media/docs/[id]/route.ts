@@ -102,7 +102,7 @@ export async function GET(req: NextRequest, context: Context) {
       if (!stats.isFile()) {
         return new NextResponse('Document not found', { status: 404 });
       }
-    } catch (error) {
+    } catch {
       return new NextResponse('Document not found', { status: 404 });
     }
 
@@ -135,8 +135,8 @@ export async function GET(req: NextRequest, context: Context) {
       status: 200,
       headers
     });
-  } catch (error) {
-    console.error('[DOCS-PROXY] Document serving error:', error);
+  } catch {
+    console.error('[DOCS-PROXY] Document serving error');
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
@@ -180,11 +180,11 @@ export async function HEAD(req: NextRequest, context: Context) {
           'Content-Disposition': `inline; filename="${downloadFilename}"`
         }
       });
-    } catch (error) {
+    } catch {
       return new NextResponse(null, { status: 404 });
     }
-  } catch (error) {
-    console.error('[DOCS-PROXY] Document HEAD error:', error);
+  } catch {
+    console.error('[DOCS-PROXY] Document HEAD error');
     return new NextResponse(null, { status: 500 });
   }
 }

@@ -38,15 +38,14 @@ export class NotificationsController {
 
   @Get('unread-count')
   async getUnreadCount(@CurrentUser() user: JwtUser) {
-    const count = await this.notificationsService.getUnreadCount(String(user.sub));
+    const count = await this.notificationsService.getUnreadCount(
+      String(user.sub),
+    );
     return { count };
   }
 
   @Put(':id/read')
-  async markAsRead(
-    @Param('id') id: string,
-    @CurrentUser() user: JwtUser,
-  ) {
+  async markAsRead(@Param('id') id: string, @CurrentUser() user: JwtUser) {
     await this.notificationsService.markAsRead(id);
     return { success: true };
   }

@@ -61,7 +61,7 @@ export class CategoriesService {
     const counts = await this.prisma.categoria.groupBy({
       by: ['parentId'],
       where: {
-        parentId: { in: parentIds.map(id => Number(id)) },
+        parentId: { in: parentIds.map((id) => Number(id)) },
         activa: true,
       },
       _count: {

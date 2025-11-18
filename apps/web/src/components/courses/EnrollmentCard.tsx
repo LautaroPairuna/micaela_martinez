@@ -5,7 +5,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { SubscriptionCancelButton } from '@/components/subscription/SubscriptionCancelButton';
 import { GraduationCap, Clock, PlayCircle, BookOpen, Award, TrendingUp } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 
 type EnrollmentProgreso = {
   porcentaje?: number | null;
@@ -85,7 +85,7 @@ export function EnrollmentCard({
   }, [enrollment.progreso]);
 
   // Helper para un único log consolidado
-  const logProgressSummary = (
+  const logProgressSummary = useCallback((
     params: {
       enrollmentId: string | number;
       modulesSource: 'course.modulos' | 'courseModules' | 'none';
@@ -129,7 +129,7 @@ export function EnrollmentCard({
     } catch (e) {
       console.warn('📊 EnrollmentCard Progress Summary logging failed:', e);
     }
-  };
+  }, [getLessonProgressKey]);
 
   // Calcular progreso en tiempo real usando la lógica de CoursePlayer
   const realTimeProgress = useMemo(() => {
@@ -195,6 +195,31 @@ export function EnrollmentCard({
   const hasSubscription = Boolean(subscription);
   const durationMonths = Number(subscription?.duration ?? 3);
   const diasTotales = Number.isFinite(durationMonths) ? durationMonths * 30 : 90; // fallback
+
+  const ctaHref = useMemo(() => {
+    if (isCompleted || !course?.slug) return `/cursos/${course?.slug ?? enrollment.cursoId}`;
+    const modulesToUse = (course?.modulos && course.modulos.length > 0)
+      ? course.modulos
+      : (courseModules && courseModules.length > 0 ? courseModules : []);
+    if (!modulesToUse.length) return `/cursos/${course.slug}`;
+    for (let mIdx = 0; mIdx < modulesToUse.length; mIdx++) {
+      const module = modulesToUse[mIdx] as { id: string; orden?: number; lecciones?: Array<{ id: string; orden?: number }> };
+      const lessons = module.lecciones ?? [];
+      for (let lIdx = 0; lIdx < lessons.length; lIdx++) {
+        const lesson = lessons[lIdx];
+        const modId = String(module.id);
+        const key = getLessonProgressKey ? getLessonProgressKey(modId, String(lesson.id)) : `${modId}-${lesson.id}`;
+        const hasClientState = Object.prototype.hasOwnProperty.call(lessonProgress, key);
+        const isDone = hasClientState ? !!lessonProgress[key] : !!serverProgress[key];
+        if (!isDone) {
+          const moduloSlugNum = typeof module.orden === 'number' && module.orden ? module.orden : mIdx + 1;
+          const leccionSlugNum = typeof lesson.orden === 'number' && lesson.orden ? lesson.orden : lIdx + 1;
+          return `/cursos/player/${course.slug}/modulo-${moduloSlugNum}/leccion-${leccionSlugNum}`;
+        }
+      }
+    }
+    return `/cursos/player/${course.slug}/modulo-1/leccion-1`;
+  }, [isCompleted, course?.slug, course?.modulos, courseModules, lessonProgress, serverProgress, getLessonProgressKey, enrollment.cursoId]);
 
   return (
     <Card
@@ -319,7 +344,7 @@ export function EnrollmentCard({
               {/* Acciones */}
               <div className="flex items-center gap-3 pt-4">
                 <Link
-                  href={`/cursos/${course?.slug ?? enrollment.cursoId}`}
+                  href={ctaHref}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-bold rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 transform shadow-lg ring-1 ring-[var(--gold)]/20"
                 >
                   {isCompleted ? (

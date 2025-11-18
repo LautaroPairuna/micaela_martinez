@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CacheService } from '../common/cache/cache.service';
 import { HierarchicalDetectorService } from './utils/hierarchical-detector.service';
-import { AuditService } from './audit.service';
+import { UnifiedAuditService } from './unified-audit.service';
 import { ActivityType, ActivitySource } from './activity.dto';
 import { WebsocketGateway } from '../websockets/websocket.gateway';
 
@@ -16,7 +16,7 @@ export class AdminService {
   constructor(
     private prisma: PrismaService,
     private hierarchicalDetector: HierarchicalDetectorService,
-    private auditService: AuditService,
+    private unifiedAuditService: UnifiedAuditService,
     private websocketGateway: WebsocketGateway,
     private cacheService: CacheService,
   ) {}
@@ -230,7 +230,9 @@ export class AdminService {
       if (key === 'parentId' && value !== null) {
         const numericValue = Number(value);
         if (isNaN(numericValue)) {
-          console.warn(`Valor inválido para parentId: ${value}, ignorando filtro`);
+          console.warn(
+            `Valor inválido para parentId: ${value}, ignorando filtro`,
+          );
           continue;
         }
         processedFilters[key] = numericValue;
@@ -242,7 +244,7 @@ export class AdminService {
         const k = key.toLowerCase();
         const isIdLike = k === 'id' || k.endsWith('id') || k.includes('id');
         const isSlug = k === 'slug' || k.endsWith('slug');
-        
+
         if (isIdLike || isSlug) {
           // Para campos ID, intentar conversión numérica si es apropiado
           if (isIdLike && !isNaN(Number(value))) {
@@ -264,7 +266,9 @@ export class AdminService {
       } else if (Array.isArray(value) && value.length > 0) {
         // Para arrays, usar 'in' para múltiples valores
         // Validar que todos los elementos sean del tipo correcto
-        const validValues = value.filter(v => v !== null && v !== undefined && v !== '');
+        const validValues = value.filter(
+          (v) => v !== null && v !== undefined && v !== '',
+        );
         if (validValues.length > 0) {
           processedFilters[key] = { in: validValues };
         }
@@ -306,7 +310,7 @@ export class AdminService {
       // Validación de campos jerárquicos
       if (!hierarchyInfo.parentField || !hierarchyInfo.childrenField) {
         throw new BadRequestException(
-          `Configuración jerárquica incompleta para ${resource}: faltan campos parent/children`
+          `Configuración jerárquica incompleta para ${resource}: faltan campos parent/children`,
         );
       }
 
@@ -319,7 +323,7 @@ export class AdminService {
           processedFilters[parentField] = null;
         } else {
           throw new BadRequestException(
-            `Valor inválido para filtro 'esHija': ${esHija}. Debe ser true o false`
+            `Valor inválido para filtro 'esHija': ${esHija}. Debe ser true o false`,
           );
         }
       }
@@ -351,7 +355,7 @@ export class AdminService {
             }
           } catch (dbError) {
             throw new BadRequestException(
-              `Error al consultar registros padre para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`
+              `Error al consultar registros padre para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
             );
           }
         } else if (esPadre === 'false' || esPadre === false) {
@@ -374,12 +378,12 @@ export class AdminService {
             }
           } catch (dbError) {
             throw new BadRequestException(
-              `Error al consultar registros sin hijos para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`
+              `Error al consultar registros sin hijos para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
             );
           }
         } else {
           throw new BadRequestException(
-            `Valor inválido para filtro 'esPadre': ${esPadre}. Debe ser true o false`
+            `Valor inválido para filtro 'esPadre': ${esPadre}. Debe ser true o false`,
           );
         }
       }
@@ -391,115 +395,118 @@ export class AdminService {
           processedFilters[parentField] = null;
         } else {
           // Validar que el padreId sea un número válido
-          const parentIdNum = typeof padreId === 'string' ? parseInt(padreId, 10) : padreId;
+          const parentIdNum =
+            typeof padreId === 'string' ? parseInt(padreId, 10) : padreId;
           if (isNaN(parentIdNum) || parentIdNum <= 0) {
             throw new BadRequestException(
-              `ID de padre inválido: ${padreId}. Debe ser un número positivo`
+              `ID de padre inválido: ${padreId}. Debe ser un número positivo`,
             );
           }
           processedFilters[parentField] = parentIdNum;
         }
       }
 
-    // Filtro por nivel jerárquico (0 = raíz, 1 = primer nivel, etc.)
-    if (nivelJerarquia !== undefined) {
-      const nivel = parseInt(nivelJerarquia.toString());
-      if (isNaN(nivel) || nivel < 0) {
-        throw new BadRequestException(
-          `Nivel jerárquico inválido: ${nivelJerarquia}. Debe ser un número entero no negativo`
-        );
-      }
+      // Filtro por nivel jerárquico (0 = raíz, 1 = primer nivel, etc.)
+      if (nivelJerarquia !== undefined) {
+        const nivel = parseInt(nivelJerarquia.toString());
+        if (isNaN(nivel) || nivel < 0) {
+          throw new BadRequestException(
+            `Nivel jerárquico inválido: ${nivelJerarquia}. Debe ser un número entero no negativo`,
+          );
+        }
 
-      try {
-        if (nivel === 0) {
-          // Nivel 0: elementos raíz (sin padre)
-          const parentField = hierarchyInfo.parentField;
-          processedFilters[parentField] = null;
-        } else {
-          // Para otros niveles, necesitamos una consulta más compleja
-          // Por ahora, implementamos solo nivel 1 (hijos directos de raíz)
-          if (nivel === 1) {
+        try {
+          if (nivel === 0) {
+            // Nivel 0: elementos raíz (sin padre)
             const parentField = hierarchyInfo.parentField;
-            // Buscar elementos que tengan padre pero cuyos padres no tengan padre
-            const rootParents = await model.findMany({
-              where: {
-                [parentField]: null,
-              },
-              select: { id: true },
-            });
-
-            const rootIds = rootParents.map((record: { id: any }) => record.id);
-            if (rootIds.length > 0) {
-              processedFilters[parentField] = { in: rootIds };
-            } else {
-              processedFilters.id = { in: [] };
-            }
+            processedFilters[parentField] = null;
           } else {
-            // Para niveles > 1, por ahora no implementado
-            throw new BadRequestException(
-              `Filtro por nivel jerárquico ${nivel} no implementado. Solo se soportan niveles 0 y 1`
-            );
+            // Para otros niveles, necesitamos una consulta más compleja
+            // Por ahora, implementamos solo nivel 1 (hijos directos de raíz)
+            if (nivel === 1) {
+              const parentField = hierarchyInfo.parentField;
+              // Buscar elementos que tengan padre pero cuyos padres no tengan padre
+              const rootParents = await model.findMany({
+                where: {
+                  [parentField]: null,
+                },
+                select: { id: true },
+              });
+
+              const rootIds = rootParents.map(
+                (record: { id: any }) => record.id,
+              );
+              if (rootIds.length > 0) {
+                processedFilters[parentField] = { in: rootIds };
+              } else {
+                processedFilters.id = { in: [] };
+              }
+            } else {
+              // Para niveles > 1, por ahora no implementado
+              throw new BadRequestException(
+                `Filtro por nivel jerárquico ${nivel} no implementado. Solo se soportan niveles 0 y 1`,
+              );
+            }
           }
+        } catch (dbError) {
+          if (dbError instanceof BadRequestException) {
+            throw dbError;
+          }
+          throw new BadRequestException(
+            `Error al procesar filtro de nivel jerárquico para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
+          );
         }
-      } catch (dbError) {
-        if (dbError instanceof BadRequestException) {
-          throw dbError;
-        }
-        throw new BadRequestException(
-          `Error al procesar filtro de nivel jerárquico para ${resource}: ${dbError instanceof Error ? dbError.message : String(dbError)}`
-        );
       }
-    }
 
-    // Procesar _directChildrenOnly (solo hijos directos)
-    if (_directChildrenOnly === true || _directChildrenOnly === 'true') {
-      console.log(
-        `🔍 [DEBUG] Aplicando filtro _directChildrenOnly para ${resource}`,
-      );
-
-      // Si también hay un filtro de productoId (o similar), es un caso de hijos directos de un padre específico
-      const possibleParentFields = [
-        'productoId',
-        'cursoId',
-        'categoriaId',
-        'marcaId',
-      ];
-      const parentFieldInFilters = possibleParentFields.find(
-        (field) => filters[field] !== undefined,
-      );
-
-      if (parentFieldInFilters) {
+      // Procesar _directChildrenOnly (solo hijos directos)
+      if (_directChildrenOnly === true || _directChildrenOnly === 'true') {
         console.log(
-          `🔍 [DEBUG] Encontrado campo padre en filtros: ${parentFieldInFilters} = ${filters[parentFieldInFilters]}`,
+          `🔍 [DEBUG] Aplicando filtro _directChildrenOnly para ${resource}`,
         );
-        // Ya tenemos el filtro por padre específico, no necesitamos hacer nada más
-      } else if (padreId) {
-        console.log(`🔍 [DEBUG] Usando padreId explícito: ${padreId}`);
-        // Ya tenemos el filtro por padreId, no necesitamos hacer nada más
+
+        // Si también hay un filtro de productoId (o similar), es un caso de hijos directos de un padre específico
+        const possibleParentFields = [
+          'productoId',
+          'cursoId',
+          'categoriaId',
+          'marcaId',
+        ];
+        const parentFieldInFilters = possibleParentFields.find(
+          (field) => filters[field] !== undefined,
+        );
+
+        if (parentFieldInFilters) {
+          console.log(
+            `🔍 [DEBUG] Encontrado campo padre en filtros: ${parentFieldInFilters} = ${filters[parentFieldInFilters]}`,
+          );
+          // Ya tenemos el filtro por padre específico, no necesitamos hacer nada más
+        } else if (padreId) {
+          console.log(`🔍 [DEBUG] Usando padreId explícito: ${padreId}`);
+          // Ya tenemos el filtro por padreId, no necesitamos hacer nada más
+        }
       }
-    }
 
-    // Procesar _parentSpecific (específico del padre)
-    if (_parentSpecific === true || _parentSpecific === 'true') {
-      console.log(
-        `🔍 [DEBUG] Aplicando filtro _parentSpecific para ${resource}`,
-      );
+      // Procesar _parentSpecific (específico del padre)
+      if (_parentSpecific === true || _parentSpecific === 'true') {
+        console.log(
+          `🔍 [DEBUG] Aplicando filtro _parentSpecific para ${resource}`,
+        );
 
-      // Este filtro ya está implícito cuando se filtra por un campo de padre específico
-      // No necesitamos hacer nada adicional si ya hay un filtro de padre
-    }
+        // Este filtro ya está implícito cuando se filtra por un campo de padre específico
+        // No necesitamos hacer nada adicional si ya hay un filtro de padre
+      }
 
-    // Agregar otros filtros
-    Object.assign(processedFilters, otherFilters);
+      // Agregar otros filtros
+      Object.assign(processedFilters, otherFilters);
     } catch (error) {
       // Si es una BadRequestException, la re-lanzamos tal como está
       if (error instanceof BadRequestException) {
         throw error;
       }
-      
+
       // Para cualquier otro error, lo envolvemos en una BadRequestException
       throw new BadRequestException(
-        `Error al procesar filtros jerárquicos para ${resource}: ${error instanceof Error ? error.message : String(error)}`
+        `Error al procesar filtros jerárquicos para ${resource}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -586,7 +593,11 @@ export class AdminService {
         if (process.env.NODE_ENV === 'development') {
           console.log(
             `🔍 [DEBUG] Filtros OR procesados:`,
-            JSON.stringify((processedFilters as Record<string, any>).OR, null, 2),
+            JSON.stringify(
+              (processedFilters as Record<string, any>).OR,
+              null,
+              2,
+            ),
           );
         }
       }
@@ -776,7 +787,9 @@ export class AdminService {
       this.cacheService.deletePattern(`admin:${resource}:`);
 
       // Emitir evento WebSocket para actualización en tiempo real
-      console.log(`[AdminService] Emitiendo evento WebSocket: create para ${resource}`);
+      console.log(
+        `[AdminService] Emitiendo evento WebSocket: create para ${resource}`,
+      );
       this.websocketGateway.emitToAll('crud-update', {
         action: 'create',
         resource,
@@ -810,13 +823,13 @@ export class AdminService {
       const normalized = this.normalizeDataInput(data);
       // No permitir actualizar claves primarias ni timestamps
       if (normalized && typeof normalized === 'object') {
-        delete (normalized as any).id;
-        delete (normalized as any).creadoEn;
-        delete (normalized as any).actualizadoEn;
-        delete (normalized as any).createdAt;
-        delete (normalized as any).updatedAt;
+        delete normalized.id;
+        delete normalized.creadoEn;
+        delete normalized.actualizadoEn;
+        delete normalized.createdAt;
+        delete normalized.updatedAt;
       }
-      
+
       const result = await model.update({
         where: { id: this.coerceId(resource, id) },
         data: normalized,
@@ -826,7 +839,9 @@ export class AdminService {
       this.cacheService.deletePattern(`admin:${resource}:`);
 
       // Emitir evento WebSocket para actualización en tiempo real
-      console.log(`[AdminService] Emitiendo evento WebSocket: update para ${resource} ID ${id}`);
+      console.log(
+        `[AdminService] Emitiendo evento WebSocket: update para ${resource} ID ${id}`,
+      );
       this.websocketGateway.emitToAll('crud-update', {
         action: 'update',
         resource,
@@ -869,7 +884,9 @@ export class AdminService {
       this.cacheService.deletePattern(`admin:${resource}:`);
 
       // Emitir evento WebSocket para actualización en tiempo real
-      console.log(`[AdminService] Emitiendo evento WebSocket: delete para ${resource} ID ${id}`);
+      console.log(
+        `[AdminService] Emitiendo evento WebSocket: delete para ${resource} ID ${id}`,
+      );
       this.websocketGateway.emitToAll('crud-update', {
         action: 'delete',
         resource,
@@ -958,21 +975,24 @@ export class AdminService {
   ) {
     try {
       // Obtener eventos de auditoría recientes
-      const auditLogs = await this.auditService.getRecentAuditLogs(15);
+      const auditLogs = await this.unifiedAuditService.getAuditLogs({
+        limit: 15,
+        offset: 0,
+      });
 
       // Convertir logs de auditoría a formato de actividad
       const auditActivities = auditLogs.map((log) => ({
         id: `audit-${log.id}`,
         type: this.mapAuditActionToActivityType(log.action, log.tableName, {
-          newData: (log as any).newData,
-          oldData: (log as any).oldData,
+          newData: log.newData,
+          oldData: log.oldData,
         }),
         description: this.generateAuditDescription({
           action: log.action,
           tableName: log.tableName,
           user: log.user,
-          newData: (log as any).newData,
-          oldData: (log as any).oldData,
+          newData: log.newData,
+          oldData: log.oldData,
         }),
         timestamp: log.timestamp.toISOString(),
         user: log.user.nombre || log.user.email,
@@ -1072,7 +1092,7 @@ export class AdminService {
   private mapAuditActionToActivityType(
     action: string,
     tableName: string,
-    log?: { newData?: any; oldData?: any }
+    log?: { newData?: any; oldData?: any },
   ): string {
     const actionMap: Record<string, Record<string, string>> = {
       CREATE: {
@@ -1166,7 +1186,7 @@ export class AdminService {
   }
 
   /**
-   * Obtiene logs de auditoría con filtros (delegado al AuditService)
+   * Obtiene logs de auditoría con filtros (delegado al UnifiedAuditService)
    */
   async getAuditLogs(params: {
     userId?: string;
@@ -1177,18 +1197,29 @@ export class AdminService {
     limit?: number;
     offset?: number;
   }) {
-    return this.auditService.getAuditLogs(params);
+    return this.unifiedAuditService.getAuditLogs({
+      resource: params.tableName,
+      action: params.action,
+      userId: params.userId,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      limit: params.limit || 50,
+      offset: params.offset || 0,
+    });
   }
 
   /**
-   * Obtiene logs de auditoría recientes (delegado al AuditService)
+   * Obtiene logs de auditoría recientes (delegado al UnifiedAuditService)
    */
   async getRecentAuditLogs(limit: number = 15) {
-    return this.auditService.getRecentAuditLogs(limit);
+    return this.unifiedAuditService.getAuditLogs({
+      limit,
+      offset: 0,
+    });
   }
 
   /**
-   * Crea un registro de actividad en el sistema
+   * Crea un registro de actividad en el sistema usando el UnifiedAuditService
    * Esta función registra eventos de actividad para mostrarlos en el dashboard
    */
   async createActivity(activityData: {
@@ -1199,28 +1230,27 @@ export class AdminService {
     metadata?: Record<string, unknown>;
   }) {
     try {
-      // Generar un ID único para la actividad
-      const id = `activity-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      // Usar el UnifiedAuditService para registrar la actividad
+      const auditRecord = await this.unifiedAuditService.logCustomActivity(
+        'activities', // tableName
+        `activity-${Date.now()}`, // recordId
+        activityData.type, // action
+        activityData.user, // userId
+        {
+          description: activityData.description,
+          source: activityData.source,
+          ...activityData.metadata,
+        }, // data
+        true, // createNotification
+      );
 
-      // Crear objeto de actividad con timestamp actual
-      const activity = {
-        id,
-        ...activityData,
-        timestamp: new Date().toISOString(),
-      };
-
-      // Registrar la actividad en el sistema de auditoría si es posible
-      if (
-        this.auditService &&
-        typeof this.auditService.logCustomActivity === 'function'
-      ) {
-        await this.auditService.logCustomActivity(activity);
-      }
-
-      // Devolver la actividad creada
       return {
         success: true,
-        activity,
+        activity: {
+          id: auditRecord.id,
+          ...activityData,
+          timestamp: auditRecord.timestamp,
+        },
       };
     } catch (error) {
       console.error('Error al crear actividad:', error);

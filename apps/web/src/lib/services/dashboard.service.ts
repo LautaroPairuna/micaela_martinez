@@ -153,7 +153,7 @@ class DashboardService {
   private async getRecentActivity(): Promise<ActivityItem[]> {
     try {
       // Obtener registros recientes de diferentes tablas
-      const [usuarios, cursos, productos, inscripciones, _sesiones] = await Promise.allSettled([
+      const [usuarios, cursos, productos, inscripciones] = await Promise.allSettled([
         adminApi.get<ListResponse<UnknownRec>>(
           '/admin/tables/Usuario/records?limit=3&orderBy=createdAt&order=desc',
         ),

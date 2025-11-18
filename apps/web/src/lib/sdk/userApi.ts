@@ -69,7 +69,7 @@ export type Favorito = {
 };
 
 export type FavoriteProduct = {
-  id: string; // id de producto
+  id: string | number;
   slug?: string;
   titulo?: string;
   precio?: number; // precio directo
@@ -81,7 +81,7 @@ export type FavoriteProduct = {
    - Tipo mínimo alineado a tu UI ProductCard
 ──────────────────────────── */
 export type ProductMinimal = {
-  id: string;
+  id: string | number;
   slug: string;
   titulo: string;
   precio: number; // precio directo
@@ -215,27 +215,23 @@ export function clearUserCache(): void {
    Perfil
 ──────────────────────────── */
 export async function getMe(opts?: NextOpts) {
-  // Verificar caché solo si no se fuerza no-cache
   if (opts?.cache !== 'no-store') {
     const cached = getCachedUser();
     if (cached) {
       return cached;
     }
   }
-  
-  const raw = await apiProxy<BackendMe>('/users/me', { ...opts, cache: 'no-store' });
-  
-  // Obtener el token de acceso de las cookies usando utilidades centralizadas
-  const accessToken = await getServerCookies();
-  
-  const user = adaptMe(raw, accessToken);
-  
-  // Cachear solo si no se fuerza no-cache
-  if (opts?.cache !== 'no-store') {
-    setCachedUser(user);
+  try {
+    const raw = await apiProxy<BackendMe>('/users/me', { ...opts, cache: 'no-store' });
+    const accessToken = await getServerCookies();
+    const user = adaptMe(raw, accessToken);
+    if (opts?.cache !== 'no-store') {
+      setCachedUser(user);
+    }
+    return user;
+  } catch {
+    return null;
   }
-  
-  return user;
 }
 
 /**
@@ -343,12 +339,12 @@ export async function listFavorites(opts?: NextOpts) {
   }
 }
 
-export async function addFavorite(productoId: string, opts?: NextOpts) {
-  if (!productoId || typeof productoId !== 'string' || productoId.trim() === '') {
+export async function addFavorite(productoId: string | number, opts?: NextOpts) {
+  const pid = String(productoId).trim();
+  if (!pid) {
     throw new Error('productoId debe ser un string válido');
   }
-  
-  const payload = { productoId: productoId.trim() };
+  const payload = { productoId: /^\d+$/.test(pid) ? Number(pid) : pid };
   
   // Usar el catchAll existente para evitar problemas de contenido mixto
   return fetch('/api/users/me/favorites', {
@@ -356,27 +352,31 @@ export async function addFavorite(productoId: string, opts?: NextOpts) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     ...opts,
-  }).then(res => {
-    if (!res.ok) throw new Error('Error al añadir favorito');
-    return undefined;
+  }).then(async res => {
+    if (res.ok) return undefined;
+    if (res.status === 409) return undefined;
+    const msg = await res.text().catch(() => '');
+    throw new Error(msg || 'Error al añadir favorito');
   }) as Promise<void>;
 }
 
-export async function removeFavorite(productoId: string, opts?: NextOpts) {
-  if (!productoId || typeof productoId !== 'string' || productoId.trim() === '') {
+export async function removeFavorite(productoId: string | number, opts?: NextOpts) {
+  const pid = String(productoId).trim();
+  if (!pid) {
     throw new Error('productoId debe ser un string válido');
   }
-  // Usar el catchAll existente para evitar problemas de contenido mixto
-  return fetch(`/api/users/me/favorites/${encodeURIComponent(productoId.trim())}`, {
+  return fetch(`/api/users/me/favorites/${encodeURIComponent(pid)}`, {
     method: 'DELETE',
     ...opts,
-  }).then(res => {
-    if (!res.ok) throw new Error('Error al eliminar favorito');
-    return undefined;
+  }).then(async res => {
+    if (res.ok) return undefined;
+    if (res.status === 404) return undefined;
+    const msg = await res.text().catch(() => '');
+    throw new Error(msg || 'Error al eliminar favorito');
   }) as Promise<void>;
 }
 
-export async function toggleFavorite(productoId: string, isFav: boolean, opts?: NextOpts) {
+export async function toggleFavorite(productoId: string | number, isFav: boolean, opts?: NextOpts) {
   return isFav ? removeFavorite(productoId, opts) : addFavorite(productoId, opts);
 }
 
@@ -415,7 +415,7 @@ async function getProductBySlug(slug: string, opts?: NextOpts): Promise<ProductM
   }
 }
 
-export async function listFavoriteProducts(opts?: NextOpts): Promise<ProductMinimal[]> {
+export async function listFavoriteProducts(): Promise<ProductMinimal[]> {
   try {
     // Forzamos no-cache para obtener datos actualizados
     const favs = await listFavorites({ cache: 'no-store' });
@@ -448,7 +448,7 @@ export async function listFavoriteProducts(opts?: NextOpts): Promise<ProductMini
       .filter((f) => !f.slug || !resolvedSlugs.has(f.slug))
       .map((f) => ({
         id: f.id,
-        slug: f.slug ?? f.id, // si no hay slug, usamos id como sustituto
+        slug: f.slug ?? String(f.id),
         titulo: f.titulo ?? 'Producto',
         precio: typeof f.precio === 'number' ? f.precio : 0,
         imagen: f.imagen ?? null,

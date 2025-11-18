@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { SearchBar } from '@/components/search/SearchBar';
 import { CartButton } from '@/components/cart/CartButton';
@@ -85,9 +85,8 @@ function HeaderInner() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { me, loading, setMe } = useSession();
+  const { me, loading } = useSession();
 
   // next= ruta + query actual
   const nextHref = useMemo(() => {
@@ -145,7 +144,6 @@ function HeaderInner() {
           <nav className="flex items-center gap-6 text-sm" aria-label="Principal">
             <NavLink href="/cursos" active={pathname.startsWith('/cursos')}>Cursos</NavLink>
             <NavLink href="/tienda" active={pathname.startsWith('/tienda')}>Tienda</NavLink>
-            <NavLink href="/ayuda"  active={pathname.startsWith('/ayuda')}>Ayuda</NavLink>
           </nav>
         </div>
 
@@ -252,7 +250,7 @@ function NavLink({ href, active, children }:{
       href={href}
       className={[
         'relative py-2 group',
-        'hover:text-[var(--gold-dark)] transition-colors',
+        'hover:text-[var(--pink-dark)] transition-colors',
         active ? 'text-[var(--gold-dark)]' : ''
       ].join(' ')}
     >
@@ -261,7 +259,7 @@ function NavLink({ href, active, children }:{
         aria-hidden
         className={[
           'absolute -bottom-0.5 left-0 h-[3px] rounded-full transition-all drop-shadow-[0_0_0.5px_rgba(0,0,0,.25)]',
-          active ? 'w-full bg-[var(--gold-strong)]' : 'w-0 bg-[var(--gold-strong)]/80 group-hover:w-full'
+          active ? 'w-full bg-[var(--gold-strong)]' : 'w-0 bg-[var(--pink-strong)]/80 group-hover:w-full'
         ].join(' ')}
       />
     </Link>
@@ -640,7 +638,7 @@ function MobilePanel({
         {/* Navegación principal alineada al estilo */}
         <nav className="px-6 py-4" aria-label="Principal">
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-[var(--gold)] uppercase tracking-wider px-4 py-2">
+            <h3 className="text-xs font-semibold text-[var(--pink)] uppercase tracking-wider px-4 py-2">
               Explorar
             </h3>
             <ul className="space-y-1">
@@ -652,18 +650,18 @@ function MobilePanel({
                     'flex items-center justify-between',
                     'px-4 py-4 rounded-xl',
                     'text-neutral-700 hover:text-neutral-900',
-                    'hover:bg-gradient-to-r hover:from-[var(--gold)]/10 hover:to-transparent',
+                    'hover:bg-gradient-to-r hover:from-[var(--pink)]/10 hover:to-transparent',
                     'transition-all duration-200',
-                    'group focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/50'
+                    'group focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/50'
                   ].join(' ')}
                 >
                   <span className="inline-flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] group-hover:bg-[var(--gold)]/20 transition-colors">
+                    <div className="p-2 rounded-lg bg-[var(--pink)]/10 text-[var(--pink)] group-hover:bg-[var(--pink)]/20 transition-colors">
                       <GraduationCap className="size-5" />
                     </div>
                     <span className="font-medium text-neutral-800">Cursos</span>
                   </span>
-                  <ChevronRight className="size-4 text-[var(--gold)]/60 group-hover:text-[var(--gold)] transition-colors" />
+                  <ChevronRight className="size-4 text-[var(--pink)]/60 group-hover:text-[var(--pink)] transition-colors" />
                 </Link>
               </li>
               <li>
@@ -726,9 +724,9 @@ function MobilePanel({
                 className={[
                   'inline-flex items-center gap-2 px-4 py-2',
                   'rounded-xl text-sm font-semibold',
-                  'text-neutral-700 hover:text-[var(--gold)]',
-                  'hover:bg-[var(--gold)]/10 transition-all duration-200',
-                  'focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/50'
+                  'text-neutral-700 hover:text-[var(--pink)]',
+                  'hover:bg-[var(--pink)]/10 transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/50'
                 ].join(' ')}
               >
                 <Instagram className="size-4" /> Instagram

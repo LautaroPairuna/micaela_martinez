@@ -14,7 +14,10 @@ export class SubscriptionController {
     @GetUser() user: Usuario,
     @Param('courseId') courseId: string,
   ) {
-    return this.subscriptionService.getSubscriptionInfo(String(user.id), courseId);
+    return this.subscriptionService.getSubscriptionInfo(
+      String(user.id),
+      courseId,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

@@ -77,8 +77,11 @@ export class AuditInterceptor implements NestInterceptor {
           if (finalRecordId) {
             try {
               // Validar userId antes de llamar al servicio de auditoría
-              const validUserId = userId && !isNaN(Number(userId)) && Number(userId) > 0 ? userId : 'system';
-              
+              const validUserId =
+                userId && !isNaN(Number(userId)) && Number(userId) > 0
+                  ? userId
+                  : 'system';
+
               await this.auditService.logCrudAction(
                 auditAction,
                 tableName,
@@ -91,7 +94,10 @@ export class AuditInterceptor implements NestInterceptor {
             } catch (error: unknown) {
               // Capturar errores específicos del servicio de auditoría
               const auditError = error as Error;
-              this.logger.error(`Error en auditoría: ${auditError.message || 'Error desconocido'}`, auditError);
+              this.logger.error(
+                `Error en auditoría: ${auditError.message || 'Error desconocido'}`,
+                auditError,
+              );
               // No propagamos el error para no afectar la operación principal
             }
           }
@@ -121,7 +127,7 @@ export class AuditInterceptor implements NestInterceptor {
     // El JWT strategy almacena el usuario con la propiedad 'sub'
     const user = (request as any).user;
     const userId = user?.sub;
-    
+
     // Debug log para identificar el problema
     if (user) {
       console.log('🔍 [AuditInterceptor] Usuario en request:', {
@@ -129,17 +135,22 @@ export class AuditInterceptor implements NestInterceptor {
         email: user.email,
         name: user.name,
         roles: user.roles,
-        fullUser: user
+        fullUser: user,
       });
     }
-    
+
     // Validar que el userId sea un número válido antes de devolverlo
     if (userId && !isNaN(Number(userId)) && Number(userId) > 0) {
       return String(userId);
     }
-    
+
     // Si no hay userId válido, devolver undefined para que no se audite
-    console.warn('⚠️ [AuditInterceptor] userId inválido:', userId, 'Usuario completo:', user);
+    console.warn(
+      '⚠️ [AuditInterceptor] userId inválido:',
+      userId,
+      'Usuario completo:',
+      user,
+    );
     return undefined;
   }
 

@@ -1,7 +1,7 @@
 // Configuración de filtros dinámicos por tabla
 import { LucideIcon } from 'lucide-react'
 import {
-  DollarSign, Package, Tag, Folder, FolderOpen, CheckCircle, Calendar,
+  DollarSign, Package, Tag, Folder, FolderOpen, CheckCircle,
   User, Mail, MapPin, Star, FileText,
   BookOpen, GraduationCap, Award, ShoppingCart, CreditCard
 } from 'lucide-react'

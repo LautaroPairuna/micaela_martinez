@@ -25,9 +25,14 @@ export class NotificationsService {
     setInterval(() => this.cleanupRateLimitCache(), 5 * 60 * 1000);
   }
 
-  async updateUserPreferences(usuarioId: string, updateDto: UpdateNotificationPreferencesDto) {
+  async updateUserPreferences(
+    usuarioId: string,
+    updateDto: UpdateNotificationPreferencesDto,
+  ) {
     try {
-      const preferences = await (this.prisma as any).preferenciasNotificacion.upsert({
+      const preferences = await (
+        this.prisma as any
+      ).preferenciasNotificacion.upsert({
         where: { usuarioId },
         update: {
           ...updateDto,
@@ -49,23 +54,29 @@ export class NotificationsService {
 
   async getNotificationStats() {
     try {
-      const [totalNotifications, unreadNotifications, recentNotifications] = await Promise.all([
-        this.prisma.notificacion.count(),
-        this.prisma.notificacion.count({ where: { leida: false } }),
-        this.prisma.notificacion.count({
-          where: {
-            creadoEn: {
-              gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Últimas 24 horas
+      const [totalNotifications, unreadNotifications, recentNotifications] =
+        await Promise.all([
+          this.prisma.notificacion.count(),
+          this.prisma.notificacion.count({ where: { leida: false } }),
+          this.prisma.notificacion.count({
+            where: {
+              creadoEn: {
+                gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Últimas 24 horas
+              },
             },
-          },
-        }),
-      ]);
+          }),
+        ]);
 
       return {
         totalNotifications,
         unreadNotifications,
         recentNotifications,
-        readRate: totalNotifications > 0 ? ((totalNotifications - unreadNotifications) / totalNotifications) * 100 : 0,
+        readRate:
+          totalNotifications > 0
+            ? ((totalNotifications - unreadNotifications) /
+                totalNotifications) *
+              100
+            : 0,
       };
     } catch (error) {
       console.error('Error getting notification stats:', error);
@@ -73,15 +84,21 @@ export class NotificationsService {
     }
   }
 
-  async notifyReviewLike(reviewId: string, likedByUserId: string, reviewAuthorId: string) {
+  async notifyReviewLike(
+    reviewId: string,
+    likedByUserId: string,
+    reviewAuthorId: string,
+  ) {
     if (likedByUserId === reviewAuthorId) return; // No notificar si el autor se da like a sí mismo
 
     try {
       const [likedByUser, review] = await Promise.all([
-        this.prisma.usuario.findUnique({ where: { id: Number(likedByUserId) } }),
-        this.prisma.resena.findUnique({ 
+        this.prisma.usuario.findUnique({
+          where: { id: Number(likedByUserId) },
+        }),
+        this.prisma.resena.findUnique({
           where: { id: Number(reviewId) },
-          include: { producto: { select: { titulo: true } } }
+          include: { producto: { select: { titulo: true } } },
         }),
       ]);
 
@@ -104,19 +121,25 @@ export class NotificationsService {
     }
   }
 
-  async notifyReviewResponse(responseId: string, respondedByUserId: string, originalReviewAuthorId: string) {
+  async notifyReviewResponse(
+    responseId: string,
+    respondedByUserId: string,
+    originalReviewAuthorId: string,
+  ) {
     if (respondedByUserId === originalReviewAuthorId) return; // No notificar si responde a su propia reseña
 
     try {
       const [respondedByUser, response] = await Promise.all([
-        this.prisma.usuario.findUnique({ where: { id: Number(respondedByUserId) } }),
-        this.prisma.resenaRespuesta.findUnique({ 
+        this.prisma.usuario.findUnique({
+          where: { id: Number(respondedByUserId) },
+        }),
+        this.prisma.resenaRespuesta.findUnique({
           where: { id: Number(responseId) },
-          include: { 
-            resena: { 
-              include: { producto: { select: { titulo: true } } }
-            }
-          }
+          include: {
+            resena: {
+              include: { producto: { select: { titulo: true } } },
+            },
+          },
         }),
       ]);
 
@@ -201,7 +224,10 @@ export class NotificationsService {
     options: { page: number; limit: number; onlyUnread: boolean },
   ) {
     const { page, limit, onlyUnread } = options;
-    const where = { usuarioId: Number(usuarioId), ...(onlyUnread && { leida: false }) };
+    const where = {
+      usuarioId: Number(usuarioId),
+      ...(onlyUnread && { leida: false }),
+    };
 
     const [notificaciones, total] = await this.prisma.$transaction([
       this.prisma.notificacion.findMany({

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { listEnrollments } from '@/lib/sdk/userApi';
 
 type LessonProgressMap = Record<string, boolean>;
@@ -80,7 +80,8 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
   const [courseModules, setCourseModules] = useState<Record<string, CourseModule[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  const getLessonProgressKey = (moduleId: string, lessonId: string) => `${moduleId}-${lessonId}`;
+  // Mantener referencias estables para evitar rerenders innecesarios
+  const getLessonProgressKey = useCallback((moduleId: string, lessonId: string) => `${moduleId}-${lessonId}`, []);
 
   const refreshEnrollments = async () => {
     try {
@@ -96,18 +97,18 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
     }
   };
 
-  const updateProgress = (courseId: string, moduleId: string, lessonId: string, completed: boolean) => {
+  const updateProgress = useCallback((courseId: string, moduleId: string, lessonId: string, completed: boolean) => {
     const key = getLessonProgressKey(moduleId, lessonId);
     setLessonProgress(prev => ({
       ...prev,
       [key]: completed
     }));
-  };
+  }, [getLessonProgressKey]);
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales una sola vez al montar
   useEffect(() => {
-    refreshEnrollments();
-  }, [updateProgress]);
+    void refreshEnrollments();
+  }, []);
 
   // Escuchar cambios de progreso desde otros componentes
   useEffect(() => {
@@ -121,7 +122,7 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
     return () => {
       window.removeEventListener('lesson-progress-updated', handleProgressUpdate as EventListener);
     };
-  }, []);
+  }, [updateProgress]);
 
   const value = useMemo<EnrollmentProgressContextType>(() => ({
     lessonProgress,
@@ -129,7 +130,7 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
     getLessonProgressKey,
     updateProgress,
     refreshEnrollments,
-  }), [lessonProgress, courseModules, updateProgress]);
+  }), [lessonProgress, courseModules, getLessonProgressKey, updateProgress]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Cargando progreso...</div>;

@@ -183,3 +183,46 @@ export async function safeGetProducts(params: Partial<ProductQuery> = {}) {
   try { return await getProducts(params); }
   catch (e) { console.error('getProducts failed:', e); return { items: [], meta: { page: 1, pages: 1 } } as ListResp<ProductListItem>; }
 }
+/**
+ * Estrategia robusta para productos: intenta con params y relaja filtros
+ * en caso de error del backend (500/TypeError), para no romper la UI.
+ */
+export async function safeGetProductsSmart(params: Partial<ProductQuery> = {}) {
+  const attempts: Partial<ProductQuery>[] = [
+    params,
+    { ...params, marca: undefined },
+    { ...params, categoria: undefined },
+    { ...params, marca: undefined, categoria: undefined },
+    { ...params, minPrice: undefined, maxPrice: undefined },
+    { q: params.q, sort: params.sort, page: params.page, perPage: params.perPage },
+  ];
+  for (const a of attempts) {
+    try {
+      const res = await getProducts(a);
+      try { Object.defineProperty(res as object, '__debug', { value: { usedParams: a }, enumerable: false }); } catch {}
+      return res;
+    } catch {
+      // silent fallback
+    }
+  }
+  return { items: [], meta: { page: 1, pages: 1 } } as ListResp<ProductListItem>;
+}
+export async function safeGetProductFacets(params: Partial<ProductQuery> = {}) {
+  const attempts: Partial<ProductQuery>[] = [
+    params,
+    { ...params, marca: undefined },
+    { ...params, categoria: undefined },
+    { ...params, minPrice: undefined, maxPrice: undefined },
+    { q: params.q },
+  ];
+  for (const a of attempts) {
+    try {
+      const res = await getProductFacets(a);
+      try { Object.defineProperty(res as object, '__debug', { value: { usedParams: a }, enumerable: false }); } catch {}
+      return res;
+    } catch {
+      // silent fallback
+    }
+  }
+  return { marcas: [], categorias: [] } as unknown;
+}
