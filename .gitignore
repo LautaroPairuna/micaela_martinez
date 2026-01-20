@@ -5,7 +5,8 @@ dist
 .env.*.local
 documentacion
 .backup/
-public/tpm/
+apps/api/public/tpm/
+apps/api/public/uploads/
 
 /generated/prisma
 
