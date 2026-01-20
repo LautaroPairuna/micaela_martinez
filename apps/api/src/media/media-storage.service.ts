@@ -4,7 +4,8 @@ import * as fs from 'fs/promises';
 import sharp from 'sharp';
 import { randomBytes } from 'crypto';
 
-import ffmpeg from 'fluent-ffmpeg';
+const ffmpeg = require('fluent-ffmpeg');
+
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { VideoProgressGateway } from './video-progress.gateway';
 
