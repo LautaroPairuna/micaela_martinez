@@ -53,6 +53,10 @@ export function useAuth() {
           isLoading: false,
           error: null
         });
+
+        // Sincronizar carrito
+        const { useCart } = await import('@/store/cart');
+        useCart.getState().syncWithBackend();
       } else {
         // Usuario no autenticado
         adminApi.clearToken();
@@ -134,6 +138,19 @@ export function useAuth() {
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
+      // Limpiar stores
+      try {
+        const { useFavorites } = await import('@/store/favorites');
+        const { useCheckout } = await import('@/store/checkout');
+        const { useCart } = await import('@/store/cart');
+        
+        useFavorites.getState().reset();
+        useCheckout.getState().reset();
+        useCart.getState().reset();
+      } catch (error) {
+        console.error('Error resetting stores:', error);
+      }
+
       // Limpiar estado local independientemente del resultado
       localStorage.removeItem('auth_token');
       // Limpiar posibles restos de sesión en storage

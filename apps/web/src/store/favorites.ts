@@ -3,6 +3,17 @@
 import { create } from 'zustand';
 import { addFavorite, removeFavorite, listFavorites } from '@/lib/sdk/userApi';
 
+function broadcastFavorites(ids: Array<string | number>) {
+  if (typeof window === 'undefined') return;
+  if (!('BroadcastChannel' in window)) return;
+  try {
+    const next = ids.map((id) => ({ id }));
+    const bc = new BroadcastChannel('favorites');
+    bc.postMessage({ type: 'set', next });
+    bc.close();
+  } catch {}
+}
+
 type FavoritesState = {
   favorites: Set<string>;
   isLoading: boolean;
@@ -10,6 +21,7 @@ type FavoritesState = {
   
   // Acciones
   setFavorites: (productIds: Array<string | number>) => void;
+  setFavoritesSilent: (productIds: Array<string | number>) => void;
   loadFavorites: (forceReload?: boolean) => Promise<void>;
   addToFavorites: (productId: string | number, productTitle: string) => Promise<void>;
   removeFromFavorites: (productId: string | number, productTitle: string) => Promise<void>;
@@ -24,6 +36,12 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
   isInitialized: false,
 
   setFavorites: (productIds: Array<string | number>) => {
+    const ids = productIds.map(id => String(id));
+    set({ favorites: new Set(ids), isInitialized: true });
+    broadcastFavorites(ids);
+  },
+
+  setFavoritesSilent: (productIds: Array<string | number>) => {
     const ids = productIds.map(id => String(id));
     set({ favorites: new Set(ids), isInitialized: true });
   },
@@ -54,6 +72,7 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
       });
       
       set({ favorites: new Set(productIds), isInitialized: true });
+      broadcastFavorites(productIds);
       console.log('✅ Favoritos cargados en store:', productIds.length);
     } catch (error) {
       // Si hay error (ej: usuario no autenticado), simplemente no cargamos favoritos
@@ -77,24 +96,12 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
       const newFavorites = new Set(favorites);
       newFavorites.add(pid);
       set({ favorites: newFavorites });
+      broadcastFavorites(Array.from(newFavorites));
       
-      // Importar dinámicamente react-toastify para evitar problemas de SSR
-      const { toast } = await import('react-toastify');
-      toast.success(`${productTitle} agregado a favoritos`, {
-        position: 'bottom-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // Feedback de UI lo maneja el hook/useToast en componentes
     } catch (error) {
       console.error('Error al agregar a favoritos:', error);
-      const { toast } = await import('react-toastify');
-      toast.error('Error al agregar a favoritos', {
-        position: 'bottom-right',
-        autoClose: 3000,
-      });
+      // Feedback de error lo maneja el hook/useToast en componentes
     } finally {
       set({ isLoading: false });
     }
@@ -111,23 +118,12 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
       const newFavorites = new Set(favorites);
       newFavorites.delete(pid);
       set({ favorites: newFavorites });
+      broadcastFavorites(Array.from(newFavorites));
       
-      const { toast } = await import('react-toastify');
-      toast.info(`${productTitle} eliminado de favoritos`, {
-        position: 'bottom-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // Feedback de UI lo maneja el hook/useToast en componentes
     } catch (error) {
       console.error('Error al eliminar de favoritos:', error);
-      const { toast } = await import('react-toastify');
-      toast.error('Error al eliminar de favoritos', {
-        position: 'bottom-right',
-        autoClose: 3000,
-      });
+      // Feedback de error lo maneja el hook/useToast en componentes
     } finally {
       set({ isLoading: false });
     }
@@ -149,5 +145,6 @@ export const useFavorites = create<FavoritesState>()((set, get) => ({
 
   reset: () => {
     set({ favorites: new Set(), isInitialized: false, isLoading: false });
+    broadcastFavorites([]);
   },
 }));

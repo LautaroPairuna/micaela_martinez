@@ -249,7 +249,7 @@ export function PaymentStep() {
                     }
                   }}
                   className={`w-full flex items-center justify-between p-4 text-left hover:bg-[var(--bg-secondary)] transition-colors ${
-                    isSelected ? 'bg-[var(--gold)]/10 border-l-4 border-l-[var(--gold)]' : 'bg-[var(--bg)]'
+                    isSelected ? 'bg-[var(--pink)]/10 border-l-4 border-l-[var(--pink)]' : 'bg-[var(--bg)]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -266,7 +266,7 @@ export function PaymentStep() {
                             {method.badge}
                           </span>
                         )}
-                        {isSelected && <CheckCircle className="h-4 w-4 text-[var(--gold)] ml-auto" />}
+                        {isSelected && <CheckCircle className="h-4 w-4 text-[var(--pink)] ml-auto" />}
                       </div>
                       <div className="text-sm text-[var(--muted)] mt-0.5">{method.description}</div>
                       {method.features && (
@@ -274,7 +274,7 @@ export function PaymentStep() {
                           <div className="text-xs text-[var(--muted)] space-y-1">
                             {method.features.slice(0, 2).map((feature, index) => (
                               <div key={index} className="flex items-center gap-1">
-                                <div className="w-1 h-1 rounded-full bg-[var(--gold)] flex-shrink-0"></div>
+                                <div className="w-1 h-1 rounded-full bg-[var(--pink)] flex-shrink-0"></div>
                                 {feature}
                               </div>
                             ))}

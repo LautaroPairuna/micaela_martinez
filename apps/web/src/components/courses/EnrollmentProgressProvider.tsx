@@ -16,6 +16,8 @@ type EnrollmentProgressContextType = {
   getLessonProgressKey: (moduleId: string, lessonId: string) => string;
   updateProgress: (courseId: string, moduleId: string, lessonId: string, completed: boolean) => void;
   refreshEnrollments: () => Promise<void>;
+  getCourseProgress: (courseId: string) => number;
+  getCourseProgressBySlug: (slug: string) => number;
 };
 
 const EnrollmentProgressContext = createContext<EnrollmentProgressContextType | null>(null);
@@ -24,6 +26,7 @@ function flattenEnrollmentProgress(enrollments: Array<{
   cursoId?: string | number;
   curso?: {
     id?: string | number;
+    slug?: string | null;
     modulos?: Array<{
       id: string | number;
       lecciones?: Array<{ id: string | number }>;
@@ -32,14 +35,18 @@ function flattenEnrollmentProgress(enrollments: Array<{
   progreso?: unknown;
 }>): { 
   lessonProgress: LessonProgressMap; 
-  courseModules: Record<string, CourseModule[]> 
+  courseModules: Record<string, CourseModule[]>; 
+  courseSlugToId: Record<string, string> 
 } {
   const lessonProgress: LessonProgressMap = {};
   const courseModules: Record<string, CourseModule[]> = {};
+  const courseSlugToId: Record<string, string> = {};
 
   enrollments.forEach((enrollment) => {
     const courseId = String(enrollment.cursoId || enrollment.curso?.id || '');
     if (!courseId) return;
+    const slugVal = enrollment.curso?.slug ? String(enrollment.curso.slug) : undefined;
+    if (slugVal) courseSlugToId[slugVal] = courseId;
 
     // Extraer módulos del curso si están disponibles
     if (enrollment.curso?.modulos) {
@@ -72,30 +79,32 @@ function flattenEnrollmentProgress(enrollments: Array<{
     }
   });
 
-  return { lessonProgress, courseModules };
+  return { lessonProgress, courseModules, courseSlugToId };
 }
 
 export function EnrollmentProgressProvider({ children }: { children: React.ReactNode }) {
   const [lessonProgress, setLessonProgress] = useState<LessonProgressMap>({});
   const [courseModules, setCourseModules] = useState<Record<string, CourseModule[]>>({});
+  const [courseSlugToId, setCourseSlugToId] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Mantener referencias estables para evitar rerenders innecesarios
   const getLessonProgressKey = useCallback((moduleId: string, lessonId: string) => `${moduleId}-${lessonId}`, []);
 
-  const refreshEnrollments = async () => {
+  const refreshEnrollments = useCallback(async () => {
     try {
       setIsLoading(true);
       const enrollments = await listEnrollments();
-      const { lessonProgress: newProgress, courseModules: newModules } = flattenEnrollmentProgress(enrollments);
+      const { lessonProgress: newProgress, courseModules: newModules, courseSlugToId: slugMap } = flattenEnrollmentProgress(enrollments);
       setLessonProgress(newProgress);
       setCourseModules(newModules);
+      setCourseSlugToId(slugMap);
     } catch (error) {
       console.error('Error refreshing enrollments:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const updateProgress = useCallback((courseId: string, moduleId: string, lessonId: string, completed: boolean) => {
     const key = getLessonProgressKey(moduleId, lessonId);
@@ -108,7 +117,7 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
   // Cargar datos iniciales una sola vez al montar
   useEffect(() => {
     void refreshEnrollments();
-  }, []);
+  }, [refreshEnrollments]);
 
   // Escuchar cambios de progreso desde otros componentes
   useEffect(() => {
@@ -130,7 +139,46 @@ export function EnrollmentProgressProvider({ children }: { children: React.React
     getLessonProgressKey,
     updateProgress,
     refreshEnrollments,
-  }), [lessonProgress, courseModules, getLessonProgressKey, updateProgress]);
+    getCourseProgress: (courseId: string) => {
+      const mods = courseModules[courseId] || [];
+      let total = 0;
+      let done = 0;
+      for (const m of mods) {
+        const lessons = m.lecciones || [];
+        total += lessons.length;
+        for (const l of lessons) {
+          const key = getLessonProgressKey(m.id, l.id);
+          if (lessonProgress[key]) done += 1;
+        }
+      }
+      if (total <= 0) return 0;
+      return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+    },
+    getCourseProgressBySlug: (slug: string) => {
+      const id = courseSlugToId[slug];
+      if (!id) return 0;
+      const mods = courseModules[id] || [];
+      let total = 0;
+      let done = 0;
+      for (const m of mods) {
+        const lessons = m.lecciones || [];
+        total += lessons.length;
+        for (const l of lessons) {
+          const key = getLessonProgressKey(m.id, l.id);
+          if (lessonProgress[key]) done += 1;
+        }
+      }
+      if (total <= 0) return 0;
+      return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+    },
+  }), [
+    lessonProgress,
+    courseModules,
+    getLessonProgressKey,
+    updateProgress,
+    refreshEnrollments,
+    courseSlugToId,
+  ]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">Cargando progreso...</div>;
@@ -149,4 +197,8 @@ export function useEnrollmentProgress(): EnrollmentProgressContextType {
     throw new Error('useEnrollmentProgress must be used within EnrollmentProgressProvider');
   }
   return ctx;
+}
+
+export function useEnrollmentProgressSafe(): EnrollmentProgressContextType | null {
+  return useContext(EnrollmentProgressContext);
 }

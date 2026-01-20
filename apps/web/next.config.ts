@@ -23,12 +23,21 @@ const nextConfig: NextConfig = {
   // 3) Images: evitar throw si la URL no es válida
   images: {
     unoptimized: true,
-    domains: ['localhost', U.hostname],
     remotePatterns: [
       {
         protocol: U.protocol.replace(':', '') as 'http' | 'https',
         hostname: U.hostname,
         port: U.port || undefined,
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost',
         pathname: '/**',
       },
     ],
@@ -46,6 +55,7 @@ const nextConfig: NextConfig = {
       { source: `${IMAGE_PUBLIC_URL}/:path*`,   destination: `${U.origin}${IMAGE_PUBLIC_URL}/:path*` },
       { source: `${DOC_PUBLIC_URL}/:path*`,     destination: `${U.origin}${DOC_PUBLIC_URL}/:path*` },
       { source: '/uploads/:path*',              destination: `${U.origin}/uploads/:path*` },
+      { source: '/api/media/uploads/:path*',              destination: `${U.origin}/uploads/:path*` },
       { source: '/static/:path*',               destination: `${U.origin}/static/:path*` },
       { source: '/files/:path*',                destination: `${U.origin}/files/:path*` },
       { source: '/videos/:path*',               destination: `${U.origin}/videos/:path*` },

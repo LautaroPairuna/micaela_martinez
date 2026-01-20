@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Producto } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CacheService } from '../common/cache/cache.service';
 import { QueryProductDto } from './dto/query-product.dto';
@@ -101,7 +101,6 @@ export class ProductsService {
       ...(priceFilter ? { precio: priceFilter } : {}),
     };
 
-
     const [items, total] = await this.prisma.$transaction([
       this.prisma.producto.findMany({
         where,
@@ -149,7 +148,6 @@ export class ProductsService {
       items: transformedItems,
       meta: { total, page, perPage, pages: Math.ceil(total / perPage!) },
     };
-
 
     // ✅ Guardar resultado en caché (TTL: 5 minutos para catálogo público)
     this.cacheService.set(cacheKey, result, 300000);
@@ -202,7 +200,6 @@ export class ProductsService {
       else whereForCategories.marcaId = -1; // Usando -1 en lugar de '__none__'
     }
 
-
     const byBrand = await this.prisma.producto.groupBy({
       by: ['marcaId'],
       where: whereForBrands,
@@ -249,8 +246,32 @@ export class ProductsService {
       }))
       .sort((a, b) => b.count - a.count);
 
+    // Rango de precios (respetando filtros de marca/cat pero ignorando precio)
+    const whereForPrice: Prisma.ProductoWhereInput = {
+      publicado: true,
+      ...(q ? { titulo: { contains: q } } : {}),
+    };
+    // Reutilizamos la lógica de resolución de IDs que ya se hizo (aunque parcialmente en bloques if).
+    // Para ser robustos y evitar duplicar lógica compleja, usamos lo que ya tenemos en whereForBrands/Categories
+    if (whereForBrands.categoriaId)
+      whereForPrice.categoriaId = whereForBrands.categoriaId;
+    if (whereForCategories.marcaId)
+      whereForPrice.marcaId = whereForCategories.marcaId;
 
-    return { marcas: brandFacets, categorias: categoryFacets };
+    const priceAgg = await this.prisma.producto.aggregate({
+      where: whereForPrice,
+      _min: { precio: true },
+      _max: { precio: true },
+    });
+
+    return {
+      marcas: brandFacets,
+      categorias: categoryFacets,
+      price: {
+        min: priceAgg._min.precio ?? 0,
+        max: priceAgg._max.precio ?? 0,
+      },
+    };
   }
 
   async bySlug(slug: string) {

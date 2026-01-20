@@ -5,7 +5,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin'
 
 export default defineConfig([
   {
-    ignores: ['node_modules', '.next', 'dist', 'build', 'out'],
+    ignores: ['node_modules/**', '.next/**', 'dist/**', 'build/**', 'out/**'],
     files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       ecmaVersion: 2023,

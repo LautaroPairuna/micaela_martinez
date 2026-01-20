@@ -116,6 +116,8 @@ export default function DireccionesPage() {
         title="Mis Direcciones"
         description="Administrá tus direcciones de facturación para facilitar tus compras"
         icon={MapPin}
+        iconBg="bg-transparent border border-[var(--pink)]/40"
+        iconColor="text-[var(--pink)]"
         stats={[
           {
             label: "Total de direcciones",
@@ -203,7 +205,7 @@ export default function DireccionesPage() {
                       <div className="flex gap-2">
                         {!d.predeterminada && (
                           <button 
-                            className="p-2 text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)]"
+                            className="p-2 text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
                             onClick={() => onPredeterminar(d)}
                             title="Marcar como predeterminada"
                           >
@@ -212,7 +214,7 @@ export default function DireccionesPage() {
                         )}
                         <button 
                           onClick={() => onDelete(d.id)}
-                          className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200 border border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700"
+                          className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200 border border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
                           title="Eliminar dirección"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -321,7 +323,7 @@ export default function DireccionesPage() {
                   <Button 
                     type="submit" 
                     disabled={saving}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-50"
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40 disabled:opacity-50"
                   >
                     {saving ? (
                       <>
@@ -339,7 +341,7 @@ export default function DireccionesPage() {
                     type="button" 
                     variant="outline"
                     onClick={() => reset()}
-                    className="px-6 py-2.5 rounded-xl transition-all duration-200"
+                    className="px-6 py-2.5 rounded-xl transition-all duration-200 border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)] hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
                   >
                     Limpiar
                   </Button>

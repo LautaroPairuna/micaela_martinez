@@ -2,5 +2,11 @@ node_modules
 dist
 .next
 .env
+.backup
 .env.*.local
 documentacion
+apps/api/public/uploads/tmp/
+apps/api/public/uploads/
+apps/api/public/uploads/media/
+
+/generated/prisma

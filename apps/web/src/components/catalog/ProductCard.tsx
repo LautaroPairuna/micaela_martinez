@@ -40,7 +40,7 @@ function resolveProductThumb(src?: string | null): string | undefined {
   if (src.startsWith('/images/')) {
     // Si no tiene /thumbs/ en el tramo de la carpeta, lo insertamos
     // /images/<folder>/[thumbs/]filename
-    if (!/\/images\/[^/]+\/thumbs\//.test(src)) {
+    if (!/\/images\/[^/]+\//.test(src)) {
       return src.replace(/^\/images\/([^/]+)\//, '/images/$1/thumbs/');
     }
     return src;
@@ -57,7 +57,7 @@ function resolveProductThumb(src?: string | null): string | undefined {
   }
 
   // Solo filename → asumir carpeta 'producto'
-  return `/images/producto/thumbs/${src}`;
+  return `/images/producto/${src}`;
 }
 
 /** Para casos donde quieras el original (detalle de producto, zoom, etc.) */

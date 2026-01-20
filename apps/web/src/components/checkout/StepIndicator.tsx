@@ -52,15 +52,12 @@ export function StepIndicator() {
                 {/* Icono */}
                 <div
                   className={cn(
-                    'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-200',
+                    'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-200 ease-out',
                     {
-                      // Estado activo
-                      'bg-[var(--gold)] border-[var(--gold)] text-black': isActive,
-                      // Estado completado
-                      'bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]': isCompleted || isPast,
-                      // Estado pendiente
-                      'bg-[var(--subtle)] border-[var(--border)] text-[var(--muted)]': !isActive && !isCompleted && !isPast,
-                      // Cursor pointer si es accesible
+                      'bg-[var(--pink)] border-[var(--pink)] text-black': isActive,
+                      'bg-[var(--pink)]/10 border-[var(--pink)] text-[var(--pink)]': isCompleted,
+                      'bg-[var(--subtle)] border-[var(--pink)] text-[var(--pink)]/70': isPast && !isCompleted,
+                      'bg-[var(--subtle)] border-[var(--border)] text-[var(--muted)]': !isActive && !isPast && !isCompleted,
                       'cursor-pointer hover:scale-105': isAccessible,
                     }
                   )}
@@ -70,7 +67,7 @@ export function StepIndicator() {
                     }
                   }}
                 >
-                  {isCompleted || isPast ? (
+                  {isCompleted ? (
                     <CheckCircle className="w-6 h-6" />
                   ) : (
                     <Icon className="w-6 h-6" />
@@ -81,11 +78,12 @@ export function StepIndicator() {
                 <div className="mt-3 text-center">
                   <div
                     className={cn(
-                      'text-sm font-medium transition-colors',
+                      'text-sm font-medium transition-colors ease-out',
                       {
                         'text-[var(--fg)]': isActive,
-                        'text-[var(--gold)]': isCompleted || isPast,
-                        'text-[var(--muted)]': !isActive && !isCompleted && !isPast,
+                        'text-[var(--pink)]': isCompleted,
+                        'text-[var(--pink)]/70': isPast && !isCompleted,
+                        'text-[var(--muted)]': !isActive && !isPast && !isCompleted,
                       }
                     )}
                   >
@@ -102,9 +100,9 @@ export function StepIndicator() {
                 <div className="flex-1 mx-4 mt-[-2rem]">
                   <div
                     className={cn(
-                      'h-0.5 transition-colors duration-200',
+                      'h-0.5 transition-colors duration-200 ease-out',
                       {
-                        'bg-[var(--gold)]': index < currentStepIndex,
+                        'bg-[var(--pink)]': index < currentStepIndex,
                         'bg-[var(--border)]': index >= currentStepIndex,
                       }
                     )}
@@ -124,7 +122,7 @@ export function StepIndicator() {
         </div>
         <div className="mt-2 w-full bg-[var(--border)] rounded-full h-2">
           <div
-            className="bg-[var(--gold)] h-2 rounded-full transition-all duration-300"
+            className="bg-[var(--pink)] h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
           />
         </div>

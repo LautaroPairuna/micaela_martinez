@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { UsuarioMe } from '@/lib/sdk/userApi';
 import { clearUserCache } from '@/lib/sdk/userApi';
+import { useCart } from '@/store/cart';
 
 type AuthContextType = {
   user: UsuarioMe | null;
@@ -44,6 +45,11 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
       // Actualizar el estado con los nuevos datos
       setUser(userData?.data || userData || null);
       console.log('Usuario actualizado:', userData?.data || userData);
+
+      // Sincronizar carrito si hay usuario
+      if (userData?.data || userData) {
+        useCart.getState().syncWithBackend();
+      }
     } catch (error) {
       // Manejar específicamente errores de autenticación (401)
       if (error instanceof Error && error.message.includes('HTTP 401')) {
@@ -81,6 +87,11 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
           setUser(userData?.data || userData || null);
           setInitialized(true);
           console.log('Sesión inicializada con usuario:', userData?.data || userData);
+
+          // Sincronizar carrito si hay usuario
+          if (userData?.data || userData) {
+            useCart.getState().syncWithBackend();
+          }
         }
       } catch (error) {
         // Manejar específicamente errores de autenticación (401)

@@ -80,8 +80,8 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
 
       <PageHeader
         icon={GraduationCap}
-        iconBg="bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)]"
-        iconColor="text-black"
+        iconBg="bg-transparent border border-[var(--pink)]/40"
+        iconColor="text-[var(--pink)]"
         title="Mi Aprendizaje"
         description={
           initialRows.length > 0

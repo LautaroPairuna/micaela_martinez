@@ -4,29 +4,7 @@ import Link from 'next/link';
 import { Menu, X, ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatDuration } from '@/lib/utils';
-
-type Course = {
-  id: string;
-  titulo: string;
-  slug?: string;
-  instructor?: {
-    id: string;
-    nombre: string;
-  } | null;
-};
-
-type Module = {
-  id: string;
-  titulo: string;
-  orden: number;
-};
-
-type Lesson = {
-  id: string;
-  titulo: string;
-  duracionS?: number | null;
-  orden: number;
-};
+import type { Course, Lesson, Module } from '@/types/course';
 
 type CourseHeaderProps = {
   course: Course;

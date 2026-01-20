@@ -6,9 +6,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo run dev --parallel",
+    "dev:web": "pnpm --filter @app/web dev",
+    "dev:api": "pnpm --filter @app/api dev",
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
+    "lint:web": "pnpm --filter @app/web lint",
+    "lint:api": "pnpm --filter @app/api lint",
     "build:api": "turbo run build --filter=@app/api",
     "build:web": "turbo run build --filter=@app/web",
     "start:api": "turbo run start --filter=@app/api",

@@ -9,6 +9,8 @@ export function PriceFilterClient({
   sort,
   minPrice,
   maxPrice,
+  placeholderMin,
+  placeholderMax,
 }: {
   categoria?: string;
   marca?: string;
@@ -16,6 +18,8 @@ export function PriceFilterClient({
   sort: string | null;
   minPrice?: number;
   maxPrice?: number;
+  placeholderMin?: number;
+  placeholderMax?: number;
 }) {
   const [minV, setMinV] = useState<string>(minPrice != null ? String(minPrice) : '');
   const [maxV, setMaxV] = useState<string>(maxPrice != null ? String(maxPrice) : '');
@@ -40,8 +44,9 @@ export function PriceFilterClient({
         inputMode="numeric"
         pattern="[0-9]*"
         value={minV}
+        placeholder={placeholderMin != null ? String(placeholderMin) : undefined}
         onChange={(e) => setMinV(e.target.value)}
-        className="w-full rounded-xl2 border border-default bg-[var(--bg)] text-[var(--fg)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pink)]"
+        className="w-full rounded-xl2 border border-default bg-[var(--bg)] text-[var(--fg)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pink)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
 
       <label className="text-xs font-medium text-[color:var(--fg)]">Máx. precio (ARS)</label>
@@ -53,8 +58,9 @@ export function PriceFilterClient({
         inputMode="numeric"
         pattern="[0-9]*"
         value={maxV}
+        placeholder={placeholderMax != null ? String(placeholderMax) : undefined}
         onChange={(e) => setMaxV(e.target.value)}
-        className="w-full rounded-xl2 border border-default bg-[var(--bg)] text-[var(--fg)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pink)]"
+        className="w-full rounded-xl2 border border-default bg-[var(--bg)] text-[var(--fg)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pink)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
 
       <button

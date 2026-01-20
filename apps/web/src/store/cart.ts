@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { cartApi } from '@/lib/sdk/cartApi';
 
 export type CartKind = 'product' | 'course';
 
@@ -28,7 +29,7 @@ export type CartLineCourse = {
 
 export type CartLine = CartLineProduct | CartLineCourse;
 
-type CartState = {
+export type CartState = {
   items: CartLine[];
   isOpen: boolean;
   hydrated: boolean;
@@ -46,6 +47,8 @@ type CartState = {
   decrease: (id: string) => void;
   addProduct: (line: Omit<CartLineProduct, 'type' | 'quantity'> & { quantity?: number }) => Promise<void>;
   addCourse: (line: Omit<CartLineCourse, 'type' | 'quantity'>) => Promise<void>;
+  syncWithBackend: () => Promise<void>;
+  reset: () => void;
 };
 
 export const useCart = create<CartState>()(
@@ -59,18 +62,46 @@ export const useCart = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set({ isOpen: !get().isOpen }),
 
-      clear: () => set({ items: [] }),
-      remove: (id, type) => set({ items: get().items.filter(i => !(i.id === id && i.type === type)) }),
+      syncWithBackend: async () => {
+        try {
+          // Sincronizar estado actual con backend
+          // El backend hace merge y devuelve el estado final
+          const { items } = get();
+          console.log('[CartStore] Syncing with backend...', items);
+          const mergedItems = await cartApi.syncCart(items);
+          console.log('[CartStore] Sync success, merged items:', mergedItems);
+          set({ items: mergedItems, hydrated: true });
+        } catch (error) {
+          console.error('[CartStore] Sync cart failed:', error);
+          // Si falla, al menos marcamos como hidratado para no bloquear UI si dependiera de ello
+          set({ hydrated: true });
+        }
+      },
+
+      clear: () => {
+        set({ items: [] });
+        cartApi.clearCart().catch(() => {});
+      },
+      reset: () => set({ items: [] }),
+      remove: (id, type) => {
+        set({ items: get().items.filter(i => !(i.id === id && i.type === type)) });
+        cartApi.removeItem(type, id).catch(() => {});
+      },
 
       setQty: (id, qty) => {
         if (qty < 1 || !Number.isFinite(qty)) return;
-        set({
-          items: get().items.map(i =>
-            i.type === 'product' && i.id === id
-              ? { ...i, quantity: Math.max(1, Math.min(qty, i.maxQty ?? 99)) }
-              : i
-          ),
-        });
+        const nextItems = get().items.map(i =>
+          i.type === 'product' && i.id === id
+            ? { ...i, quantity: Math.max(1, Math.min(qty, i.maxQty ?? 99)) }
+            : i
+        );
+        set({ items: nextItems });
+
+        // Sincronizar el item modificado
+        const updatedItem = nextItems.find(i => i.id === id && i.type === 'product');
+        if (updatedItem) {
+          cartApi.syncCart([updatedItem]).catch(() => {});
+        }
       },
       increase: (id) => {
         const it = get().items.find(i => i.id === id && i.type === 'product') as CartLineProduct | undefined;
@@ -144,6 +175,12 @@ export const useCart = create<CartState>()(
             console.error('Error al mostrar toast:', error);
           }
         }
+
+        // Sincronizar con backend
+        const finalItem = get().items.find(i => i.type === 'product' && i.id === line.id);
+        if (finalItem) {
+          cartApi.syncCart([finalItem]).catch(() => {});
+        }
       },
 
       addCourse: async (line) => {
@@ -198,6 +235,12 @@ export const useCart = create<CartState>()(
           } catch (error) {
             console.error('Error al mostrar toast:', error);
           }
+        }
+
+        // Sincronizar con backend
+        const finalItem = get().items.find(i => i.type === 'course' && i.id === line.id);
+        if (finalItem) {
+             cartApi.syncCart([finalItem]).catch(() => {});
         }
       },
     }),

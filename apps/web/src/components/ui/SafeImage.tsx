@@ -145,7 +145,10 @@ export function SafeImage({
         fill
         sizes={sizes}
         priority={priority}
-        onError={() => setErr(true)}
+        onError={() => {
+          setErr(true);
+          setLoaded(true); // Aseguramos que se muestre el placeholder si falla
+        }}
         onLoad={() => setLoaded(true)}
         draggable={false}
         suppressHydrationWarning

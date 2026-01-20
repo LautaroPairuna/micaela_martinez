@@ -52,6 +52,13 @@ export default async function LessonPage({
 }) {
   const { slug, modulo, leccion } = await params;
 
+  const isNextRedirect = (err: unknown): err is { digest: string } => {
+    if (!err || typeof err !== 'object') return false;
+    if (!('digest' in err)) return false;
+    const digest = (err as { digest?: unknown }).digest;
+    return typeof digest === 'string' && digest.startsWith('NEXT_REDIRECT');
+  };
+
   try {
     // Validar que el curso existe
     const course = await getCourseBySlug(slug);
@@ -135,6 +142,7 @@ export default async function LessonPage({
       </div>
     );
   } catch (error) {
+    if (isNextRedirect(error)) throw error;
     console.error('Error in lesson page:', error);
     notFound();
   }

@@ -137,6 +137,8 @@ export default function PedidosPage() {
         title="Mis Pedidos"
         description="Historial completo de tus compras y estado de pedidos"
         icon={ShoppingBag}
+        iconBg="bg-transparent border border-[var(--pink)]/40"
+        iconColor="text-[var(--pink)]"
         stats={[
           {
             label: "Total de pedidos",
@@ -264,10 +266,10 @@ export default function PedidosPage() {
                     
                     {/* Acciones */}
                     <div className="flex gap-2">
-                      <button onClick={() => handleOpenModal(o)} className="px-4 py-2 text-sm font-bold text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)]">
+                      <button onClick={() => handleOpenModal(o)} className="px-4 py-2 text-sm font-bold text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10 rounded-xl transition-all duration-200 border border-[var(--gold)]/30 hover:border-[var(--gold)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40">
                         Ver detalles
                       </button>
-                      <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)] rounded-xl transition-all duration-200 border border-[var(--pink)]/30 hover:border-[var(--pink)] flex items-center gap-2">
+                      <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)] rounded-xl transition-all duration-200 border border-[var(--pink)]/30 hover:border-[var(--pink)] flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40">
                         <RotateCcw className="h-4 w-4 text-[var(--pink)]" />
                         Repetir
                       </button>

@@ -68,6 +68,19 @@ function validateUserAgent(req: NextRequest): boolean {
   return ok.some(x => ua.includes(x));
 }
 
+function isDirectNavigation(req: NextRequest): boolean {
+  const accept = (req.headers.get('accept') || '').toLowerCase();
+  if (accept.includes('text/html')) return true;
+
+  const mode = (req.headers.get('sec-fetch-mode') || '').toLowerCase();
+  if (mode === 'navigate') return true;
+
+  const dest = (req.headers.get('sec-fetch-dest') || '').toLowerCase();
+  if (dest === 'document') return true;
+
+  return false;
+}
+
 function getMimeType(filename: string): string {
   const ext = filename.toLowerCase().split('.').pop();
   switch (ext) {
@@ -141,6 +154,10 @@ async function proxyFromBackend(req: NextRequest, filename: string): Promise<Nex
     if (pass.includes(k.toLowerCase())) outHeaders.set(k, v);
   }
 
+  outHeaders.set('Cache-Control', 'private, no-store');
+  outHeaders.set('X-Content-Type-Options', 'nosniff');
+  outHeaders.set('Cross-Origin-Resource-Policy', 'same-origin');
+
   return new NextResponse(beRes.body, {
     status: beRes.status,
     headers: outHeaders,
@@ -158,6 +175,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     // Anti-abuso
     if (!validateOrigin(req))    return new NextResponse('Forbidden (origin)', { status: 403 });
     if (!validateUserAgent(req)) return new NextResponse('Forbidden (ua)', { status: 403 });
+    if (isDirectNavigation(req)) return new NextResponse('Forbidden (direct navigation)', { status: 403 });
 
     // Sesión
     const session = await validateSession();
@@ -198,6 +216,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
           'Content-Type': mime,
           'Cache-Control': 'private, no-store',
           'X-Content-Type-Options': 'nosniff',
+          'Cross-Origin-Resource-Policy': 'same-origin',
         },
       });
     }
@@ -211,6 +230,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         'Accept-Ranges': 'bytes',
         'Cache-Control': 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
+        'Cross-Origin-Resource-Policy': 'same-origin',
       },
     });
   } catch (err) {
@@ -278,4 +298,3 @@ export async function HEAD(req: NextRequest, ctx: Ctx) {
     return new NextResponse(null, { status: 200 }); // HEAD nunca debería romper carga del <video>
   }
 }
-

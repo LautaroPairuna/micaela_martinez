@@ -1,72 +1,99 @@
-// Rutas "públicas" que tu UI usa para armar URLs.
-// Ojo: IMAGE_PUBLIC_URL lo dejamos en /images porque lo sirves estático desde el back.
-// Para contenidos protegidos (video/doc) se usa /api/media/*
+// apps/web/src/lib/adminConstants.ts
 
-export const IMAGE_PUBLIC_URL = '/images';     // p.ej. /images/producto/slug/archivo.jpg
-export const MEDIA_PUBLIC_URL = '/api/media';  // base para /api/media/videos|docs|images
-export const DOC_PUBLIC_URL   = '/docs';       // si además sirves PDFs públicos
+/**
+ * Rutas "lindas" que usa el FRONT.
+ *
+ * Next las reescribe hacia el backend con rewrites:
+ *
+ *  /images/:path*      →  BACKEND /api/media/images/images/:path*
+ *  /docs/:path*        →  BACKEND /api/media/documents/:path*
+ *  /videos/:path*      →  BACKEND /api/media/videos/:path*
+ *  /thumbnails/:path*  →  BACKEND /api/media/thumbnails/:path*
+ */
 
-// Útil por si querés construir URLs absolutas al backend en alguna circunstancia
+// FRONT: rutas que usás en <img src="...">, <video src="...">, etc.
+export const IMAGE_PUBLIC_URL = '/images';
+export const DOC_PUBLIC_URL = '/docs';
+export const VIDEO_PUBLIC_URL = '/videos';
+export const THUMBNAIL_PUBLIC_URL = '/thumbnails';
+
+// Base genérica por si la necesitás
+export const MEDIA_PUBLIC_URL = '/api/media';
+
+/**
+ * URL absoluta del backend (por si necesitás construir links directos
+ * a la API, no para assets estáticos).
+ */
 function computeBackendUrl(): string {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
   if (backendUrl) {
     return backendUrl.replace(/\/+$/, '');
   }
-  
-  // Fallback para desarrollo local
+
   const fallback = 'http://localhost:3001';
-  console.warn(`[ADMIN-CONSTANTS] NEXT_PUBLIC_BACKEND_URL no definido, usando fallback: ${fallback}`);
+  console.warn(
+    `[ADMIN-CONSTANTS] NEXT_PUBLIC_BACKEND_URL no definido, usando fallback: ${fallback}`,
+  );
   return fallback;
 }
 
 export const BACKEND_URL = computeBackendUrl();
 
 /**
- * Mapeo específico para tablas que manejan archivos
- * (usado principalmente para el sistema de imágenes y uploads)
+ * Mapeo lógico de carpetas por recurso (útil para construir paths)
+ * OJO: esto es "lógico", no la ruta completa en disco.
  */
 export const folderNames = {
-  /** Productos - carpeta: /images/producto/ */
   Producto: 'producto',
-  /** Imágenes de productos - carpeta: /images/producto-imagenes/ */
   ProductoImagen: 'producto-imagenes',
-  /** Usuarios - carpeta: /images/usuario/ */
   Usuario: 'usuario',
-  /** Cursos - carpeta: /images/cursos/ */
   Curso: 'cursos',
-  /** Lecciones - carpeta: /videos/leccion/ */
   Leccion: 'leccion',
-  /** Marcas - carpeta: /images/marcas/ */
   Marca: 'marcas',
-  /** Categorías - carpeta: /images/categorias/ */
   Categoria: 'categorias',
 } as const;
 
-// Alias para mantener compatibilidad con código existente
 export const allFolderNames = folderNames;
 
-/**
- * Extensiones de archivos de imagen soportadas
- */
-const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif'];
+/* ---- helpers de tipo de archivo ---- */
 
-/**
- * Extensiones de archivos de video soportadas
- */
-const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.3gp', '.m4v', '.mpg', '.mpeg'];
+const IMAGE_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.bmp',
+  '.tiff',
+  '.tif',
+];
 
-/**
- * Verifica si un archivo es una imagen basándose en su extensión
- */
+const VIDEO_EXTENSIONS = [
+  '.mp4',
+  '.webm',
+  '.ogg',
+  '.avi',
+  '.mov',
+  '.wmv',
+  '.flv',
+  '.mkv',
+  '.3gp',
+  '.m4v',
+  '.mpg',
+  '.mpeg',
+];
+
 export function isImageFile(filePath: string): boolean {
-  const extension = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+  const dotIndex = filePath.lastIndexOf('.');
+  if (dotIndex === -1) return false;
+  const extension = filePath.substring(dotIndex).toLowerCase();
   return IMAGE_EXTENSIONS.includes(extension);
 }
 
-/**
- * Verifica si un archivo es un video basándose en su extensión
- */
 export function isVideoFile(filePath: string): boolean {
-  const extension = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+  const dotIndex = filePath.lastIndexOf('.');
+  if (dotIndex === -1) return false;
+  const extension = filePath.substring(dotIndex).toLowerCase();
   return VIDEO_EXTENSIONS.includes(extension);
 }

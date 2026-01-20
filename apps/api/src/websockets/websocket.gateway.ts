@@ -44,7 +44,7 @@ export class WebsocketGateway
       this.logger.warn('⚠️ Server.engine no está disponible en afterInit');
 
       // Configurar listeners cuando el engine esté disponible
-      server.on('connection', (socket) => {
+      server.on('connection', () => {
         this.logger.log(
           '🔌 Nueva conexión detectada en server.on("connection")',
         );

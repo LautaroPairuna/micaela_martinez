@@ -89,7 +89,7 @@ export default function FavoritosPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-[var(--gold)] via-[var(--gold-200)] to-[var(--gold-300)] shadow-xl">
+        <div className="p-4 rounded-2xl bg-transparent border border-[var(--pink)]/40 shadow-xl">
           <Heart className="h-8 w-8 text-[var(--pink)]" />
         </div>
         <div>
@@ -209,7 +209,7 @@ export default function FavoritosPage() {
                     <Link href={`/tienda/${product.slug}`}>
                       <Button 
                         variant="outline" 
-                        className="px-3 py-2.5 border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200 rounded-lg"
+                        className="px-3 py-2.5 border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)]/10 hover:border-[var(--pink)] hover:text-[var(--pink)] transition-all duration-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>

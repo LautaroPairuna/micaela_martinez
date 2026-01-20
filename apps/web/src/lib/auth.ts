@@ -158,15 +158,16 @@ export async function logout() {
     // Importar dinámicamente para evitar problemas de SSR
     const { useFavorites } = await import('@/store/favorites');
     const { useCheckout } = await import('@/store/checkout');
+    const { useCart } = await import('@/store/cart');
     
     // Limpiar favoritos (datos específicos del usuario)
     useFavorites.getState().reset();
     
     // Limpiar checkout (datos de proceso de compra)
     useCheckout.getState().reset();
-    
-    // Nota: El carrito se mantiene intencionalmente para mejor UX
-    // Si se desea limpiar también: useCart.getState().clear();
+
+    // Limpiar carrito local (para evitar items zombies)
+    useCart.getState().reset();
     
     // 4. Limpiar cualquier cache de localStorage/sessionStorage relacionado con auth
     if (typeof window !== 'undefined') {

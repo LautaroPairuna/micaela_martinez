@@ -113,8 +113,8 @@ export default function NotificationSettingsPage() {
     <div className="space-y-8">
       <PageHeader
         icon={Settings}
-        iconBg="bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)]"
-        iconColor="text-black"
+        iconBg="bg-transparent border border-[var(--pink)]/40"
+        iconColor="text-[var(--pink)]"
         title="Configuración de Notificaciones"
         description="Personaliza qué notificaciones quieres recibir y cómo"
       />
@@ -198,7 +198,7 @@ export default function NotificationSettingsPage() {
             <Button
               variant="outline"
               onClick={handleReset}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)]/10 hover:border-[var(--pink)] hover:text-[var(--pink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
             >
               <RotateCcw className="h-4 w-4" />
               Restaurar valores por defecto
@@ -207,7 +207,7 @@ export default function NotificationSettingsPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-50"
+              className="bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40 disabled:opacity-50"
             >
               {saving ? (
                 <>
