@@ -4,3 +4,11 @@ dist
 .env
 .env.*.local
 documentacion
+.backup/
+public/tpm/
+
+/generated/prisma
+
+# Media / temporales (recomendado)
+temp/
+tmp/
