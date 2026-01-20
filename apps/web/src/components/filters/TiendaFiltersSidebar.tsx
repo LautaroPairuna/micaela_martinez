@@ -2,9 +2,7 @@ import Link from 'next/link';
 import { FilterSection } from './FilterSection';
 import { buildTiendaPrettyPath } from '@/lib/routes';
 import { PriceFilterClient } from './PriceFilterClient';
-
-type MarcaFacet = { id: string; slug?: string; nombre: string; count: number };
-type CategoriaFacet = { id: string; slug?: string; nombre: string; count: number };
+import type { ProductFacets } from '@/lib/sdk/catalogApi';
 
 const cx = (...cls: Array<string | false | null | undefined>) =>
   cls.filter(Boolean).join(' ');
@@ -13,7 +11,7 @@ export function TiendaFiltersSidebar({
   facets,
   state,
 }: {
-  facets: { marcas?: MarcaFacet[]; categorias?: CategoriaFacet[] };
+  facets: ProductFacets;
   state: {
     categoria?: string;
     marca?: string;
@@ -55,7 +53,16 @@ export function TiendaFiltersSidebar({
       {/* Precio */}
       <FilterSection title="Precio">
         <div className="px-2 pb-2 space-y-2 sm:space-y-3">
-          <PriceFilterClient categoria={categoria} marca={marca} q={q} sort={sort ?? null} minPrice={minPrice} maxPrice={maxPrice} />
+          <PriceFilterClient
+            categoria={categoria}
+            marca={marca}
+            q={q}
+            sort={sort ?? null}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            placeholderMin={facets.price?.min}
+            placeholderMax={facets.price?.max}
+          />
         </div>
       </FilterSection>
 

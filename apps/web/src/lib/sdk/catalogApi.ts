@@ -28,6 +28,14 @@ export type ProductDetail = ProductListItem & {
   categoria?: { nombre?: string | null; slug?: string | null; id?: string | number | null } | null;
 };
 
+export type BrandFacet = { id: string; slug?: string; nombre: string; count: number };
+export type CategoryFacet = { id: string; slug?: string; nombre: string; count: number };
+export type ProductFacets = {
+  marcas?: BrandFacet[];
+  categorias?: CategoryFacet[];
+  price?: { min: number; max: number };
+};
+
 /* ───────────────── Cursos ───────────────── */
 export type CourseLevel = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
 export type CourseSort = ProductSort;
@@ -112,7 +120,7 @@ export async function getProducts(params: Partial<ProductQuery> = {}) {
 }
 export async function getProductFacets(params: Partial<ProductQuery> = {}) {
   const qp = cleanProductQuery(params);
-  return apiProxy<unknown>(`/catalog/productos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
+  return apiProxy<ProductFacets>(`/catalog/productos/filtros${toQS(qp)}`, { next: { revalidate: 300 } });
 }
 export async function getProductBySlug(slug: string) {
   return apiProxy<ProductDetail>(`/catalog/productos/${encodeURIComponent(slug)}`, { next: { revalidate: 120 } });
@@ -224,5 +232,5 @@ export async function safeGetProductFacets(params: Partial<ProductQuery> = {}) {
       // silent fallback
     }
   }
-  return { marcas: [], categorias: [] } as unknown;
+  return { marcas: [], categorias: [], price: undefined } as ProductFacets;
 }

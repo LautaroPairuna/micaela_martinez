@@ -121,6 +121,16 @@
           "items": {
             "$ref": "#/definitions/PagoSuscripcion"
           }
+        },
+        "carrito": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Carrito"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -308,6 +318,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/ResenaBorrador"
+          }
+        },
+        "itemsCarrito": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemCarrito"
           }
         },
         "instructorId": {
@@ -613,6 +629,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/ResenaBorrador"
+          }
+        },
+        "itemsCarrito": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemCarrito"
           }
         }
       },
@@ -1552,6 +1574,103 @@
         "action",
         "userId"
       ]
+    },
+    "Carrito": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "usuarioId": {
+          "type": "integer"
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemCarrito"
+          }
+        }
+      },
+      "required": [
+        "usuarioId",
+        "actualizadoEn"
+      ]
+    },
+    "ItemCarrito": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "carritoId": {
+          "type": "integer"
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "CURSO",
+            "PRODUCTO"
+          ]
+        },
+        "productoId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cursoId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cantidad": {
+          "type": "integer",
+          "default": 1
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "carrito": {
+          "$ref": "#/definitions/Carrito"
+        },
+        "producto": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Producto"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "curso": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Curso"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "carritoId",
+        "tipo"
+      ]
     }
   },
   "type": "object",
@@ -1627,6 +1746,12 @@
     },
     "auditLog": {
       "$ref": "#/definitions/AuditLog"
+    },
+    "carrito": {
+      "$ref": "#/definitions/Carrito"
+    },
+    "itemCarrito": {
+      "$ref": "#/definitions/ItemCarrito"
     }
   }
 }

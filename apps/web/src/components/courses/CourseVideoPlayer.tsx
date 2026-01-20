@@ -30,7 +30,32 @@ type CourseVideoPlayerProps = {
   onTimeUpdate?: (time: number) => void;
   hideTitle?: boolean;
   autoHideControls?: boolean;
+  previewUrl?: string; // URL del archivo .vtt para thumbnails
 };
+
+interface VttCue {
+  start: number;
+  end: number;
+  imgUrl: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+function parseVttTime(timeStr: string): number {
+  const parts = timeStr.split(':');
+  let seconds = 0;
+  if (parts.length === 3) {
+    seconds += parseInt(parts[0]) * 3600;
+    seconds += parseInt(parts[1]) * 60;
+    seconds += parseFloat(parts[2]);
+  } else if (parts.length === 2) {
+    seconds += parseInt(parts[0]) * 60;
+    seconds += parseFloat(parts[1]);
+  }
+  return seconds;
+}
 
 function formatTime(seconds: number): string {
   const s = Math.max(0, isNaN(seconds) ? 0 : seconds);
@@ -50,7 +75,8 @@ export function CourseVideoPlayer({
   onTheaterModeChange,
   onTimeUpdate, // <- prop (se mantiene)
   hideTitle: hideTitleProp = false,
-  autoHideControls: autoHideControlsProp = true
+  autoHideControls: autoHideControlsProp = true,
+  previewUrl
 }: CourseVideoPlayerProps) {
   const { me } = useSession();
 
@@ -73,6 +99,168 @@ export function CourseVideoPlayer({
   const [isTheater, setIsTheater] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Hover preview logic
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [vttCues, setVttCues] = useState<VttCue[]>([]);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+
+  // Cargar y parsear VTT si existe
+  useEffect(() => {
+    if (!previewUrl) {
+      setVttCues([]);
+      return;
+    }
+
+    fetch(previewUrl)
+      .then((res) => res.text())
+      .then((text) => {
+        const lines = text.split('\n');
+        const cues: VttCue[] = [];
+        let currentStart = 0;
+        let currentEnd = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          if (line.includes('-->')) {
+            const [startStr, endStr] = line.split('-->').map((s) => s.trim());
+            currentStart = parseVttTime(startStr);
+            currentEnd = parseVttTime(endStr);
+          } else if (line.includes('#xywh=')) {
+            const [urlPart, hash] = line.split('#xywh=');
+            const [x, y, w, h] = hash.split(',').map(Number);
+            
+            // Resolver URL absoluta si es relativa
+            let finalImgUrl = urlPart;
+            if (urlPart && !urlPart.startsWith('http') && !urlPart.startsWith('/')) {
+              // Asumir relativa a previewUrl
+              const lastSlash = previewUrl.lastIndexOf('/');
+              if (lastSlash !== -1) {
+                const base = previewUrl.substring(0, lastSlash + 1);
+                finalImgUrl = base + urlPart;
+              }
+            }
+
+            cues.push({
+              start: currentStart,
+              end: currentEnd,
+              imgUrl: finalImgUrl, 
+              x, y, w, h
+            });
+          }
+        }
+        setVttCues(cues);
+      })
+      .catch((err) => console.error('Error cargando VTT:', err));
+  }, [previewUrl]);
+
+  const currentThumbnail = useMemo(() => {
+    if (hoverTime === null || vttCues.length === 0) return null;
+    return vttCues.find((c) => hoverTime >= c.start && hoverTime < c.end);
+  }, [hoverTime, vttCues]);
+
+  // Auto-hide controles logic (moved up to avoid "used before defined" error)
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetControlsTimeout = useCallback(() => {
+    if (!autoHideControlsProp) {
+      setControlsVisible(true);
+      setMouseActivity(true);
+      return;
+    }
+    if (hideControlsTimeoutRef.current) clearTimeout(hideControlsTimeoutRef.current);
+    setControlsVisible(true);
+    setMouseActivity(true);
+    if (isPlaying) {
+      hideControlsTimeoutRef.current = setTimeout(() => {
+        setControlsVisible(false);
+        setMouseActivity(false);
+      }, 3000);
+    }
+  }, [isPlaying, autoHideControlsProp]);
+
+  // Manejo de Drag & Drop en la barra de progreso
+  const handleSeekStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation(); // Evitar que el click pause/play el video
+    setIsDragging(true);
+    updateSeek(e);
+  };
+
+  const updateSeek = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+    if (!progressBarRef.current || !videoRef.current) return;
+    
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+    
+    // Calcular porcentaje exacto (clamped 0-1)
+    const rawX = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, rawX / rect.width));
+    const newTime = percentage * duration;
+    
+    // Actualizar visualmente inmediato
+    setCurrentTime(newTime);
+    videoRef.current.currentTime = newTime;
+    
+    // Actualizar hover también si estamos arrastrando
+    setHoverPosition(Math.max(0, Math.min(rect.width, rawX)));
+    setHoverTime(newTime);
+  }, [duration]);
+
+  useEffect(() => {
+    const handleGlobalMove = (e: MouseEvent | TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault(); // Evitar scroll en móvil
+        updateSeek(e);
+      }
+    };
+    const handleGlobalUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        resetControlsTimeout();
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleGlobalMove);
+      document.addEventListener('touchmove', handleGlobalMove, { passive: false });
+      document.addEventListener('mouseup', handleGlobalUp);
+      document.addEventListener('touchend', handleGlobalUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMove);
+      document.removeEventListener('touchmove', handleGlobalMove);
+      document.removeEventListener('mouseup', handleGlobalUp);
+      document.removeEventListener('touchend', handleGlobalUp);
+    };
+  }, [isDragging, duration, resetControlsTimeout, updateSeek]);
+
+  const handleProgressMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) return; // Si arrastra, el efecto global se encarga
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const time = percentage * duration;
+    
+    setHoverPosition(x);
+    setHoverTime(time);
+  };
+
+  const handleProgressMouseLeave = () => {
+    setHoverTime(null);
+  };
+
+  // Sincronizar tiempo del preview
+  useEffect(() => {
+    if (previewVideoRef.current && hoverTime !== null && !isNaN(hoverTime)) {
+      previewVideoRef.current.currentTime = hoverTime;
+    }
+  }, [hoverTime]);
 
   // Resolver URL segura
   useEffect(() => {
@@ -131,24 +319,6 @@ export function CourseVideoPlayer({
   }, [watermarkConfig]);
 
   // Auto-hide controles
-  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resetControlsTimeout = useCallback(() => {
-    if (!autoHideControlsProp) {
-      setControlsVisible(true);
-      setMouseActivity(true);
-      return;
-    }
-    if (hideControlsTimeoutRef.current) clearTimeout(hideControlsTimeoutRef.current);
-    setControlsVisible(true);
-    setMouseActivity(true);
-    if (isPlaying) {
-      hideControlsTimeoutRef.current = setTimeout(() => {
-        setControlsVisible(false);
-        setMouseActivity(false);
-      }, 3000);
-    }
-  }, [isPlaying, autoHideControlsProp]);
-
   useEffect(() => {
     resetControlsTimeout();
     return () => {
@@ -430,20 +600,80 @@ export function CourseVideoPlayer({
           {/* Controles inferiores */}
           <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
             {/* Progreso */}
-            <div className="w-full">
-              <input
-                type="range"
-                min={0}
-                max={duration || 0}
-                value={currentTime}
-                onChange={handleSeek}
-                className="w-full h-2 bg-white/30 rounded-lg appearance-none cursor-pointer slider transition-all duration-200 hover:h-3"
+              <div 
+                ref={progressBarRef}
+                className="w-full relative group/progress py-3 cursor-pointer touch-none select-none flex items-center"
+                onMouseMove={handleProgressMouseMove}
+                onMouseLeave={handleProgressMouseLeave}
+                onMouseDown={handleSeekStart}
+                onTouchStart={handleSeekStart}
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  background: `linear-gradient(to right, #af966d 0%, #af966d ${(currentTime / (duration || 1)) * 100}%, rgba(255,255,255,0.3) ${(currentTime / (duration || 1)) * 100}%, rgba(255,255,255,0.3) 100%)`
-                }}
-              />
-            </div>
+              >
+                {/* Tooltip Preview */}
+                {hoverTime !== null && validUrl && !isDragging && (
+                  <div 
+                    className="absolute bottom-full mb-4 flex flex-col items-center bg-black/90 rounded-lg overflow-hidden border border-white/20 shadow-xl pointer-events-none z-50 animate-in fade-in zoom-in-95 duration-150"
+                    style={{ 
+                      left: hoverPosition,
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    <div className="w-40 aspect-video bg-black relative overflow-hidden">
+                      {currentThumbnail ? (
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            backgroundImage: `url(${currentThumbnail.imgUrl})`,
+                            backgroundPosition: `-${currentThumbnail.x}px -${currentThumbnail.y}px`,
+                            backgroundRepeat: 'no-repeat',
+                          }}
+                        />
+                      ) : (
+                        <video
+                          ref={previewVideoRef}
+                          src={resolvedVideoUrl}
+                          className="w-full h-full object-cover opacity-90"
+                          muted
+                          disablePictureInPicture
+                          preload="auto"
+                        />
+                      )}
+                    </div>
+                    <div className="w-full bg-neutral-900/90 py-1 text-center border-t border-white/10">
+                      <span className="text-xs font-mono font-medium text-white">
+                        {formatTime(hoverTime)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Track Fondo */}
+                <div className="w-full h-1 bg-white/30 rounded-full overflow-hidden group-hover/progress:h-1.5 transition-all duration-200">
+                  {/* Progreso jugado */}
+                  <div 
+                    className="h-full bg-[var(--gold)]"
+                    style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+                  />
+                </div>
+                
+                {/* Indicador de Hover */}
+                {hoverTime !== null && !isDragging && (
+                   <div 
+                     className="absolute top-0 bottom-0 w-[1px] bg-white/60 pointer-events-none h-full"
+                     style={{ left: hoverPosition }}
+                   />
+                )}
+
+                {/* Thumb / Bolita (siempre visible o solo hover) */}
+                <div 
+                  className={cn(
+                    "absolute w-3 h-3 bg-white rounded-full shadow-md transform -translate-x-1/2 transition-transform duration-200",
+                    (isDragging || hoverTime !== null) ? "scale-100" : "scale-0 group-hover/progress:scale-100"
+                  )}
+                  style={{ left: `${(currentTime / (duration || 1)) * 100}%` }}
+                />
+              </div>
 
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-3">
@@ -508,11 +738,14 @@ export function CourseVideoPlayer({
                     type="range"
                     min={0}
                     max={1}
-                    step={0.1}
+                    step={0.01}
                     value={isMuted ? 0 : volume}
                     onChange={handleVolumeChange}
                     className="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
                     onClick={(e) => e.stopPropagation()}
+                    style={{
+                      background: `linear-gradient(to right, #af966d 0%, #af966d ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) 100%)`,
+                    }}
                   />
                 </div>
 

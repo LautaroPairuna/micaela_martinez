@@ -2,79 +2,63 @@ import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | null = null;
 
+function computeWsBase(): string {
+  const api = (process.env.NEXT_PUBLIC_BACKEND_WS_URL?.trim()
+    || process.env.NEXT_PUBLIC_BACKEND_URL?.trim()
+    || process.env.NEXT_PUBLIC_API_URL?.trim()) || 'http://localhost:3001';
+  const base = api.replace(/\/+$/, '');
+  return base.replace(/\/api$/i, '');
+}
+
 export const initializeSocket = (userId: string): Socket => {
-  console.log('🔧 [Socket] Inicializando conexión Socket.IO...');
-  console.log('🔧 [Socket] UserId:', userId);
-  
-  // Desconectar socket existente si existe
   if (socket) {
-    console.log('🔧 [Socket] Desconectando socket existente...');
     socket.disconnect();
     socket = null;
   }
 
-  // URL base sin namespace explícito (usa el namespace por defecto '/')
-  const serverUrl = 'http://localhost:3001';
-  
-  console.log('🔧 [Socket] Conectando a:', serverUrl);
-  console.log('🔧 [Socket] Query params:', { userId });
+  const serverUrl = computeWsBase();
 
-  // Configuración mínima - sin especificar namespace
   socket = io(serverUrl, {
     query: { userId },
     autoConnect: true,
     forceNew: true,
     timeout: 10000,
+    transports: ['websocket', 'polling'],
+    withCredentials: false,
   });
 
-  // Event listeners para debugging
   socket.on('connect', () => {
-    console.log('✅ [Socket] Conectado exitosamente!');
-    console.log('✅ [Socket] Socket ID:', socket?.id);
-    console.log('✅ [Socket] Namespace actual:', 'N/A');
-    console.log('✅ [Socket] Transport:', 'N/A');
-    console.log('✅ [Socket] Estado conectado:', socket?.connected);
-    
-    // Enviar ping de prueba
     socket?.emit('ping', { message: 'test ping', userId, timestamp: Date.now() });
   });
 
   socket.on('connect_error', (error: Error & { type?: string; description?: string }) => {
-    console.error('❌ [Socket] Error de conexión:', error);
-    console.error('❌ [Socket] Tipo de error:', error.type || 'N/A');
-    console.error('❌ [Socket] Descripción:', error.description || 'N/A');
-    console.error('❌ [Socket] Context:', 'N/A');
-    console.error('❌ [Socket] Transport:', 'N/A');
+    void error;
   });
 
-  socket.on('disconnect', (reason) => {
-    console.log('🔌 [Socket] Desconectado. Razón:', reason);
+  socket.on('disconnect', () => {
+    /* noop */
   });
 
-  socket.on('connection-confirmed', (data) => {
-    console.log('🎉 [Socket] Conexión confirmada por el servidor:', data);
+  socket.on('connection-confirmed', () => {
+    /* noop */
   });
 
-  socket.on('pong', (data) => {
-    console.log('🏓 [Socket] Pong recibido:', data);
+  socket.on('pong', () => {
+    /* noop */
   });
 
-  socket.on('joined', (data) => {
-    console.log('🎯 [Socket] Join confirmado:', data);
+  socket.on('joined', () => {
+    /* noop */
   });
 
-  // Listener genérico para todos los eventos
-  socket.onAny((eventName, ...args) => {
-    console.log(`📨 [Socket] Evento recibido: ${eventName}`, args);
+  socket.onAny(() => {
+    /* noop */
   });
 
-  // Listener para errores generales
-  socket.on('error', (error) => {
-    console.error('❌ [Socket] Error general:', error);
+  socket.on('error', () => {
+    /* noop */
   });
 
-  console.log('🔧 [Socket] Socket creado, intentando conectar...');
-  
   return socket;
 };
 
@@ -84,11 +68,9 @@ export const getSocket = (): Socket | null => {
 
 export const disconnectSocket = (): void => {
   if (socket) {
-    console.log('🔌 [Socket] Desconectando socket...');
     socket.disconnect();
     socket = null;
   }
 };
 
-// Exportar el tipo Socket para uso en otros archivos
 export type { Socket } from 'socket.io-client';

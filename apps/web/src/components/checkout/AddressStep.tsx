@@ -84,7 +84,7 @@ export function AddressStep() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
+      <Card className="border border-[var(--pink)]/30">
         <CardBody className="p-6">
           <h2 className="text-xl font-semibold text-[var(--fg)]">
             Dirección de facturación
@@ -97,7 +97,7 @@ export function AddressStep() {
 
       {/* Direcciones existentes */}
       {!showAddressForm && (
-        <Card>
+        <Card className="border border-[var(--pink)]/30">
           <CardBody className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium text-[var(--fg)]">
@@ -132,19 +132,19 @@ export function AddressStep() {
                     className={cn(
                       'p-4 rounded-lg border-2 cursor-pointer transition-all duration-200',
                       {
-                        'border-[var(--gold)] bg-[var(--gold)]/5': shippingAddress?.id === address.id,
-                        'border-[var(--border)] hover:border-[var(--gold)]/50': shippingAddress?.id !== address.id,
+                        'border-[var(--pink)] bg-[var(--pink)]/5': shippingAddress?.id === address.id,
+                        'border-[var(--border)] hover:border-[var(--pink)]/50': shippingAddress?.id !== address.id,
                       }
                     )}
                     onClick={() => setShippingAddress(address)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/10 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-transparent border border-[var(--pink)]/40 flex items-center justify-center flex-shrink-0">
                           {address.etiqueta?.toLowerCase().includes('casa') ? (
-                            <Home className="h-5 w-5 text-[var(--gold)]" />
+                            <Home className="h-5 w-5 text-[var(--pink)]" />
                           ) : (
-                            <Building className="h-5 w-5 text-[var(--gold)]" />
+                            <Building className="h-5 w-5 text-[var(--pink)]" />
                           )}
                         </div>
                         <div className="flex-1">
@@ -153,7 +153,7 @@ export function AddressStep() {
                               {address.nombre}
                             </span>
                             {address.predeterminada && (
-                              <Star className="h-4 w-4 text-[var(--gold)] fill-current" />
+                              <Star className="h-4 w-4 text-[var(--pink)] fill-current" />
                             )}
                           </div>
                           <div className="text-sm text-[var(--muted)] mt-1">
@@ -195,7 +195,7 @@ export function AddressStep() {
 
       {/* Dirección de facturación */}
       {shippingAddress && (
-        <Card>
+        <Card className="border border-[var(--pink)]/30">
           <CardBody className="p-6">
             <h3 className="font-medium text-[var(--fg)] mb-4">
               Dirección de facturación
@@ -206,7 +206,7 @@ export function AddressStep() {
                 type="checkbox"
                 checked={useSameAddress}
                 onChange={(e) => setUseSameAddress(e.target.checked)}
-                className="w-4 h-4 text-[var(--gold)] border-[var(--border)] rounded focus:ring-[var(--gold)] focus:ring-2"
+                className="w-4 h-4 text-[var(--pink)] border-[var(--border)] rounded focus:ring-[var(--pink)] focus:ring-2"
               />
               <span className="text-[var(--fg)]">
                 Usar la misma dirección para facturación
@@ -225,7 +225,7 @@ export function AddressStep() {
       )}
 
       {/* Navegación */}
-      <Card>
+      <Card className="border border-[var(--pink)]/30">
         <CardBody className="p-6">
           <div className="flex items-center justify-between">
             <Button

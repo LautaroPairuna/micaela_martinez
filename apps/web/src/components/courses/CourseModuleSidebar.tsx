@@ -4,29 +4,8 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight, Play, FileText, BookOpen, HelpCircle, CheckCircle, X, Clock, CheckCircle2 } from 'lucide-react';
 import { cn, formatDuration } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import type { Course, Lesson, Module } from '@/types/course';
 
-
-type Course = {
-  id: string;
-  titulo: string;
-  modulos?: Module[] | null;
-};
-
-type Module = {
-  id: string;
-  titulo: string;
-  orden: number;
-  lecciones?: Lesson[] | null;
-};
-
-type Lesson = {
-  id: string;
-  titulo: string;
-  descripcion?: string | null;
-  duracionS?: number | null;
-  orden: number;
-  tipo?: 'VIDEO' | 'TEXTO' | 'DOCUMENTO' | 'QUIZ';
-};
 
 type CourseModuleSidebarProps = {
   course: Course;
@@ -44,7 +23,7 @@ type CourseModuleSidebarProps = {
 
 
 
-function getLessonIcon(tipo?: string, isCompleted: boolean = false) {
+function getLessonIcon(tipo?: Lesson['tipo'], isCompleted: boolean = false) {
   if (isCompleted) {
     return <CheckCircle className="h-4 w-4 text-green-500" />;
   }
@@ -118,10 +97,11 @@ export function CourseModuleSidebar({
 
   const getTotalModuleDuration = (module: Module) => {
     if (!module.lecciones?.length) return 0;
-    
-    return module.lecciones.reduce((total, lesson) => 
-      total + (lesson.duracionS || 0), 0
-    );
+
+    return module.lecciones.reduce((total, lesson) => {
+      const duration = getLessonDuration ? (getLessonDuration(lesson) ?? 0) : (lesson.duracionS ?? 0);
+      return total + duration;
+    }, 0);
   };
 
   if (!course.modulos?.length) {

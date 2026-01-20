@@ -14,10 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/**
- * ───── Enums (valores en minúsculas) ─────
- */
-
 enum TipoItemOrden {
   CURSO    @map("curso")
   PRODUCTO @map("producto")
@@ -89,6 +85,7 @@ model Usuario {
   preferenciasNotificacion PreferenciasNotificacion?
   auditLogs                AuditLog[]
   pagosSuscripcion         PagoSuscripcion[]
+  carrito                  Carrito?
 
   @@map("usuario")
 }
@@ -104,8 +101,8 @@ model Role {
 }
 
 model UsuarioRol {
-  usuarioId Int    @map("usuario_id")
-  roleId    Int    @map("role_id")
+  usuarioId Int @map("usuario_id")
+  roleId    Int @map("role_id")
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -134,14 +131,14 @@ model Favorito {
  */
 
 model Curso {
-  id            Int       @id @default(autoincrement())
-  slug          String    @unique @db.VarChar(128)
-  titulo        String    @db.VarChar(255)
+  id            Int     @id @default(autoincrement())
+  slug          String  @unique @db.VarChar(128)
+  titulo        String  @db.VarChar(255)
   resumen       String?
-  descripcionMD String?   @map("descripcion_md")
-  requisitos    String?   @db.Text
+  descripcionMD String? @map("descripcion_md")
+  requisitos    String? @db.Text
   precio        Int
-  publicado     Boolean   @default(false)
+  publicado     Boolean @default(false)
 
   nivel        NivelCurso @default(BASICO)
   portada      String?    @map("portada_archivo") @db.VarChar(255)
@@ -156,6 +153,7 @@ model Curso {
   resenas       Resena[]
   inscripciones Inscripcion[]
   borradores    ResenaBorrador[]
+  itemsCarrito  ItemCarrito[]
 
   instructorId Int?     @map("instructor_id")
   instructor   Usuario? @relation("CursoInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
@@ -181,13 +179,12 @@ model Inscripcion {
   @@map("inscripcion")
 }
 
-
 model Modulo {
-  id       Int     @id @default(autoincrement())
-  cursoId  Int     @map("curso_id")
+  id       Int    @id @default(autoincrement())
+  cursoId  Int    @map("curso_id")
   titulo   String
   orden    Int
-  parentId Int?    @map("parent_id")
+  parentId Int?   @map("parent_id")
 
   curso     Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
   parent    Modulo?   @relation("ModuloSelf", fields: [parentId], references: [id], onDelete: SetNull)
@@ -205,6 +202,7 @@ model Leccion {
   titulo      String
   duracionS   Int         @default(0) @map("duracion_s")
   rutaSrc     String?     @map("ruta_src")
+  previewUrl  String?     @map("preview_url") @db.VarChar(255)
   orden       Int
   tipo        TipoLeccion @default(TEXTO)
   descripcion String?     @db.Text
@@ -238,12 +236,13 @@ model Producto {
   marcaId     Int? @map("marca_id")
   categoriaId Int? @map("categoria_id")
 
-  marca      Marca?           @relation(fields: [marcaId], references: [id], onDelete: SetNull)
-  categoria  Categoria?       @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
-  imagenes   ProductoImagen[]
-  resenas    Resena[]
-  favoritos  Favorito[]
-  borradores ResenaBorrador[]
+  marca        Marca?           @relation(fields: [marcaId], references: [id], onDelete: SetNull)
+  categoria    Categoria?       @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  imagenes     ProductoImagen[]
+  resenas      Resena[]
+  favoritos    Favorito[]
+  borradores   ResenaBorrador[]
+  itemsCarrito ItemCarrito[]
 
   // ✅ Índices optimizados para consultas frecuentes
   @@index([publicado, destacado, creadoEn]) // Consultas de productos publicados y destacados
@@ -520,18 +519,18 @@ model Notificacion {
 }
 
 model PreferenciasNotificacion {
-  id        Int  @id @default(autoincrement())
-  usuarioId Int  @unique @map("usuario_id")
+  id        Int @id @default(autoincrement())
+  usuarioId Int @unique @map("usuario_id")
 
-  nuevaResena            Boolean @default(true)  @map("nueva_resena")
-  respuestaResena        Boolean @default(true)  @map("respuesta_resena")
-  actualizacionesSistema Boolean @default(true)  @map("actualizaciones_sistema")
+  nuevaResena            Boolean @default(true) @map("nueva_resena")
+  respuestaResena        Boolean @default(true) @map("respuesta_resena")
+  actualizacionesSistema Boolean @default(true) @map("actualizaciones_sistema")
   mantenimiento          Boolean @default(true)
-  reporteContenido       Boolean @default(true)  @map("reporte_contenido")
-  contenidoPendiente     Boolean @default(true)  @map("contenido_pendiente")
+  reporteContenido       Boolean @default(true) @map("reporte_contenido")
+  contenidoPendiente     Boolean @default(true) @map("contenido_pendiente")
 
   resumenDiario              Boolean @default(false) @map("resumen_diario")
-  notificacionesInstantaneas Boolean @default(true)  @map("notificaciones_instantaneas")
+  notificacionesInstantaneas Boolean @default(true) @map("notificaciones_instantaneas")
 
   creadoEn      DateTime @default(now()) @map("creado_en")
   actualizadoEn DateTime @updatedAt @map("actualizado_en")
@@ -566,14 +565,14 @@ model ResenaBorrador {
 model AuditLog {
   id        Int      @id @default(autoincrement())
   tableName String   @map("table_name") @db.VarChar(50)
-  recordId  String   @map("record_id")  @db.VarChar(50)
+  recordId  String   @map("record_id") @db.VarChar(50)
   action    String   @db.VarChar(20)
   oldData   Json?    @map("old_data")
   newData   Json?    @map("new_data")
   userId    Int      @map("user_id")
   userAgent String?  @map("user_agent") @db.Text
   ipAddress String?  @map("ip_address") @db.VarChar(45)
-  endpoint  String?  @map("endpoint")   @db.VarChar(255)
+  endpoint  String?  @map("endpoint") @db.VarChar(255)
   timestamp DateTime @default(now())
 
   user Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -583,4 +582,38 @@ model AuditLog {
   @@index([recordId, tableName], name: "idx_record_table")
   @@index([timestamp], name: "idx_timestamp")
   @@map("audit_log")
+}
+
+/**
+ * ───── Carrito de Compras ─────
+ */
+
+model Carrito {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int      @unique @map("usuario_id")
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  usuario Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  items   ItemCarrito[]
+
+  @@map("carrito")
+}
+
+model ItemCarrito {
+  id         Int           @id @default(autoincrement())
+  carritoId  Int           @map("carrito_id")
+  tipo       TipoItemOrden
+  productoId Int?          @map("producto_id")
+  cursoId    Int?          @map("curso_id")
+  cantidad   Int           @default(1)
+  creadoEn   DateTime      @default(now()) @map("creado_en")
+
+  carrito  Carrito   @relation(fields: [carritoId], references: [id], onDelete: Cascade)
+  producto Producto? @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  curso    Curso?    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  @@unique([carritoId, tipo, productoId, cursoId], map: "unique_item_carrito")
+  @@index([carritoId])
+  @@map("item_carrito")
 }

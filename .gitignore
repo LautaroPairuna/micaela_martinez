@@ -5,11 +5,6 @@ dist
 .env.*.local
 documentacion
 .backup/
-apps/api/public/tpm/
+apps/api/public/tmp/
 apps/api/public/uploads/
-
 /generated/prisma
-
-# Media / temporales (recomendado)
-temp/
-tmp/

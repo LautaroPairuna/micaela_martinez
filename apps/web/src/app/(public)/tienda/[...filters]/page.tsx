@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Search } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
-import { safeGetProductsSmart, safeGetProductFacets } from '@/lib/sdk/catalogApi';
+import { safeGetProductsSmart, safeGetProductFacets, type ProductFacets } from '@/lib/sdk/catalogApi';
 import {
   buildTiendaPrettyPath,
   buildTiendaPathResetPage,
@@ -28,9 +28,7 @@ export const revalidate = 60;
 type ProductoSort = 'relevancia' | 'novedades' | 'precio_asc' | 'precio_desc' | 'rating_desc';
 
 /** Debe coincidir estructuralmente con lo que espera TiendaFiltersSidebar */
-type BrandFacet = { id: string; slug?: string; nombre: string; count: number };
-type CategoryFacet = { id: string; slug?: string; nombre: string; count: number };
-type Facets = { marcas?: BrandFacet[]; categorias?: CategoryFacet[] };
+// Usamos ProductFacets de catalogApi
 
 type ProductCardProps = ComponentProps<typeof ProductCard>;
 type Product = ProductCardProps extends { p: infer T } ? T & { id?: string | number } : never;
@@ -125,7 +123,7 @@ export default async function TiendaPage({
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
   const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
 
-  const facets = (await safeGetProductFacets({ q, categoria, marca, minPrice, maxPrice })) as Facets;
+  const facets = (await safeGetProductFacets({ q, categoria, marca, minPrice, maxPrice })) as ProductFacets;
 
   const appliedCategoria = Array.isArray(facets?.categorias) && facets.categorias.length > 0
     ? (categoria && facets.categorias.some((c) => (c.slug ?? c.id) === categoria) ? categoria : undefined)
@@ -153,7 +151,7 @@ export default async function TiendaPage({
   // debug logs removed for clean console
 
   // Chips (usar labels si existen)
-  const useFacets: Facets = (() => {
+  const useFacets: ProductFacets = (() => {
     const hasServer = (Array.isArray(facets?.marcas) && facets.marcas.length > 0) || (Array.isArray(facets?.categorias) && facets.categorias.length > 0);
     if (hasServer) return facets;
     const marcasMap = new Map<string, { id: string; slug?: string; nombre: string; count: number }>();
@@ -172,7 +170,7 @@ export default async function TiendaPage({
         categoriasMap.set(c, prev);
       }
     });
-    return { marcas: Array.from(marcasMap.values()), categorias: Array.from(categoriasMap.values()) } as Facets;
+    return { marcas: Array.from(marcasMap.values()), categorias: Array.from(categoriasMap.values()) } as ProductFacets;
   })();
 
   const marcaLabel = appliedMarca ? findLabel(useFacets?.marcas, appliedMarca) : null;

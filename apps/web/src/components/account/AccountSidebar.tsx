@@ -94,7 +94,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
               className="
                 grid h-12 w-12 lg:h-16 lg:w-16 place-items-center rounded-full
                 bg-[radial-gradient(75%_120%_at_30%_20%,_rgba(255,255,255,.35),_transparent_60%)]
-                bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40
+                bg-[var(--pink)]/10 text-[var(--pink)] ring-1 ring-[var(--pink)]/40
                 shadow-[inset_0_1px_0_rgba(255,255,255,.2)] font-bold text-sm lg:text-lg tracking-wide
               "
             >
@@ -105,8 +105,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
             <h2 className="text-lg lg:text-xl font-semibold text-gray-900 truncate">{displayName}</h2>
             <p className="text-gray-600 text-xs lg:text-sm truncate">{email}</p>
             <div className="mt-1">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] text-xs font-medium">
-                <div className="w-1.5 h-1.5 rounded-full bg-[var(--gold)]"></div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--pink)]/10 text-[var(--pink)] text-xs font-medium">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--pink)]"></div>
                 Cuenta activa
               </span>
             </div>
@@ -117,8 +117,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
           className="
             inline-flex items-center justify-center gap-2 w-full
             px-4 py-2.5 font-medium text-sm lg:text-base rounded-lg
-            bg-[var(--gold)] hover:bg-[var(--gold-dark)]
-            text-black transition-colors duration-200
+            bg-gradient-to-r from-[var(--pink)] to-[var(--pink-strong)] hover:from-[var(--pink-strong)] hover:to-[var(--pink)]
+            text-black transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40
           "
         >
           <Edit3 className="h-4 w-4" />
@@ -136,13 +136,13 @@ export default function AccountSidebar({ me }: { me: Me }) {
               group relative flex items-center gap-3 px-4 py-3.5 rounded-xl
               transition-all duration-300 ease-out text-sm lg:text-base font-medium
               hover:scale-[1.02] active:scale-[0.98]
-              text-gray-700 hover:text-[var(--gold)] hover:bg-[var(--gold)]/5
-              border border-transparent hover:border-[var(--gold)]/20
+              text-[var(--pink)] hover:text-[var(--pink)] hover:bg-[var(--bg-hover)]
+              border border-[var(--pink)]/30 hover:border-[var(--pink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40
             "
           >
             <div className="
               relative p-2 rounded-lg transition-all duration-300
-              bg-gray-100 text-gray-600 group-hover:bg-[var(--gold)]/10 group-hover:text-[var(--gold)]
+              bg-transparent border border-[var(--pink)]/40 text-[var(--pink)]
             ">
               <Home className="h-4 w-4 flex-shrink-0" />
             </div>
@@ -152,7 +152,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
             {/* Flecha de navegación */}
             <ChevronRight className="
               h-4 w-4 transition-all duration-300
-              text-gray-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[var(--gold)]
+              text-gray-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[var(--pink)]
             " />
             
             {/* Efecto de brillo en hover */}
@@ -181,20 +181,22 @@ export default function AccountSidebar({ me }: { me: Me }) {
                     'hover:scale-[1.02] active:scale-[0.98]',
                     active
                       ? [
-                          'text-[var(--gold)] bg-gradient-to-r from-[var(--gold)]/10 to-[var(--gold)]/5',
-                          'border border-[var(--gold)]/20 shadow-lg shadow-[var(--gold)]/10'
+                          'text-[var(--pink)] bg-[var(--pink)]/10',
+                          'border border-[var(--pink)]/40 shadow-lg shadow-[var(--pink)]/10'
                         ].join(' ')
                       : [
-                          'text-gray-700 hover:text-[var(--gold)] hover:bg-[var(--gold)]/5',
-                          'border border-transparent hover:border-[var(--gold)]/20'
+                          'text-[var(--pink)] hover:text-[var(--pink)] hover:bg-[var(--bg-hover)]',
+                          'border border-[var(--pink)]/30 hover:border-[var(--pink)]'
                         ].join(' ')
                   ].join(' ')}
-                >
+                  
+                  
+                  >
                   <div className={[
                     'relative p-2 rounded-lg transition-all duration-300',
                     active 
-                      ? 'bg-[var(--gold)]/15 text-[var(--gold)]'
-                      : 'bg-gray-100 text-gray-600 group-hover:bg-[var(--gold)]/10 group-hover:text-[var(--gold)]'
+                      ? 'bg-transparent border border-[var(--pink)]/40 text-[var(--pink)]'
+                      : 'bg-transparent border border-[var(--pink)]/30 text-[var(--pink)] group-hover:border-[var(--pink)]'
                   ].join(' ')}>
                     <Icon className="h-4 w-4 flex-shrink-0" />
                   </div>
@@ -203,15 +205,15 @@ export default function AccountSidebar({ me }: { me: Me }) {
                   
                   {/* Indicador de página activa */}
                   {active && (
-                    <div className="w-2 h-2 rounded-full bg-[var(--gold)] shadow-lg shadow-[var(--gold)]/50" />
+                    <div className="w-2 h-2 rounded-full bg-[var(--pink)] shadow-lg shadow-[var(--pink)]/40" />
                   )}
                   
                   {/* Flecha de navegación */}
                   <ChevronRight className={[
                     'h-4 w-4 transition-all duration-300',
                     active 
-                      ? 'text-[var(--gold)] opacity-100 translate-x-0'
-                      : 'text-gray-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[var(--gold)]'
+                      ? 'text-[var(--pink)] opacity-100 translate-x-0'
+                      : 'text-gray-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[var(--pink)]'
                   ].join(' ')} />
                   
                   {/* Efecto de brillo en hover */}
@@ -256,8 +258,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
             'bg-gray-900/90 border border-gray-700/50',
             'hover:bg-gray-800 hover:shadow-xl hover:scale-105',
             'active:scale-95 transition-all duration-300 ease-out',
-            'focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/50',
-            isMobileMenuOpen ? 'bg-[var(--gold)] border-[var(--gold)]' : ''
+            'focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/50',
+            isMobileMenuOpen ? 'bg-[var(--pink)] border-[var(--pink)]' : ''
           ].join(' ')}
           aria-label={isMobileMenuOpen ? 'Cerrar menú de cuenta' : 'Abrir menú de cuenta'}
         >
@@ -267,7 +269,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
                 'absolute inset-0 w-5 h-5 transition-all duration-300',
                 isMobileMenuOpen 
                   ? 'opacity-0 rotate-180 scale-75 text-black' 
-                  : 'opacity-100 rotate-0 scale-100 text-white group-hover:text-[var(--gold)]'
+                  : 'opacity-100 rotate-0 scale-100 text-white group-hover:text-[var(--pink)]'
               ].join(' ')} 
             />
             <X 
@@ -281,12 +283,14 @@ export default function AccountSidebar({ me }: { me: Me }) {
           </div>
           
           {/* Indicador de estado activo */}
-          <div className={[
-            'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full transition-all duration-300',
-            'bg-gradient-to-r from-[var(--gold)] to-[var(--gold-strong)]',
-            'shadow-lg shadow-[var(--gold)]/30',
-            isMobileMenuOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
-          ].join(' ')} />
+          <div
+            className={[
+              'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full transition-all duration-300',
+              'bg-gradient-to-r from-[var(--pink)] to-[var(--pink-strong)]',
+              'shadow-lg shadow-[var(--pink)]/30',
+              isMobileMenuOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
+            ].join(' ')}
+          />
         </button>
       </div>
 
@@ -325,7 +329,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
       >
         <div className="relative h-full">
           {/* Gradiente decorativo */}
-          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--gold)] via-[var(--gold-strong)] to-[var(--gold)]" />
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--pink)] via-[var(--pink)] to-[var(--pink-strong)]" />
           
           <SidebarContent />
         </div>
@@ -344,8 +348,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
                 aria-hidden
                 className="
                   grid h-9 w-9 place-items-center rounded-full
-                  bg-gradient-to-br from-[var(--gold)] to-[var(--gold-strong)]
-                  text-black font-bold text-sm shadow-lg shadow-[var(--gold)]/25
+                  bg-gradient-to-br from-[var(--pink)] to-[var(--pink-strong)]
+                  text-black font-bold text-sm shadow-lg shadow-[var(--pink)]/25
                 "
               >
                 {initials}

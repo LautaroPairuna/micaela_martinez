@@ -12,7 +12,7 @@ import { ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useProgress } from '@/components/courses/ProgressContext';
 import { getSecureVideoUrl } from '@/lib/media-utils';
-import { Course, Module, Lesson, Enrollment } from '@/types/course';
+import type { Course, Module, Lesson, Enrollment } from '@/types/course';
 
 // ---------- Error Boundary ----------
 interface ErrorBoundaryProps {
@@ -267,13 +267,16 @@ export function CoursePlayer({
   const getLessonDuration = useCallback(
     (lesson: Lesson): number | null => {
       if (lesson.tipo === 'VIDEO') {
-        if (videoDurationsCache[lesson.id]) return videoDurationsCache[lesson.id];
-        if (!lesson.rutaSrc) return null;
-        return lesson.duracionS ?? null;
+        const cached = videoDurationsCache[lesson.id];
+        if (typeof cached === 'number' && Number.isFinite(cached) && cached > 0) return cached;
+
+        const rawSrc = getRawVideoSrc(lesson);
+        if (!rawSrc) return null;
       }
+
       return lesson.duracionS ?? null;
     },
-    [videoDurationsCache]
+    [videoDurationsCache, getRawVideoSrc]
   );
 
   // Precargar duraciones en montaje
@@ -529,6 +532,37 @@ export function CoursePlayer({
 
   // Mini-player: navegación
   useEffect(() => {
+    if (showMiniPlayer && miniPlayerLesson && currentLesson && miniPlayerLesson.id !== currentLesson.id) {
+      // Si el usuario cambia de lección mientras el miniplayer está activo,
+      // cerramos el miniplayer para evitar confusión (o podríamos actualizarlo).
+      // Por ahora, cerramos.
+      setShowMiniPlayer(false);
+    }
+  }, [currentLesson, showMiniPlayer, miniPlayerLesson]);
+
+  // Generar previewUrl (VTT) si el video es local
+  const previewUrl = React.useMemo(() => {
+    if (!resolvedVideoUrl) return undefined;
+    try {
+      // Usamos URL para parsear correctamente aunque tenga query params
+      const urlObj = new URL(resolvedVideoUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+      // Buscamos patrón /api/media/videos/NOMBRE.EXT
+      if (urlObj.pathname.includes('/media/videos/')) {
+        const parts = urlObj.pathname.split('/');
+        const filename = parts[parts.length - 1]; // "video-123.mp4"
+        if (filename) {
+          const baseName = filename.replace(/\.[^/.]+$/, ''); // "video-123"
+          // Retornamos la URL del VTT según convención
+          return `/api/media/assets/${baseName}-preview.vtt`;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return undefined;
+  }, [resolvedVideoUrl]);
+
+  useEffect(() => {
     const handleBeforeUnload = () => {
       const rawSrc = getRawVideoSrc(currentLesson);
       if (currentLesson?.tipo === 'VIDEO' && rawSrc && miniPlayerCurrentTime > 0) {
@@ -612,6 +646,7 @@ export function CoursePlayer({
                     onDurationUpdate={handleVideoDurationUpdate}
                     onTheaterModeChange={handleTheaterModeChange}
                     onTimeUpdate={handleMiniPlayerTimeUpdate}
+                    previewUrl={previewUrl}
                   />
                 ) : (
                   <div className="relative flex-1 flex flex-col min-h-0">
@@ -672,6 +707,7 @@ export function CoursePlayer({
                     course={course}
                     lessonProgress={lessonProgress}
                     getLessonProgressKey={getLessonProgressKey}
+                    getLessonDuration={getLessonDuration}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -735,6 +771,7 @@ export function CoursePlayer({
                     course={course}
                     lessonProgress={lessonProgress}
                     getLessonProgressKey={getLessonProgressKey}
+                    getLessonDuration={getLessonDuration}
                   />
                 </div>
 

@@ -3,53 +3,22 @@
 import { useMemo } from 'react';
 import { Target, Clock, BookOpen, CheckCircle2 } from 'lucide-react';
 import { cn, formatDuration } from '@/lib/utils';
-
-type Course = {
-  id: string;
-  titulo: string;
-  modulos?: Module[] | null;
-};
-
-type Module = {
-  id: string;
-  titulo: string;
-  lecciones?: Lesson[] | null;
-};
-
-type Lesson = {
-  id: string;
-  titulo: string;
-  duracionS?: number | null;
-};
-
-type DetailedEnrollmentProgress = {
-  /** Mapa lección completada por clave única */
-  lessons?: Record<string, boolean>;
-  /** Porcentaje 0-100 */
-  percentage?: number;
-  /** Campos adicionales que pueda enviar el backend */
-  [key: string]: unknown;
-};
-
-type Enrollment = {
-  id: string;
-  /** Puede ser porcentaje directo o un objeto con detalle */
-  progreso?: number | DetailedEnrollmentProgress;
-  completado: boolean;
-};
+import type { Course, Enrollment, Lesson, Module } from '@/types/course';
 
 type CourseProgressProps = {
   course: Course;
   enrollment: Enrollment; // se recibe, aunque no lo usamos en el cálculo actual
   lessonProgress: Record<string, boolean>;
   getLessonProgressKey: (moduleId: string, lessonId: string) => string;
+  getLessonDuration?: (lesson: Lesson) => number | null | undefined;
 };
 
 export function CourseProgress({
   course,
   enrollment: _enrollment, // renombrado para evitar warning de unused
   lessonProgress,
-  getLessonProgressKey
+  getLessonProgressKey,
+  getLessonDuration,
 }: CourseProgressProps) {
   void _enrollment;
   const stats = useMemo(() => {
@@ -73,11 +42,14 @@ export function CourseProgress({
       if (module.lecciones?.length) {
         module.lecciones.forEach((lesson) => {
           totalLessons++;
-          totalDuration += lesson.duracionS || 0;
+          const lessonDuration = getLessonDuration
+            ? (getLessonDuration(lesson) ?? 0)
+            : (lesson.duracionS || 0);
+          totalDuration += lessonDuration;
 
           if (lessonProgress[getLessonProgressKey(module.id, lesson.id)]) {
             completedLessons++;
-            completedDuration += lesson.duracionS || 0;
+            completedDuration += lessonDuration;
           }
         });
       }
@@ -94,7 +66,7 @@ export function CourseProgress({
       progressPercentage,
       totalModules: course.modulos.length
     };
-  }, [course.modulos, lessonProgress, getLessonProgressKey]);
+  }, [course.modulos, lessonProgress, getLessonProgressKey, getLessonDuration]);
 
   const isCompleted = stats.progressPercentage === 100;
   const isNearlyCompleted = stats.progressPercentage >= 90;
@@ -199,7 +171,6 @@ export function CourseProgress({
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               <span>
-                {formatDuration(stats.completedDuration)} /{' '}
                 {formatDuration(stats.totalDuration)}
               </span>
             </div>

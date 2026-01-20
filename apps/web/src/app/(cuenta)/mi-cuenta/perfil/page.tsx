@@ -49,13 +49,23 @@ export default function PerfilPage() {
     setTimeout(() => setSuccess(false), 3000);
   };
 
+  const initials = (() => {
+    const name = me?.nombre?.trim();
+    if (name) {
+      const parts = name.split(/\s+/).filter(Boolean);
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + (parts[parts.length - 1][0] || '')).toUpperCase();
+    }
+    const head = me?.email?.split('@')[0] || 'U';
+    return head.slice(0, 2).toUpperCase();
+  })();
+
   return (
     <div className="space-y-8">
-      
       <PageHeader
         icon={User}
-        iconBg="bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)]"
-        iconColor="text-black"
+        iconBg="bg-transparent border border-[var(--pink)]/40"
+        iconColor="text-[var(--pink)]"
         title="Mi Perfil"
         description="Administrá tu información personal y configuración de cuenta"
         stats={me ? [
@@ -92,10 +102,8 @@ export default function PerfilPage() {
             <Card>
               <CardBody className="space-y-6">
                 <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--gold)]/15 flex items-center justify-center shadow-lg ring-4 ring-[var(--gold)]/40">
-                    <span className="text-2xl font-bold text-[var(--gold)]">
-                      {(me?.nombre || me?.email || 'U').charAt(0).toUpperCase()}
-                    </span>
+                  <div className="grid place-items-center w-20 h-20 mx-auto mb-4 rounded-full bg-[radial-gradient(75%_120%_at_30%_20%,_rgba(255,255,255,.35),_transparent_60%)] bg-[var(--pink)]/10 text-[var(--pink)] ring-1 ring-[var(--pink)]/40 shadow-[inset_0_1px_0_rgba(255,255,255,.2)]">
+                    <span className="text-2xl font-bold tracking-wide">{initials}</span>
                   </div>
                   <h3 className="text-lg font-semibold">
                     {me?.nombre || 'Usuario'}
@@ -152,7 +160,7 @@ export default function PerfilPage() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 pb-4 border-b border-[var(--border)]">
                     <div className="p-2 rounded-xl bg-[var(--gold)]/15">
-                      <User className="h-5 w-5 text-[var(--gold)]" />
+                      <User className="h-5 w-5 text-[var(--pink)]" />
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-[var(--fg)]">Información Personal</h3>
@@ -217,7 +225,7 @@ export default function PerfilPage() {
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--gold)] hover:bg-[var(--gold-dark)] text-black font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--gold)] hover:bg-[var(--gold-dark)] text-black font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       >
                         {isSubmitting ? (
                           <>
@@ -232,7 +240,7 @@ export default function PerfilPage() {
                         type="button" 
                         variant="outline"
                         onClick={() => reset({ nombre: me?.nombre ?? '' })}
-                        className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium border-2 hover:bg-[var(--subtle)] transition-all duration-200"
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium border-2 border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)] hover:text-black transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
                       >
                         Cancelar
                       </Button>

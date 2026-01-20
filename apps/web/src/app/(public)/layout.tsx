@@ -26,7 +26,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     // Usá el mismo sistema de tema (var(--bg)/--fg) o ninguna clase aquí si el root ya pinta el fondo
     <div className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
-      <div className="surface-light text-[var(--fg)]">
+      <div className="sticky top-0 z-50 surface-light text-[var(--fg)]">
         <Header />
       </div>
 

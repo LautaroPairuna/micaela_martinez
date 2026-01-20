@@ -10,6 +10,7 @@ import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { AddCourseButton } from '@/components/cart/AddCourseButton';
 import { Star } from 'lucide-react';
+import { useEnrollmentProgressSafe } from '@/components/courses/EnrollmentProgressProvider';
 
 type NivelCurso = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
 const NIVEL_LABEL: Record<NivelCurso, string> = {
@@ -19,6 +20,7 @@ const NIVEL_LABEL: Record<NivelCurso, string> = {
 };
 
 type CourseMinimal = {
+  id: string | number;
   slug: string;
   titulo: string;
   precio: number;                // precio directo
@@ -40,12 +42,16 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
 
   const nivelLabel = c.nivel ? NIVEL_LABEL[c.nivel] : undefined;
 
-  const isEnrolled = !!inscripcion && inscripcion?.estado !== 'cancelled';
+  const progressCtx = useEnrollmentProgressSafe();
+  const providerPct = progressCtx ? progressCtx.getCourseProgressBySlug(c.slug) : 0;
   const progressPctRaw =
-    typeof inscripcion?.progreso === 'number'
-      ? inscripcion?.progreso
-      : inscripcion?.progreso?.percent ?? inscripcion?.progreso?.porcentaje ?? 0;
+    providerPct && providerPct > 0
+      ? providerPct
+      : (typeof inscripcion?.progreso === 'number'
+          ? inscripcion?.progreso
+          : inscripcion?.progreso?.percent ?? inscripcion?.progreso?.porcentaje ?? 0);
   const progressPct = Math.max(0, Math.min(100, Math.round(progressPctRaw || 0)));
+  const isEnrolled = !!inscripcion && inscripcion?.estado !== 'cancelled';
   const ctaLabel = isEnrolled ? (progressPct > 0 ? 'Continuar aprendiendo' : 'Empezar') : 'Ver curso';
 
   return (
@@ -133,7 +139,7 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
                   <div className="space-y-2">
                     <AddCourseButton 
                       c={{
-                        id: c.slug,
+                        id: c.id,
                         slug: c.slug,
                         titulo: c.titulo,
                         precio: c.precio,

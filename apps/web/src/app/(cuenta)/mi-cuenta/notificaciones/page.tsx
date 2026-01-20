@@ -20,8 +20,8 @@ export default function NotificationsAccountPage() {
       <div className="flex items-center justify-between">
         <PageHeader
           icon={Bell}
-          iconBg="bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)]"
-          iconColor="text-black"
+          iconBg="bg-transparent border border-[var(--pink)]/40"
+          iconColor="text-[var(--pink)]"
           title="Mis Notificaciones"
           description="Mantente al día con todas tus notificaciones y actualizaciones importantes"
           stats={[
@@ -55,7 +55,7 @@ export default function NotificationsAccountPage() {
         <Link href="/mi-cuenta/configuracion-notificaciones">
           <Button
             variant="outline"
-            className="flex items-center gap-2 hover:bg-[var(--gold)]/10 hover:border-[var(--gold)] hover:text-[var(--gold)] transition-all duration-200"
+            className="flex items-center gap-2 border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)]/10 hover:border-[var(--pink)] hover:text-[var(--pink)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
           >
             <Settings className="h-4 w-4" />
             Configurar

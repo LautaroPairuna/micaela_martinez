@@ -164,14 +164,14 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden bg-black border-2 border-[var(--gold)]/30 flex flex-col">
-        <DialogHeader className="border-b border-[var(--gold)]/30 pb-4 flex-shrink-0">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden bg-black border-2 border-[var(--pink)]/40 flex flex-col">
+        <DialogHeader className="border-b border-[var(--pink)]/30 pb-4 flex-shrink-0">
           <DialogTitle className="flex items-center gap-3 text-xl text-white">
-            <div className="p-2 rounded-lg bg-[var(--gold)]/20 border border-[var(--gold)]/40">
-              <Package className="h-6 w-6 text-[var(--gold)]" />
+            <div className="p-2 rounded-lg bg-transparent border border-[var(--pink)]/40">
+              <Package className="h-6 w-6 text-[var(--pink)]" />
             </div>
             <div>
-              <div className="font-bold text-[var(--gold)]">Pedido #{order.id.slice(0, 8)}</div>
+              <div className="font-bold text-[var(--gold)]">Pedido #{String(order.id).slice(0, 8)}</div>
               <div className="text-sm text-gray-300 font-normal flex items-center gap-2 mt-1">
                 <Calendar className="h-4 w-4" />
                 Realizado el {fecha}
@@ -180,16 +180,16 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden min-h-0">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full py-4">
+        <div className="flex-1 overflow-hidden min-h-0 overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full py-4 overflow-y-auto">
             {/* Contenido principal - Items del pedido */}
             <div className="lg:col-span-3 overflow-y-auto pr-2 space-y-4">
               {/* Productos */}
               {productos.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-3 sticky top-0 bg-black/95 backdrop-blur-sm py-2 z-10">
-                    <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-400/30">
-                      <ShoppingBag className="h-4 w-4 text-blue-400" />
+                    <div className="p-2 rounded-lg bg-transparent border border-[var(--pink)]/40">
+                      <ShoppingBag className="h-4 w-4 text-[var(--pink)]" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-white">Productos</h3>
@@ -198,7 +198,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                   </div>
                   <div className="space-y-2">
                     {productos.map((item: OrdenItem) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-600 bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200 hover:border-[var(--gold)]/40">
+                      <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-600 bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200 hover:border-[var(--pink)]/40">
                         <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-800 border border-gray-600 flex-shrink-0">
                           <SafeImage
                             src={resolveProductImage(item.refId)}
@@ -236,8 +236,8 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {cursos.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-3 sticky top-0 bg-black/95 backdrop-blur-sm py-2 z-10">
-                    <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-400/30">
-                      <BookOpen className="h-4 w-4 text-purple-400" />
+                    <div className="p-2 rounded-lg bg-transparent border border-[var(--pink)]/40">
+                      <BookOpen className="h-4 w-4 text-[var(--pink)]" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-white">Cursos</h3>
@@ -246,7 +246,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                   </div>
                   <div className="space-y-2">
                     {cursos.map((item: OrdenItem) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-600 bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200 hover:border-[var(--gold)]/40">
+                      <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-600 bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200 hover:border-[var(--pink)]/40">
                         <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-800 border border-gray-600 flex-shrink-0">
                           <SafeImage
                             src={resolveCourseImage(item.refId)}
@@ -299,9 +299,9 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                 </div>
 
                 {/* Resumen de pago detallado */}
-                <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
+                <div className="bg-gray-900/50 rounded-xl border border-[var(--pink)]/30 p-4">
                   <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
-                    <CreditCard className="h-4 w-4 text-[var(--gold)]" />
+                    <CreditCard className="h-4 w-4 text-[var(--pink)]" />
                     Resumen de pago
                   </h3>
                   <div className="space-y-2 text-xs">
@@ -386,13 +386,13 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
                 {/* Acceso a cursos */}
                 {cursos.length > 0 && (
-                  <div className="bg-gray-900/50 rounded-xl border border-gray-600 p-4">
+                  <div className="bg-gray-900/50 rounded-xl border border-[var(--pink)]/30 p-4">
                     <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-white">
-                      <BookOpen className="h-4 w-4 text-[var(--gold)]" />
+                      <BookOpen className="h-4 w-4 text-[var(--pink)]" />
                       Acceso a cursos
                     </h3>
                     <div className="text-xs">
-                      <div className="p-2 bg-green-500/20 rounded-lg border border-green-400/30">
+                      <div className="p-2 bg-[var(--pink)]/10 rounded-lg border border-[var(--pink)]/30">
                         <p className="font-medium text-green-300 text-xs">Acceso inmediato</p>
                         <p className="text-green-400 text-xs mt-1">
                           Los cursos están disponibles en tu área de estudiante

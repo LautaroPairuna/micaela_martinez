@@ -16,9 +16,12 @@ export function AddCourseButton({ c, className }: { c: CourseForCartButton; clas
   const image = c.portadaUrl ?? null;
 
   const handleAddToCart = async () => {
+    // Backend ahora soporta slugs, así que usamos ID o Slug indistintamente
+    const idToUse = c.id ? String(c.id) : c.slug;
+
     try {
       await addCourse({
-        id: String(c.id || c.slug),
+        id: idToUse,
         slug: c.slug,
         title: c.titulo,
         price: c.precio,

@@ -5,26 +5,31 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { json, urlencoded, raw } from 'express';
-const cookieParser = require('cookie-parser');
 import * as express from 'express';
+import * as path from 'path';
 
-// 👇 importa tus rutas y dirs públicos del módulo de uploads
-import {
-  IMAGE_PUBLIC_DIR,
-  MEDIA_UPLOAD_DIR,
-  DOC_UPLOAD_DIR,
-  IMAGE_PUBLIC_URL,
-  MEDIA_PUBLIC_URL,
-  DOC_PUBLIC_URL,
-} from './admin/uploads/constants';
-
+const cookieParser = require('cookie-parser');
 const compression = require('compression');
+
+// 🔹 Raíz de `public` del backend
+const PUBLIC_ROOT = path.join(process.cwd(), 'public');
+
+// 🔹 Rutas públicas “externas” (las que ve el navegador)
+const IMAGE_PUBLIC_URL = '/images'; // p.ej. /images/logo.png
+const MEDIA_PUBLIC_URL = '/uploads/media'; // p.ej. /uploads/media/video.mp4
+const DOC_PUBLIC_URL = '/uploads/docs'; // p.ej. /uploads/docs/archivo.pdf
+
+// 🔹 Directorios reales en disco
+const IMAGE_PUBLIC_DIR = path.join(PUBLIC_ROOT, 'images');
+const MEDIA_UPLOAD_DIR = path.join(PUBLIC_ROOT, 'uploads', 'media');
+const DOC_UPLOAD_DIR = path.join(PUBLIC_ROOT, 'uploads', 'docs');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // webhook raw ANTES de json/urlencoded
   app.use('/api/payments/webhook', raw({ type: '*/*' }));
+
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.use(cookieParser());
@@ -32,7 +37,6 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '2mb' }));
 
   // ✅ Servir archivos estáticos fuera del prefijo /api
-  //    (ponelo ANTES o DESPUÉS del setGlobalPrefix, da igual, el path es absoluto)
   app.use(
     IMAGE_PUBLIC_URL, // '/images'
     express.static(IMAGE_PUBLIC_DIR, {
@@ -41,6 +45,7 @@ async function bootstrap() {
       etag: true,
     }),
   );
+
   app.use(
     MEDIA_PUBLIC_URL, // '/uploads/media'
     express.static(MEDIA_UPLOAD_DIR, {
@@ -49,9 +54,14 @@ async function bootstrap() {
       etag: true,
     }),
   );
+
   app.use(
     DOC_PUBLIC_URL, // '/uploads/docs'
-    express.static(DOC_UPLOAD_DIR, { index: false, maxAge: '30d', etag: true }),
+    express.static(DOC_UPLOAD_DIR, {
+      index: false,
+      maxAge: '30d',
+      etag: true,
+    }),
   );
 
   // API prefix
@@ -65,14 +75,12 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Permitir solicitudes sin origen (como Postman, apps móviles o curl)
       if (!origin) {
+        // p.ej. Postman, curl, apps móviles
         return callback(null, true);
       }
-      // Si la whitelist está vacía, permitir cualquier origen (útil para desarrollo local)
-      // O si el origen está en la whitelist
       if (whitelist.length === 0 || whitelist.indexOf(origin) !== -1) {
-        callback(null, true); // Refleja el origen solicitado
+        callback(null, true);
       } else {
         callback(new Error('Origen no permitido por la política CORS'));
       }
@@ -88,16 +96,20 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
+
   app.set('trust proxy', 1);
   app.enableShutdownHooks();
 
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port);
+
   console.log(`API encendida en http://localhost:${port}/api`);
   console.log(`🖼  Estáticos: ${IMAGE_PUBLIC_URL} → ${IMAGE_PUBLIC_DIR}`);
   console.log(`🎞  Media:     ${MEDIA_PUBLIC_URL} → ${MEDIA_UPLOAD_DIR}`);
   console.log(`📄  Docs:      ${DOC_PUBLIC_URL} → ${DOC_UPLOAD_DIR}`);
 }
+
 bootstrap();

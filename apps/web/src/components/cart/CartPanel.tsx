@@ -88,7 +88,7 @@ export function CartPanel() {
         onClick={close}
         aria-hidden="true"
         className={[
-          'absolute inset-0 bg-black/60 backdrop-blur-[1px] transition-opacity',
+          'absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity',
           show ? 'opacity-100' : 'opacity-0',
           'motion-reduce:transition-none',
         ].join(' ')}
@@ -97,7 +97,7 @@ export function CartPanel() {
       <aside
         ref={panelRef}
         className={[
-          'absolute right-0 top-0 h-dvh w-full max-w-md bg-[var(--bg)] border-l border-default shadow-2xl',
+          'absolute right-0 top-0 h-dvh w-full max-w-md bg-[var(--bg)] border-l border-[var(--border)] shadow-2xl',
           'grid grid-rows-[auto_1fr_auto]',
           'transform-gpu transition-transform duration-300',
           show ? 'translate-x-0' : 'translate-x-full',
@@ -105,20 +105,20 @@ export function CartPanel() {
         ].join(' ')}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 h-20 flex items-center justify-between px-6 border-b border-default bg-[var(--bg)]/95 backdrop-blur">
+        <div className="sticky top-0 z-10 h-20 flex items-center justify-between px-6 border-b border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-r from-[var(--gold)]/20 to-[var(--gold-dark)]/20 border border-[var(--gold)]/30">
-              <ShoppingCart className="size-5 text-[var(--gold)]" />
+            <div className="p-2 rounded-xl bg-gradient-to-r from-[var(--gold)]/25 via-[var(--pink)]/20 to-[var(--gold-dark)]/25 border border-[var(--pink)]/40">
+              <ShoppingCart className="size-5 text-[var(--pink)]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Tu carrito</h2>
-              <span className="text-sm text-muted">{count} {count === 1 ? 'artículo' : 'artículos'}</span>
+              <h2 className="text-lg font-semibold text-[var(--fg)]">Tu carrito</h2>
+              <span className="text-sm text-[var(--muted)]">{count} {count === 1 ? 'artículo' : 'artículos'}</span>
             </div>
           </div>
           <button
             ref={closeBtnRef}
             onClick={close}
-            className="p-2 rounded-xl hover:bg-subtle transition-colors"
+            className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
             aria-label="Cerrar carrito"
           >
             <X className="size-5" />
@@ -129,11 +129,11 @@ export function CartPanel() {
         <div className="overflow-y-auto p-6 space-y-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 mb-6">
-                <ShoppingCart className="size-12 text-gray-400 mx-auto" />
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-[var(--bg-subtle)] to-[var(--bg-hover)] border border-[var(--border)] mb-6">
+                <ShoppingCart className="size-12 text-[var(--pink)] mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Tu carrito está vacío</h3>
-              <p className="text-sm text-gray-600 mb-6 max-w-[20rem]">Descubre nuestros productos y cursos para comenzar tu compra</p>
+              <h3 className="text-lg font-semibold text-[var(--fg)] mb-2">Tu carrito está vacío</h3>
+              <p className="text-sm text-[var(--muted)] mb-6 max-w-[20rem]">Descubre nuestros productos y cursos para comenzar tu compra</p>
               <div className="flex flex-col gap-3 w-full max-w-[16rem]">
                 <Link 
                   href="/tienda" 
@@ -145,7 +145,7 @@ export function CartPanel() {
                 <Link 
                   href="/cursos" 
                   onClick={close} 
-                  className="w-full rounded-xl border border-gray-300 bg-white text-gray-700 font-medium px-4 py-3 hover:bg-gray-50 transition-colors text-center"
+                  className="w-full rounded-xl border border-[var(--pink)] bg-transparent text-[var(--pink)] font-semibold px-4 py-3 hover:bg-[var(--pink)] hover:text-black transition-colors text-center"
                 >
                   Ver cursos
                 </Link>
@@ -180,64 +180,64 @@ export function CartPanel() {
               return (
                 <div
                    key={`${it.type}-${it.id}`}
-                   className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-sm transition-shadow duration-200"
+                   className="bg-[var(--bg)] rounded-xl border border-[var(--border)] p-3 hover:shadow-sm transition-shadow duration-200"
                  >
                    <div className="flex gap-3">
                      {/* Miniatura */}
-                     <Link href={href} onClick={close} className="block focus:outline-none focus:ring-2 focus:ring-[var(--gold)] rounded-lg flex-shrink-0">
-                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                     <Link href={href} onClick={close} className="block focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 rounded-lg flex-shrink-0">
+                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-[var(--bg-subtle)] border border-[var(--border)]">
                          <SafeImage src={it.image || '/images/placeholder.jpg'} alt={it.title} ratio="1/1" className="object-cover" />
                        </div>
                      </Link>
 
                     {/* Info principal */}
                      <div className="flex-1 min-w-0">
-                       <Link href={href} onClick={close} className="block">
-                         <h4 className="text-sm font-semibold text-gray-900 hover:text-[var(--gold)] line-clamp-2 transition-colors">
-                           {it.title}
-                         </h4>
-                       </Link>
+                      <Link href={href} onClick={close} className="block">
+                        <h4 className="text-sm font-semibold text-[var(--fg)] hover:text-[var(--pink)] line-clamp-2 transition-colors">
+                          {it.title}
+                        </h4>
+                      </Link>
                        
                        <div className="mt-1 flex items-center gap-2">
-                         <span className="text-xs text-gray-600">Precio:</span>
-                         <span className="text-sm font-medium text-gray-900">{formatCurrency(it.price)}</span>
+                         <span className="text-xs text-[var(--muted)]">Precio:</span>
+                         <span className="text-sm font-medium text-[var(--fg)]">{formatCurrency(it.price)}</span>
                        </div>
 
                       {/* Controles de cantidad y acciones */}
                        <div className="mt-2 flex items-center justify-between">
                          {isCartLineProduct(it) ? (
                            <div className="flex items-center gap-2">
-                             <div className="flex items-center gap-1 rounded-md border border-gray-300 bg-gray-50 px-1.5 py-0.5">
+                          <div className="flex items-center gap-1.5 rounded-md border border-[var(--pink)]/40 bg-[var(--bg)] px-2 py-1">
+                              <button
+                                 onClick={() => dec(it.id)}
+                                 className="p-1.5 rounded-md text-[var(--fg)] hover:bg-[var(--bg-hover)] disabled:opacity-40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
+                                 aria-label="Disminuir cantidad"
+                                 disabled={!canDec}
+                               >
+                                 <Minus className="h-3.5 w-3.5" />
+                               </button>
+                               <span className="min-w-[1.75rem] text-center text-sm font-bold text-[var(--fg)] tabular-nums px-1.5">{qty}</span>
                                <button
-                                  onClick={() => dec(it.id)}
-                                  className="p-0.5 rounded hover:bg-white disabled:opacity-40 transition-colors text-gray-900"
-                                  aria-label="Disminuir cantidad"
-                                  disabled={!canDec}
-                                >
-                                  <Minus className="size-3" />
-                                </button>
-                                <span className="min-w-[1.5rem] text-center text-sm font-bold text-gray-900 tabular-nums px-1">{qty}</span>
-                                <button
-                                  onClick={onIncSafe}
-                                  className="p-0.5 rounded hover:bg-white disabled:opacity-40 transition-colors text-gray-900"
-                                  aria-label="Aumentar cantidad"
-                                  disabled={!canInc}
-                                  title={canInc ? '' : 'Sin stock disponible'}
-                                >
-                                  <Plus className="size-3" />
-                                </button>
-                             </div>
-                             {typeof maxQty === 'number' && (
-                               <span className="text-xs text-gray-500">Stock: {maxQty}</span>
-                             )}
+                                 onClick={onIncSafe}
+                                 className="p-1.5 rounded-md text-[var(--fg)] hover:bg-[var(--bg-hover)] disabled:opacity-40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
+                                 aria-label="Aumentar cantidad"
+                                 disabled={!canInc}
+                                 title={canInc ? '' : 'Sin stock disponible'}
+                               >
+                                 <Plus className="h-3.5 w-3.5" />
+                               </button>
+                          </div>
+                          {typeof maxQty === 'number' && (
+                             <span className="text-xs text-[var(--muted)]">Stock: {maxQty}</span>
+                          )}
                            </div>
                          ) : (
-                           <div className="text-xs text-gray-600">Curso</div>
+                          <div className="text-xs text-[var(--muted)]">Curso</div>
                          )}
                          
                          <button
                            onClick={() => remove(it.id, it.type)}
-                           className="p-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                           className="p-1.5 rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
                            aria-label="Eliminar"
                            title="Eliminar del carrito"
                          >
@@ -246,14 +246,14 @@ export function CartPanel() {
                        </div>
                       
                       {/* Precio total */}
-                       <div className="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
-                         <span className="text-xs text-gray-600">Total:</span>
+                       <div className="mt-2 pt-2 border-t border-[var(--border)] flex justify-between items-center">
+                         <span className="text-xs text-[var(--muted)]">Total:</span>
                          <div className="text-right">
-                           <div className="text-sm font-bold text-gray-900 tabular-nums" aria-live="polite" aria-atomic="true">
+                           <div className="text-sm font-bold text-[var(--fg)] tabular-nums" aria-live="polite" aria-atomic="true">
                              {formatCurrency(lineTotal)}
                            </div>
                            {isCartLineProduct(it) && qty > 1 && (
-                             <div className="text-xs text-gray-500 tabular-nums">({formatCurrency(it.price)} c/u)</div>
+                             <div className="text-xs text-[var(--muted)] tabular-nums">({formatCurrency(it.price)} c/u)</div>
                            )}
                          </div>
                        </div>
@@ -266,15 +266,15 @@ export function CartPanel() {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white/95 backdrop-blur p-6">
+        <div className="sticky bottom-0 z-10 border-t border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur p-6">
           <div className="space-y-4">
             {/* Resumen de totales */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center justify-between text-sm text-[var(--muted)]">
                 <span>Subtotal ({count} {count === 1 ? 'artículo' : 'artículos'}):</span>
                 <span className="tabular-nums font-medium">{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex items-center justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-100">
+              <div className="flex items-center justify-between text-lg font-bold text-[var(--fg)] pt-2 border-t border-[var(--border)]">
                 <span>Total:</span>
                 <span className="tabular-nums text-xl" aria-live="polite" aria-atomic="true">
                   {formatCurrency(subtotal)}
@@ -307,7 +307,7 @@ export function CartPanel() {
                 <Link
                   href="/checkout"
                   onClick={close}
-                  className="block w-full rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] px-6 py-4 text-center font-bold text-black hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                  className="block w-full rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] px-6 py-4 text-center font-bold text-black hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
                 >
                   Proceder al pago
                 </Link>
@@ -316,7 +316,7 @@ export function CartPanel() {
                 <Link
                   href="/tienda"
                   onClick={close}
-                  className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-center font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 rounded-xl border border-[var(--pink)] bg-transparent px-4 py-3 text-center font-semibold text-[var(--pink)] hover:bg-[var(--pink)] hover:text-black transition-colors"
                 >
                   Seguir comprando
                 </Link>

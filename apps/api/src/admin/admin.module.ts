@@ -1,28 +1,27 @@
+// apps/api/src/admin/admin.module.ts
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
-import { AdminController } from './admin.controller';
-import { AdminService } from './admin.service';
-import { UnifiedAuditService } from './unified-audit.service';
-import { AuditListenerService } from './audit-listener.service';
-import { AdminAuditInterceptor } from './interceptors/audit.interceptor';
-import { HierarchicalDetectorService } from './utils/hierarchical-detector.service';
-import { WebsocketsModule } from '../websockets/websockets.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { AdminMetaModule } from './meta/admin-meta.module';
+import { AdminCrudModule } from './crud/admin-crud.module';
+import { AdminUploadModule } from './uploads/admin-upload.module';
+import { AdminResourcesModule } from './resources/admin-resources.module';
+import { AdminDashboardModule } from './dashboard/admin-dashboard.module';
 
 @Module({
-  imports: [PrismaModule, ConfigModule, WebsocketsModule],
-  controllers: [AdminController],
-  providers: [
-    AdminService,
-    UnifiedAuditService,
-    AuditListenerService, // Mantenemos por compatibilidad temporal
-    HierarchicalDetectorService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AdminAuditInterceptor,
-    },
+  imports: [
+    PrismaModule,
+    AdminMetaModule,
+    AdminCrudModule,
+    AdminUploadModule,
+    AdminResourcesModule,
+    AdminDashboardModule,
   ],
-  exports: [AdminService, UnifiedAuditService, HierarchicalDetectorService],
+  exports: [
+    AdminMetaModule,
+    AdminCrudModule,
+    AdminUploadModule,
+    AdminResourcesModule,
+    AdminDashboardModule,
+  ],
 })
 export class AdminModule {}

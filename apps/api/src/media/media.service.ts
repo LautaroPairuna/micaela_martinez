@@ -1,3 +1,4 @@
+// apps/api/src/media/media.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -133,6 +134,24 @@ export class MediaService {
       path.resolve(__dirname, '../../..', 'public', 'uploads', 'media'),
     );
     throw new NotFoundException('Video no encontrado');
+  }
+
+  getAssetStream(filename: string): StreamPayload {
+    const fullPath = this.findVideoOr404(filename); // Reutiliza búsqueda de videos (busca en media/ y uploads/media)
+    const stat = this.statOr404(fullPath);
+    
+    let contentType = 'application/octet-stream';
+    if (filename.endsWith('.vtt')) contentType = 'text/vtt';
+    if (filename.endsWith('.jpg')) contentType = 'image/jpeg';
+    
+    const headers = {
+      'Content-Type': contentType,
+      'Content-Length': String(stat.size),
+      'Cache-Control': 'public, max-age=3600',
+    };
+
+    const stream = fs.createReadStream(fullPath);
+    return { stream, headers, status: 200 };
   }
 
   // ------------- utils comunes -------------
@@ -372,19 +391,32 @@ export class MediaService {
     return { stream, headers, status: 200 };
   }
 
-  // Método para servir imágenes públicas desde el backend
+  // ✅ Método para servir imágenes públicas desde el backend (public/uploads/…)
   getPublicImageStream(filename: string): StreamPayload {
-    // Directorios donde buscar imágenes públicas (solo en el backend)
-    const candidates = [
-      // Directorio principal public del backend
-      path.resolve(__dirname, '../../public', filename),
-      // Directorio public/images del backend
-      path.resolve(__dirname, '../../public/images', filename),
-      // Directorio images en la raíz del backend
-      path.resolve(__dirname, '../../images', filename),
+    // Normalizamos: quitamos barras iniciales
+    const safe = filename.replace(/^\/+/, ''); // "uploads/producto/foo.webp"
+
+    const cwd = process.cwd();
+
+    // Posibles raíces donde está /public del backend
+    const publicRoots = [
+      path.resolve(__dirname, '../../public'),
+      path.resolve(__dirname, '../public'),
+      path.resolve(cwd, 'apps', 'api', 'public'),
+      path.resolve(cwd, 'public'),
     ];
 
-    // Buscar el archivo
+    const candidates: string[] = [];
+
+    for (const root of publicRoots) {
+      // 1) si viene "uploads/producto/foo.webp"
+      candidates.push(path.resolve(root, safe));
+      // 2) si viene "producto/foo.webp" (sin uploads)
+      if (!safe.startsWith('uploads/')) {
+        candidates.push(path.resolve(root, 'uploads', safe));
+      }
+    }
+
     let fullPath = '';
     for (const p of candidates) {
       if (fs.existsSync(p) && fs.statSync(p).isFile()) {
@@ -394,10 +426,14 @@ export class MediaService {
     }
 
     if (!fullPath) {
-      throw new NotFoundException(`Imagen pública no encontrada: ${filename}`);
+      throw new NotFoundException(
+        `Imagen pública no encontrada: ${filename} (candidatos: ${candidates.join(
+          ', ',
+        )})`,
+      );
     }
 
-    const mimeType = this.getMimeType(path.extname(fullPath)) || 'image/jpeg';
+    const mimeType = this.getMimeType(fullPath) || 'image/jpeg';
     const stream = fs.createReadStream(fullPath);
 
     return {

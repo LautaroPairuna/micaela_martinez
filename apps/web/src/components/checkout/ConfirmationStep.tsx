@@ -64,7 +64,7 @@ export function ConfirmationStep() {
         )}
       </div>
 
-      <Card>
+      <Card className="border border-[var(--pink)]/30">
         <CardBody className="p-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">

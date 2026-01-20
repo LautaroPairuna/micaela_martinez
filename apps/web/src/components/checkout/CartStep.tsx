@@ -29,8 +29,8 @@ export function CartStep() {
       <Card>
         <CardBody className="text-center py-16">
           <div className="max-w-md mx-auto space-y-6">
-            <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[var(--gold)]/20 to-[var(--gold)]/10 flex items-center justify-center shadow-lg">
-              <ShoppingCart className="h-10 w-10 text-[var(--gold)]" />
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-transparent border border-[var(--pink)]/40 flex items-center justify-center shadow-lg">
+              <ShoppingCart className="h-10 w-10 text-[var(--pink)]" />
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-bold text-[var(--fg)]">
@@ -109,7 +109,7 @@ export function CartStep() {
                           {item.title}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs px-2 py-1 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30">
+                          <span className="text-xs px-2 py-1 rounded-full bg-[var(--pink)]/10 text-[var(--pink)] border border-[var(--pink)]/30">
                             {item.type === 'course' ? 'Curso' : 'Producto'}
                           </span>
                           {item.type === 'product' && (
@@ -137,7 +137,7 @@ export function CartStep() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setQty(item.id, Math.max(1, item.quantity - 1))}
-                            className="w-8 h-8 rounded-md border border-[var(--border)] flex items-center justify-center hover:bg-[var(--subtle)] transition-colors"
+                            className="w-8 h-8 rounded-md border border-[var(--pink)]/40 flex items-center justify-center hover:bg-[var(--bg-subtle)] hover:border-[var(--pink)] transition-colors"
                             disabled={item.quantity <= 1 || item.type === 'course'}
                           >
                             <Minus className="h-4 w-4" />
@@ -147,7 +147,7 @@ export function CartStep() {
                           </span>
                           <button
                             onClick={() => setQty(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded-md border border-[var(--border)] flex items-center justify-center hover:bg-[var(--subtle)] transition-colors"
+                            className="w-8 h-8 rounded-md border border-[var(--pink)]/40 flex items-center justify-center hover:bg-[var(--bg-subtle)] hover:border-[var(--pink)] transition-colors"
                             disabled={item.type === 'course'}
                           >
                             <Plus className="h-4 w-4" />

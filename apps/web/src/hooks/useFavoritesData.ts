@@ -1,3 +1,4 @@
+// src/hooks/useFavoriteData.ts
 'use client';
 
 import { useMemo } from 'react';
@@ -8,28 +9,43 @@ import { useToast } from '@/contexts/ToastContext';
 
 type FavoriteListItem = { id: string | number };
 
+const FAVORITES_KEY = ['favorites', 'me'] as const;
+
 export function useFavoritesClient() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { error: toastError, success: toastSuccess } = useToast();
 
+  // 1) Query principal: una sola fuente de verdad
   const favoritesQuery = useQuery<FavoriteListItem[]>({
-    queryKey: ['favorites', user?.id ?? 'anon'],
+    queryKey: FAVORITES_KEY,
     queryFn: async () => {
       try {
         const favs = await listFavorites({ cache: 'no-store' });
         return Array.isArray(favs) ? favs.map((f) => ({ id: f.id })) : [];
       } catch (e) {
+        // si hay error (ej: 401), devolvemos array vacío
         return [];
       }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id,        // solo si hay usuario logueado
     staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
-  const ids = useMemo(() => new Set((favoritesQuery.data ?? []).map((f) => String(f.id))), [favoritesQuery.data]);
+  // 2) Set de IDs para lookup rápido
+  const ids = useMemo(
+    () => new Set((favoritesQuery.data ?? []).map((f) => String(f.id))),
+    [favoritesQuery.data],
+  );
 
-  const mutation = useMutation<void, unknown, { productId: string | number; title?: string; currentlyFav: boolean }, { prev: FavoriteListItem[] }>({
+  // 3) Mutación optimista
+  const mutation = useMutation<
+    void,
+    unknown,
+    { productId: string | number; title?: string; currentlyFav: boolean },
+    { prev: FavoriteListItem[] }
+  >({
     mutationFn: async ({ productId, currentlyFav }) => {
       if (currentlyFav) {
         await removeFavorite(productId);
@@ -38,17 +54,25 @@ export function useFavoritesClient() {
       }
     },
     onMutate: async (vars) => {
-      const key = ['favorites', user?.id ?? 'anon'];
-      await queryClient.cancelQueries({ queryKey: key });
-      const prev = queryClient.getQueryData<FavoriteListItem[]>(key) ?? [];
+      await queryClient.cancelQueries({ queryKey: FAVORITES_KEY });
+
+      const prev = queryClient.getQueryData<FavoriteListItem[]>(FAVORITES_KEY) ?? [];
       const pid = String(vars.productId);
-      const next = vars.currentlyFav ? prev.filter((f) => String(f.id) !== pid) : [...prev, { id: pid }];
-      queryClient.setQueryData(key, next);
-      return { prev } as const;
+
+      const next = vars.currentlyFav
+        ? prev.filter((f) => String(f.id) !== pid)
+        : [...prev, { id: pid }];
+
+      // ⚡ Optimismo: actualizamos cache inmediatamente
+      queryClient.setQueryData(FAVORITES_KEY, next);
+
+      return { prev };
     },
     onError: (error, vars, ctx) => {
-      const key = ['favorites', user?.id ?? 'anon'];
-      if (ctx?.prev) queryClient.setQueryData(key, ctx.prev);
+      if (ctx?.prev) {
+        queryClient.setQueryData(FAVORITES_KEY, ctx.prev);
+      }
+
       const msg = error instanceof Error ? error.message : 'Error al actualizar favoritos';
       if (msg.includes('401')) {
         toastError('Necesitas iniciar sesión para usar favoritos');
@@ -57,8 +81,11 @@ export function useFavoritesClient() {
       }
     },
     onSuccess: (_data, vars) => {
-      toastSuccess(vars.currentlyFav ? 'Eliminado de favoritos' : 'Agregado a favoritos');
-      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id ?? 'anon'] });
+      toastSuccess(
+        vars.currentlyFav ? 'Eliminado de favoritos' : 'Agregado a favoritos',
+      );
+      // Si querés máxima coherencia con otras pantallas:
+      // queryClient.invalidateQueries({ queryKey: FAVORITES_KEY });
     },
   });
 

@@ -84,8 +84,8 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
       <CardBody className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/10 flex items-center justify-center">
-              <MapPin className="h-5 w-5 text-[var(--gold)]" />
+            <div className="w-10 h-10 rounded-lg bg-transparent border border-[var(--pink)]/40 flex items-center justify-center">
+              <MapPin className="h-5 w-5 text-[var(--pink)]" />
             </div>
             <div>
               <h3 className="font-medium text-[var(--fg)]">
@@ -218,7 +218,7 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
             </label>
             <select
               {...register('pais')}
-              className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-[var(--fg)] focus:ring-2 focus:ring-[var(--gold)]/20 focus:border-[var(--gold)]"
+              className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-[var(--fg)] focus:ring-2 focus:ring-[var(--pink)]/20 focus:border-[var(--pink)]"
             >
               <option value="AR">Argentina</option>
             </select>
@@ -230,7 +230,7 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
               <input
                 type="checkbox"
                 {...register('predeterminada')}
-                className="w-4 h-4 text-[var(--gold)] border-[var(--border)] rounded focus:ring-[var(--gold)] focus:ring-2"
+                className="w-4 h-4 text-[var(--pink)] border-[var(--border)] rounded focus:ring-[var(--pink)] focus:ring-2"
               />
               <span className="text-[var(--fg)]">
                 Establecer como dirección predeterminada
