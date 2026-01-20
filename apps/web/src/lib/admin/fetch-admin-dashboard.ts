@@ -2,14 +2,14 @@
 import 'server-only';
 import type { DashboardSummary } from './dashboard-types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
-if (!API_BASE) {
-  // Mejor explotar en build si falta la URL
-  throw new Error(
-    'NEXT_PUBLIC_API_BASE_URL no está definida. Configúrala en tu .env.',
-  );
-}
+// if (!API_BASE) {
+//   // Mejor explotar en build si falta la URL
+//   throw new Error(
+//     'NEXT_PUBLIC_API_BASE_URL no está definida. Configúrala en tu .env.',
+//   );
+// }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -135,6 +135,12 @@ function normalizeDashboardSummary(input: unknown): DashboardSummary {
 }
 
 export async function fetchDashboardOverview(): Promise<DashboardSummary> {
+  if (!API_BASE) {
+    throw new Error(
+      'NEXT_PUBLIC_API_BASE_URL no está definida. Configúrala en tu .env.',
+    );
+  }
+
   const res = await fetch(`${API_BASE}/admin/dashboard/overview`, {
     // dashboard siempre fresco
     cache: 'no-store',
