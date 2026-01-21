@@ -1,26 +1,32 @@
 # ---- base ----
 FROM node:20-alpine AS base
 WORKDIR /repo
-# ---- deps (workspace) ----
-FROM base AS deps
-RUN corepack enable && corepack prepare pnpm@9.6.0 --activate
-COPY pnpm-workspace.yaml package.json turbo.json ./
-COPY packages/tsconfig/package.json packages/tsconfig/package.json
-COPY apps/api/package.json apps/api/package.json
-RUN pnpm fetch
-RUN pnpm -r install -w --offline
+
 # ---- build ----
-FROM deps AS build
-COPY . .
-RUN pnpm --filter @app/api build
+FROM base AS build
+# Copy root files needed for tsconfig
+COPY packages/tsconfig/ packages/tsconfig/
+# Copy api files
+COPY apps/api/ apps/api/
+
+WORKDIR /repo/apps/api
+RUN npm ci
+RUN npx prisma generate
+RUN npm run build
+
 # ---- run ----
 FROM node:20-alpine AS run
 WORKDIR /app
 ENV NODE_ENV=production
-RUN corepack enable && corepack prepare pnpm@9.6.0 --activate
-COPY --from=build /repo/apps/api/package.json ./package.json
+
+COPY --from=build /repo/apps/api/package.json ./
+COPY --from=build /repo/apps/api/package-lock.json ./
+
+# Install prod deps (includes prisma CLI as it is in dependencies)
+RUN npm ci --only=production --ignore-scripts
+
 COPY --from=build /repo/apps/api/dist ./dist
 COPY --from=build /repo/apps/api/prisma ./prisma
-RUN pnpm i --prod --ignore-scripts
+
 EXPOSE 3001
 CMD ["npm", "run", "start:prod"]

@@ -15,7 +15,7 @@
     "lint:api": "pnpm --filter @app/api lint",
     "build:api": "turbo run build --filter=@app/api",
     "build:web": "turbo run build --filter=@app/web",
-    "start:api": "turbo run start --filter=@app/api",
+    "start:api": "turbo run start:prod --filter=@app/api",
     "start:web": "turbo run start --filter=@app/web",
     "db:migrate": "turbo run db:migrate --filter=@app/api",
     "db:generate": "turbo run db:generate --filter=@app/api",
