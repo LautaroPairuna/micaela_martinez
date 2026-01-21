@@ -477,6 +477,12 @@
             "null"
           ]
         },
+        "previewUrl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "orden": {
           "type": "integer"
         },

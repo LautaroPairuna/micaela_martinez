@@ -9,9 +9,8 @@ generator jsonSchema {
   keepRelationScalarFields = "true"
 }
 
-datasource db {
+datasource mica_pestanas {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 enum TipoItemOrden {
