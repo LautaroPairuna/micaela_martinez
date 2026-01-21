@@ -1,5 +1,5 @@
 // apps/api/src/prisma/prisma.extensions.ts
-import { Prisma, PrismaClient } from '../generated/prisma/client';
+import { Prisma, PrismaClient, EstadoOrden } from '../generated/prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 export const modelExtension = Prisma.defineExtension({
@@ -9,6 +9,7 @@ export const modelExtension = Prisma.defineExtension({
       async findForAuth(id: number) {
         if (!id) return null;
         const ctx = Prisma.getExtensionContext(this);
+
         const u = await ctx.findUnique({
           where: { id },
           select: {
@@ -18,17 +19,20 @@ export const modelExtension = Prisma.defineExtension({
             roles: { select: { role: { select: { slug: true } } } },
           },
         });
+
         if (!u) return null;
+
         return {
           id: u.id,
           email: u.email,
           nombre: u.nombre,
-          roles: u.roles.map((r) => r.role.slug),
+          roles: u.roles.map((r: { role: { slug: string } }) => r.role.slug),
         };
       },
 
       async findByEmailAuth(email: string) {
         const ctx = Prisma.getExtensionContext(this);
+
         const u = await ctx.findUnique({
           where: { email },
           select: {
@@ -39,13 +43,15 @@ export const modelExtension = Prisma.defineExtension({
             roles: { select: { role: { select: { slug: true } } } },
           },
         });
+
         if (!u) return null;
+
         return {
           id: u.id,
           email: u.email,
           nombre: u.nombre,
           passwordHash: u.passwordHash,
-          roles: u.roles.map((r) => r.role.slug),
+          roles: u.roles.map((r: { role: { slug: string } }) => r.role.slug),
         };
       },
     },
@@ -63,7 +69,7 @@ export const modelExtension = Prisma.defineExtension({
       async markAsPaid(id: number) {
         return Prisma.getExtensionContext(this).update({
           where: { id },
-          data: { estado: 'pagado', actualizadoEn: new Date() },
+          data: { estado: EstadoOrden.PAGADO, actualizadoEn: new Date() },
         });
       },
     },
@@ -124,7 +130,6 @@ export const createExtendedClient = () => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is missing');
 
-  // si tu URL trae params que rompen el driver, los sacamos
   const connectionString = databaseUrl.includes('?')
     ? databaseUrl.split('?')[0]
     : databaseUrl;

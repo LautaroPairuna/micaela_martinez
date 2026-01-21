@@ -20,7 +20,6 @@ import {
   MercadoPagoPaymentDto,
   MercadoPagoSubscriptionDto,
 } from './dto/orders.dto';
-import { EstadoOrden } from '@prisma/client';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)

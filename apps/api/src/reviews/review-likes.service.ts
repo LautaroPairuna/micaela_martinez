@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewLikeDto } from './dto/create-review-like.dto';
-import { TipoLike } from '@prisma/client';
+import { TipoLike } from '../generated/prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const toInt = (v: unknown, label = 'id'): number => {
