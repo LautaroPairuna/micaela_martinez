@@ -9,7 +9,7 @@ generator jsonSchema {
   keepRelationScalarFields = "true"
 }
 
-datasource mica_pestanas {
+datasource db {
   provider = "mysql"
 }
 
