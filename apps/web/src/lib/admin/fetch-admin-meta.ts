@@ -8,7 +8,10 @@ function getApiBase() {
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     'http://localhost:3001';
-  return url.replace(/\/$/, '');
+  
+  // Asegurar que termine en /api
+  const base = url.replace(/\/$/, '');
+  return base.endsWith('/api') ? base : `${base}/api`;
 }
 
 const API_BASE = getApiBase();
