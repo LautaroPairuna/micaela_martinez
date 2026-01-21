@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EstadoOrden } from '../generated/prisma/client';
+import { Prisma, EstadoOrden } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type UserForAuth = {
@@ -137,7 +137,7 @@ export class UsersService {
 
   async getSubscriptionInfo(userId: number) {
     // Buscar la orden más reciente con suscripción activa
-    const activeSubscription = await this.prisma.orden.findFirst({
+    const activeSubscription = (await this.prisma.orden.findFirst({
       where: {
         usuarioId: Number(userId),
         esSuscripcion: true,
@@ -147,7 +147,10 @@ export class UsersService {
       orderBy: {
         actualizadoEn: 'desc',
       },
-    });
+      include: {
+        items: true,
+      },
+    })) as Prisma.OrdenGetPayload<{ include: { items: true } }> | null;
 
     if (!activeSubscription) {
       return {

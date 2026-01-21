@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { getSkipTake } from '../common/utils/pagination';
-import { Prisma, TipoItemOrden, EstadoOrden } from '@prisma/client';
+import { Prisma, TipoItemOrden, EstadoOrden } from '../generated/prisma/client';
 import { ImageUrlUtil } from '../common/utils/image-url.util';
 
 const toInt = (v: unknown, label = 'id'): number => {
