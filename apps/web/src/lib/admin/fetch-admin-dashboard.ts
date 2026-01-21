@@ -2,14 +2,16 @@
 import 'server-only';
 import type { DashboardSummary } from './dashboard-types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+function getApiBase() {
+  const url =
+    process.env.BACKEND_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:3001';
+  return url.replace(/\/$/, '');
+}
 
-// if (!API_BASE) {
-//   // Mejor explotar en build si falta la URL
-//   throw new Error(
-//     'NEXT_PUBLIC_API_BASE_URL no está definida. Configúrala en tu .env.',
-//   );
-// }
+const API_BASE = getApiBase();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

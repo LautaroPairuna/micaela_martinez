@@ -2,7 +2,16 @@
 import 'server-only';
 import type { ResourceMeta } from './meta-types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+function getApiBase() {
+  const url =
+    process.env.BACKEND_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:3001';
+  return url.replace(/\/$/, '');
+}
+
+const API_BASE = getApiBase();
 
 // 👇 NUEVA: listar todos los recursos del admin
 export async function fetchAllResourcesMeta(): Promise<ResourceMeta[]> {
