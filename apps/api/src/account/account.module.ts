@@ -9,7 +9,7 @@ import { OrdersModule } from '../orders/orders.module';
 @Module({
   imports: [PassportModule, OrdersModule],
   controllers: [AccountController], // → expone /users/me
-  providers: [AccountService, PrismaService, JwtAuthGuard],
+  providers: [AccountService, JwtAuthGuard],
   exports: [AccountService],
 })
 export class AccountModule {}

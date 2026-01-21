@@ -245,13 +245,13 @@ export class ReviewsService {
     }
 
     const userIdNum = toInt(userId, 'userId');
-    const where: Prisma.ResenaWhereInput = {
+    const where = {
       usuarioId: userIdNum,
       ...(cursoId !== undefined ? { cursoId: toInt(cursoId, 'cursoId') } : {}),
       ...(productoId !== undefined
         ? { productoId: toInt(productoId, 'productoId') }
         : {}),
-    };
+    } satisfies Prisma.ResenaWhereInput;
 
     return this.prisma.resena.findFirst({
       where,

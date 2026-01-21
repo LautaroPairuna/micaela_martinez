@@ -3,7 +3,11 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Prisma, EstadoInscripcion, NivelCurso } from '@prisma/client';
+import {
+  Prisma,
+  EstadoInscripcion,
+  NivelCurso,
+} from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryCourseDto } from './dto/query-course.dto';
 import { getSkipTake } from '../common/utils/pagination';
@@ -42,7 +46,7 @@ export class CoursesService {
         ? { gte: minPrice ?? 0, ...(maxPrice != null ? { lte: maxPrice } : {}) }
         : undefined;
 
-    const where: Prisma.CursoWhereInput = {
+    const where = {
       publicado: true,
       ...(q
         ? {
@@ -51,7 +55,7 @@ export class CoursesService {
         : {}),
       ...(nivel ? { nivel: nivel as any } : {}),
       ...(priceFilter ? { precio: priceFilter } : {}),
-    };
+    } satisfies Prisma.CursoWhereInput;
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.curso.findMany({

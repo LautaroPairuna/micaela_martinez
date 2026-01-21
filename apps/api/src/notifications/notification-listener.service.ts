@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { TipoNotificacion } from '@prisma/client';
+import { TipoNotificacion } from '../generated/prisma/client';
 
 import {
   EventTypes,

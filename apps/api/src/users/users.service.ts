@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
-import { EstadoOrden } from '@prisma/client';
+import { EstadoOrden } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type UserForAuth = {
@@ -12,14 +11,14 @@ export type UserForAuth = {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  private readonly selectAuth = {
+  private selectAuth = {
     id: true,
     email: true,
     nombre: true,
     roles: { select: { role: { select: { slug: true } } } },
-  } satisfies Prisma.UsuarioSelect;
+  };
+
+  constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: number | undefined): Promise<UserForAuth | null> {
     // Si el ID es undefined, retornar null inmediatamente
@@ -37,7 +36,7 @@ export class UsersService {
       id: Number(u.id),
       email: u.email,
       nombre: u.nombre,
-      roles: u.roles ? u.roles.map((ur: any) => ur.role.slug) : [],
+      roles: u.roles ? u.roles.map((ur) => ur.role.slug) : [],
     };
   }
 
@@ -51,7 +50,7 @@ export class UsersService {
       id: Number(u.id),
       email: u.email,
       nombre: u.nombre,
-      roles: u.roles.map((ur: any) => ur.role.slug),
+      roles: u.roles.map((ur) => ur.role.slug),
     };
   }
 
@@ -148,9 +147,6 @@ export class UsersService {
       orderBy: {
         actualizadoEn: 'desc',
       },
-      include: {
-        items: true,
-      },
     });
 
     if (!activeSubscription) {
@@ -168,7 +164,12 @@ export class UsersService {
     let nextPaymentDate = null;
 
     try {
-      const metadatos = activeSubscription.metadatos as any;
+      const metadatos = activeSubscription.metadatos as unknown as {
+        subscription?: {
+          nextPaymentDate?: string;
+          createdAt?: string;
+        };
+      };
 
       if (metadatos?.subscription?.nextPaymentDate) {
         nextPaymentDate = metadatos.subscription.nextPaymentDate;

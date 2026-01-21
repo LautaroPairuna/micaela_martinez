@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 generator jsonSchema {
@@ -11,6 +12,7 @@ generator jsonSchema {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 enum TipoItemOrden {

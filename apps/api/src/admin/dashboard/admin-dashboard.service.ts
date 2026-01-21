@@ -2,7 +2,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EstadoOrden } from '@prisma/client';
+import { EstadoOrden } from '../../generated/prisma/client';
 import {
   DashboardSummaryDto,
   OrdersByStatusDto,
