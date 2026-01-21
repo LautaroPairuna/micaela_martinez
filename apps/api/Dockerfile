@@ -20,6 +20,7 @@ ENV NODE_ENV=production
 RUN corepack enable && corepack prepare pnpm@9.6.0 --activate
 COPY --from=build /repo/apps/api/package.json ./package.json
 COPY --from=build /repo/apps/api/dist ./dist
+COPY --from=build /repo/apps/api/prisma ./prisma
 RUN pnpm i --prod --ignore-scripts
 EXPOSE 3001
-CMD ["node","dist/main.js"]
+CMD ["npm", "run", "start:prod"]
