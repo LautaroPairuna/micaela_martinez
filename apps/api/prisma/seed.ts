@@ -2,9 +2,9 @@
 import {
   Prisma,
   PrismaClient,
-  NivelCurso,
   EstadoInscripcion,
   EstadoOrden,
+  NivelCurso,
   TipoItemOrden,
   TipoLeccion,
 } from '@prisma/client';

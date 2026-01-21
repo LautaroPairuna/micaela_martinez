@@ -48,9 +48,13 @@ export class CartService {
   }
 
   async syncCart(userId: number, items: CartItemDto[]) {
-    console.log(`[CartService] Syncing ${items.length} items for user ${userId}`);
+    console.log(
+      `[CartService] Syncing ${items.length} items for user ${userId}`,
+    );
     // 1. Asegurar carrito existe
-    let cart = await this.prisma.carrito.findUnique({ where: { usuarioId: userId } });
+    let cart = await this.prisma.carrito.findUnique({
+      where: { usuarioId: userId },
+    });
     if (!cart) {
       console.log(`[CartService] Creating new cart for user ${userId}`);
       cart = await this.prisma.carrito.create({ data: { usuarioId: userId } });
@@ -68,21 +72,28 @@ export class CartService {
 
     for (const item of items) {
       try {
-        const tipo = item.tipo === 'producto' ? TipoItemOrden.PRODUCTO : TipoItemOrden.CURSO;
-        
+        const tipo =
+          item.tipo === 'producto'
+            ? TipoItemOrden.PRODUCTO
+            : TipoItemOrden.CURSO;
+
         // Resolver IDs (pueden venir como número, string numérico o slug)
         let productoId: number | null = null;
         if (item.productoId) {
           const pid = item.productoId;
           if (typeof pid === 'number') {
-             productoId = pid;
+            productoId = pid;
           } else if (!isNaN(Number(pid))) {
-             productoId = Number(pid);
+            productoId = Number(pid);
           } else {
             // Es un slug
-            const p = await this.prisma.producto.findFirst({ where: { slug: String(pid) }, select: { id: true } });
+            const p = await this.prisma.producto.findFirst({
+              where: { slug: String(pid) },
+              select: { id: true },
+            });
             productoId = p?.id || null;
-            if (!productoId) console.warn(`[CartService] Product slug not found: ${pid}`);
+            if (!productoId)
+              console.warn(`[CartService] Product slug not found: ${pid}`);
           }
         }
 
@@ -95,23 +106,35 @@ export class CartService {
             cursoId = Number(cid);
           } else {
             // Es un slug
-            const c = await this.prisma.curso.findFirst({ where: { slug: String(cid) }, select: { id: true } });
+            const c = await this.prisma.curso.findFirst({
+              where: { slug: String(cid) },
+              select: { id: true },
+            });
             cursoId = c?.id || null;
-            if (!cursoId) console.warn(`[CartService] Course slug not found: ${cid}`);
+            if (!cursoId)
+              console.warn(`[CartService] Course slug not found: ${cid}`);
           }
         }
 
         // Validación estricta: evitar items sin referencia
         if (tipo === TipoItemOrden.PRODUCTO && !productoId) {
-          console.warn(`[CartService] Skipping invalid product item (no ID):`, item);
+          console.warn(
+            `[CartService] Skipping invalid product item (no ID):`,
+            item,
+          );
           continue;
         }
         if (tipo === TipoItemOrden.CURSO && !cursoId) {
-          console.warn(`[CartService] Skipping invalid course item (no ID):`, item);
+          console.warn(
+            `[CartService] Skipping invalid course item (no ID):`,
+            item,
+          );
           continue;
         }
 
-        console.log(`[CartService] Processing item: ${tipo} (Prod: ${productoId}, Course: ${cursoId}, Qty: ${item.cantidad})`);
+        console.log(
+          `[CartService] Processing item: ${tipo} (Prod: ${productoId}, Course: ${cursoId}, Qty: ${item.cantidad})`,
+        );
 
         const existingItem = await this.prisma.itemCarrito.findFirst({
           where: {
@@ -123,7 +146,9 @@ export class CartService {
         });
 
         if (existingItem) {
-          console.log(`[CartService] Updating existing item ${existingItem.id}`);
+          console.log(
+            `[CartService] Updating existing item ${existingItem.id}`,
+          );
           // Actualizamos con la cantidad que viene del frontend (asumimos que es la "verdad" actual del usuario)
           await this.prisma.itemCarrito.update({
             where: { id: existingItem.id },
@@ -154,10 +179,13 @@ export class CartService {
   }
 
   async removeItem(userId: number, type: 'producto' | 'curso', refId: number) {
-    const cart = await this.prisma.carrito.findUnique({ where: { usuarioId: userId } });
+    const cart = await this.prisma.carrito.findUnique({
+      where: { usuarioId: userId },
+    });
     if (!cart) return this.getCart(userId);
 
-    const tipo = type === 'producto' ? TipoItemOrden.PRODUCTO : TipoItemOrden.CURSO;
+    const tipo =
+      type === 'producto' ? TipoItemOrden.PRODUCTO : TipoItemOrden.CURSO;
 
     await this.prisma.itemCarrito.deleteMany({
       where: {
@@ -171,9 +199,13 @@ export class CartService {
   }
 
   async clearCart(userId: number) {
-    const cart = await this.prisma.carrito.findUnique({ where: { usuarioId: userId } });
+    const cart = await this.prisma.carrito.findUnique({
+      where: { usuarioId: userId },
+    });
     if (cart) {
-      await this.prisma.itemCarrito.deleteMany({ where: { carritoId: cart.id } });
+      await this.prisma.itemCarrito.deleteMany({
+        where: { carritoId: cart.id },
+      });
     }
     return { items: [] };
   }

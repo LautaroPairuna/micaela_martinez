@@ -111,7 +111,7 @@ export class MediaController {
       // Usamos getVideoStream internamente porque ya busca en 'media' y 'uploads/media'
       // pero ojo que getVideoStream fuerza video/* content-type a veces.
       // Mejor usamos una lógica simplificada similar a getPublicImageStream
-      
+
       // Asumimos que los assets están donde los videos (uploads/media)
       const { stream, headers, status } = this.media.getAssetStream(filename);
       res.status(status);

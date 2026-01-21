@@ -1,13 +1,15 @@
 import {
   Injectable,
-  BadRequestException,
-  ForbiddenException,
   NotFoundException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { Prisma, TipoItemOrden } from '@prisma/client';
+import { getSkipTake } from '../common/utils/pagination';
+import { Prisma, TipoItemOrden, EstadoOrden } from '@prisma/client';
+import { ImageUrlUtil } from '../common/utils/image-url.util';
 
 const toInt = (v: unknown, label = 'id'): number => {
   if (v === null || v === undefined || v === '') {
@@ -286,7 +288,7 @@ export class ReviewsService {
       where: {
         refId: productoIdNum,
         tipo: TipoItemOrden.PRODUCTO,
-        orden: { usuarioId: userIdNum, estado: 'PAGADO' },
+        orden: { usuarioId: userIdNum, estado: EstadoOrden.PAGADO },
       },
     });
 

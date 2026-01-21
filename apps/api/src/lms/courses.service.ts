@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Prisma, EstadoInscripcion } from '@prisma/client';
+import { Prisma, EstadoInscripcion, NivelCurso } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryCourseDto } from './dto/query-course.dto';
 import { getSkipTake } from '../common/utils/pagination';
@@ -49,7 +49,7 @@ export class CoursesService {
             OR: [{ titulo: { contains: q } }, { resumen: { contains: q } }],
           }
         : {}),
-      ...(nivel ? { nivel } : {}),
+      ...(nivel ? { nivel: nivel as any } : {}),
       ...(priceFilter ? { precio: priceFilter } : {}),
     };
 
@@ -108,7 +108,11 @@ export class CoursesService {
       _count: { _all: true },
     });
 
-    const niveles = ['BASICO', 'INTERMEDIO', 'AVANZADO'] as const;
+    const niveles = [
+      NivelCurso.BASICO,
+      NivelCurso.INTERMEDIO,
+      NivelCurso.AVANZADO,
+    ] as const;
     const nivelFacets = niveles.map((n) => ({
       nivel: n,
       count: byLevel.find((x) => x.nivel === n)?._count._all ?? 0,

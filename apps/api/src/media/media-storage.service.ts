@@ -272,11 +272,11 @@ export class MediaStorageService {
 
       // Si no hubo transcode, emitimos 100% y done si aplica
       if (clientId) {
-         this.videoGateway.emitProgress(clientId, 100);
-         // No emitimos DONE aquí porque podría haber paso 2 (assets)
-         // Pero como es raw, quizás no haya paso 2? 
-         // Asumiremos que el controller orquesta.
-         // En el modo raw, la compresión termina instantáneamente.
+        this.videoGateway.emitProgress(clientId, 100);
+        // No emitimos DONE aquí porque podría haber paso 2 (assets)
+        // Pero como es raw, quizás no haya paso 2?
+        // Asumiremos que el controller orquesta.
+        // En el modo raw, la compresión termina instantáneamente.
       }
 
       const relativePath = path
@@ -295,11 +295,7 @@ export class MediaStorageService {
 
     // Intentar transcode desde disco
     try {
-      await this.runFfmpegFluent(
-        file.path, 
-        finalMp4Path, 
-        clientId
-      );
+      await this.runFfmpegFluent(file.path, finalMp4Path, clientId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Fallo la transcodificación (disk). Error: ${msg}`);
@@ -351,7 +347,9 @@ export class MediaStorageService {
   ): Promise<void> {
     // Threads: 0 = auto (usa todos los cores). Si el usuario define ENV, lo respetamos.
     // Antes limitábamos a 2, lo cual causa "bajo uso de CPU" y lentitud.
-    const threads = process.env.FFMPEG_THREADS ? Number(process.env.FFMPEG_THREADS) : 0;
+    const threads = process.env.FFMPEG_THREADS
+      ? Number(process.env.FFMPEG_THREADS)
+      : 0;
 
     return new Promise((resolve, reject) => {
       this.logger.log(
@@ -363,7 +361,7 @@ export class MediaStorageService {
         .audioCodec('aac')
         .outputOptions([
           // Scale con algoritmo rápido (bilinear) y mantén FPS nativo para evitar overhead de conversión
-          '-vf scale=-2:720:flags=fast_bilinear', 
+          '-vf scale=-2:720:flags=fast_bilinear',
           '-preset ultrafast', // Prioridad absoluta a velocidad
           '-crf 30', // Calidad aceptable para web, archivo más ligero
           '-b:a 96k',
@@ -520,7 +518,7 @@ export class MediaStorageService {
     const vttPath = path.join(fullOutputDir, vttName);
 
     // Configuración OPTIMIZADA (15s / 120px)
-    const interval = 15; 
+    const interval = 15;
     const width = 120;
     const height = 68;
     const cols = 5;
@@ -563,8 +561,8 @@ export class MediaStorageService {
             }
           })
           .on('end', () => {
-             this.videoGateway.emitProgress(clientId, 100);
-             resolve();
+            this.videoGateway.emitProgress(clientId, 100);
+            resolve();
           })
           .on('error', (err: Error) => reject(err))
           .run();
@@ -586,7 +584,7 @@ export class MediaStorageService {
     for (let i = 0; i < totalImages; i++) {
       const startTime = i * interval;
       const endTime = Math.min((i + 1) * interval, duration);
-      
+
       const startStr = this.formatVttTime(startTime);
       const endStr = this.formatVttTime(endTime);
 
@@ -600,7 +598,7 @@ export class MediaStorageService {
 
     await fs.writeFile(vttPath, vttContent);
     this.logger.log(`VTT generado: ${vttPath}`);
-    
+
     // Al final de todo (sprite + vtt), emitimos DONE
     this.videoGateway.emitDone(clientId);
 

@@ -1,4 +1,10 @@
-import { IsEnum, IsInt, IsOptional, Min, ValidateNested } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum CartItemType {

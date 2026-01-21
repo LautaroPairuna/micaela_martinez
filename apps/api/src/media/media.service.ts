@@ -139,11 +139,11 @@ export class MediaService {
   getAssetStream(filename: string): StreamPayload {
     const fullPath = this.findVideoOr404(filename); // Reutiliza búsqueda de videos (busca en media/ y uploads/media)
     const stat = this.statOr404(fullPath);
-    
+
     let contentType = 'application/octet-stream';
     if (filename.endsWith('.vtt')) contentType = 'text/vtt';
     if (filename.endsWith('.jpg')) contentType = 'image/jpeg';
-    
+
     const headers = {
       'Content-Type': contentType,
       'Content-Length': String(stat.size),

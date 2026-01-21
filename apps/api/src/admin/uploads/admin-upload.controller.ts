@@ -242,23 +242,30 @@ export class AdminUploadController {
 
         // ✅ Generar VTT y Sprite (si es posible)
         // Usamos el mismo nombre base del archivo final para que coincida: video.mp4 -> video-preview.vtt
-        const baseNameForVtt = path.basename(filenameOnly, path.extname(filenameOnly));
-        
+        const baseNameForVtt = path.basename(
+          filenameOnly,
+          path.extname(filenameOnly),
+        );
+
         // saveCompressedVideoFromDisk devuelve path relativo a public (uploads/media/foo.mp4)
         // generateVttAndSprite necesita path absoluto del video
-        const absoluteVideoPath = path.join(process.cwd(), 'public', saved.path);
+        const absoluteVideoPath = path.join(
+          process.cwd(),
+          'public',
+          saved.path,
+        );
 
-        // No bloqueamos (await) para no demorar la respuesta del admin? 
+        // No bloqueamos (await) para no demorar la respuesta del admin?
         // O sí, para asegurar que esté listo. Dado que el usuario pidió implementación robusta, mejor await.
         // Pero si tarda mucho, el admin podría dar timeout.
         // Para videos grandes, esto puede tardar minutos. Mejor hacerlo "fire and forget" o background.
-        // Sin embargo, en MediaController lo hice con await. 
+        // Sin embargo, en MediaController lo hice con await.
         // Vamos a hacerlo con await pero con un catch para no fallar el upload si falla el VTT.
         try {
           await this.mediaStorage.generateVttAndSprite(
             absoluteVideoPath,
             'uploads/media',
-            baseNameForVtt
+            baseNameForVtt,
           );
         } catch (e) {
           console.error('Error generando VTT en admin upload:', e);

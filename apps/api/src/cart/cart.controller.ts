@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { SyncCartDto } from './dto/sync-cart.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -18,7 +26,9 @@ export class CartController {
 
   @Post('sync')
   syncCart(@CurrentUser() user: JwtUser, @Body() dto: SyncCartDto) {
-    console.log(`[Cart] SyncCart for user ${user.sub} with ${dto.items?.length} items`);
+    console.log(
+      `[Cart] SyncCart for user ${user.sub} with ${dto.items?.length} items`,
+    );
     return this.cartService.syncCart(user.sub, dto.items);
   }
 

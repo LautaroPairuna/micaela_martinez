@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EstadoInscripcion, EstadoOrden, TipoItemOrden } from '@prisma/client';
 
 @Injectable()
 export class ReviewPermissionGuard implements CanActivate {
@@ -47,7 +48,7 @@ export class ReviewPermissionGuard implements CanActivate {
       where: {
         usuarioId: Number(userId),
         cursoId: Number(cursoId),
-        estado: 'ACTIVADA', // Solo inscripciones activas
+        estado: EstadoInscripcion.ACTIVADA, // Solo inscripciones activas
       },
     });
 
@@ -62,11 +63,11 @@ export class ReviewPermissionGuard implements CanActivate {
     // Verificar que el usuario haya comprado el producto
     const purchase = await this.prisma.itemOrden.findFirst({
       where: {
-        tipo: 'PRODUCTO',
+        tipo: TipoItemOrden.PRODUCTO,
         refId: Number(productoId),
         orden: {
           usuarioId: Number(userId),
-          estado: 'PAGADO', // Solo órdenes pagadas
+          estado: EstadoOrden.PAGADO, // Solo órdenes pagadas
         },
       },
       include: {
