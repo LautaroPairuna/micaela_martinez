@@ -3,7 +3,11 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Inject,
+  BadRequestException,
 } from '@nestjs/common';
+import { PRISMA } from '../../src/prisma/prisma.token';
+import { ExtendedPrismaClient } from '../../src/prisma/prisma.extensions';
 import { JwtService } from '@nestjs/jwt';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcryptjs';
@@ -21,7 +25,7 @@ type JwtPayload = {
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA) private readonly prisma: ExtendedPrismaClient,
     private readonly jwt: JwtService,
     private readonly eventEmitter: EventEmitter2,
   ) {}

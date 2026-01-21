@@ -1,25 +1,29 @@
-import { Global, Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { createExtendedClient } from './prisma.extensions';
+import { Global, Module, OnModuleDestroy, OnModuleInit, Inject, Injectable } from '@nestjs/common';
+import { PRISMA } from './prisma.token';
+import { createExtendedClient, type ExtendedPrismaClient } from './prisma.extensions';
+
+@Injectable()
+class PrismaLifecycle implements OnModuleInit, OnModuleDestroy {
+  constructor(@Inject(PRISMA) private readonly prisma: ExtendedPrismaClient) {}
+
+  async onModuleInit() {
+    await this.prisma.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.prisma.$disconnect();
+  }
+}
 
 @Global()
 @Module({
   providers: [
     {
-      provide: PrismaService,
-      useFactory: async () => {
-        const client = createExtendedClient();
-        await client.$connect();
-
-        // Hook para graceful shutdown en NestJS
-        (client as any).onModuleDestroy = async () => {
-          await client.$disconnect();
-        };
-
-        return client;
-      },
+      provide: PRISMA,
+      useFactory: () => createExtendedClient(),
     },
+    PrismaLifecycle,
   ],
-  exports: [PrismaService],
+  exports: [PRISMA],
 })
 export class PrismaModule {}

@@ -1,5 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString, IsIn } from 'class-validator';
-import { TipoLike } from '@prisma/client';
+import { IsNotEmpty, IsString, IsIn } from 'class-validator';
 
 export class CreateReviewLikeDto {
   @IsString()

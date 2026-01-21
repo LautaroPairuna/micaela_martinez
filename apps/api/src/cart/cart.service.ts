@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CartItemDto } from './dto/sync-cart.dto';
-import { TipoItemOrden } from '@prisma/client';
+import { TipoItemOrden } from '../../src/generated/prisma/client';
 
 @Injectable()
 export class CartService {

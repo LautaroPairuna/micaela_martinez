@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EstadoInscripcion, EstadoOrden, TipoItemOrden } from '@prisma/client';
+import { EstadoInscripcion, EstadoOrden, TipoItemOrden } from '../../generated/prisma/client';
 
 @Injectable()
 export class ReviewPermissionGuard implements CanActivate {

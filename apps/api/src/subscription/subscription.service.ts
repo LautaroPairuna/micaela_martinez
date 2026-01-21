@@ -31,7 +31,9 @@ export class SubscriptionService {
 
       // Filtrar inscripciones próximas a vencer
       for (const enrollment of enrollments) {
-        const progreso = enrollment.progreso as Record<string, any>;
+        const progreso = enrollment.progreso as unknown as {
+          subscription?: { endDate: string };
+        };
 
         if (progreso?.subscription?.endDate) {
           const endDate = new Date(progreso.subscription.endDate);
@@ -71,7 +73,9 @@ export class SubscriptionService {
 
     if (!enrollment) return false;
 
-    const progreso = enrollment.progreso as Record<string, any>;
+    const progreso = enrollment.progreso as unknown as {
+      subscription?: { endDate: string };
+    };
 
     // Si no tiene información de suscripción, asumimos acceso permanente (legacy)
     if (!progreso?.subscription) return true;
@@ -128,9 +132,17 @@ export class SubscriptionService {
     });
 
     // Extraer información de la suscripción desde los metadatos
-    const metadatos = orden.metadatos
-      ? JSON.parse(JSON.stringify(orden.metadatos))
-      : {};
+    const metadatos = (
+      orden.metadatos ? JSON.parse(JSON.stringify(orden.metadatos)) : {}
+    ) as {
+      subscription?: {
+        nextPaymentDate?: string;
+        frequency?: number;
+        frequencyType?: string;
+        duration?: number;
+        durationType?: string;
+      };
+    };
     const subscription = metadatos.subscription || {};
 
     return {
@@ -167,7 +179,16 @@ export class SubscriptionService {
 
     if (!enrollment) return null;
 
-    const progreso = enrollment.progreso as Record<string, any>;
+    const progreso = enrollment.progreso as unknown as {
+      subscription?: {
+        endDate: string;
+        duration?: number;
+        durationType?: string;
+        orderId?: string;
+        subscriptionId?: string;
+        isActive?: boolean;
+      };
+    };
 
     // Si no tiene información de suscripción, devolvemos acceso permanente
     if (!progreso?.subscription) {

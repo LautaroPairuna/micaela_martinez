@@ -1,6 +1,7 @@
 // apps/api/src/admin/crud/admin-crud.service.ts
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { PRISMA } from '../../prisma/prisma.token';
+import { ExtendedPrismaClient } from '../../prisma/prisma.extensions';
 import { buildAdminMeta } from '../meta/admin-meta.utils';
 import type { ResourceMeta } from '../meta/admin-meta.types';
 import { ImageUrlUtil } from '../../common/utils/image-url.util';
@@ -47,7 +48,7 @@ export type AdminListResponse = {
 export class AdminCrudService {
   private readonly meta: ResourceMeta[] = buildAdminMeta();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PRISMA) private readonly prisma: ExtendedPrismaClient) {}
 
   /** Busca la definición de recurso en el meta por tableName o nombre de modelo */
   private getResourceMeta(resource: string): ResourceMeta {

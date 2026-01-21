@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { PRISMA } from '../../src/prisma/prisma.token';
+import { ExtendedPrismaClient } from '../../src/prisma/prisma.extensions';
 import { Prisma, EstadoOrden } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -18,7 +20,7 @@ export class UsersService {
     roles: { select: { role: { select: { slug: true } } } },
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PRISMA) private readonly prisma: ExtendedPrismaClient) {}
 
   async findById(id: number | undefined): Promise<UserForAuth | null> {
     // Si el ID es undefined, retornar null inmediatamente

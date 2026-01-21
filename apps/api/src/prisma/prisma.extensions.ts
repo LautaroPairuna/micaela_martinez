@@ -1,10 +1,6 @@
+// apps/api/src/prisma/prisma.extensions.ts
 import { Prisma, PrismaClient } from '../generated/prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createPool } from 'mariadb';
-
-// ----------------------------------------------------------------------
-// 1. Extensiones de Modelo (Operaciones Scoped)
-// ----------------------------------------------------------------------
 
 export const modelExtension = Prisma.defineExtension({
   name: 'modelExtension',
@@ -53,6 +49,7 @@ export const modelExtension = Prisma.defineExtension({
         };
       },
     },
+
     producto: {
       async findActive() {
         return Prisma.getExtensionContext(this).findMany({
@@ -61,6 +58,7 @@ export const modelExtension = Prisma.defineExtension({
         });
       },
     },
+
     orden: {
       async markAsPaid(id: number) {
         return Prisma.getExtensionContext(this).update({
@@ -72,17 +70,10 @@ export const modelExtension = Prisma.defineExtension({
   },
 });
 
-// ----------------------------------------------------------------------
-// 2. Extensiones de Cliente (Operaciones Cross-Model / Orquestación)
-// ----------------------------------------------------------------------
-
 export const clientExtension = Prisma.defineExtension({
   name: 'clientExtension',
   client: {
-    /**
-     * Otorga roles a un usuario de manera idempotente.
-     */
-    async grantUserRoles(
+    grantUserRoles: async function (
       this: PrismaClient,
       userId: number,
       roleSlugs: string[],
@@ -98,9 +89,7 @@ export const clientExtension = Prisma.defineExtension({
       await this.$transaction(
         roles.map((r) =>
           this.usuarioRol.upsert({
-            where: {
-              usuarioId_roleId: { usuarioId: userId, roleId: r.id },
-            },
+            where: { usuarioId_roleId: { usuarioId: userId, roleId: r.id } },
             update: {},
             create: { usuarioId: userId, roleId: r.id },
           }),
@@ -108,10 +97,7 @@ export const clientExtension = Prisma.defineExtension({
       );
     },
 
-    /**
-     * Revoca roles de un usuario.
-     */
-    async revokeUserRoles(
+    revokeUserRoles: async function (
       this: PrismaClient,
       userId: number,
       roleSlugs: string[],
@@ -134,22 +120,18 @@ export const clientExtension = Prisma.defineExtension({
   },
 });
 
-// ----------------------------------------------------------------------
-// 3. Factory del Cliente Extendido
-// ----------------------------------------------------------------------
-
 export const createExtendedClient = () => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is missing');
 
+  // si tu URL trae params que rompen el driver, los sacamos
   const connectionString = databaseUrl.includes('?')
     ? databaseUrl.split('?')[0]
     : databaseUrl;
 
-  // ✅ el adapter espera string | PoolConfig (NO Pool)
   const adapter = new PrismaMariaDb(connectionString);
-
   const client = new PrismaClient({ adapter });
+
   return client.$extends(modelExtension).$extends(clientExtension);
 };
 

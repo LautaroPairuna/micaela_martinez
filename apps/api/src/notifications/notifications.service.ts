@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { TipoNotificacion } from '@prisma/client';
+import { TipoNotificacion } from '../../src/generated/prisma/client';
 import { UpdateNotificationPreferencesDto } from './dto/user-preferences.dto';
 
 export interface CreateNotificationDto {

@@ -7,9 +7,10 @@ import {
   NivelCurso,
   TipoItemOrden,
   TipoLeccion,
-} from '@prisma/client';
+} from '../src/generated/prisma/client';
+import { createExtendedClient } from '../src/prisma/prisma.extensions';
 
-const prisma = new PrismaClient();
+const prisma = createExtendedClient();
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
 /* ───────── Helpers ───────── */

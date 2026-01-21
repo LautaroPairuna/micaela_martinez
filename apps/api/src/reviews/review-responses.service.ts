@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewResponseDto } from './dto/create-review-response.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 
 const toInt = (v: unknown, label = 'id'): number => {
   if (v === null || v === undefined || v === '') {

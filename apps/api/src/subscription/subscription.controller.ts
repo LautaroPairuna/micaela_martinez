@@ -2,7 +2,7 @@ import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { GetUser } from '../auth/get-user.decorator';
-import { Usuario } from '@prisma/client';
+import { Usuario } from '../generated/prisma/client';
 
 @Controller('subscription')
 export class SubscriptionController {
