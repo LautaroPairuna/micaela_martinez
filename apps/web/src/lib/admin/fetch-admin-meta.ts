@@ -11,28 +11,44 @@ function getApiBase() {
   
   // Asegurar que termine en /api
   const base = url.replace(/\/$/, '');
-  return base.endsWith('/api') ? base : `${base}/api`;
+  const finalUrl = base.endsWith('/api') ? base : `${base}/api`;
+  
+  // Log de diagnóstico
+  if (typeof window === 'undefined') {
+    console.log(`[AdminMetaFetch] API Base resolved to: ${finalUrl}`);
+  }
+  return finalUrl;
 }
 
 const API_BASE = getApiBase();
 
 // 👇 NUEVA: listar todos los recursos del admin
 export async function fetchAllResourcesMeta(): Promise<ResourceMeta[]> {
-  const res = await fetch(`${API_BASE}/admin/meta/resources`, {
-    cache: 'no-store',
-  });
+  const url = `${API_BASE}/admin/meta/resources`;
+  try {
+    const res = await fetch(url, {
+      cache: 'no-store',
+    });
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch admin meta: ${res.status}`);
+    if (!res.ok) {
+      console.error(`[AdminMeta] Error fetching ${url}: Status ${res.status}`);
+      if (res.status === 404) {
+         throw new Error(`Error al obtener metadata del admin: 404 Not Found en ${url}`);
+      }
+      throw new Error(`Failed to fetch admin meta: ${res.status}`);
+    }
+
+    const json = await res.json();
+
+    // Por si el backend devuelve { resources: [...] } o directamente [...]
+    if (Array.isArray(json)) return json as ResourceMeta[];
+    if (Array.isArray(json.resources)) return json.resources as ResourceMeta[];
+
+    throw new Error('Invalid admin meta payload');
+  } catch (err) {
+    console.error(`[AdminMeta] Network error fetching ${url}`, err);
+    throw err;
   }
-
-  const json = await res.json();
-
-  // Por si el backend devuelve { resources: [...] } o directamente [...]
-  if (Array.isArray(json)) return json as ResourceMeta[];
-  if (Array.isArray(json.resources)) return json.resources as ResourceMeta[];
-
-  throw new Error('Invalid admin meta payload');
 }
 
 // 👇 ya la tenías: meta de un recurso

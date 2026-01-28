@@ -11,7 +11,15 @@ function getApiBase() {
   
   // Asegurar que termine en /api
   const base = url.replace(/\/$/, '');
-  return base.endsWith('/api') ? base : `${base}/api`;
+  const finalUrl = base.endsWith('/api') ? base : `${base}/api`;
+  
+  // Log de diagnóstico (solo server-side)
+  if (typeof window === 'undefined') {
+    console.log(`[AdminFetch] API Base resolved to: ${finalUrl}`);
+    console.log(`[AdminFetch] Envs: BACKEND_INTERNAL_URL=${process.env.BACKEND_INTERNAL_URL}, NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL}`);
+  }
+  
+  return finalUrl;
 }
 
 const API_BASE = getApiBase();
@@ -139,25 +147,32 @@ function normalizeDashboardSummary(input: unknown): DashboardSummary {
   };
 }
 
-export async function fetchDashboardOverview(): Promise<DashboardSummary> {
-  if (!API_BASE) {
-    throw new Error(
-      'NEXT_PUBLIC_API_BASE_URL no está definida. Configúrala en tu .env.',
-    );
+export async function fetchDashboardOverview(): Promise<DashboardSummary | null> {
+  const url = `${API_BASE}/admin/dashboard/overview`;
+  
+  try {
+    const res = await fetch(url, {
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      console.error(`[AdminDashboard] Error fetching ${url}: Status ${res.status} ${res.statusText}`);
+      try {
+        const text = await res.text();
+        console.error(`[AdminDashboard] Response body: ${text.slice(0, 500)}`);
+      } catch {}
+      
+      if (res.status === 404) {
+        throw new Error(`Error al obtener overview del dashboard: 404 Not Found en ${url}`);
+      }
+      throw new Error(`Error al obtener overview del dashboard: ${res.status}`);
+    }
+
+    const json: unknown = await res.json();
+    return normalizeDashboardSummary(json);
+  } catch (error) {
+    console.error(`[AdminDashboard] Network/Parse error fetching ${url}:`, error);
+    // Retornamos null para que la UI no explote, pero el error queda logueado
+    throw error; 
   }
-
-  const res = await fetch(`${API_BASE}/admin/dashboard/overview`, {
-    // dashboard siempre fresco
-    cache: 'no-store',
-    credentials: 'include',
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      `Error al obtener overview del dashboard: ${res.status} ${res.statusText}`,
-    );
-  }
-
-  const json: unknown = await res.json();
-  return normalizeDashboardSummary(json);
 }
