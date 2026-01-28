@@ -61,6 +61,7 @@ const nextConfig: NextConfig = {
       { source: '/videos/:path*',               destination: `${U.origin}/videos/:path*` },
       { source: '/api/admin/uploads',           destination: `${U.origin}/api/admin/uploads` },
       { source: '/api/admin/uploads/:path*',    destination: `${U.origin}/api/admin/uploads/:path*` },
+      { source: '/socket.io/:path*',            destination: `${U.origin}/socket.io/:path*` },
       { source: '/_next/image',                 destination: '/_next/image' },
     ];
   },

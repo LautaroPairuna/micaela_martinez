@@ -72,10 +72,13 @@ export class CartService {
 
     for (const item of items) {
       try {
+        // FIX: Prisma runtime expects Uppercase enum keys (CURSO/PRODUCTO)
+        // even if the generated type definitions say lowercase ('curso'/'producto').
+        // We cast to any to bypass the TypeScript definition mismatch.
         const tipo =
-          item.tipo === 'producto'
-            ? TipoItemOrden.PRODUCTO
-            : TipoItemOrden.CURSO;
+          item.tipo?.toLowerCase() === 'producto'
+            ? ('PRODUCTO' as any)
+            : ('CURSO' as any);
 
         // Resolver IDs (pueden venir como número, string numérico o slug)
         let productoId: number | null = null;
@@ -185,7 +188,7 @@ export class CartService {
     if (!cart) return this.getCart(userId);
 
     const tipo =
-      type === 'producto' ? TipoItemOrden.PRODUCTO : TipoItemOrden.CURSO;
+      type === 'producto' ? ('PRODUCTO' as any) : ('CURSO' as any);
 
     await this.prisma.itemCarrito.deleteMany({
       where: {

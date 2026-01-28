@@ -19,7 +19,16 @@ import { useAdminToast } from '@/contexts/AdminToastContext';
 import { buildZodSchemaFromFields } from '@/lib/admin/validation';
 import { io, type Socket } from 'socket.io-client'; // 👈 NUEVO
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const getApiBase = () => {
+  const url =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    '/api';
+  const base = url.replace(/\/+$/, '');
+  return base.endsWith('/api') ? base : `${base}/api`;
+};
+
+const API_BASE = getApiBase();
 
 export type FormMode = 'create' | 'edit';
 
