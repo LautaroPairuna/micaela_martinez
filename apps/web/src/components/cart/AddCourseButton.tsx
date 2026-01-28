@@ -1,6 +1,7 @@
 'use client';
 
 import { useCart } from '@/store/cart';
+import { cn } from '@/lib/utils';
 
 type CourseForCartButton = {
   id?: string | number;
@@ -35,9 +36,12 @@ export function AddCourseButton({ c, className }: { c: CourseForCartButton; clas
   return (
     <button
       onClick={handleAddToCart}
-      className={`rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 border border-gray-600 px-4 py-2 text-center transition-all duration-300 hover:from-gray-700 hover:to-gray-600 hover:border-[var(--gold)]/50 hover:shadow-md ${className || ''}`}
+      className={cn(
+        "rounded-xl bg-[var(--pink)] px-4 py-2 text-center shadow-lg transition-all duration-300 hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40",
+        className
+      )}
     >
-      <span className="text-sm font-medium text-gray-200 transition-colors hover:text-[var(--gold)]">Añadir al carrito</span>
+      <span className="text-sm font-bold text-black">Suscribirse</span>
     </button>
   )
 }

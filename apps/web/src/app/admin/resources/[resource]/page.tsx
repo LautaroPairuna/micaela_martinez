@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import {
   fetchAdminList,
+  fetchAllResourcesMeta,
   fetchResourceMeta,
 } from '@/lib/admin/fetch-admin-meta';
 import { AdminResourceClient } from './AdminResourceClient';
@@ -16,6 +17,7 @@ type PageParams = {
 type PageSearchParams = {
   page?: string;
   q?: string;
+  filters?: string;
 };
 
 type PageProps = {
@@ -44,10 +46,30 @@ export default async function AdminResourcePage({
 
   const page = sp.page ? Number(sp.page) : 1;
   const q = sp.q ?? undefined;
+  const filters = sp.filters ?? undefined;
 
-  const [meta, list] = await Promise.all([
+  let parsedFilters: Array<{ field: string; op: string; value?: unknown }> | undefined;
+  if (filters) {
+    try {
+      parsedFilters = JSON.parse(filters) as Array<{
+        field: string;
+        op: string;
+        value?: unknown;
+      }>;
+    } catch {
+      parsedFilters = undefined;
+    }
+  }
+
+  const [meta, list, allResources] = await Promise.all([
     fetchResourceMeta(resource),
-    fetchAdminList(resource, { page, pageSize: PAGE_SIZE, q }),
+    fetchAdminList(resource, {
+      page,
+      pageSize: PAGE_SIZE,
+      q,
+      filters: parsedFilters,
+    }),
+    fetchAllResourcesMeta(),
   ]);
 
   return (
@@ -56,6 +78,7 @@ export default async function AdminResourcePage({
         resource={resource}
         meta={meta}
         initialData={list}
+        allResources={allResources}
       />
     </AdminToastProvider>
   );

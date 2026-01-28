@@ -49,7 +49,7 @@ export class ImageUrlUtil {
    * Genera URL para imagen del hero
    */
   static getHeroImageUrl(filename: string): string {
-    return `${this.BASE_IMAGE_PATH}/hero/${filename}`;
+    return `/api/hero/image/${filename}`;
   }
 
   /**

@@ -29,35 +29,32 @@ export class WebsocketGateway
 
   private readonly logger = new Logger(WebsocketGateway.name);
   private userSockets: Map<string, Set<string>> = new Map();
+  private engineListenersAttached = false;
 
   afterInit(server: Server) {
     this.logger.log('🚀 WebSocket Gateway inicializado correctamente');
     this.logger.log(`📡 Servidor Socket.IO corriendo en namespace: /`);
 
-    // Configurar el servidor para debugging - verificar que engine existe
     if (server.engine) {
-      server.engine.on('connection_error', (err) => {
-        this.logger.error('❌ Error en Socket.IO Engine:', err);
-      });
-      this.logger.log('✅ Event listeners del engine configurados');
+      this.attachEngineListeners(server);
     } else {
-      this.logger.warn('⚠️ Server.engine no está disponible en afterInit');
-
-      // Configurar listeners cuando el engine esté disponible
       server.on('connection', () => {
-        this.logger.log(
-          '🔌 Nueva conexión detectada en server.on("connection")',
-        );
-        if (server.engine) {
-          server.engine.on('connection_error', (err) => {
-            this.logger.error(
-              '❌ Error en Socket.IO Engine (delayed setup):',
-              err,
-            );
-          });
+        if (server.engine && !this.engineListenersAttached) {
+          this.attachEngineListeners(server);
         }
       });
     }
+  }
+
+  private attachEngineListeners(server: Server) {
+    if (this.engineListenersAttached) return;
+    if (!server.engine) return;
+
+    server.engine.on('connection_error', (err) => {
+      this.logger.error('❌ Error en Socket.IO Engine:', err);
+    });
+    this.engineListenersAttached = true;
+    this.logger.log('✅ Event listeners del engine configurados');
   }
 
   handleConnection(client: Socket) {

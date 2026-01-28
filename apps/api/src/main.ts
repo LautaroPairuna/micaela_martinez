@@ -11,6 +11,15 @@ import * as path from 'path';
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 
+process.on('warning', (warning: Error) => {
+  const code = (warning as Error & { code?: string }).code;
+  const message = warning.message;
+  if (code === 'DEP0040' && message.includes('punycode')) {
+    return;
+  }
+  console.warn(warning);
+});
+
 // 🔹 Raíz de `public` del backend
 const PUBLIC_ROOT = path.join(process.cwd(), 'public');
 

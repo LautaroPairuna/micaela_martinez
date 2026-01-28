@@ -2,7 +2,6 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EstadoOrden } from '../../generated/prisma/client';
 import {
   DashboardSummaryDto,
   OrdersByStatusDto,
@@ -79,10 +78,9 @@ export class AdminDashboardService {
 
     // ─────────────────────── Facturación hoy / mes ───────────────────────
     // Usamos como "facturadas" las órdenes PAGADO + CUMPLIDO
-    const paidStates: EstadoOrden[] = [
-      EstadoOrden.PAGADO,
-      EstadoOrden.CUMPLIDO,
-    ];
+    // Workaround for Prisma 7 validation error: Pass Keys instead of Mapped Values if validation fails?
+    // Testing with Keys:
+    const paidStates = ['PAGADO', 'CUMPLIDO'] as any;
 
     const [revenueTodayAgg, revenueMonthAgg] = await Promise.all([
       this.prisma.orden.aggregate({

@@ -1,6 +1,7 @@
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
+  previewFeatures = []
 }
 
 generator jsonSchema {
@@ -12,7 +13,6 @@ generator jsonSchema {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 enum TipoItemOrden {
@@ -426,12 +426,27 @@ model Slider {
   titulo        String   @db.VarChar(255)
   alt           String   @db.VarChar(255)
   archivo       String   @db.VarChar(255)
+
+  // ✅ Contenido opcional “pro” (todo en español)
+  subtitulo     String?  @db.VarChar(255)
+  descripcion   String?  @db.VarChar(600)
+  etiqueta      String?  @db.VarChar(80)  // ej: "+500 alumnas", "Envío gratis", etc.
+
+  // ✅ Botones/CTAs (opcionales)
+  ctaPrimarioTexto  String? @map("cta_primario_texto") @db.VarChar(80)
+  ctaPrimarioHref   String? @map("cta_primario_href")  @db.VarChar(255)
+  ctaSecundarioTexto String? @map("cta_secundario_texto") @db.VarChar(80)
+  ctaSecundarioHref  String? @map("cta_secundario_href")  @db.VarChar(255)
+
+  // ✅ Control
   activa        Boolean  @default(true)
   orden         Int      @default(0)
+
   creadoEn      DateTime @default(now()) @map("creado_en")
   actualizadoEn DateTime @updatedAt @map("actualizado_en")
 
   @@index([activa, orden])
+  @@index([orden])
   @@map("slider")
 }
 

@@ -48,7 +48,7 @@ export class MediaStorageService {
     }
 
     this.logger.log(`VIDEO_TRANSCODE_MODE=${this.transcodeMode}`);
-    this.logger.warn(`keepTmpOnFfmpegError=${this.keepTmpOnFfmpegError}`);
+    this.logger.log(`keepTmpOnFfmpegError=${this.keepTmpOnFfmpegError}`);
   }
 
   private slugify(value: string): string {

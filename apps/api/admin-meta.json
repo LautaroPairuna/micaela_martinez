@@ -117,7 +117,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "InscripcionToUsuario",
+        "relationModel": "Inscripcion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -133,7 +133,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "OrdenToUsuario",
+        "relationModel": "Orden",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -149,7 +149,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ResenaToUsuario",
+        "relationModel": "Resena",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -165,7 +165,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CursoInstructor",
+        "relationModel": "Curso",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -181,7 +181,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "DireccionToUsuario",
+        "relationModel": "Direccion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -197,7 +197,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "FavoritoToUsuario",
+        "relationModel": "Favorito",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -213,7 +213,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "UsuarioToUsuarioRol",
+        "relationModel": "UsuarioRol",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -229,7 +229,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ResenaLikeToUsuario",
+        "relationModel": "ResenaLike",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -245,7 +245,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ResenaRespuestaToUsuario",
+        "relationModel": "ResenaRespuesta",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -261,7 +261,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "NotificacionToUsuario",
+        "relationModel": "Notificacion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -277,7 +277,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ResenaBorradorToUsuario",
+        "relationModel": "ResenaBorrador",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -293,7 +293,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "PreferenciasNotificacionToUsuario",
+        "relationModel": "PreferenciasNotificacion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -309,7 +309,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "AuditLogToUsuario",
+        "relationModel": "AuditLog",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -325,13 +325,113 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "PagoSuscripcionToUsuario",
+        "relationModel": "PagoSuscripcion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      },
+      {
+        "name": "carrito",
+        "type": "Carrito",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": false,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Carrito",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "email",
+        "label": "Email",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "nombre",
+        "label": "Nombre",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "passwordHash",
+        "label": "Password Hash",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "emailVerificadoEn",
+        "label": "Email Verificado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -408,13 +508,62 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "RoleToUsuarioRol",
+        "relationModel": "UsuarioRol",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "slug",
+        "label": "Slug",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "name",
+        "label": "Name",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "createdAt",
+        "label": "Created At",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -427,7 +576,7 @@
         "name": "usuarioId",
         "type": "Int",
         "kind": "scalar",
-        "isId": false,
+        "isId": true,
         "isRequired": true,
         "isList": false,
         "isEnum": false,
@@ -437,13 +586,13 @@
         "isForeignKey": true,
         "fkResource": "Usuario",
         "showInList": true,
-        "showInForm": true
+        "showInForm": false
       },
       {
         "name": "roleId",
         "type": "Int",
         "kind": "scalar",
-        "isId": false,
+        "isId": true,
         "isRequired": true,
         "isList": false,
         "isEnum": false,
@@ -453,7 +602,7 @@
         "isForeignKey": true,
         "fkResource": "Role",
         "showInList": true,
-        "showInForm": true
+        "showInForm": false
       },
       {
         "name": "usuario",
@@ -463,7 +612,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "UsuarioToUsuarioRol",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -479,13 +628,35 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "RoleToUsuarioRol",
+        "relationModel": "Role",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "roleId",
+        "label": "Role Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Role"
       }
     ]
   },
@@ -564,7 +735,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "FavoritoToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -580,13 +751,60 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "FavoritoToProducto",
+        "relationModel": "Producto",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "productoId",
+        "label": "Producto Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Producto"
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -834,7 +1052,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CursoToModulo",
+        "relationModel": "Modulo",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -850,7 +1068,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CursoToResena",
+        "relationModel": "Resena",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -866,7 +1084,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CursoToInscripcion",
+        "relationModel": "Inscripcion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -882,7 +1100,23 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CursoToResenaBorrador",
+        "relationModel": "ResenaBorrador",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": true,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "itemsCarrito",
+        "type": "ItemCarrito",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": true,
+        "isEnum": false,
+        "relationModel": "ItemCarrito",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -914,13 +1148,185 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CursoInstructor",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "slug",
+        "label": "Slug",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "resumen",
+        "label": "Resumen",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "descripcionMD",
+        "label": "Descripcion MD",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "requisitos",
+        "label": "Requisitos",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "precio",
+        "label": "Precio",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "publicado",
+        "label": "Publicado",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "nivel",
+        "label": "Nivel",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "BASICO",
+          "INTERMEDIO",
+          "AVANZADO"
+        ]
+      },
+      {
+        "field": "portada",
+        "label": "Portada",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "destacado",
+        "label": "Destacado",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "ratingProm",
+        "label": "Rating Prom",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "ratingConteo",
+        "label": "Rating Conteo",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "instructorId",
+        "label": "Instructor Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
       }
     ]
   },
@@ -1050,7 +1456,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "InscripcionToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -1066,13 +1472,86 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CursoToInscripcion",
+        "relationModel": "Curso",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "cursoId",
+        "label": "Curso Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Curso"
+      },
+      {
+        "field": "estado",
+        "label": "Estado",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "ACTIVADA",
+          "PAUSADA",
+          "DESACTIVADA"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -1166,7 +1645,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CursoToModulo",
+        "relationModel": "Curso",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -1182,7 +1661,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ModuloSelf",
+        "relationModel": "Modulo",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -1198,7 +1677,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ModuloSelf",
+        "relationModel": "Modulo",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -1214,13 +1693,72 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "LeccionToModulo",
+        "relationModel": "Leccion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "cursoId",
+        "label": "Curso Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Curso"
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "orden",
+        "label": "Orden",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "parentId",
+        "label": "Parent Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Modulo"
       }
     ]
   },
@@ -1307,6 +1845,21 @@
         "showInForm": true
       },
       {
+        "name": "previewUrl",
+        "type": "String",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": false,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": true
+      },
+      {
         "name": "orden",
         "type": "Int",
         "kind": "scalar",
@@ -1381,13 +1934,123 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "LeccionToModulo",
+        "relationModel": "Modulo",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "moduloId",
+        "label": "Modulo Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Modulo"
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "duracionS",
+        "label": "Duracion S",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "rutaSrc",
+        "label": "Ruta Src",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "previewUrl",
+        "label": "Preview Url",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "orden",
+        "label": "Orden",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "tipo",
+        "label": "Tipo",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "VIDEO",
+          "DOCUMENTO",
+          "QUIZ",
+          "TEXTO"
+        ]
+      },
+      {
+        "field": "descripcion",
+        "label": "Descripcion",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
       }
     ]
   },
@@ -1631,7 +2294,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "MarcaToProducto",
+        "relationModel": "Marca",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -1647,7 +2310,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CategoriaToProducto",
+        "relationModel": "Categoria",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -1663,7 +2326,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ProductoToProductoImagen",
+        "relationModel": "ProductoImagen",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -1679,7 +2342,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ProductoToResena",
+        "relationModel": "Resena",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -1695,7 +2358,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "FavoritoToProducto",
+        "relationModel": "Favorito",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -1711,13 +2374,201 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ProductoToResenaBorrador",
+        "relationModel": "ResenaBorrador",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      },
+      {
+        "name": "itemsCarrito",
+        "type": "ItemCarrito",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": true,
+        "isEnum": false,
+        "relationModel": "ItemCarrito",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": true,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "slug",
+        "label": "Slug",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "precio",
+        "label": "Precio",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "stock",
+        "label": "Stock",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "publicado",
+        "label": "Publicado",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "destacado",
+        "label": "Destacado",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "imagen",
+        "label": "Imagen",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "descripcionMD",
+        "label": "Descripcion MD",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "precioLista",
+        "label": "Precio Lista",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "ratingProm",
+        "label": "Rating Prom",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "ratingConteo",
+        "label": "Rating Conteo",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "marcaId",
+        "label": "Marca Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Marca"
+      },
+      {
+        "field": "categoriaId",
+        "label": "Categoria Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Categoria"
       }
     ]
   },
@@ -1765,7 +2616,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "isImage": false,
+        "isImage": true,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
@@ -1810,13 +2661,73 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ProductoToProductoImagen",
+        "relationModel": "Producto",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "productoId",
+        "label": "Producto Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Producto"
+      },
+      {
+        "field": "archivo",
+        "label": "Archivo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "alt",
+        "label": "Alt",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "orden",
+        "label": "Orden",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
       }
     ]
   },
@@ -1938,13 +2849,94 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "MarcaToProducto",
+        "relationModel": "Producto",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "slug",
+        "label": "Slug",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "nombre",
+        "label": "Nombre",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "imagen",
+        "label": "Imagen",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "activa",
+        "label": "Activa",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "orden",
+        "label": "Orden",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -2097,7 +3089,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CategoriaSelf",
+        "relationModel": "Categoria",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -2113,7 +3105,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CategoriaSelf",
+        "relationModel": "Categoria",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -2129,13 +3121,115 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "CategoriaToProducto",
+        "relationModel": "Producto",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "slug",
+        "label": "Slug",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "nombre",
+        "label": "Nombre",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "descripcion",
+        "label": "Descripcion",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "imagen",
+        "label": "Imagen",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "activa",
+        "label": "Activa",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "orden",
+        "label": "Orden",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "parentId",
+        "label": "Parent Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Categoria"
       }
     ]
   },
@@ -2403,7 +3497,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "OrdenEnvio",
+        "relationModel": "Direccion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -2419,7 +3513,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "OrdenFacturacion",
+        "relationModel": "Direccion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -2435,7 +3529,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "OrdenToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -2451,7 +3545,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ItemOrdenToOrden",
+        "relationModel": "ItemOrden",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -2467,13 +3561,184 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "OrdenToPagoSuscripcion",
+        "relationModel": "PagoSuscripcion",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "estado",
+        "label": "Estado",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "PENDIENTE",
+          "PAGADO",
+          "CUMPLIDO",
+          "CANCELADO",
+          "REEMBOLSADO"
+        ]
+      },
+      {
+        "field": "total",
+        "label": "Total",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "moneda",
+        "label": "Moneda",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "referenciaPago",
+        "label": "Referencia Pago",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "esSuscripcion",
+        "label": "Es Suscripcion",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "suscripcionActiva",
+        "label": "Suscripcion Activa",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "suscripcionId",
+        "label": "Suscripcion Id",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "suscripcionFrecuencia",
+        "label": "Suscripcion Frecuencia",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "suscripcionTipoFrecuencia",
+        "label": "Suscripcion Tipo Frecuencia",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "direccionEnvioId",
+        "label": "Direccion Envio Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Direccion"
+      },
+      {
+        "field": "direccionFacturacionId",
+        "label": "Direccion Facturacion Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Direccion"
       }
     ]
   },
@@ -2601,13 +3866,101 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ItemOrdenToOrden",
+        "relationModel": "Orden",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "ordenId",
+        "label": "Orden Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Orden"
+      },
+      {
+        "field": "tipo",
+        "label": "Tipo",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "CURSO",
+          "PRODUCTO"
+        ]
+      },
+      {
+        "field": "refId",
+        "label": "Ref Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "cantidad",
+        "label": "Cantidad",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "precioUnitario",
+        "label": "Precio Unitario",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
       }
     ]
   },
@@ -2761,7 +4114,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "OrdenToPagoSuscripcion",
+        "relationModel": "Orden",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -2777,13 +4130,107 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "PagoSuscripcionToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "ordenId",
+        "label": "Orden Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Orden"
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "referenciaPago",
+        "label": "Referencia Pago",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "monto",
+        "label": "Monto",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "estado",
+        "label": "Estado",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -2831,7 +4278,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "DireccionToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3042,7 +4489,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "OrdenEnvio",
+        "relationModel": "Orden",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -3058,13 +4505,180 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "OrdenFacturacion",
+        "relationModel": "Orden",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "etiqueta",
+        "label": "Etiqueta",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "nombre",
+        "label": "Nombre",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "telefono",
+        "label": "Telefono",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "calle",
+        "label": "Calle",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "numero",
+        "label": "Numero",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "pisoDepto",
+        "label": "Piso Depto",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "ciudad",
+        "label": "Ciudad",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "provincia",
+        "label": "Provincia",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "cp",
+        "label": "Cp",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "pais",
+        "label": "Pais",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "predeterminada",
+        "label": "Predeterminada",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -3126,7 +4740,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "isImage": false,
+        "isImage": true,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
@@ -3192,6 +4806,99 @@
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "alt",
+        "label": "Alt",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "archivo",
+        "label": "Archivo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "activa",
+        "label": "Activa",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "orden",
+        "label": "Orden",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -3316,7 +5023,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CursoToResena",
+        "relationModel": "Curso",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3332,7 +5039,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ProductoToResena",
+        "relationModel": "Producto",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3348,7 +5055,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ResenaToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3364,7 +5071,7 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ResenaToResenaLike",
+        "relationModel": "ResenaLike",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -3380,13 +5087,94 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "ResenaToResenaRespuesta",
+        "relationModel": "ResenaRespuesta",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "cursoId",
+        "label": "Curso Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Curso"
+      },
+      {
+        "field": "productoId",
+        "label": "Producto Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Producto"
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "puntaje",
+        "label": "Puntaje",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "comentario",
+        "label": "Comentario",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -3485,7 +5273,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ResenaToResenaLike",
+        "relationModel": "Resena",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3501,13 +5289,73 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ResenaLikeToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "resenaId",
+        "label": "Resena Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Resena"
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "tipo",
+        "label": "Tipo",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "LIKE",
+          "DISLIKE"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -3647,7 +5495,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ResenaToResenaRespuesta",
+        "relationModel": "Resena",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3663,7 +5511,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ResenaRespuestaToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3679,7 +5527,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "RespuestaHijos",
+        "relationModel": "ResenaRespuesta",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -3695,13 +5543,101 @@
         "isRequired": true,
         "isList": true,
         "isEnum": false,
-        "relationModel": "RespuestaHijos",
+        "relationModel": "ResenaRespuesta",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "resenaId",
+        "label": "Resena Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Resena"
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "parentId",
+        "label": "Parent Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "ResenaRespuesta"
+      },
+      {
+        "field": "contenido",
+        "label": "Contenido",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "eliminado",
+        "label": "Eliminado",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -3861,13 +5797,106 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "NotificacionToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "tipo",
+        "label": "Tipo",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "RESPUESTA_RESENA",
+          "LIKE_RESENA",
+          "MENCION",
+          "SISTEMA"
+        ]
+      },
+      {
+        "field": "titulo",
+        "label": "Titulo",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "mensaje",
+        "label": "Mensaje",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "leida",
+        "label": "Leida",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "url",
+        "label": "Url",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -4065,13 +6094,126 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "PreferenciasNotificacionToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "nuevaResena",
+        "label": "Nueva Resena",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "respuestaResena",
+        "label": "Respuesta Resena",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "actualizacionesSistema",
+        "label": "Actualizaciones Sistema",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "mantenimiento",
+        "label": "Mantenimiento",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "reporteContenido",
+        "label": "Reporte Contenido",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "contenidoPendiente",
+        "label": "Contenido Pendiente",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "resumenDiario",
+        "label": "Resumen Diario",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "notificacionesInstantaneas",
+        "label": "Notificaciones Instantaneas",
+        "input": "boolean",
+        "operators": [
+          "equals"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -4211,7 +6353,7 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ResenaBorradorToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -4227,7 +6369,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "CursoToResenaBorrador",
+        "relationModel": "Curso",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
@@ -4243,13 +6385,106 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "relationModel": "ProductoToResenaBorrador",
+        "relationModel": "Producto",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "cursoId",
+        "label": "Curso Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Curso"
+      },
+      {
+        "field": "productoId",
+        "label": "Producto Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Producto"
+      },
+      {
+        "field": "puntaje",
+        "label": "Puntaje",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "comentario",
+        "label": "Comentario",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   },
@@ -4432,13 +6667,516 @@
         "isRequired": true,
         "isList": false,
         "isEnum": false,
-        "relationModel": "AuditLogToUsuario",
+        "relationModel": "Usuario",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "tableName",
+        "label": "Table Name",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "recordId",
+        "label": "Record Id",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "action",
+        "label": "Action",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "userId",
+        "label": "User Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "userAgent",
+        "label": "User Agent",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "ipAddress",
+        "label": "Ip Address",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "endpoint",
+        "label": "Endpoint",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ]
+      },
+      {
+        "field": "timestamp",
+        "label": "Timestamp",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Carrito",
+    "tableName": "carrito",
+    "displayName": "Carrito",
+    "fields": [
+      {
+        "name": "id",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": true,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": false
+      },
+      {
+        "name": "usuarioId",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": true,
+        "fkResource": "Usuario",
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "creadoEn",
+        "type": "DateTime",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "actualizadoEn",
+        "type": "DateTime",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "usuario",
+        "type": "Usuario",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Usuario",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "items",
+        "type": "ItemCarrito",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": true,
+        "isEnum": false,
+        "relationModel": "ItemCarrito",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": true,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario"
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      {
+        "field": "actualizadoEn",
+        "label": "Actualizado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ItemCarrito",
+    "tableName": "item_carrito",
+    "displayName": "Item Carrito",
+    "fields": [
+      {
+        "name": "id",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": true,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": false
+      },
+      {
+        "name": "carritoId",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": true,
+        "fkResource": "Carrito",
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "tipo",
+        "type": "TipoItemOrden",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": true,
+        "enumName": "TipoItemOrden",
+        "enumValues": [
+          "CURSO",
+          "PRODUCTO"
+        ],
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "productoId",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": false,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": true,
+        "fkResource": "Producto",
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "cursoId",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": false,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": true,
+        "fkResource": "Curso",
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "cantidad",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "creadoEn",
+        "type": "DateTime",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "carrito",
+        "type": "Carrito",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Carrito",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "producto",
+        "type": "Producto",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": false,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Producto",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "curso",
+        "type": "Curso",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": false,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Curso",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      }
+    ],
+    "filters": [
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "carritoId",
+        "label": "Carrito Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Carrito"
+      },
+      {
+        "field": "tipo",
+        "label": "Tipo",
+        "input": "enum",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "enumValues": [
+          "CURSO",
+          "PRODUCTO"
+        ]
+      },
+      {
+        "field": "productoId",
+        "label": "Producto Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Producto"
+      },
+      {
+        "field": "cursoId",
+        "label": "Curso Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Curso"
+      },
+      {
+        "field": "cantidad",
+        "label": "Cantidad",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ]
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
       }
     ]
   }

@@ -9,8 +9,9 @@ import { Pill } from '@/components/ui/Pill';
 import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { AddCourseButton } from '@/components/cart/AddCourseButton';
-import { Star } from 'lucide-react';
+import { Star, BookOpen, Clock } from 'lucide-react';
 import { useEnrollmentProgressSafe } from '@/components/courses/EnrollmentProgressProvider';
+import { formatDuration } from '@/lib/utils';
 
 type NivelCurso = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
 const NIVEL_LABEL: Record<NivelCurso, string> = {
@@ -31,6 +32,8 @@ type CourseMinimal = {
   ratingConteo?: number | null;
   _count?: { modulos?: number };
   instructor?: { nombre?: string | null } | null;
+  totalLessons?: number;
+  totalDuration?: number;
 };
 
 type InscripcionMini = {
@@ -59,7 +62,9 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
       className="group block h-full touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/40"
       style={{ outlineOffset: 4, WebkitTapHighlightColor: 'transparent' }}
     >
-      <Card className="h-full flex flex-col lg:flex-row border border-gray-700 bg-gray-900 backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1">
+      <Card className="relative h-full flex flex-col lg:flex-row border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 overflow-hidden rounded-xl">
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[linear-gradient(120deg,transparent,rgba(197,164,109,0.12),transparent)] bg-[length:200%_200%] animate-shine" />
+        <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[var(--gold)]/10" />
         {/* Imagen */}
         <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:h-auto">
           <div className="aspect-video lg:aspect-square w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
@@ -73,6 +78,7 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
               sizes="(min-width:1280px) 100vw, (min-width:768px) 50vw, 100vw"
             />
           </div>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_70%_at_20%_20%,rgba(197,164,109,0.18),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           {/* Overlay con badges */}
           <div className="absolute inset-2 flex flex-col justify-between pointer-events-none">
             <div className="flex flex-wrap gap-2">
@@ -92,12 +98,29 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         </div>
 
         {/* Contenido principal */}
-        <div className="flex flex-col gap-3 flex-1 p-4 sm:p-5 lg:p-6">
+        <div className="relative flex flex-col gap-3 flex-1 p-4 sm:p-5 lg:p-6">
               <h3 className="relative font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem] uppercase tracking-wide transition-all duration-300 text-white group-hover:text-[var(--gold)] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">{c.titulo}</h3>
 
-              <p className="text-sm text-[var(--muted)]">
-                {c._count?.modulos && c._count.modulos > 0 ? `${c._count.modulos} módulos` : 'Sin módulos'}
-              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
+                  <BookOpen className="h-3 w-3" />
+                  {c.totalLessons ? `${c.totalLessons} lecciones` : '0 lecciones'}
+                </span>
+
+                {c.totalDuration && c.totalDuration > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
+                    <Clock className="h-3 w-3" />
+                    {formatDuration(c.totalDuration)}
+                  </span>
+                )}
+
+                {c.ratingProm && c.ratingConteo && c.ratingConteo > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
+                    <Star className="h-3 w-3 text-[var(--gold)]" />
+                    {Number(c.ratingProm || 0).toFixed(1)} · {c.ratingConteo}
+                  </span>
+                )}
+              </div>
 
               {c.ratingProm && c.ratingConteo && c.ratingConteo > 0 && (
                 <div className="min-h-[24px] flex items-center">

@@ -33,6 +33,11 @@ function mapSort(sort?: string): Prisma.CursoOrderByWithRelationInput[] {
   }
 }
 
+const activeEnrollmentStates: EstadoInscripcion[] = [
+  EstadoInscripcion.ACTIVADA,
+  EstadoInscripcion.PAUSADA,
+].map((state) => state.toUpperCase() as EstadoInscripcion);
+
 @Injectable()
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
@@ -76,16 +81,40 @@ export class CoursesService {
           ratingConteo: true,
           instructor: { select: { id: true, nombre: true } },
           _count: { select: { modulos: true, resenas: true } },
+          modulos: {
+            select: {
+              lecciones: {
+                select: { id: true, duracionS: true },
+              },
+            },
+          },
         },
       }),
       this.prisma.curso.count({ where }),
     ]);
 
-    // Transformar los datos para incluir URLs de imagen
-    const transformedItems = items.map((item) => ({
-      ...item,
-      portadaUrl: ImageUrlUtil.getCourseImageUrl(item.portada),
-    }));
+    // Transformar los datos para incluir URLs de imagen y cálculos
+    const transformedItems = items.map((item) => {
+      const totalLessons = item.modulos.reduce(
+        (acc, mod) => acc + mod.lecciones.length,
+        0,
+      );
+      const totalDurationS = item.modulos.reduce(
+        (acc, mod) =>
+          acc + mod.lecciones.reduce((sum, l) => sum + (l.duracionS || 0), 0),
+        0,
+      );
+
+      // Eliminamos modulos de la respuesta final para no sobrecargar el payload
+      const { modulos, ...rest } = item;
+
+      return {
+        ...rest,
+        portadaUrl: ImageUrlUtil.getCourseImageUrl(item.portada),
+        totalLessons,
+        totalDuration: totalDurationS,
+      };
+    });
 
     return {
       items: transformedItems,
@@ -232,7 +261,7 @@ export class CoursesService {
         where: {
           cursoId: cursoBase.id,
           estado: {
-            in: [EstadoInscripcion.ACTIVADA, EstadoInscripcion.PAUSADA],
+            in: activeEnrollmentStates,
           },
         },
       }),
@@ -274,7 +303,7 @@ export class CoursesService {
         usuarioId: parseInt(userId),
         cursoId: curso.id,
         estado: {
-          in: [EstadoInscripcion.ACTIVADA, EstadoInscripcion.PAUSADA],
+          in: activeEnrollmentStates,
         },
       },
       select: {

@@ -8,71 +8,63 @@ import { ProductCard } from "@/components/catalog/ProductCard";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { safeGetCourses, safeGetProducts } from "@/lib/sdk/catalogApi";
 import { getMe, listEnrollments } from "@/lib/sdk/userApi";
-import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { CoursesGridClient } from '@/components/courses/CoursesGridClient';
-import { HeroCarousel } from "@/components/ui/HeroCarousel";
+import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { CoursesGridClient } from "@/components/courses/CoursesGridClient";
+import HeroSection from "@/components/home/HeroSection";
 
 // Forzar renderizado dinámico para evitar errores con headers()
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /* ───────────────────── helpers UI ───────────────────── */
 function TitleBand({
+  subtitle,
   title,
-  tone = "gold", // "gold" | "neutral" | "dark"
-}: { title: string; tone?: "gold" | "neutral" | "dark" }) {
-  const getStyles = () => {
-    switch (tone) {
-      case "gold":
-        return {
-          bg: "#1a1a1a",
-          text: "text-[var(--gold)]",
-          accent: "var(--gold)",
-          border: "border-[var(--gold)]/20"
-        };
-      case "neutral":
-        return {
-          bg: "#1a1a1a",
-          text: "text-white/90",
-          accent: "#888",
-          border: "border-white/10"
-        };
-      case "dark":
-      default:
-        return {
-          bg: "#111",
-          text: "text-white",
-          accent: "#666",
-          border: "border-white/10"
-        };
-    }
-  };
-
-  const styles = getStyles();
-
+  highlight,
+  glowClassName,
+}: {
+  subtitle: string;
+  title: string;
+  highlight?: string;
+  glowClassName?: string;
+}) {
   return (
-    <div className="relative w-full">
-      <div 
-        className={`absolute inset-0 border-t ${styles.border}`}
-        style={{ background: styles.bg }} 
-      />
-      <div className="relative w-full max-w-7xl mx-auto p-4">
-        <div className="py-6 text-center">
-          <h2 className={`font-display uppercase tracking-[.06em] text-xl sm:text-2xl font-medium ${styles.text}`}>
-            {title}
-          </h2>
-          <div className="mt-3 mx-auto w-20 h-px opacity-60" style={{ background: styles.accent }} />
-        </div>
+    <div className="relative w-full py-12">
+      <div className="relative w-full max-w-7xl mx-auto px-4 text-center">
+        {glowClassName && (
+          <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className={glowClassName} />
+          </div>
+        )}
+        {/* Subtitulo */}
+        <p className="text-xs md:text-sm font-bold tracking-[0.2em] text-[var(--gold)] uppercase mb-6">
+          {subtitle}
+        </p>
+
+        {/* Titulo Principal */}
+        <h2 className="font-display text-3xl md:text-5xl text-white leading-[1.5]">
+          {title}{" "}
+          {highlight && <span className="text-[var(--pink)]">{highlight}</span>}
+        </h2>
+
+        {/* Linea decorativa pequeña */}
+        <div className="mt-6 mx-auto w-80 h-px bg-[var(--gold)] opacity-60" />
       </div>
     </div>
   );
 }
 
-function SeeAllButton({ href, children }: { href: string; children: React.ReactNode }) {
+function SeeAllButton({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       href={href}
       className="
-        inline-flex items-center justify-center rounded-xl2 px-5 py-2 text-sm font-medium mt-10
+        inline-flex items-center justify-center rounded-2xl px-8 py-3 text-sm font-semibold mt-10 min-w-[240px]
         border-2 border-[var(--gold,#F5C451)] text-[var(--gold,#F5C451)]
         hover:bg-[var(--gold,#F5C451)] hover:text-black
         transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60
@@ -85,7 +77,8 @@ function SeeAllButton({ href, children }: { href: string; children: React.ReactN
 
 export const metadata: Metadata = {
   title: "Inicio",
-  description: "Cursos y tienda de cosmética minimalista y elegante por Micaela Pestañas.",
+  description:
+    "Cursos y tienda de cosmética minimalista y elegante por Micaela Pestañas.",
   alternates: { canonical: "/" },
 };
 
@@ -96,11 +89,6 @@ type CourseMinimal = ComponentProps<typeof CourseCard>["c"];
 type ProductMinimal = ComponentProps<typeof ProductCard>["p"];
 
 // Keys seguras sin usar `any`
-const courseKey = (c: CourseMinimal, i: number) => {
-  const r = c as unknown as Record<string, unknown>;
-  const slug = r["slug"];
-  return typeof slug === "string" ? slug : String(i);
-};
 const productKey = (p: ProductMinimal, i: number) => {
   const r = p as unknown as Record<string, unknown>;
   const id = r["id"];
@@ -112,8 +100,6 @@ const productKey = (p: ProductMinimal, i: number) => {
     : String(i);
 };
 
-
-
 export default async function HomePage() {
   // Usar funciones seguras que no fallan en build estático
   const [cursos, productos] = await Promise.all([
@@ -121,14 +107,16 @@ export default async function HomePage() {
     safeGetProducts({ sort: "relevancia", page: 1, perPage: 12 }),
   ]);
 
-  const courses: CourseMinimal[] = Array.isArray(cursos?.items) ? (cursos!.items as CourseMinimal[]) : [];
-  const products: ProductMinimal[] = Array.isArray(productos?.items) ? (productos!.items as ProductMinimal[]) : [];
+  const courses: CourseMinimal[] = Array.isArray(cursos?.items)
+    ? (cursos!.items as CourseMinimal[])
+    : [];
+  const products: ProductMinimal[] = Array.isArray(productos?.items)
+    ? (productos!.items as ProductMinimal[])
+    : [];
 
   // visibles
   const courseCount = Math.min(4, courses.length);
   const productCount = Math.min(8, products.length);
-
-  // El componente HeroCarousel ahora obtiene las imágenes desde la API
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const searchJsonLd = {
@@ -146,78 +134,45 @@ export default async function HomePage() {
   const compactPadY = (n: number) => (n <= 2 ? "py-10" : "");
 
   const qc = new QueryClient();
-  const me = await getMe({ cache: 'no-store' });
+  const me = await getMe({ cache: "no-store" });
   const isLoggedIn = !!me?.id;
   if (isLoggedIn) {
-    await qc.prefetchQuery({ queryKey: ['enrollments'], queryFn: () => listEnrollments({ cache: 'no-store' }) });
+    await qc.prefetchQuery({
+      queryKey: ["enrollments"],
+      queryFn: () => listEnrollments({ cache: "no-store" }),
+    });
   }
 
   return (
     <>
       {/* ───────── HERO ───────── */}
       <section className="w-full">
-        <div className="grid lg:grid-cols-12 w-full">
-          <div className="lg:col-span-12 bg-[#111] flex items-center px-8 py-16">
-            <div className="w-full">
-              {/* <h1 className="font-display uppercase tracking-[.08em] leading-[1.45] text-2xl sm:text-3xl lg:text-4xl">
-                <span className="block text-white">Micaela Martinez - </span>
-                <span className="block text-[var(--gold)] mt-2">Extenciones de Pestañas</span>
-              </h1> */}
-
-              <Image
-                src="/images/mica_pestanas_logo_blanco.svg"
-                alt="Micaela Pestañas"
-                width={600}
-                height={600}
-                className="mx-auto"
-              />
-              
-              <p className="mt-6 text-lg text-white/90 leading-relaxed text-center">
-                Aprendé técnicas profesionales y encontrá productos curados. 
-                Minimalismo, elegancia y resultados.
-              </p>
-              
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <Link
-                  href="/cursos"
-                  className="inline-flex items-center justify-center rounded-lg px-6 py-3
-                             bg-[var(--gold)] text-black font-semibold
-                             transition-all duration-300 hover:bg-[var(--gold-200)]"
-                >
-                  Explorar Cursos
-                </Link>
-
-                <Link
-                  href="/tienda"
-                  className="inline-flex items-center justify-center rounded-lg px-6 py-3
-                             border border-[var(--pink)] text-[var(--pink)] font-semibold
-                             transition-all duration-300 hover:bg-[var(--pink)] hover:text-black"
-                >
-                  Ver Tienda
-                </Link>
-              </div>
-            </div>
-          </div>
-          
-          <div className="lg:col-span-12">
-            <div className="w-full">
-              <HeroCarousel
-                autoPlay={true}
-                autoPlayInterval={6000}
-                className=""
-              />
-            </div>
-          </div>
-        </div>
+        <HeroSection
+          logo={
+            <Image
+              src="/images/mica_pestanas_logo_blanco.svg"
+              alt="Micaela Pestañas"
+              width={520}
+              height={220}
+              className="h-auto w-[260px] sm:w-[320px] md:w-[380px]"
+              priority
+            />
+          }
+        />
       </section>
 
       {/* ───────── CURSOS: divisor full-width + sección en #111 ───────── */}
-      <TitleBand title="CURSOS DESTACADOS" tone="gold" />
+      <TitleBand
+        subtitle="ACADEMIA"
+        title="CURSOS"
+        highlight="PROFESIONALES"
+        glowClassName="h-40 w-40 rounded-full bg-[#F5C451]/25 blur-[72px]"
+      />
       <Section
         id="cursos"
         width="xl"
-        padY="md"
-        bleedBackground={<div className="absolute inset-0 bg-[#111]" />}
+        padY="sm"
+        bleedBackground={<div className="absolute inset-0 bg-[#0d0d0d]" />}
         innerClassName={compactPadY(courseCount)}
       >
         {courseCount > 0 ? (
@@ -238,16 +193,21 @@ export default async function HomePage() {
       </Section>
 
       {/* ───────── PRODUCTOS: divisor full-width + sección negra ───────── */}
-      <TitleBand title="PRODUCTOS DESTACADOS" tone="gold" />
+      <TitleBand
+        subtitle="TIENDA"
+        title="PRODUCTOS"
+        highlight="DESTACADOS"
+        glowClassName="h-36 w-36 rounded-full bg-[#ff4fb2]/30 blur-[72px]"
+      />
       <Section
         id="productos"
         width="xl"
-        padY="md"
-        bleedBackground={<div className="absolute inset-0 bg-[var(--bg,#000)]" />}
+        padY="sm"
+        bleedBackground={<div className="absolute inset-0 bg-[var(--bg,#0d0d0d)]" />}
         innerClassName={compactPadY(productCount)}
       >
         {productCount > 0 ? (
-          <div className={`${compactWrap(productCount, "max-w-6xl")} grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4`}>
+          <div className={`${compactWrap(productCount, "max-w-6xl")} grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4`}>
             {products.slice(0, productCount).map((p, i) => (
               <ProductCard key={productKey(p, i)} p={p} />
             ))}

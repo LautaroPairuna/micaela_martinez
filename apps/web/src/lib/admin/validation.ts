@@ -79,6 +79,17 @@ export function buildZodSchemaFromFields(fields: FieldMeta[]) {
     if (field.isId) continue;
     if (field.isParentChildCount) continue;
 
+    // Campos de archivo/imagen se manejan con upload separado.
+    // Para evitar errores de validación cuando no se envía aún, los permitimos como opcionales.
+    if (field.isImage || field.isFile) {
+      shape[field.name] = mapFieldToZod({
+        ...field,
+        // Fuerza opcional/nullable independientemente de isRequired
+        isRequired: false,
+      }).optional().nullable();
+      continue;
+    }
+
     shape[field.name] = mapFieldToZod(field);
   }
 

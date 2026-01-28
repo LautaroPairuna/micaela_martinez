@@ -128,7 +128,7 @@ export default function FavoritosPage() {
         </div>
       ) : (
         /* Products Grid - Diseño similar a ProductCard */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
           {items.map((product: ProductMinimal) => (
             <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 border-[var(--border)] bg-[var(--card)] overflow-hidden rounded-xl">
               <CardBody className="p-0">

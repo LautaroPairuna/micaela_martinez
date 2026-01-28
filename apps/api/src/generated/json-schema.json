@@ -553,7 +553,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "description": "@admin.file"
         },
         "descripcionMD": {
           "type": [
@@ -565,7 +566,8 @@
           "type": [
             "integer",
             "null"
-          ]
+          ],
+          "description": "@admin.label(\"Precio de Lista\")"
         },
         "ratingProm": {
           "type": [
@@ -1126,6 +1128,48 @@
         },
         "archivo": {
           "type": "string"
+        },
+        "subtitulo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "etiqueta": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaPrimarioTexto": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaPrimarioHref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaSecundarioTexto": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaSecundarioHref": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "activa": {
           "type": "boolean",

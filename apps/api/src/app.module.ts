@@ -87,6 +87,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(StaticFilesMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.GET });
+      .forRoutes({ path: '*path', method: RequestMethod.GET });
   }
 }

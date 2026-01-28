@@ -55,6 +55,7 @@ type ListParams = {
   page?: number;
   pageSize?: number;
   q?: string;
+  filters?: Array<{ field: string; op: string; value?: unknown }>;
 };
 
 export type AdminListResponse<T = any> = {
@@ -76,6 +77,9 @@ export async function fetchAdminList<T = any>(
   if (params.page) search.set('page', String(params.page));
   if (params.pageSize) search.set('pageSize', String(params.pageSize));
   if (params.q) search.set('q', params.q);
+  if (params.filters && params.filters.length > 0) {
+    search.set('filters', JSON.stringify(params.filters));
+  }
 
   const res = await fetch(
     `${API_BASE}/admin/resources/${resource}?${search.toString()}`,

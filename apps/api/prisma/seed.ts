@@ -1,7 +1,7 @@
 /// <reference types="node" />
+import 'dotenv/config';
 import {
   Prisma,
-  PrismaClient,
   EstadoInscripcion,
   EstadoOrden,
   NivelCurso,
@@ -11,7 +11,46 @@ import {
 import { createExtendedClient } from '../src/prisma/prisma.extensions';
 
 const prisma = createExtendedClient();
+
+/**
+ * Cast helper para JSON (Prisma Json)
+ */
 const json = (v: unknown) => v as Prisma.InputJsonValue;
+
+/**
+ * Prisma 7.2.0 + enums con @map: en algunos setups/runtime el engine valida esperando la KEY del enum
+ * (ej: "BASICO") en lugar del VALUE mapeado (ej: "basico").
+ *
+ * Este normalizador:
+ * - si recibe "basico" → devuelve "BASICO"
+ * - si recibe NivelCurso.BASICO (que hoy vale "basico") → devuelve "BASICO"
+ * - si recibe "BASICO" → devuelve "BASICO"
+ */
+function enumKey<T extends Record<string, string>>(enm: T, input: unknown): string {
+  if (input == null) return input as any;
+
+  const s = String(input);
+
+  // Si ya es una key válida:
+  if (Object.prototype.hasOwnProperty.call(enm, s)) return s;
+
+  // Si es un value mapeado, buscamos la key:
+  for (const [k, v] of Object.entries(enm)) {
+    if (v === s) return k;
+  }
+
+  // Si no matchea, devolvemos lo que venga (dejar que Prisma tire error si corresponde)
+  return s;
+}
+
+// Normalizadores concretos (devuelven la KEY y se castea a any para no pelear con el tipo TS del enum)
+const E = {
+  nivelCurso: (v: unknown) => enumKey(NivelCurso as any, v) as any,
+  estadoOrden: (v: unknown) => enumKey(EstadoOrden as any, v) as any,
+  estadoInscripcion: (v: unknown) => enumKey(EstadoInscripcion as any, v) as any,
+  tipoItemOrden: (v: unknown) => enumKey(TipoItemOrden as any, v) as any,
+  tipoLeccion: (v: unknown) => enumKey(TipoLeccion as any, v) as any,
+};
 
 /* ───────── Helpers ───────── */
 
@@ -22,13 +61,24 @@ const upsertRoleBySlug = (slug: string, name: string) =>
     create: { slug, name, createdAt: new Date() },
   });
 
-const upsertUserByEmail = async (email: string, data: Omit<Prisma.UsuarioCreateInput, 'email'>) => {
+const upsertUserByEmail = async (
+  email: string,
+  data: Omit<Prisma.UsuarioCreateInput, 'email'>,
+) => {
   await prisma.usuario.upsert({
     where: { email },
-    update: { nombre: data.nombre, passwordHash: (data as any).passwordHash, emailVerificadoEn: data.emailVerificadoEn ?? undefined },
-    create: { ...data, email },
+    update: {
+      nombre: data.nombre,
+      passwordHash: (data as any).passwordHash,
+      emailVerificadoEn: (data as any).emailVerificadoEn ?? undefined,
+    },
+    create: { ...data, email } as any,
   });
-  const u = await prisma.usuario.findUnique({ where: { email }, select: { id: true } });
+
+  const u = await prisma.usuario.findUnique({
+    where: { email },
+    select: { id: true },
+  });
   if (!u) throw new Error(`No se pudo obtener usuario ${email}`);
   return u.id;
 };
@@ -54,60 +104,112 @@ const upsertProductoGetId = async (p: {
   descripcionMD?: string | null; precioLista?: number | null;
   marcaSlug?: string | null; categoriaSlug?: string | null;
 }) => {
-  const marca = p.marcaSlug ? await prisma.marca.findUnique({ where: { slug: p.marcaSlug }, select: { id: true } }) : null;
-  const categoria = p.categoriaSlug ? await prisma.categoria.findUnique({ where: { slug: p.categoriaSlug }, select: { id: true } }) : null;
+  const marca = p.marcaSlug
+    ? await prisma.marca.findUnique({ where: { slug: p.marcaSlug }, select: { id: true } })
+    : null;
+
+  const categoria = p.categoriaSlug
+    ? await prisma.categoria.findUnique({ where: { slug: p.categoriaSlug }, select: { id: true } })
+    : null;
 
   await prisma.producto.upsert({
     where: { slug: p.slug },
     update: {
-      titulo: p.titulo, precio: p.precio, stock: p.stock,
-      publicado: p.publicado ?? true, destacado: p.destacado ?? false,
-      imagen: p.imagen ?? null, descripcionMD: p.descripcionMD ?? null,
+      titulo: p.titulo,
+      precio: p.precio,
+      stock: p.stock,
+      publicado: p.publicado ?? true,
+      destacado: p.destacado ?? false,
+      imagen: p.imagen ?? null,
+      descripcionMD: p.descripcionMD ?? null,
       precioLista: p.precioLista ?? null,
-      marcaId: marca?.id ?? null, categoriaId: categoria?.id ?? null,
+      marcaId: marca?.id ?? null,
+      categoriaId: categoria?.id ?? null,
     },
     create: {
-      slug: p.slug, titulo: p.titulo, precio: p.precio, stock: p.stock,
-      publicado: p.publicado ?? true, destacado: p.destacado ?? false,
-      imagen: p.imagen ?? null, descripcionMD: p.descripcionMD ?? null,
+      slug: p.slug,
+      titulo: p.titulo,
+      precio: p.precio,
+      stock: p.stock,
+      publicado: p.publicado ?? true,
+      destacado: p.destacado ?? false,
+      imagen: p.imagen ?? null,
+      descripcionMD: p.descripcionMD ?? null,
       precioLista: p.precioLista ?? null,
-      marcaId: marca?.id ?? null, categoriaId: categoria?.id ?? null,
+      marcaId: marca?.id ?? null,
+      categoriaId: categoria?.id ?? null,
       creadoEn: new Date(),
     },
   });
 
-  const prod = await prisma.producto.findUnique({ where: { slug: p.slug }, select: { id: true } });
+  const prod = await prisma.producto.findUnique({
+    where: { slug: p.slug },
+    select: { id: true },
+  });
   if (!prod) throw new Error(`No se pudo obtener producto ${p.slug}`);
   return prod.id;
 };
 
 /** Curso por slug → devuelve id Int */
 const upsertCursoGetId = async (c: {
-  idSlug: string; titulo: string; resumen: string; descripcionMD: string;
-  precio: number; nivel: NivelCurso; portada: string; destacado?: boolean; tags?: string[];
+  idSlug: string;
+  titulo: string;
+  resumen: string;
+  descripcionMD: string;
+  precio: number;
+  nivel: NivelCurso | string; // aceptamos string para que no te mate el bug
+  portada: string;
+  destacado?: boolean;
+  tags?: string[];
   instructorId: number;
 }) => {
+  const nivelKey = E.nivelCurso(c.nivel); // <- CLAVE: manda "BASICO"/"INTERMEDIO"/"AVANZADO"
+
   await prisma.curso.upsert({
     where: { slug: c.idSlug },
     update: {
-      titulo: c.titulo, resumen: c.resumen, descripcionMD: c.descripcionMD,
-      precio: c.precio, publicado: true, nivel: c.nivel,
-      portada: c.portada, destacado: c.destacado ?? false, tags: json(c.tags ?? []),
+      titulo: c.titulo,
+      resumen: c.resumen,
+      descripcionMD: c.descripcionMD,
+      precio: c.precio,
+      publicado: true,
+      nivel: nivelKey,
+      portada: c.portada,
+      destacado: c.destacado ?? false,
+      tags: json(c.tags ?? []),
       instructorId: c.instructorId,
-    },
+    } as any,
     create: {
-      slug: c.idSlug, titulo: c.titulo, resumen: c.resumen, descripcionMD: c.descripcionMD,
-      precio: c.precio, publicado: true, nivel: c.nivel,
-      portada: c.portada, destacado: c.destacado ?? false, tags: json(c.tags ?? []),
-      creadoEn: new Date(), instructorId: c.instructorId,
-    },
+      slug: c.idSlug,
+      titulo: c.titulo,
+      resumen: c.resumen,
+      descripcionMD: c.descripcionMD,
+      precio: c.precio,
+      publicado: true,
+      nivel: nivelKey,
+      portada: c.portada,
+      destacado: c.destacado ?? false,
+      tags: json(c.tags ?? []),
+      creadoEn: new Date(),
+      instructorId: c.instructorId,
+    } as any,
   });
-  const curso = await prisma.curso.findUnique({ where: { slug: c.idSlug }, select: { id: true } });
+
+  const curso = await prisma.curso.findUnique({
+    where: { slug: c.idSlug },
+    select: { id: true },
+  });
   if (!curso) throw new Error(`No se pudo obtener curso ${c.idSlug}`);
   return curso.id;
 };
 
 async function main() {
+  // Debug útil (te muestra el enum generado y cómo lo normaliza)
+  console.log('NivelCurso enum:', NivelCurso);
+  console.log('NivelCurso.BASICO (value):', (NivelCurso as any).BASICO);
+  console.log('Normalize "basico" ->', enumKey(NivelCurso as any, 'basico'));
+  console.log('Normalize NivelCurso.BASICO ->', enumKey(NivelCurso as any, (NivelCurso as any).BASICO));
+
   // ───────────────── Roles
   const [rAdmin, rInstr, rCust, rStaff] = await Promise.all([
     upsertRoleBySlug('ADMIN', 'Administrador'),
@@ -121,16 +223,18 @@ async function main() {
     nombre: 'Admin Demo',
     passwordHash: '$2b$10$oc6bQbe6F67xUabv2r1.mecBi8Emco5qNTH3NUBFzUyJQRIyJDXym',
     emailVerificadoEn: new Date(),
-  });
+  } as any);
+
   const instrId = await upsertUserByEmail('instructor@demo.com', {
     nombre: 'Instructora Demo',
     passwordHash: '$2b$10$ck3bjxlcYx/ir8YYe6rv2OrF4LVVcFI/iQI4s0FyTSkzSMBqEh/oC',
     emailVerificadoEn: new Date(),
-  });
+  } as any);
+
   const clienteId = await upsertUserByEmail('cliente@demo.com', {
     nombre: 'Cliente Demo',
     passwordHash: '$2b$10$lY1J9JyencWSaSqJjLnr0.n82C5pVF65rNME63FdicIskJ4LRSevi',
-  });
+  } as any);
 
   // ───────────────── Usuario ↔ Rol
   await prisma.usuarioRol.upsert({
@@ -155,28 +259,48 @@ async function main() {
   });
 
   // ───────────────── Direcciones (idempotente simple)
-  const dirCasa = await prisma.direccion.findFirst({ where: { usuarioId: clienteId, calle: 'España', numero: '350' } });
+  const dirCasa = await prisma.direccion.findFirst({
+    where: { usuarioId: clienteId, calle: 'España', numero: '350' },
+  });
   if (!dirCasa) {
     await prisma.direccion.create({
       data: {
         usuarioId: clienteId,
-        etiqueta: 'Casa', nombre: 'Cliente Demo', telefono: '3875550001',
-        calle: 'España', numero: '350', pisoDepto: '2° B',
-        ciudad: 'Salta', provincia: 'Salta', cp: '4400', pais: 'AR',
-        predeterminada: true, creadoEn: new Date(),
-      },
+        etiqueta: 'Casa',
+        nombre: 'Cliente Demo',
+        telefono: '3875550001',
+        calle: 'España',
+        numero: '350',
+        pisoDepto: '2° B',
+        ciudad: 'Salta',
+        provincia: 'Salta',
+        cp: '4400',
+        pais: 'AR',
+        predeterminada: true,
+        creadoEn: new Date(),
+      } as any,
     });
   }
-  const dirTrabajo = await prisma.direccion.findFirst({ where: { usuarioId: clienteId, calle: 'Caseros', numero: '120' } });
+
+  const dirTrabajo = await prisma.direccion.findFirst({
+    where: { usuarioId: clienteId, calle: 'Caseros', numero: '120' },
+  });
   if (!dirTrabajo) {
     await prisma.direccion.create({
       data: {
         usuarioId: clienteId,
-        etiqueta: 'Trabajo', nombre: 'Cliente Demo', telefono: '3875550002',
-        calle: 'Caseros', numero: '120',
-        ciudad: 'Salta', provincia: 'Salta', cp: '4400', pais: 'AR',
-        predeterminada: false, creadoEn: new Date(),
-      },
+        etiqueta: 'Trabajo',
+        nombre: 'Cliente Demo',
+        telefono: '3875550002',
+        calle: 'Caseros',
+        numero: '120',
+        ciudad: 'Salta',
+        provincia: 'Salta',
+        cp: '4400',
+        pais: 'AR',
+        predeterminada: false,
+        creadoEn: new Date(),
+      } as any,
     });
   }
 
@@ -216,6 +340,7 @@ async function main() {
     marcaSlug: 'loreal',
     categoriaSlug: 'maquillaje',
   });
+
   const prodId_labial = await upsertProductoGetId({
     slug: 'labial-mate-rojo',
     titulo: 'Labial Mate Rojo',
@@ -229,6 +354,7 @@ async function main() {
     marcaSlug: 'loreal',
     categoriaSlug: 'labios',
   });
+
   const prodId_crema = await upsertProductoGetId({
     slug: 'crema-hidratante',
     titulo: 'Crema Hidratante Diario',
@@ -241,6 +367,7 @@ async function main() {
     marcaSlug: 'cerave',
     categoriaSlug: 'tratamiento',
   });
+
   const prodId_eyeliner = await upsertProductoGetId({
     slug: 'delineador-liquido-precision',
     titulo: 'Delineador Líquido Precisión',
@@ -253,6 +380,7 @@ async function main() {
     marcaSlug: 'maybelline',
     categoriaSlug: 'ojos',
   });
+
   const prodId_mascara = await upsertProductoGetId({
     slug: 'mascara-volumen-extremo',
     titulo: 'Máscara Volumen Extremo',
@@ -265,6 +393,7 @@ async function main() {
     marcaSlug: 'revlon',
     categoriaSlug: 'ojos',
   });
+
   const prodId_gloss = await upsertProductoGetId({
     slug: 'gloss-hidratante-brillo-natural',
     titulo: 'Gloss Hidratante Brillo Natural',
@@ -277,6 +406,7 @@ async function main() {
     marcaSlug: 'elf',
     categoriaSlug: 'labios',
   });
+
   const prodId_cleanser = await upsertProductoGetId({
     slug: 'gel-limpieza-suave',
     titulo: 'Gel de Limpieza Suave',
@@ -289,6 +419,7 @@ async function main() {
     marcaSlug: 'neutrogena',
     categoriaSlug: 'limpieza',
   });
+
   const prodId_serum = await upsertProductoGetId({
     slug: 'serum-vitamina-c-10',
     titulo: 'Sérum Vitamina C 10%',
@@ -301,6 +432,7 @@ async function main() {
     marcaSlug: 'natura',
     categoriaSlug: 'tratamiento',
   });
+
   const prodId_sunscreen = await upsertProductoGetId({
     slug: 'protector-solar-fps-50',
     titulo: 'Protector Solar FPS 50',
@@ -313,6 +445,7 @@ async function main() {
     marcaSlug: 'neutrogena',
     categoriaSlug: 'proteccion',
   });
+
   const prodId_toner = await upsertProductoGetId({
     slug: 'tonico-hidratante',
     titulo: 'Tónico Hidratante',
@@ -325,6 +458,7 @@ async function main() {
     marcaSlug: 'cerave',
     categoriaSlug: 'limpieza',
   });
+
   const prodId_brochas = await upsertProductoGetId({
     slug: 'set-brochas-profesional-8',
     titulo: 'Set de Brochas Profesional x8',
@@ -338,43 +472,35 @@ async function main() {
     categoriaSlug: 'herramientas',
   });
 
-  // ───────────────── Imágenes (limpiar por producto y recrear)
-  await prisma.productoImagen.deleteMany({ where: { productoId: prodId_labial } });
-  await prisma.productoImagen.createMany({
-    data: [
-      { productoId: prodId_labial, archivo: 'labial1.jpg', alt: 'Labial Mate - foto 1', orden: 0 },
-      { productoId: prodId_labial, archivo: 'labial1-b.jpg', alt: 'Labial Mate - foto 2', orden: 1 },
-    ],
-    skipDuplicates: true,
-  });
-  await prisma.productoImagen.upsert({
-    where: { id: 0 }, update: {}, create: { productoId: prodId_crema, archivo: 'crema1.jpg', alt: 'Crema Hidratante - foto 1', orden: 0 },
-  }).catch(async () => {
-    const exists = await prisma.productoImagen.findFirst({ where: { productoId: prodId_crema, archivo: 'crema1.jpg' } });
-    if (!exists) await prisma.productoImagen.create({ data: { productoId: prodId_crema, archivo: 'crema1.jpg', alt: 'Crema Hidratante - foto 1', orden: 0 } });
-  });
-  // (para el resto, crea una sola imagen base si no existe)
-  const ensureImg = (productoId: number, archivo: string, alt: string) =>
-    prisma.productoImagen.upsert({
-      where: { id: 0 }, update: {}, create: { productoId, archivo, alt, orden: 0 },
-    }).catch(async () => {
-      const e = await prisma.productoImagen.findFirst({ where: { productoId, archivo } });
-      if (!e) await prisma.productoImagen.create({ data: { productoId, archivo, alt, orden: 0 } });
+  // ───────────────── Imágenes (idempotente simple: borramos y recreamos por producto)
+  const resetImgs = async (productoId: number, data: { archivo: string; alt: string; orden: number }[]) => {
+    await prisma.productoImagen.deleteMany({ where: { productoId } });
+    if (!data.length) return;
+    await prisma.productoImagen.createMany({
+      data: data.map((d) => ({ productoId, ...d })),
+      skipDuplicates: true,
     });
-  await ensureImg(prodId_eyeliner, 'eyeliner1.jpg', 'Delineador - foto 1');
-  await ensureImg(prodId_mascara, 'mascara1.jpg', 'Máscara - foto 1');
-  await ensureImg(prodId_gloss, 'gloss1.jpg', 'Gloss - foto 1');
-  await ensureImg(prodId_cleanser, 'cleanser1.jpg', 'Gel de limpieza - foto 1');
-  await ensureImg(prodId_serum, 'serum1.jpg', 'Sérum - foto 1');
-  await ensureImg(prodId_sunscreen, 'sunscreen1.jpg', 'Protector solar - foto 1');
-  await ensureImg(prodId_toner, 'toner1.jpg', 'Tónico - foto 1');
-  await ensureImg(prodId_brochas, 'brochas1.jpg', 'Set de brochas - foto 1');
+  };
+
+  await resetImgs(prodId_labial, [
+    { archivo: 'labial1.jpg', alt: 'Labial Mate - foto 1', orden: 0 },
+    { archivo: 'labial1-b.jpg', alt: 'Labial Mate - foto 2', orden: 1 },
+  ]);
+  await resetImgs(prodId_crema, [{ archivo: 'crema1.jpg', alt: 'Crema Hidratante - foto 1', orden: 0 }]);
+  await resetImgs(prodId_eyeliner, [{ archivo: 'eyeliner1.jpg', alt: 'Delineador - foto 1', orden: 0 }]);
+  await resetImgs(prodId_mascara, [{ archivo: 'mascara1.jpg', alt: 'Máscara - foto 1', orden: 0 }]);
+  await resetImgs(prodId_gloss, [{ archivo: 'gloss1.jpg', alt: 'Gloss - foto 1', orden: 0 }]);
+  await resetImgs(prodId_cleanser, [{ archivo: 'cleanser1.jpg', alt: 'Gel de limpieza - foto 1', orden: 0 }]);
+  await resetImgs(prodId_serum, [{ archivo: 'serum1.jpg', alt: 'Sérum - foto 1', orden: 0 }]);
+  await resetImgs(prodId_sunscreen, [{ archivo: 'sunscreen1.jpg', alt: 'Protector solar - foto 1', orden: 0 }]);
+  await resetImgs(prodId_toner, [{ archivo: 'toner1.jpg', alt: 'Tónico - foto 1', orden: 0 }]);
+  await resetImgs(prodId_brochas, [{ archivo: 'brochas1.jpg', alt: 'Set de brochas - foto 1', orden: 0 }]);
 
   // ───────────────── Favorito
   await prisma.favorito.upsert({
     where: { usuarioId_productoId: { usuarioId: clienteId, productoId: prodId_labial } },
     update: {},
-    create: { usuarioId: clienteId, productoId: prodId_labial, creadoEn: new Date() },
+    create: { usuarioId: clienteId, productoId: prodId_labial, creadoEn: new Date() } as any,
   });
 
   // ───────────────── Cursos (incluye curso de prueba)
@@ -382,9 +508,10 @@ async function main() {
     idSlug: 'curso-de-prueba',
     titulo: 'Curso de Prueba',
     resumen: 'Curso para testing de suscripciones mensuales.',
-    descripcionMD: 'Este es un curso de prueba para verificar el funcionamiento de las suscripciones mensuales en MercadoPago.',
+    descripcionMD:
+      'Este es un curso de prueba para verificar el funcionamiento de las suscripciones mensuales en MercadoPago.',
     precio: 1000,
-    nivel: NivelCurso.BASICO,
+    nivel: NivelCurso.BASICO, // OK: lo normalizamos a "BASICO"
     portada: 'curso-prueba.jpg',
     destacado: true,
     tags: ['prueba', 'testing', 'suscripcion'],
@@ -469,8 +596,7 @@ async function main() {
     instructorId: instrId,
   });
 
-  // ───────────────── Módulos + Lecciones (maquillaje completo + curso de prueba)
-  // Limpieza previa de módulos/lecciones por curso (para idempotencia)
+  // ───────────────── Módulos + Lecciones
   const resetCurso = async (cursoId: number) => {
     await prisma.leccion.deleteMany({ where: { modulo: { cursoId } } });
     await prisma.modulo.deleteMany({ where: { cursoId } });
@@ -478,71 +604,79 @@ async function main() {
 
   // Curso de Prueba
   await resetCurso(cursoPruebaId);
-  const modP1 = await prisma.modulo.create({ data: { cursoId: cursoPruebaId, titulo: 'Módulo 1: Introducción', orden: 1 } });
-  const modP2 = await prisma.modulo.create({ data: { cursoId: cursoPruebaId, titulo: 'Módulo 2: Contenido Principal', orden: 2 } });
-  await prisma.leccion.createMany({
-    data: [
-      { moduloId: modP1.id, titulo: 'Lección 1: Bienvenida', descripcion: 'Bienvenida al curso de prueba', contenido: '# Bienvenida\n\nEste es un curso para probar suscripciones.', duracionS: 300, orden: 1, rutaSrc: null, tipo: TipoLeccion.TEXTO },
-      { moduloId: modP2.id, titulo: 'Lección 2: Contenido Principal', descripcion: 'Contenido principal', contenido: '# Contenido Principal\n\nDetalle del curso de prueba.', duracionS: 600, orden: 1, rutaSrc: null, tipo: TipoLeccion.TEXTO },
-      { moduloId: modP2.id, titulo: 'Lección 3: Conclusión', descripcion: 'Cierre del curso', contenido: '# Conclusión\n\n¡Gracias por completar el curso!', duracionS: 300, orden: 2, rutaSrc: null, tipo: TipoLeccion.TEXTO },
-    ],
+  const modP1 = await prisma.modulo.create({
+    data: { cursoId: cursoPruebaId, titulo: 'Módulo 1: Introducción', orden: 1 } as any,
   });
-
-  // Maquillaje Profesional (m1..m5 + 15 lecciones resumidas)
-  await resetCurso(cursoMaquId);
-  const [m1, m2, m3, m4, m5] = await Promise.all([
-    prisma.modulo.create({ data: { cursoId: cursoMaquId, titulo: 'Fundamentos y kit inicial', orden: 1 } }),
-    prisma.modulo.create({ data: { cursoId: cursoMaquId, titulo: 'Técnicas y acabados', orden: 2 } }),
-    prisma.modulo.create({ data: { cursoId: cursoMaquId, titulo: 'Base y corrección', orden: 3 } }),
-    prisma.modulo.create({ data: { cursoId: cursoMaquId, titulo: 'Contouring y highlighting', orden: 4 } }),
-    prisma.modulo.create({ data: { cursoId: cursoMaquId, titulo: 'Looks completos y portfolio', orden: 5 } }),
-  ]);
+  const modP2 = await prisma.modulo.create({
+    data: { cursoId: cursoPruebaId, titulo: 'Módulo 2: Contenido Principal', orden: 2 } as any,
+  });
 
   await prisma.leccion.createMany({
     data: [
-      // M1
-      { moduloId: m1.id, titulo: 'Herramientas esenciales', orden: 1, duracionS: 480, rutaSrc: 'herramientas-esenciales-20251028-003311-c00531.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Herramientas básicas.' },
-      { moduloId: m1.id, titulo: 'Higiene y preparación de piel', orden: 2, duracionS: 540, rutaSrc: null, tipo: TipoLeccion.TEXTO, descripcion: 'Protocolos de higiene.', contenido: json({ tipo: 'TEXTO', data: { contenido: '## Higiene y preparación de la piel\n\nAntes de maquillar, la piel debe estar limpia y preparada.\n\n1. **Limpieza suave:** elimina impurezas con un limpiador adecuado.\n2. **Tónico equilibrante:** ayuda a regular el pH y cerrar poros.\n3. **Hidratación:** crema o gel según tipo de piel.\n4. **Protección solar:** imprescindible durante el día.\n\n> Consejo: evita productos demasiado grasos antes del maquillaje para mejorar la fijación.' } }) },
-      { moduloId: m1.id, titulo: 'Teoría del color en maquillaje', orden: 3, duracionS: 420, rutaSrc: 'teoria-color-maquillaje.pdf', tipo: TipoLeccion.DOCUMENTO, descripcion: 'Guía de color.', contenido: json({ tipo: 'DOCUMENTO', data: { url: '/docs/teoria-color-maquillaje.pdf', nombre: 'Teoría del Color', tipoArchivo: 'PDF' } }) },
-      // M2
-      { moduloId: m2.id, titulo: 'Smokey eye clásico', orden: 1, duracionS: 600, rutaSrc: 'smokey-eye-cl-sico-20250917-120656-dda191.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Smokey paso a paso.' },
-      { moduloId: m2.id, titulo: 'Acabado mate de larga duración', orden: 2, duracionS: 660, rutaSrc: 'acabado-mate-duracion.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Acabado mate perfecto.' },
-      { moduloId: m2.id, titulo: 'Quiz: Técnicas básicas', orden: 3, duracionS: 300, rutaSrc: null, tipo: TipoLeccion.QUIZ, descripcion: 'Evalúa tus conocimientos.', contenido: json({ tipo: 'QUIZ', data: { configuracion: { mostrarResultados: true, permitirReintentos: true, puntajeMinimo: 70 }, preguntas: [
-        { pregunta: '¿Primer paso del smokey?', opciones: ['Sombra oscura', 'Primer en párpado', 'Delineado', 'Máscara'], respuestaCorrecta: 1, explicacion: 'El primer ayuda a fijar las sombras y evita pliegues.' },
-        { pregunta: '¿Cómo se logra un degradé suave?', opciones: ['Con un pincel rígido', 'Difuminando con movimiento circular', 'Aplicando mucha cantidad de sombra', 'Con delineador líquido'], respuestaCorrecta: 1, explicacion: 'Los movimientos circulares con pincel de difuminar generan transiciones suaves.' },
-        { pregunta: '¿Cuál es el último paso antes de finalizar el ojo?', opciones: ['Máscara de pestañas', 'Base de maquillaje', 'Rubor', 'Corrector'], respuestaCorrecta: 0, explicacion: 'La máscara define y completa el look del ojo.' }
-      ] } }) },
-      // M3
-      { moduloId: m3.id, titulo: 'Elección del tono de base perfecto', orden: 1, duracionS: 480, rutaSrc: 'tono-base-perfecto.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Identificar tono ideal.' },
-      { moduloId: m3.id, titulo: 'Corrección de ojeras y manchas', orden: 2, duracionS: 540, rutaSrc: null, tipo: TipoLeccion.TEXTO, descripcion: 'Técnicas de corrección.', contenido: json({ tipo: 'TEXTO', data: { contenido: '## Corrección de ojeras y manchas\n\n- **Pre-corrección:** neutraliza tonos con correctores (salmones para ojeras, verdes para rojeces).\n- **Cobertura:** aplica una capa fina de corrector y difumina con esponja.\n- **Sellado:** fija con polvo traslúcido para evitar pliegues.' } }) },
-      { moduloId: m3.id, titulo: 'Guía de productos correctores', orden: 3, duracionS: 360, rutaSrc: 'guia-correctores.pdf', tipo: TipoLeccion.DOCUMENTO, descripcion: 'Guía completa.', contenido: json({ tipo: 'DOCUMENTO', data: { url: '/docs/guia-productos-correctores.pdf', nombre: 'Guía Correctores', tipoArchivo: 'PDF' } }) },
-      // M4
-      { moduloId: m4.id, titulo: 'Contouring según forma de rostro', orden: 1, duracionS: 720, rutaSrc: 'contouring-seg-n-forma-de-rostro-20250917-115233-6a2a28.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Adaptación por rostro.' },
-      { moduloId: m4.id, titulo: 'Técnicas de iluminación natural', orden: 2, duracionS: 600, rutaSrc: null, tipo: TipoLeccion.TEXTO, descripcion: 'Highlight natural.', contenido: json({ tipo: 'TEXTO', data: { contenido: '## Iluminación natural\n\nUbica el iluminador en puntos altos del rostro: pómulos, puente de la nariz, arco de cupido y lagrimal.\n\n- **Textura:** líquida o crema para finish natural.\n- **Aplicación:** con brocha pequeña o dedos, a toques.\n- **Evita zonas con textura:** para no enfatizar imperfecciones.' } }) },
-      { moduloId: m4.id, titulo: 'Quiz: Contouring avanzado', orden: 3, duracionS: 420, rutaSrc: null, tipo: TipoLeccion.QUIZ, descripcion: 'Evalúa contouring.', contenido: json({ tipo: 'QUIZ', data: { configuracion: { mostrarResultados: true, permitirReintentos: true, puntajeMinimo: 70 }, preguntas: [
-        { pregunta: 'Regla para rostro redondo', opciones: ['Toda la mejilla', 'Líneas verticales', 'Muy oscuro', 'Sin contorno'], respuestaCorrecta: 1, explicacion: 'Las líneas verticales ayudan a estilizar y evitar ampliar el ancho del rostro.' },
-        { pregunta: 'Para rostro cuadrado, ¿dónde suavizar?', opciones: ['Ángulo mandibular', 'Centro de la frente', 'Barbilla', 'Puente nasal'], respuestaCorrecta: 0, explicacion: 'El ángulo mandibular se suaviza para reducir la sensación de aristas marcadas.' },
-        { pregunta: '¿Qué tono usar para contorno?', opciones: ['Más claro que la piel', 'Exactamente igual', '1-2 tonos más oscuro, subtono frío', 'Muy cálido'], respuestaCorrecta: 2, explicacion: 'Un tono 1-2 pasos más oscuro con subtono frío genera sombras más naturales.' }
-      ] } }) },
-      // M5
-      { moduloId: m5.id, titulo: 'Look natural de día', orden: 1, duracionS: 900, rutaSrc: 'look-natural-dia.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Look fresco y luminoso.' },
-      { moduloId: m5.id, titulo: 'Look glamoroso de noche', orden: 2, duracionS: 1080, rutaSrc: 'look-glamoroso-noche.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Looks sofisticados.' },
-      { moduloId: m5.id, titulo: 'Creando tu portfolio profesional', orden: 3, duracionS: 720, rutaSrc: 'guia-portfolio.pdf', tipo: TipoLeccion.DOCUMENTO, descripcion: 'Guía portfolio.', contenido: json({ tipo: 'DOCUMENTO', data: { url: '/docs/guia-portfolio-profesional.pdf', nombre: 'Guía Portfolio', tipoArchivo: 'PDF' } }) },
-    ],
+      {
+        moduloId: modP1.id,
+        titulo: 'Lección 1: Bienvenida',
+        descripcion: 'Bienvenida al curso de prueba',
+        contenido: '# Bienvenida\n\nEste es un curso para probar suscripciones.',
+        duracionS: 300,
+        orden: 1,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modP2.id,
+        titulo: 'Lección 2: Contenido Principal',
+        descripcion: 'Contenido principal',
+        contenido: '# Contenido Principal\n\nDetalle del curso de prueba.',
+        duracionS: 600,
+        orden: 1,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modP2.id,
+        titulo: 'Lección 3: Conclusión',
+        descripcion: 'Cierre del curso',
+        contenido: '# Conclusión\n\n¡Gracias por completar el curso!',
+        duracionS: 300,
+        orden: 2,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+    ] as any,
   });
 
-  // Cursos restantes: dos módulos y 2 lecciones base para demo
+  // Bootstrap para cursos restantes
   const bootstrapCurso = async (cursoId: number, titulo1: string, titulo2: string) => {
     await resetCurso(cursoId);
-    const a = await prisma.modulo.create({ data: { cursoId, titulo: titulo1, orden: 1 } });
-    const b = await prisma.modulo.create({ data: { cursoId, titulo: titulo2, orden: 2 } });
+    const a = await prisma.modulo.create({ data: { cursoId, titulo: titulo1, orden: 1 } as any });
+    const b = await prisma.modulo.create({ data: { cursoId, titulo: titulo2, orden: 2 } as any });
+
     await prisma.leccion.createMany({
       data: [
-        { moduloId: a.id, titulo: 'Introducción', orden: 1, duracionS: 300, rutaSrc: 'intro.mp4', tipo: TipoLeccion.VIDEO, descripcion: 'Introducción al módulo.' },
-        { moduloId: b.id, titulo: 'Contenido principal', orden: 1, duracionS: 600, rutaSrc: null, tipo: TipoLeccion.TEXTO, descripcion: 'Contenido base.', contenido: '# Contenido\n\nDetalles del módulo.' },
-      ],
+        {
+          moduloId: a.id,
+          titulo: 'Introducción',
+          orden: 1,
+          duracionS: 300,
+          rutaSrc: 'intro.mp4',
+          tipo: E.tipoLeccion(TipoLeccion.VIDEO),
+          descripcion: 'Introducción al módulo.',
+        },
+        {
+          moduloId: b.id,
+          titulo: 'Contenido principal',
+          orden: 1,
+          duracionS: 600,
+          rutaSrc: null,
+          tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+          descripcion: 'Contenido base.',
+          contenido: '# Contenido\n\nDetalles del módulo.',
+        },
+      ] as any,
     });
   };
+
   await bootstrapCurso(cursoSkinId, 'Rutinas y tipos de piel', 'Productos clave');
   await bootstrapCurso(cursoOjosId, 'Smokey & degradados', 'Cut crease y gráficos');
   await bootstrapCurso(cursoCejasId, 'Diseño y medición', 'Perfilado y relleno');
@@ -553,7 +687,7 @@ async function main() {
   await prisma.inscripcion.upsert({
     where: { usuarioId_cursoId: { usuarioId: clienteId, cursoId: cursoMaquId } },
     update: {
-      estado: EstadoInscripcion.ACTIVADA,
+      estado: E.estadoInscripcion(EstadoInscripcion.ACTIVADA),
       progreso: json({
         completado: [],
         subscription: {
@@ -563,11 +697,11 @@ async function main() {
           endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
         },
       }),
-    },
+    } as any,
     create: {
       usuarioId: clienteId,
       cursoId: cursoMaquId,
-      estado: EstadoInscripcion.ACTIVADA,
+      estado: E.estadoInscripcion(EstadoInscripcion.ACTIVADA),
       progreso: json({
         completado: [],
         subscription: {
@@ -578,39 +712,45 @@ async function main() {
         },
       }),
       creadoEn: new Date(),
-    },
+    } as any,
   });
 
   // ───────────────── Reseña DEMO (producto)
   await prisma.resena.upsert({
     where: { productoId_usuarioId: { productoId: prodId_labial, usuarioId: clienteId } },
     update: { puntaje: 5, comentario: 'Excelente pigmentación y duración.' },
-    create: { productoId: prodId_labial, usuarioId: clienteId, puntaje: 5, comentario: 'Excelente pigmentación y duración.', creadoEn: new Date() },
+    create: { productoId: prodId_labial, usuarioId: clienteId, puntaje: 5, comentario: 'Excelente pigmentación y duración.', creadoEn: new Date() } as any,
   });
 
-  // ───────────────── Orden + Ítems (refId Int)
+  // ───────────────── Orden + Ítems
   const refPago = 'MP-REF-0001';
-  const existingOrder = await prisma.orden.findFirst({ where: { referenciaPago: refPago }, select: { id: true } });
+  const existingOrder = await prisma.orden.findFirst({
+    where: { referenciaPago: refPago },
+    select: { id: true },
+  });
+
   const ordenId = existingOrder
     ? existingOrder.id
-    : (await prisma.orden.create({
-        data: {
-          usuarioId: clienteId,
-          estado: EstadoOrden.PAGADO,
-          total: 70000,
-          moneda: 'ARS',
-          referenciaPago: refPago,
-          creadoEn: new Date(),
-        },
-        select: { id: true },
-      })).id;
+    : (
+        await prisma.orden.create({
+          data: {
+            usuarioId: clienteId,
+            estado: E.estadoOrden(EstadoOrden.PAGADO),
+            total: 70000,
+            moneda: 'ARS',
+            referenciaPago: refPago,
+            creadoEn: new Date(),
+          } as any,
+          select: { id: true },
+        })
+      ).id;
 
   await prisma.itemOrden.deleteMany({ where: { ordenId } });
   await prisma.itemOrden.createMany({
     data: [
       {
         ordenId,
-        tipo: TipoItemOrden.PRODUCTO,
+        tipo: E.tipoItemOrden(TipoItemOrden.PRODUCTO),
         refId: prodId_labial,
         titulo: 'Labial Mate Rojo',
         cantidad: 2,
@@ -618,23 +758,65 @@ async function main() {
       },
       {
         ordenId,
-        tipo: TipoItemOrden.CURSO,
+        tipo: E.tipoItemOrden(TipoItemOrden.CURSO),
         refId: cursoMaquId,
         titulo: 'Maquillaje Profesional',
         cantidad: 1,
         precioUnitario: 40000,
       },
-    ],
+    ] as any,
   });
 
-  // ───────────────── Slider
+  // ───────────────── Slider (PRO)
   await prisma.slider.deleteMany({});
   await prisma.slider.createMany({
     data: [
-      { titulo: 'Cursos Online Profesionales', alt: 'Aprende técnicas profesionales con nuestros cursos online', archivo: 'hero-cursos-online.svg', activa: true, orden: 1, creadoEn: new Date() },
-      { titulo: 'Productos de Calidad Premium', alt: 'Los mejores productos para profesionales del sector', archivo: 'hero-productos-calidad.svg', activa: true, orden: 2, creadoEn: new Date() },
-      { titulo: 'Instructores Expertos', alt: 'Aprende de los mejores profesionales del sector', archivo: 'hero-instructores-expertos.svg', activa: true, orden: 3, creadoEn: new Date() },
-    ],
+      {
+        titulo: 'Cursos Online Profesionales',
+        subtitulo: 'Aprendé a tu ritmo',
+        descripcion: 'Técnicas profesionales, clases claras y material descargable.',
+        etiqueta: '+500 alumnas',
+        ctaPrimarioTexto: 'Ver cursos',
+        ctaPrimarioHref: '/cursos',
+        ctaSecundarioTexto: 'Consultar',
+        ctaSecundarioHref: '/#contacto',
+        alt: 'Aprende técnicas profesionales con nuestros cursos online',
+        archivo: 'hero-cursos-online.svg',
+        activa: true,
+        orden: 1,
+        creadoEn: new Date(),
+      },
+      {
+        titulo: 'Productos de Calidad Premium',
+        subtitulo: 'Selección curada',
+        descripcion: 'Productos probados y recomendados para resultados pro.',
+        etiqueta: 'Envío a todo el país',
+        ctaPrimarioTexto: 'Ver tienda',
+        ctaPrimarioHref: '/tienda',
+        ctaSecundarioTexto: 'Ver ofertas',
+        ctaSecundarioHref: '/tienda?sort=novedades',
+        alt: 'Los mejores productos para profesionales del sector',
+        archivo: 'hero-productos-calidad.svg',
+        activa: true,
+        orden: 2,
+        creadoEn: new Date(),
+      },
+      {
+        titulo: 'Instructores Expertos',
+        subtitulo: 'Aprendé de verdad',
+        descripcion: 'Profesionales con experiencia real, guías paso a paso y feedback.',
+        etiqueta: 'Soporte incluido',
+        ctaPrimarioTexto: 'Conocer instructoras',
+        ctaPrimarioHref: '/instructoras',
+        ctaSecundarioTexto: 'Preguntas frecuentes',
+        ctaSecundarioHref: '/faq',
+        alt: 'Aprende de los mejores profesionales del sector',
+        archivo: 'hero-instructores-expertos.svg',
+        activa: true,
+        orden: 3,
+        creadoEn: new Date(),
+      },
+    ] as any,
     skipDuplicates: true,
   });
 
@@ -645,7 +827,8 @@ async function main() {
     prisma.curso.count(),
     prisma.orden.count(),
   ]);
-  console.log({ usuarios, productos, cursos, ordenes });
+
+  console.log({ usuarios, productos, cursos, ordenes, prodId_prueba });
 }
 
 main()

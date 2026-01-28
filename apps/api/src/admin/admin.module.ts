@@ -4,7 +4,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AdminMetaModule } from './meta/admin-meta.module';
 import { AdminCrudModule } from './crud/admin-crud.module';
 import { AdminUploadModule } from './uploads/admin-upload.module';
-import { AdminResourcesModule } from './resources/admin-resources.module';
 import { AdminDashboardModule } from './dashboard/admin-dashboard.module';
 
 @Module({
@@ -13,14 +12,12 @@ import { AdminDashboardModule } from './dashboard/admin-dashboard.module';
     AdminMetaModule,
     AdminCrudModule,
     AdminUploadModule,
-    AdminResourcesModule,
     AdminDashboardModule,
   ],
   exports: [
     AdminMetaModule,
     AdminCrudModule,
     AdminUploadModule,
-    AdminResourcesModule,
     AdminDashboardModule,
   ],
 })

@@ -1,17 +1,20 @@
-// src/admin/meta/admin-meta.utils.ts
-
-import { Prisma } from '../../../src/generated/prisma/client';
+// apps/api/src/admin/meta/admin-meta.utils.ts
 import type {
   FieldMeta,
   FieldKind,
   ResourceMeta,
   FileKind,
+  FilterMeta,
+  FilterOperator,
 } from './admin-meta.types';
 
-// Accedemos al DMMF
-const dmmf: any = (Prisma as any).dmmf;
+type DmmfLike = {
+  datamodel: {
+    models: any[];
+    enums: any[];
+  };
+};
 
-// Campos de fechas de sistema que no queremos editar
 const SYSTEM_DATE_FIELDS = [
   'creadoEn',
   'createdAt',
@@ -21,7 +24,6 @@ const SYSTEM_DATE_FIELDS = [
   'emailVerifiedAt',
 ];
 
-// Campos de texto largos que NO queremos en columnas de tabla
 const LONG_TEXT_FIELDS = [
   'descripcionMD',
   'descripcion',
@@ -30,10 +32,8 @@ const LONG_TEXT_FIELDS = [
   'comentario',
 ];
 
-// Campos derivados / internos que no queremos editar a mano
 const READONLY_FORM_FIELDS = ['ratingProm', 'ratingConteo'];
 
-// Fragments para detectar imágenes
 const IMAGE_FIELD_HINTS = [
   'imagen',
   'image',
@@ -45,26 +45,41 @@ const IMAGE_FIELD_HINTS = [
   'archivo',
 ];
 
-// Helper para nombre legible
+const STRING_FILTER_OPS: FilterOperator[] = [
+  'contains',
+  'equals',
+  'startsWith',
+  'endsWith',
+];
+const NUMBER_FILTER_OPS: FilterOperator[] = [
+  'equals',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'in',
+];
+const DATE_FILTER_OPS: FilterOperator[] = ['equals', 'gt', 'gte', 'lt', 'lte'];
+const BOOLEAN_FILTER_OPS: FilterOperator[] = ['equals'];
+const ENUM_FILTER_OPS: FilterOperator[] = ['equals', 'in'];
+const RELATION_FILTER_OPS: FilterOperator[] = ['equals', 'in'];
+
 function humanizeName(name: string): string {
   const withSpaces = name.replace(/([a-z])([A-Z])/g, '$1 $2');
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 }
 
-// Nombre de tabla (usa @@map si existe)
 function inferTableName(model: any): string {
   if (model.dbName) return model.dbName;
-  return model.name.toLowerCase();
+  return String(model.name ?? '').toLowerCase();
 }
 
-// ¿Es un campo imagen?
 function isImageField(field: any): boolean {
   if (field.type !== 'String') return false;
-  const lname = field.name.toLowerCase();
+  const lname = String(field.name ?? '').toLowerCase();
   return IMAGE_FIELD_HINTS.some((frag) => lname.includes(frag));
 }
 
-// Detectar campos de archivo (por ahora solo Leccion.rutaSrc)
 function detectFileField(
   model: any,
   field: any,
@@ -79,56 +94,126 @@ function detectFileField(
   return { isFile: false, fileKind: undefined };
 }
 
-// Inferir recurso de FK: usando índice de relaciones + heurística por nombre
 function inferFkResourceForField(
   models: any[],
   field: any,
   ownerModelName: string,
   fkIndex: Record<string, string>,
 ): string | null {
-  // 1) Relación explícita del DMMF
   const key = `${ownerModelName}.${field.name}`;
-  if (fkIndex[key]) {
-    return fkIndex[key]; // p.ej. 'Usuario'
-  }
+  if (fkIndex[key]) return fkIndex[key];
 
-  // 2) Fallback heurístico por nombre (marcaId → Marca, cursoId → Curso)
   if (field.kind !== 'scalar') return null;
   if (field.type !== 'Int') return null;
-  if (!field.name.toLowerCase().endsWith('id')) return null;
+  if (
+    !String(field.name ?? '')
+      .toLowerCase()
+      .endsWith('id')
+  )
+    return null;
 
-  const base = field.name.substring(0, field.name.length - 2); // quita "Id"
+  const base = field.name.substring(0, field.name.length - 2);
   const candidate =
     base.length > 0 ? base.charAt(0).toUpperCase() + base.slice(1) : base;
-
   const match = models.find((m) => m.name === candidate);
   return match ? candidate : null;
 }
 
-export function buildAdminMeta(): ResourceMeta[] {
-  const models: any[] = dmmf.datamodel.models;
-  const enums: any[] = dmmf.datamodel.enums;
+function buildFiltersFromFields(fields: FieldMeta[]): FilterMeta[] {
+  const filters: FilterMeta[] = [];
 
-  // Mapa de enums: nombre → lista de valores
+  for (const field of fields) {
+    if (field.kind !== 'scalar' || field.isList) continue;
+
+    const label = humanizeName(field.name);
+
+    if (field.isEnum) {
+      filters.push({
+        field: field.name,
+        label,
+        input: 'enum',
+        operators: ENUM_FILTER_OPS,
+        enumValues: field.enumValues ?? [],
+      });
+      continue;
+    }
+
+    if (field.isForeignKey && field.fkResource) {
+      filters.push({
+        field: field.name,
+        label,
+        input: 'relation',
+        operators: RELATION_FILTER_OPS,
+        relationModel: field.fkResource,
+      });
+      continue;
+    }
+
+    if (field.type === 'String') {
+      filters.push({
+        field: field.name,
+        label,
+        input: 'string',
+        operators: STRING_FILTER_OPS,
+      });
+      continue;
+    }
+
+    if (['Int', 'Float', 'Decimal'].includes(field.type)) {
+      filters.push({
+        field: field.name,
+        label,
+        input: 'number',
+        operators: NUMBER_FILTER_OPS,
+      });
+      continue;
+    }
+
+    if (field.type === 'Boolean') {
+      filters.push({
+        field: field.name,
+        label,
+        input: 'boolean',
+        operators: BOOLEAN_FILTER_OPS,
+      });
+      continue;
+    }
+
+    if (field.type === 'DateTime') {
+      filters.push({
+        field: field.name,
+        label,
+        input: 'date',
+        operators: DATE_FILTER_OPS,
+      });
+    }
+  }
+
+  return filters;
+}
+
+export function buildAdminMetaFromDmmf(dmmf: DmmfLike): ResourceMeta[] {
+  const models: any[] = dmmf.datamodel.models ?? [];
+  const enums: any[] = dmmf.datamodel.enums ?? [];
+
   const enumMap: Record<string, string[]> = enums.reduce(
     (acc, e) => {
-      acc[e.name] = e.values.map((v: any) => v.name);
+      acc[e.name] = (e.values ?? []).map((v: any) => v.name);
       return acc;
     },
     {} as Record<string, string[]>,
   );
 
-  // 🔍 Índice de FKs basado en relaciones Prisma
-  // key: 'Curso.instructorId' → 'Usuario'
+  // Índice FK por relaciones Prisma
   const fkIndex: Record<string, string> = {};
   for (const m of models) {
-    for (const f of m.fields as any[]) {
+    for (const f of (m.fields ?? []) as any[]) {
       if (
         f.kind === 'object' &&
         Array.isArray(f.relationFromFields) &&
         f.relationFromFields.length > 0
       ) {
-        const targetModel = f.type; // p.ej. 'Usuario', 'Curso', etc.
+        const targetModel = f.type;
         for (const fromField of f.relationFromFields) {
           fkIndex[`${m.name}.${fromField}`] = targetModel;
         }
@@ -141,20 +226,15 @@ export function buildAdminMeta(): ResourceMeta[] {
   for (const model of models) {
     const fields: FieldMeta[] = [];
 
-    for (const field of model.fields as any[]) {
-      // kind real del DMMF: "scalar" | "object" | "enum"
+    for (const field of (model.fields ?? []) as any[]) {
       const isEnum = field.kind === 'enum' || !!enumMap[field.type];
       const enumValues = isEnum ? (enumMap[field.type] ?? []) : undefined;
 
       const kind: FieldKind = field.kind === 'object' ? 'relation' : 'scalar';
 
-      // Imagen
       const isImage = isImageField(field);
-
-      // Archivo (Leccion.rutaSrc)
       const { isFile, fileKind } = detectFileField(model, field);
 
-      // FK (explicita + heurística)
       const fkResource = inferFkResourceForField(
         models,
         field,
@@ -163,10 +243,8 @@ export function buildAdminMeta(): ResourceMeta[] {
       );
       const isForeignKey = !!fkResource;
 
-      // Relaciones lista → contador de hijos
       const isParentChildCount = kind === 'relation' && field.isList === true;
 
-      // --- Heurísticas de UI ---
       let showInList = false;
       let showInForm = false;
 
@@ -185,27 +263,12 @@ export function buildAdminMeta(): ResourceMeta[] {
         }
       }
 
-      // Campos de sistema no se editan
-      if (SYSTEM_DATE_FIELDS.includes(field.name)) {
-        showInForm = false;
-      }
+      if (SYSTEM_DATE_FIELDS.includes(field.name)) showInForm = false;
+      if (READONLY_FORM_FIELDS.includes(field.name)) showInForm = false;
+      if (field.name === 'passwordHash') showInForm = false;
+      if (LONG_TEXT_FIELDS.includes(field.name)) showInList = false;
 
-      // Campos derivados / de rating → solo lectura (no se editan desde el admin genérico)
-      if (READONLY_FORM_FIELDS.includes(field.name)) {
-        showInForm = false;
-      }
-
-      // passwordHash nunca se edita desde el form genérico
-      if (field.name === 'passwordHash') {
-        showInForm = false;
-      }
-
-      // Textos largos fuera de la tabla (para no destrozar el layout)
-      if (LONG_TEXT_FIELDS.includes(field.name)) {
-        showInList = false;
-      }
-
-      const fieldMeta: FieldMeta = {
+      fields.push({
         name: field.name,
         type: field.type,
         kind,
@@ -213,35 +276,27 @@ export function buildAdminMeta(): ResourceMeta[] {
         isRequired: field.isRequired,
         isList: field.isList,
         isEnum,
-
         relationModel: field.relationName ?? undefined,
-
         enumName: isEnum ? field.type : undefined,
         enumValues,
-
         isImage,
         isFile,
         fileKind,
-
         isParentChildCount,
         isForeignKey,
         fkResource: fkResource ?? undefined,
-
         showInList,
         showInForm,
-      };
-
-      fields.push(fieldMeta);
+      });
     }
 
-    const resourceMeta: ResourceMeta = {
+    resources.push({
       name: model.name,
       tableName: inferTableName(model),
       displayName: humanizeName(model.name),
       fields,
-    };
-
-    resources.push(resourceMeta);
+      filters: buildFiltersFromFields(fields),
+    });
   }
 
   return resources;

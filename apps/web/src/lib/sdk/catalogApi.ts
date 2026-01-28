@@ -49,6 +49,8 @@ export type CourseQuery = {
 export type CourseListItem = {
   id: string; slug: string; titulo: string; precio: number;
   portadaUrl?: string | null; ratingProm?: number | null; ratingConteo?: number | null;
+  totalLessons?: number;
+  totalDuration?: number;
 };
 export type CourseDetail = CourseListItem & {
   descripcionMD?: string | null; nivel?: CourseLevel; resumen?: string | null;

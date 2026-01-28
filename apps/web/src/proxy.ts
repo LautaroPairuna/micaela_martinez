@@ -12,25 +12,41 @@ function computeApiBase(): string {
   return raw.endsWith('/api') ? raw : `${raw}/api`;
 }
 
+type JwtPayload = { roles?: unknown };
+
+function decodeBase64UrlToString(input: string): string | null {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+
+  try {
+    if (typeof atob === 'function') return atob(padded);
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(padded, 'base64').toString('utf8');
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getJwtRoles(token: string): string[] {
+  const parts = token.split('.');
+  if (parts.length < 2) return [];
+  const jsonStr = decodeBase64UrlToString(parts[1] ?? '');
+  if (!jsonStr) return [];
+
+  try {
+    const payload = JSON.parse(jsonStr) as JwtPayload;
+    if (!Array.isArray(payload.roles)) return [];
+    return payload.roles.filter((r): r is string => typeof r === 'string');
+  } catch {
+    return [];
+  }
+}
+
 async function isAdminToken(token: string): Promise<boolean> {
-  const apiBase = computeApiBase();
-
-  const res = await fetch(`${apiBase}/users/me`, {
-    method: 'GET',
-    headers: {
-      authorization: `Bearer ${token}`,
-      accept: 'application/json',
-    },
-    cache: 'no-store',
-  });
-
-  if (!res.ok) return false;
-  const data: unknown = await res.json().catch(() => null);
-
-  if (!data || typeof data !== 'object') return false;
-  const u = data as Record<string, unknown>;
-  const roles = Array.isArray(u.roles) ? (u.roles as unknown[]) : [];
-  return roles.some((r) => typeof r === 'string' && r.toUpperCase() === 'ADMIN');
+  const roles = getJwtRoles(token);
+  return roles.some((r) => r.toUpperCase() === 'ADMIN');
 }
 
 export async function proxy(req: NextRequest) {

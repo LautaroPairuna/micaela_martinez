@@ -10,6 +10,7 @@ import { FavoritesProvider } from '@/components/providers/FavoritesProvider';
 import { AddressProvider } from '@/components/providers/AddressProvider';
 import { auth } from '@/lib/server-auth';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { ClientToastContainer } from '@/components/providers/ClientToastContainer';
 
 export const metadata: Metadata = {
   title: { default: 'Micaela Pestañas', template: '%s | Micaela Pestañas' },
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <FavoritesProvider>
                   <AddressProvider>
                     {children}
+                    <ClientToastContainer />
                   </AddressProvider>
                 </FavoritesProvider>
               </NotificationsProvider>

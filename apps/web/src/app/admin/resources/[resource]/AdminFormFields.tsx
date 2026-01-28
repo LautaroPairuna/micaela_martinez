@@ -7,6 +7,7 @@ import React, {
   DragEvent,
   useState,
 } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
@@ -502,29 +503,33 @@ export function renderAdminField({
         <label className="block text-xs font-medium text-slate-100">
           {label}
         </label>
-        <select
-          className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
-          value={value ?? ''}
-          onChange={(e) =>
-            setFormValues((prev) => ({
-              ...prev,
-              [field.name]:
-                field.type === 'Int'
-                  ? Number(e.target.value) || null
-                  : e.target.value,
-            }))
-          }
-          disabled={loading}
-        >
-          <option value="">
-            {loading ? 'Cargando opciones...' : 'Seleccionar…'}
-          </option>
-          {options.map((opt) => (
-            <option key={opt.id} value={opt.id}>
-              {opt.label}
+        <div className="relative group">
+          <select
+            className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
+            value={value ?? ''}
+            onChange={(e) =>
+              setFormValues((prev) => ({
+                ...prev,
+                [field.name]:
+                  field.type === 'Int'
+                    ? Number(e.target.value) || null
+                    : e.target.value,
+              }))
+            }
+            disabled={loading}
+            style={{ colorScheme: 'dark' }}
+          >
+            <option value="">
+              {loading ? 'Cargando opciones...' : 'Seleccionar…'}
             </option>
-          ))}
-        </select>
+            {options.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none group-hover:text-slate-400 transition-colors" />
+        </div>
         <p className="text-[10px] text-slate-500">
           Recurso relacionado: <code>{field.fkResource}</code>
         </p>
@@ -623,18 +628,22 @@ export function renderAdminField({
         <label className="block text-xs font-medium text-slate-100">
           {label}
         </label>
-        <select
-          className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
-          value={value ?? ''}
-          onChange={(e) => onChangeField(field, e as any)}
-        >
-          <option value="">—</option>
-          {field.enumValues.map((v) => (
-            <option key={v} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
+        <div className="relative group">
+          <select
+            className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
+            value={value ?? ''}
+            onChange={(e) => onChangeField(field, e as any)}
+            style={{ colorScheme: 'dark' }}
+          >
+            <option value="">—</option>
+            {field.enumValues.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none group-hover:text-slate-400 transition-colors" />
+        </div>
       </div>
     );
   }

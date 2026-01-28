@@ -37,9 +37,11 @@ export async function proxy(req: NextRequest, path: string) {
   // cookies(): En Next.js 15 necesita await
   const jar = await cookies();
   const token = jar.get('mp_session')?.value;
+  
+  const target = buildTarget(req, path);
 
-  console.log(`[API-PROXY] ${req.method} ${path}`);
-  console.log(`[API-PROXY] Token found: ${token ? 'YES' : 'NO'}`);
+  console.log(`[API-PROXY] ${req.method} ${path} -> ${target}`);
+  console.log(`[API-PROXY] Token present: ${token ? 'YES (length: ' + token.length + ')' : 'NO'}`);
 
   const headers = new Headers(req.headers);
   headers.delete('host');
@@ -57,8 +59,6 @@ export async function proxy(req: NextRequest, path: string) {
   if (hasBody && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');
   }
-
-  const target = buildTarget(req, path);
 
   try {
     const upstream = await fetch(target, {

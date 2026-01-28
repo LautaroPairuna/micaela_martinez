@@ -505,7 +505,7 @@ export function AdminResourceForm({
             ? `${baseUrl}/${currentRow.id}`
             : baseUrl;
 
-        const method = mode === 'edit' ? 'PUT' : 'POST';
+        const method = mode === 'edit' ? 'PATCH' : 'POST';
 
         const res = await fetch(url, {
           method,

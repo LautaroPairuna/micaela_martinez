@@ -2,6 +2,39 @@
 export type FieldKind = 'scalar' | 'relation';
 export type FileKind = 'video' | 'doc' | 'generic';
 
+export type FilterOperator =
+  | 'equals'
+  | 'contains'
+  | 'startsWith'
+  | 'endsWith'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'in'
+  | 'notIn'
+  | 'isNull'
+  | 'notNull';
+
+// ✅ agregamos 'text'
+export type FilterInput =
+  | 'string'
+  | 'text'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  | 'enum'
+  | 'relation';
+
+export interface FilterMeta {
+  field: string;
+  label: string;
+  input: FilterInput;
+  operators: FilterOperator[];
+  enumValues?: string[];
+  relationModel?: string;
+}
+
 export interface FieldMeta {
   name: string;
   type: string;
@@ -17,6 +50,7 @@ export interface FieldMeta {
   enumName?: string;
   enumValues?: string[];
 
+  // ideal: boolean siempre, pero lo dejo compatible con tu UI actual
   isImage?: boolean;
   isFile?: boolean;
   fileKind?: FileKind;
@@ -34,4 +68,5 @@ export interface ResourceMeta {
   tableName: string;
   displayName: string;
   fields: FieldMeta[];
+  filters: FilterMeta[];
 }

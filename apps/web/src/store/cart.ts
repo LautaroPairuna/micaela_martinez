@@ -126,13 +126,13 @@ export const useCart = create<CartState>()(
           const mergedQty = Math.min(it.quantity + qty, it.maxQty ?? line.maxQty ?? 99);
           const next = [...cur];
           next[idx] = { ...it, quantity: mergedQty };
-          set({ items: next, isOpen: true });
+          set({ items: next });
           
           // Toast para producto actualizado
           try {
             const { toast } = await import('react-toastify');
             toast.success(`${line.title} actualizado en el carrito (${mergedQty})`, {
-              position: 'bottom-right',
+              // position: 'bottom-right', (heredado del container)
               autoClose: 3000,
               hideProgressBar: false,
               closeOnClick: true,
@@ -157,7 +157,6 @@ export const useCart = create<CartState>()(
                 maxQty: line.maxQty ?? null,
               },
             ],
-            isOpen: true,
           });
           
           // Toast para producto agregado
@@ -201,14 +200,13 @@ export const useCart = create<CartState>()(
                 quantity: 1,
               },
             ],
-            isOpen: true,
           });
           
           // Toast para curso agregado
           try {
             const { toast } = await import('react-toastify');
             toast.success(`${line.title} agregado al carrito`, {
-              position: 'bottom-right',
+              // position: 'bottom-right', (heredado del container)
               autoClose: 3000,
               hideProgressBar: false,
               closeOnClick: true,
@@ -219,13 +217,13 @@ export const useCart = create<CartState>()(
             console.error('Error al mostrar toast:', error);
           }
         } else {
-          set({ isOpen: true });
+          // Ya existe, solo mostramos toast
           
           // Toast para curso ya existente
           try {
             const { toast } = await import('react-toastify');
             toast.info(`${line.title} ya está en tu carrito`, {
-              position: 'bottom-right',
+              // position: 'bottom-right', (heredado del container)
               autoClose: 2000,
               hideProgressBar: false,
               closeOnClick: true,

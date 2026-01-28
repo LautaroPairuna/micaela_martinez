@@ -9,7 +9,7 @@ import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useFavoritesClient } from '@/hooks/useFavoritesData';
 import { AddProductButton } from '@/components/cart/AddProductButton';
-import { Heart, Star } from 'lucide-react';
+import { Heart, Star, ShoppingCart } from 'lucide-react';
 
 type ProductMinimal = {
   id?: string;
@@ -120,13 +120,41 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
   };
 
   return (
-    <Card
-      className="group h-full flex flex-col border border-gray-700 bg-gray-900 backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation"
-    >
-      {/* Imagen */}
-      <div className="relative overflow-hidden rounded-t-xl">
+    <div className="relative group">
+      <div className="pointer-events-none absolute -inset-6 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100 bg-[radial-gradient(80%_80%_at_50%_50%,rgba(255,45,149,0.55),transparent_72%)]" />
+      <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl">
+        {/* Imagen */}
+        <div className="relative overflow-hidden rounded-t-xl">
         <div className="transition-transform duration-500 ease-out group-hover:scale-105">
           <SafeImage src={img} alt={p.titulo} ratio="1/1" />
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+
+        <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 translate-y-2 transition-all duration-300 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
+          <div className="w-[85%] space-y-2">
+            <AddProductButton
+              p={{
+                id: p.id || p.slug,
+                slug: p.slug,
+                titulo: p.titulo,
+                precio: p.precio,
+                stock: p.stock,
+                imagen: img,
+                imagenes: p.imagenes,
+              }}
+            />
+            <Link
+              href={`/tienda/producto/${p.slug}`}
+              className="block w-full rounded-xl bg-[var(--gold)] px-4 py-2 text-center transition-all duration-300 text-black hover:bg-[var(--gold-200)] hover:shadow-md"
+            >
+              <div className="flex items-center justify-center gap-2 text-sm font-semibold">
+                <span>Ver detalles</span>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Badges superiores */}
@@ -172,75 +200,57 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Cuerpo */}
-      <CardBody className="flex flex-col gap-3 flex-1 p-4 sm:p-5">
-        {/* Precio */}
-        <div className="flex items-baseline justify-between">
-          <Price value={p.precio} compareAt={compareAt ?? undefined} tone="pink" />
         </div>
 
-        {/* Título */}
-        <h3 className="relative text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">
-          {p.titulo}
-        </h3>
-
-        {/* Meta */}
-        <div className="flex flex-wrap gap-2 min-h-[2rem]">
-          {p.marca?.nombre ? (
-            <Link
-              href={buildTiendaPrettyPath({ marca: p.marca.slug || slugify(p.marca.nombre) })}
-              className="inline-flex items-center rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/30 px-3 py-1 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/25"
-            >
-              {p.marca.nombre}
-            </Link>
-          ) : null}
-          {p.categoria?.nombre ? (
-            <Link
-              href={buildTiendaPrettyPath({ categoria: p.categoria.slug || slugify(p.categoria.nombre) })}
-              className="inline-flex items-center rounded-full bg-[var(--pink)]/10 border border-[var(--pink)]/25 px-3 py-1 text-xs font-medium text-[var(--pink)] transition-all duration-200 hover:bg-[var(--pink)]/20"
-            >
-              {p.categoria.nombre}
-            </Link>
-          ) : null}
-        </div>
-
-        {/* Rating */}
-        {p.ratingProm && p.ratingConteo && p.ratingConteo > 0 && (
-          <div className="min-h-[24px] flex items-center">
-            <RatingStars
-              value={Number(p.ratingProm || 0)}
-              count={p.ratingConteo || 0}
-              size="sm"
-            />
+        {/* Cuerpo */}
+        <CardBody className="flex flex-col gap-3 flex-1 p-3 sm:p-4 bg-[#141414] rounded-b-xl">
+          {/* Precio */}
+          <div className="flex items-baseline justify-between">
+            <Price value={p.precio} compareAt={compareAt ?? undefined} tone="pink" />
           </div>
-        )}
 
-        {/* CTA */}
-        <div className="mt-auto pt-2 space-y-2">
-          <AddProductButton
-            p={{
-              id: p.id || p.slug,
-              slug: p.slug,
-              titulo: p.titulo,
-              precio: p.precio,
-              stock: p.stock,
-              imagen: img,          // usamos la misma url normalizada
-              imagenes: p.imagenes,
-            }}
-            className="w-full rounded-xl bg-[var(--pink)] text-black font-bold px-4 py-2 transition-all duration-300 hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <Link
-            href={`/tienda/producto/${p.slug}`}
-            className="block w-full rounded-xl border border-[var(--gold)] px-4 py-2 text-center transition-all duration-300 text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black hover:shadow-md"
-          >
-            <div className="flex items-center justify-center gap-2 text-sm font-semibold">
-              <span>Ver detalles</span>
+          {/* Título */}
+          <h3 className="relative text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">
+            {p.titulo}
+          </h3>
+
+          {/* Meta */}
+          <div className="flex flex-wrap gap-2 min-h-[2rem]">
+            {p.marca?.nombre ? (
+              <Link
+                href={buildTiendaPrettyPath({
+                  marca: p.marca.slug || slugify(p.marca.nombre),
+                })}
+                className="inline-flex items-center rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/30 px-3 py-1 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/25"
+              >
+                {p.marca.nombre}
+              </Link>
+            ) : null}
+            {p.categoria?.nombre ? (
+              <Link
+                href={buildTiendaPrettyPath({
+                  categoria:
+                    p.categoria.slug || slugify(p.categoria.nombre),
+                })}
+                className="inline-flex items-center rounded-full bg-[var(--pink)]/10 border border-[var(--pink)]/25 px-3 py-1 text-xs font-medium text-[var(--pink)] transition-all duration-200 hover:bg-[var(--pink)]/20"
+              >
+                {p.categoria.nombre}
+              </Link>
+            ) : null}
+          </div>
+
+          {/* Rating */}
+          {p.ratingProm && p.ratingConteo && p.ratingConteo > 0 && (
+            <div className="min-h-[24px] flex items-center">
+              <RatingStars
+                value={Number(p.ratingProm || 0)}
+                count={p.ratingConteo || 0}
+                size="sm"
+              />
             </div>
-          </Link>
-        </div>
-      </CardBody>
-    </Card>
+          )}
+        </CardBody>
+      </Card>
+    </div>
   );
 }
