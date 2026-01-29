@@ -201,10 +201,11 @@ export function AdminResourceForm({
 
     const progressSocket = io('/video-progress', {
         path: '/socket.io',
-        transports: ['websocket', 'polling'], // Permitir polling como fallback si WS falla
+        transports: ['polling'], // 👈 FORZAR POLLING: más lento pero atraviesa todos los proxies/firewalls
         withCredentials: true,
         query: { clientId },
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
+        upgrade: false, // Evitar intentar upgrade a websocket si polling funciona (estabilidad > velocidad aquí)
     });
 
     progressSocket.on('connect', () => {
