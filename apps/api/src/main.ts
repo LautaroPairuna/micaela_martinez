@@ -42,8 +42,8 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.use(cookieParser());
-  app.use(json({ limit: '2mb' }));
-  app.use(urlencoded({ extended: true, limit: '2mb' }));
+  app.use(json({ limit: '8192mb' }));
+  app.use(urlencoded({ extended: true, limit: '8192mb' }));
 
   // ✅ Servir archivos estáticos fuera del prefijo /api
   app.use(
@@ -75,6 +75,12 @@ async function bootstrap() {
 
   // API prefix
   app.setGlobalPrefix('api');
+
+  // Aumentar timeout del servidor para subidas lentas (60 minutos)
+  const server = app.getHttpServer();
+  if (server && typeof server.setTimeout === 'function') {
+    server.setTimeout(3600000);
+  }
 
   // CORS - Configuración robusta
   const whitelist = (process.env.CORS_ORIGIN || '').split(',').filter(Boolean);
