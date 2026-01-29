@@ -613,8 +613,11 @@ export function AdminResourceForm({
           const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '10');
           const safeChunkMb = Number.isFinite(rawChunkMb) ? rawChunkMb : 10;
           const boundedChunkMb = Math.min(10, Math.max(1, safeChunkMb));
+          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '5');
+          const safeMinChunkMb = Number.isFinite(rawMinChunkMb) ? rawMinChunkMb : 5;
+          const boundedMinChunkMb = Math.min(boundedChunkMb, Math.max(1, safeMinChunkMb));
           const CHUNK_SIZE = Math.round(boundedChunkMb * mb);
-          const MIN_CHUNK_SIZE = Math.min(5 * mb, CHUNK_SIZE);
+          const MIN_CHUNK_SIZE = Math.round(boundedMinChunkMb * mb);
           const stateKey = `admin_upload_state_${resource}_${saved.id}_${field.name}`;
           const fileFingerprint = `${file.name}:${file.size}:${file.lastModified}`;
           let uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
