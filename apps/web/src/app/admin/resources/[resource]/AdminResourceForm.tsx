@@ -20,10 +20,23 @@ import { buildZodSchemaFromFields } from '@/lib/admin/validation';
 import { io, type Socket } from 'socket.io-client'; // 👈 NUEVO
 
 const getApiBase = () => {
-  const url =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    '/api';
+  // 1. Si hay una URL base explícita pública, usarla
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    const url = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const base = url.replace(/\/+$/, '');
+    return base.endsWith('/api') ? base : `${base}/api`;
+  }
+
+  // 2. En el cliente (navegador), usar SIEMPRE '/api' relativo para:
+  //    a) Aprovechar el Proxy de Next.js (evita CORS).
+  //    b) Usar la sesión/cookies del dominio actual.
+  //    c) Evitar errores con URLs internas de Docker (ej. http://api:3001) inalcanzables desde fuera.
+  if (typeof window !== 'undefined') {
+    return '/api';
+  }
+
+  // 3. Fallback (SSR o entornos raros): intentar usar la URL pública o default
+  const url = process.env.NEXT_PUBLIC_API_URL || '/api';
   const base = url.replace(/\/+$/, '');
   return base.endsWith('/api') ? base : `${base}/api`;
 };
