@@ -101,6 +101,17 @@ export class AdminUploadController {
             await fsp.copyFile(file.path, chunkPath);
             await fsp.unlink(file.path).catch(() => {});
         }
+
+        // VERIFICACIÓN EXTRA: Asegurar que el archivo existe y tiene tamaño
+        try {
+            const stats = await fsp.stat(chunkPath);
+            if (stats.size === 0) {
+                throw new Error('File is empty after save');
+            }
+        } catch (verifyErr) {
+             console.error(`[ChunkUpload] Error verifying chunk ${idx}:`, verifyErr);
+             throw new BadRequestException(`Error verificando chunk ${idx}: ${verifyErr}`);
+        }
       } catch (err) {
         console.error('Error saving chunk:', err);
         throw new BadRequestException(`Error guardando chunk ${idx}: ${err}`);
@@ -116,9 +127,19 @@ export class AdminUploadController {
           const writeStream = fs.createWriteStream(finalPath);
           for (let i = 0; i < total; i++) {
             const p = path.join(tmpDir, `chunk-${i}`);
+            
+            // Reintento de existencia (paranoia para sistemas de archivos lentos/bloqueados)
+            let retries = 0;
+            while (!fs.existsSync(p) && retries < 5) {
+                await new Promise(r => setTimeout(r, 500));
+                retries++;
+            }
+
             // Verificar si el chunk existe antes de leer
             if (!fs.existsSync(p)) {
-              throw new Error(`Chunk ${i} faltante para ${originalName}`);
+              const files = await fsp.readdir(tmpDir).catch(() => []);
+              console.error(`[UploadError] Missing chunk ${i} in ${tmpDir}. Found files: ${files.join(', ')}`);
+              throw new Error(`Chunk ${i} faltante para ${originalName}. En carpeta hay ${files.length} archivos.`);
             }
             const data = await fsp.readFile(p);
             writeStream.write(data);

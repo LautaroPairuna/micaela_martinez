@@ -599,6 +599,7 @@ export function AdminResourceForm({
           if (isVideo) {
             setVideoStatus('uploading');
             setVideoStatusMessage(`Subiendo video (${file.name})...`);
+            setVideoProgress(0);
             // Persistir sesión de upload
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('admin_upload_client_id', clientId);
@@ -611,7 +612,7 @@ export function AdminResourceForm({
           // --- CHUNKED UPLOAD LOGIC ---
           // Aumentamos a 50MB para reducir la cantidad de requests en archivos grandes (ej. 7GB)
           // Si 50MB falla, bajar a 10MB o 5MB para mayor estabilidad en conexiones lentas o proxies estrictos.
-          const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB (Más conservador que 50MB, más rápido que 5MB)
+          const CHUNK_SIZE = 20 * 1024 * 1024; // 20MB (Aumentado a petición para probar performance/estabilidad)
           const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
           const uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
           let uploadJson: any;
@@ -678,6 +679,11 @@ export function AdminResourceForm({
                     uploadJson = await chunkRes.json();
                   }
                   success = true;
+
+                  // Actualizar progreso UI
+                  const pct = Math.round(((i + 1) / totalChunks) * 100);
+                  setVideoProgress(pct);
+                  setVideoStatusMessage(`Subiendo parte ${i + 1} de ${totalChunks}...`);
                 } catch (e) {
                   lastError = e;
                   attempts++;
@@ -829,11 +835,25 @@ export function AdminResourceForm({
                 {videoStatus !== 'idle' && (
                   <>
                     {videoStatus === 'uploading' && (
-                      <div className="flex items-center gap-2 text-emerald-400">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>
-                          {videoStatusMessage ?? 'Subiendo archivo al servidor...'}
-                        </span>
+                      <div className="flex flex-col gap-1 text-emerald-400">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>
+                            {videoStatusMessage ?? 'Subiendo archivo al servidor...'}
+                          </span>
+                        </div>
+                        {/* Barra de progreso de subida */}
+                        {typeof videoProgress === 'number' && (
+                           <div className="flex items-center gap-1 mt-1">
+                              <div className="h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-slate-700">
+                                <div
+                                  className="h-full bg-emerald-500 transition-all duration-300 ease-out"
+                                  style={{ width: `${videoProgress}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] tabular-nums text-slate-400">{videoProgress}%</span>
+                           </div>
+                        )}
                       </div>
                     )}
 
