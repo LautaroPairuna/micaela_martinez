@@ -42,8 +42,9 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.use(cookieParser());
-  app.use(json({ limit: '500mb' }));
-  app.use(urlencoded({ extended: true, limit: '500mb' }));
+  // Aumentar límites de payload para uploads grandes
+  app.use(json({ limit: '1000mb' }));
+  app.use(urlencoded({ extended: true, limit: '1000mb' }));
 
   // ✅ Servir archivos estáticos fuera del prefijo /api
   app.use(
@@ -82,28 +83,12 @@ async function bootstrap() {
     server.setTimeout(3600000);
   }
 
-  // CORS - Configuración robusta
-  const whitelist = (process.env.CORS_ORIGIN || '').split(',').filter(Boolean);
-  console.log(
-    `Orígenes CORS permitidos: ${whitelist.join(', ') || 'Cualquiera (fallback)'}`,
-  );
-
+  // Habilitar CORS para desarrollo y producción
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        // p.ej. Postman, curl, apps móviles
-        return callback(null, true);
-      }
-      if (whitelist.length === 0 || whitelist.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Origen no permitido por la política CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Disposition'],
+    origin: true, // Permitir cualquier origen en dev/test (ajustar en prod si es necesario)
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
   });
 
   app.useGlobalPipes(
