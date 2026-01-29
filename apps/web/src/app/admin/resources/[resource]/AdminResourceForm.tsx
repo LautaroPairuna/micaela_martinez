@@ -609,7 +609,9 @@ export function AdminResourceForm({
           const uploadUrlBase = `${API_BASE}/admin/resources/${resource}/${saved.id}/upload/${field.name}`;
 
           // --- CHUNKED UPLOAD LOGIC ---
-          const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+          // Aumentamos a 50MB para reducir la cantidad de requests en archivos grandes (ej. 7GB)
+          // 7GB / 50MB = ~140 requests (manejable) vs 1400 requests con 5MB.
+          const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
           const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
           const uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
           let uploadJson: any;
