@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import sharp from 'sharp';
 import { randomBytes } from 'crypto';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sharp = require('sharp');
 const ffmpeg = require('fluent-ffmpeg');
 
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';

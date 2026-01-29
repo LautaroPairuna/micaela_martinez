@@ -192,25 +192,6 @@ export function AdminResourceForm({
     // socket.io-client url: "/" (conecta al mismo host del frontend)
     // path: "/socket.io" (default)
     
-    const socket: Socket = io('/', {
-      path: '/socket.io', // Next.js rewrite -> Backend
-      transports: ['websocket'], // Forzar websocket para evitar polling fallido
-      withCredentials: true,
-      query: { clientId },
-      // forceNew: true, // A veces ayuda en Next.js hot reload
-    });
-    
-    // Si necesitamos conectar a un namespace específico, lo hacemos así:
-    // Pero ojo: socket.io-client con namespaces a veces requiere la URL completa.
-    // Probemos primero conectando al root y luego el namespace si fuera necesario,
-    // o mejor: io('/video-progress', ...) asumiendo que el rewrite maneja el root.
-    
-    // CORRECCIÓN: Si el gateway tiene @WebSocketGateway({ namespace: 'video-progress' })
-    // entonces la conexión debe ser a esa URL.
-    // Al usar io('/video-progress'), socket.io intentará conectar a:
-    // wss://dominio.com/socket.io/?EIO=4&transport=websocket&nsp=/video-progress
-    // Esto debería pasar por el rewrite de Next.js correctamente.
-    
     /* 
        ESTRATEGIA FINAL SOCKET.IO:
        Usar path relativo para que el navegador use el mismo host/puerto que la web.
@@ -220,9 +201,10 @@ export function AdminResourceForm({
 
     const progressSocket = io('/video-progress', {
         path: '/socket.io',
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'], // Permitir polling como fallback si WS falla
         withCredentials: true,
         query: { clientId },
+        reconnectionAttempts: 5,
     });
 
     progressSocket.on('connect', () => {
@@ -272,11 +254,16 @@ export function AdminResourceForm({
       (payload: { clientId: string; error?: string }) => {
         if (payload.clientId !== clientId) return;
         setVideoStatus('error');
-        setVideoStatusMessage(
-          payload.error || 'Error al procesar el video.',
-        );
+        const errorMessage = payload.error || 'Error al procesar el video.';
+        setVideoStatusMessage(errorMessage);
         sessionStorage.removeItem('admin_upload_client_id');
         sessionStorage.removeItem('admin_upload_start_time');
+
+        showToast({ 
+          variant: 'error',
+          title: 'Error en procesamiento',
+          message: errorMessage,
+        });
       },
     );
 
@@ -287,7 +274,7 @@ export function AdminResourceForm({
     return () => {
       progressSocket.disconnect();
     };
-  }, [clientId]);
+  }, [clientId, showToast]);
 
   // Campos de formulario alineados con el backend:
   const formFields: FieldMeta[] = useMemo(
