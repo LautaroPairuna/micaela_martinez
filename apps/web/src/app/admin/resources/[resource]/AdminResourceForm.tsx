@@ -610,8 +610,8 @@ export function AdminResourceForm({
 
           // --- CHUNKED UPLOAD LOGIC ---
           // Aumentamos a 50MB para reducir la cantidad de requests en archivos grandes (ej. 7GB)
-          // 7GB / 50MB = ~140 requests (manejable) vs 1400 requests con 5MB.
-          const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
+          // Si 50MB falla, bajar a 10MB o 5MB para mayor estabilidad en conexiones lentas o proxies estrictos.
+          const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB (Más conservador que 50MB, más rápido que 5MB)
           const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
           const uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
           let uploadJson: any;

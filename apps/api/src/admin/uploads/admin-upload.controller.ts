@@ -71,16 +71,40 @@ export class AdminUploadController {
     // SOPORTE CHUNKED UPLOAD
     // ----------------------------------------------------------------------
     if (chunkIndex !== undefined && totalChunks !== undefined && uploadId && originalName) {
-      if (!file) throw new BadRequestException('No chunk file received');
+      // FIX: Si falla Multer (por límite u otro error), 'file' puede ser undefined
+      // Pero si llega aquí, Multer ya pasó. 
+      // Si el error 500 es "Chunk error", es probable que sea en el manejo de archivos.
       
+      if (!file) {
+        // Si no hay archivo, puede ser que Multer lo rechazó silenciosamente o no llegó
+        throw new BadRequestException('No chunk file received');
+      }
+
+      // FIX: Asegurar que el directorio de chunks tenga permisos y exista
       const idx = parseInt(chunkIndex, 10);
       const total = parseInt(totalChunks, 10);
-      const tmpDir = path.join(process.cwd(), 'public', 'tmp', 'chunks', uploadId);
       
-      // 1. Mover el chunk a su carpeta temporal
-      await fsp.mkdir(tmpDir, { recursive: true });
-      const chunkPath = path.join(tmpDir, `chunk-${idx}`);
-      await fsp.rename(file.path, chunkPath);
+      // Sanitizar uploadId para evitar path traversal
+      const safeUploadId = uploadId.replace(/[^a-zA-Z0-9-]/g, '');
+      const tmpDir = path.join(process.cwd(), 'public', 'tmp', 'chunks', safeUploadId);
+      
+      try {
+        // 1. Mover el chunk a su carpeta temporal
+        // Usar retry por si hay bloqueo de archivos en Windows
+        await fsp.mkdir(tmpDir, { recursive: true });
+        const chunkPath = path.join(tmpDir, `chunk-${idx}`);
+        
+        // Mover (rename) puede fallar entre discos/particiones, copy+unlink es más seguro
+        try {
+            await fsp.rename(file.path, chunkPath);
+        } catch (e) {
+            await fsp.copyFile(file.path, chunkPath);
+            await fsp.unlink(file.path).catch(() => {});
+        }
+      } catch (err) {
+        console.error('Error saving chunk:', err);
+        throw new BadRequestException(`Error guardando chunk ${idx}: ${err}`);
+      }
 
       // 2. Si es el último chunk, reconstruir el archivo
       if (idx === total - 1) {
