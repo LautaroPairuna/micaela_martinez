@@ -5,9 +5,12 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   namespace: 'video-progress',
+  transports: ['websocket', 'polling'], // Permitir polling como fallback
+  allowEIO3: true,
   cors: {
-    origin: true,
+    origin: true, // Permitir cualquier origen
     credentials: true,
+    methods: ['GET', 'POST'],
   },
 })
 export class VideoProgressGateway {
