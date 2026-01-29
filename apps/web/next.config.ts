@@ -61,6 +61,8 @@ const nextConfig: NextConfig = {
       { source: '/videos/:path*',               destination: `${U.origin}/videos/:path*` },
       { source: '/api/admin/uploads',           destination: `${U.origin}/api/admin/uploads` },
       { source: '/api/admin/uploads/:path*',    destination: `${U.origin}/api/admin/uploads/:path*` },
+      // WebSocket: Forzar sin barra al final y asegurarse de que apunte al root del backend
+      { source: '/socket.io',                   destination: `${U.origin}/socket.io/` },
       { source: '/socket.io/:path*',            destination: `${U.origin}/socket.io/:path*` },
       { source: '/_next/image',                 destination: '/_next/image' },
     ];

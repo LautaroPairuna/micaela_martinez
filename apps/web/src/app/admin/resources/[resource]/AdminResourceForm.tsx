@@ -177,22 +177,59 @@ export function AdminResourceForm({
   }, [onClose, videoStatus, clearUploadSession]);
 
   useEffect(() => {
-    if (!API_BASE) return;
+    // Si estamos en el servidor, no conectar sockets
+    if (typeof window === 'undefined') return;
 
-    // API_BASE suele ser algo tipo http://localhost:3333/api → saco el /api
-    const httpRoot = API_BASE.replace(/\/api\/?$/, '');
-
-    const socket: Socket = io(`${httpRoot}/video-progress`, {
-      transports: ['websocket'],
+    // Calcular la ruta del socket
+    // Si estamos en dev local: http://localhost:3000 -> path: /socket.io
+    // Si estamos en prod: https://midominio.com -> path: /socket.io (vía proxy next)
+    
+    // NOTA: No usamos API_BASE para el path del socket, sino que dejamos que socket.io-client
+    // infiera el host actual (window.location.host) y solo especificamos el path '/socket.io'
+    // que Next.js redirige al backend.
+    
+    // IMPORTANTE: El namespace '/video-progress' es parte del protocolo de conexión, no de la URL HTTP inicial.
+    // socket.io-client url: "/" (conecta al mismo host del frontend)
+    // path: "/socket.io" (default)
+    
+    const socket: Socket = io('/', {
+      path: '/socket.io', // Next.js rewrite -> Backend
+      transports: ['websocket'], // Forzar websocket para evitar polling fallido
       withCredentials: true,
       query: { clientId },
+      // forceNew: true, // A veces ayuda en Next.js hot reload
+    });
+    
+    // Si necesitamos conectar a un namespace específico, lo hacemos así:
+    // Pero ojo: socket.io-client con namespaces a veces requiere la URL completa.
+    // Probemos primero conectando al root y luego el namespace si fuera necesario,
+    // o mejor: io('/video-progress', ...) asumiendo que el rewrite maneja el root.
+    
+    // CORRECCIÓN: Si el gateway tiene @WebSocketGateway({ namespace: 'video-progress' })
+    // entonces la conexión debe ser a esa URL.
+    // Al usar io('/video-progress'), socket.io intentará conectar a:
+    // wss://dominio.com/socket.io/?EIO=4&transport=websocket&nsp=/video-progress
+    // Esto debería pasar por el rewrite de Next.js correctamente.
+    
+    /* 
+       ESTRATEGIA FINAL SOCKET.IO:
+       Usar path relativo para que el navegador use el mismo host/puerto que la web.
+       Next.js next.config.ts ya tiene el rewrite:
+       source: '/socket.io/:path*' -> destination: 'BACKEND/socket.io/:path*'
+    */
+
+    const progressSocket = io('/video-progress', {
+        path: '/socket.io',
+        transports: ['websocket'],
+        withCredentials: true,
+        query: { clientId },
     });
 
-    socket.on('connect', () => {
+    progressSocket.on('connect', () => {
       // console.log('WS video-progress conectado', clientId);
     });
 
-    socket.on(
+    progressSocket.on(
       'video-progress',
       (payload: { clientId: string; percent: number }) => {
         if (payload.clientId !== clientId) return;
@@ -201,8 +238,6 @@ export function AdminResourceForm({
         
         setVideoUploadStartedAtMs((prev) => {
           if (prev) return prev;
-          // Si llegamos aquí y no tenemos start time local, intentamos leer de storage una vez más
-          // o usamos Date.now() como fallback (reiniciando contador visualmente, pero es lo mejor que tenemos)
           if (typeof window !== 'undefined') {
              const stored = sessionStorage.getItem('admin_upload_start_time');
              if (stored) return Number(stored);
@@ -212,21 +247,27 @@ export function AdminResourceForm({
       },
     );
 
-    socket.on('video-stage', (payload: { clientId: string; stage: string }) => {
+    progressSocket.on('video-stage', (payload: { clientId: string; stage: string }) => {
       if (payload.clientId !== clientId) return;
       setVideoStage(payload.stage);
-      setVideoProgress(0); // Reiniciar progreso visual al cambiar de etapa
+      setVideoProgress(0); 
     });
 
-    socket.on('video-done', (payload: { clientId: string }) => {
+    progressSocket.on('video-done', (payload: { clientId: string }) => {
       if (payload.clientId !== clientId) return;
       setVideoStatus('done');
       setVideoProgress(100);
       sessionStorage.removeItem('admin_upload_client_id');
       sessionStorage.removeItem('admin_upload_start_time');
+      
+      showToast({
+        variant: 'success',
+        title: 'Video procesado correctamente',
+      });
+      onClose();
     });
 
-    socket.on(
+    progressSocket.on(
       'video-error',
       (payload: { clientId: string; error?: string }) => {
         if (payload.clientId !== clientId) return;
@@ -239,12 +280,12 @@ export function AdminResourceForm({
       },
     );
 
-    socket.on('disconnect', () => {
-      // opcional: resetear algo
+    progressSocket.on('disconnect', () => {
+      // opcional
     });
 
     return () => {
-      socket.disconnect();
+      progressSocket.disconnect();
     };
   }, [clientId]);
 
@@ -599,22 +640,46 @@ export function AdminResourceForm({
           }
 
           const uploadJson = await uploadRes.json();
+
+          // Si el backend responde "processing", es que es un video en background
+          if (uploadJson.status === 'processing') {
+            setVideoStatus('processing');
+            // NO cerramos el modal si está procesando
+            // Solo actualizamos currentItem si trae algo útil
+            if (uploadJson.item) {
+              currentItem = uploadJson.item;
+            }
+            continue; // Pasamos al siguiente campo (si hubiera)
+          }
+
           if (uploadJson?.item) {
             currentItem = uploadJson.item;
           }
         }
 
-        onSaved(currentItem, mode);
+        // Si hay video procesando, NO cerramos
+        if (videoStatus === 'processing' || videoStatus === 'uploading') {
+           showToast({
+            variant: 'info',
+            title: 'Procesando video',
+            message: 'El video se está procesando en segundo plano. No cierres esta ventana.',
+          });
+          // Forzamos "onSaved" parcial para refrescar la grilla de fondo si se desea,
+          // pero mantenemos el modal abierto.
+          onSaved(currentItem, mode);
+        } else {
+          onSaved(currentItem, mode);
 
-        showToast({
-          variant: 'success',
-          title:
-            mode === 'edit'
-              ? `${meta.displayName} actualizado`
-              : `${meta.displayName} creado`,
-        });
+          showToast({
+            variant: 'success',
+            title:
+              mode === 'edit'
+                ? `${meta.displayName} actualizado`
+                : `${meta.displayName} creado`,
+          });
 
-        onClose();
+          onClose();
+        }
       } catch (err) {
         console.error(err);
         showToast({

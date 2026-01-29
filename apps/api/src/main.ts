@@ -42,8 +42,8 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.use(cookieParser());
-  app.use(json({ limit: '8192mb' }));
-  app.use(urlencoded({ extended: true, limit: '8192mb' }));
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   // ✅ Servir archivos estáticos fuera del prefijo /api
   app.use(

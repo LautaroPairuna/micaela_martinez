@@ -19,6 +19,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MediaStorageService } from '../../media/media-storage.service';
 import { AdminMetaService } from '../meta/admin-meta.service';
+import { VideoProgressGateway } from '../../media/video-progress.gateway';
 
 const IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const DOC_MAX_BYTES = 50 * 1024 * 1024;
@@ -30,6 +31,7 @@ export class AdminUploadController {
     private readonly prisma: PrismaService,
     private readonly mediaStorage: MediaStorageService,
     private readonly adminMeta: AdminMetaService,
+    private readonly videoGateway: VideoProgressGateway,
   ) {}
 
   @Post(':resource/:id/upload/:field')
@@ -158,6 +160,40 @@ export class AdminUploadController {
     let filenameOnly: string;
     let previewUrl: string | undefined;
 
+    // Caso VIDEO: Procesamiento asíncrono para evitar Timeout (502/504)
+    if (mediaKind === 'video') {
+      // 1. Definir nombres esperados (optimista)
+      const safeBase = resourceMeta.tableName; // O slugify del título
+      // Nota: MediaStorageService genera su propio uniq, así que no podemos predecirlo 100% 
+      // sin refactorizar el servicio.
+      // ESTRATEGIA: Delegar todo al fondo y notificar por WebSocket.
+      
+      // Lanzar proceso en background ("Fire and forget" desde la vista del HTTP request)
+      this.processVideoBackground(
+        file,
+        folder,
+        baseName,
+        clientId,
+        client,
+        id,
+        fieldMeta.name,
+      ).catch((err) => {
+        console.error('Error en background video processing:', err);
+      });
+
+      // 2. Responder INMEDIATAMENTE al cliente
+      // Devolvemos el registro actual SIN cambios (o con un flag si quisiéramos)
+      // El frontend esperará el evento 'video-done' para saber que terminó.
+      return {
+        item: existing, // Devolvemos el item sin actualizar todavía
+        url: '',        // Sin preview inmediato
+        kind: mediaKind,
+        originalName: file.originalname,
+        status: 'processing', // Señal para el frontend (si lo usara)
+      };
+    }
+
+    // Caso NO video (Síncrono como siempre)
     try {
       if (mediaKind === 'image') {
         const buf = await fsp.readFile(file.path);
@@ -168,38 +204,6 @@ export class AdminUploadController {
         filenameOnly = path.basename(saved.path);
         previewUrl = saved.url;
         await fsp.unlink(file.path).catch(() => {});
-      } else if (mediaKind === 'video') {
-        const saved = await this.mediaStorage.saveCompressedVideoFromDisk(
-          {
-            path: file.path,
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-          },
-          { folder, baseName, clientId },
-        );
-        filenameOnly = path.basename(saved.path);
-        previewUrl = `/media/videos/${filenameOnly}`;
-
-        // VTT/Sprite best-effort
-        try {
-          const baseNameForVtt = path.basename(
-            filenameOnly,
-            path.extname(filenameOnly),
-          );
-          const absoluteVideoPath = path.join(
-            process.cwd(),
-            'public',
-            saved.path,
-          );
-          await this.mediaStorage.generateVttAndSprite(
-            absoluteVideoPath,
-            'uploads/media',
-            baseNameForVtt,
-          );
-        } catch (e) {
-          console.error('Error generando VTT en admin upload:', e);
-        }
       } else {
         const saved = await this.mediaStorage.saveRawFileFromDisk(
           {
@@ -229,5 +233,72 @@ export class AdminUploadController {
       kind: mediaKind,
       originalName: file.originalname,
     };
+  }
+
+  // Método auxiliar para procesamiento en background
+  private async processVideoBackground(
+    file: Express.Multer.File,
+    folder: string,
+    baseName: string,
+    clientId: string | undefined,
+    client: any,
+    id: number,
+    fieldName: string,
+  ) {
+    try {
+      // 1. Comprimir / Transcodificar
+      const saved = await this.mediaStorage.saveCompressedVideoFromDisk(
+        {
+          path: file.path,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+        },
+        { folder, baseName, clientId },
+      );
+
+      const filenameOnly = path.basename(saved.path);
+
+      // 2. VTT / Sprite (Best effort)
+      try {
+        const baseNameForVtt = path.basename(
+          filenameOnly,
+          path.extname(filenameOnly),
+        );
+        const absoluteVideoPath = path.join(
+          process.cwd(),
+          'public',
+          saved.path,
+        );
+        await this.mediaStorage.generateVttAndSprite(
+          absoluteVideoPath,
+          'uploads/media',
+          baseNameForVtt,
+        );
+      } catch (e) {
+        console.error('Error generando VTT en admin upload:', e);
+      }
+
+      // 3. Actualizar BD con el nombre final
+      await client.update({
+        where: { id },
+        data: { [fieldName]: filenameOnly },
+      });
+
+      // 4. Notificar fin al Frontend (para que refresque)
+      if (clientId) {
+        this.videoGateway.emitDone(clientId);
+      }
+    } catch (err) {
+      console.error('Error en processVideoBackground:', err);
+      if (clientId) {
+        this.videoGateway.emitError(
+          clientId,
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+      // Limpieza en caso de fallo total (si quedó el archivo temporal)
+      await fsp.unlink(file.path).catch(() => {});
+    }
   }
 }
