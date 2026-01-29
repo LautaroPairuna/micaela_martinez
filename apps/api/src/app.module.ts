@@ -34,9 +34,12 @@ import { AdminModule } from './admin/admin.module';
 // Cache interno custom
 import { CacheModule as CustomCacheModule } from './common/cache/cache.module';
 
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
   imports: [
     // ── Core / Infra ──────────────────────────────────────────────
+    ScheduleModule.forRoot(),
     PrismaModule, // Prisma global
     AuthModule,
     EventEmitterModule.forRoot({

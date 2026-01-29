@@ -596,14 +596,6 @@ export function AdminResourceForm({
 
           const isVideo = field.isFile && isVideoFile(field, file);
 
-          const uploadUrlBase = `${API_BASE}/admin/resources/${resource}/${saved.id}/upload/${field.name}`;
-          const uploadUrl = clientId
-            ? `${uploadUrlBase}?clientId=${encodeURIComponent(clientId)}`
-            : uploadUrlBase;
-
-          const formData = new FormData();
-          formData.append('file', file);
-
           if (isVideo) {
             setVideoStatus('uploading');
             setVideoStatusMessage(`Subiendo video (${file.name})...`);
@@ -614,23 +606,93 @@ export function AdminResourceForm({
             }
           }
 
-          const uploadRes = await fetch(uploadUrl, {
-            method: 'POST',
-            body: formData,
-            credentials: 'include',
-          });
+          const uploadUrlBase = `${API_BASE}/admin/resources/${resource}/${saved.id}/upload/${field.name}`;
 
-          if (!uploadRes.ok) {
-            const text = await uploadRes.text();
-            throw new Error(
-              `Error subiendo archivo para ${field.name}: ${uploadRes.status} ${text}`,
-            );
+          // --- CHUNKED UPLOAD LOGIC ---
+          const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+          const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+          const uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          let uploadJson: any;
+
+          if (totalChunks <= 1) {
+            // Subida normal (directa)
+            const uploadUrl = clientId
+              ? `${uploadUrlBase}?clientId=${encodeURIComponent(clientId)}`
+              : uploadUrlBase;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const uploadRes = await fetch(uploadUrl, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+
+            if (!uploadRes.ok) {
+              const text = await uploadRes.text();
+              throw new Error(
+                `Error subiendo archivo para ${field.name}: ${uploadRes.status} ${text}`,
+              );
+            }
+            uploadJson = await uploadRes.json();
+          } else {
+            // Subida por chunks
+            for (let i = 0; i < totalChunks; i++) {
+              const start = i * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, file.size);
+              const chunk = file.slice(start, end);
+
+              const formData = new FormData();
+              formData.append('file', chunk, file.name);
+
+              const query = new URLSearchParams({
+                clientId,
+                chunkIndex: i.toString(),
+                totalChunks: totalChunks.toString(),
+                uploadId,
+                originalName: file.name,
+              });
+
+              const chunkUrl = `${uploadUrlBase}?${query.toString()}`;
+
+              let attempts = 0;
+              let success = false;
+              let lastError;
+
+              while (attempts < 3 && !success) {
+                try {
+                  const chunkRes = await fetch(chunkUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include',
+                  });
+                  if (!chunkRes.ok) {
+                    const txt = await chunkRes.text();
+                    throw new Error(`Chunk error: ${chunkRes.status} ${txt}`);
+                  }
+                  // El último chunk retorna la respuesta final
+                  if (i === totalChunks - 1) {
+                    uploadJson = await chunkRes.json();
+                  }
+                  success = true;
+                } catch (e) {
+                  lastError = e;
+                  attempts++;
+                  await new Promise((r) => setTimeout(r, 1000 * attempts));
+                }
+              }
+
+              if (!success) {
+                throw new Error(
+                  `Falló chunk ${i + 1}/${totalChunks} (${field.name}): ${lastError}`,
+                );
+              }
+            }
           }
 
-          const uploadJson = await uploadRes.json();
-
           // Si el backend responde "processing", es que es un video en background
-          if (uploadJson.status === 'processing') {
+          if (uploadJson?.status === 'processing') {
             setVideoStatus('processing');
             // NO cerramos el modal si está procesando
             // Solo actualizamos currentItem si trae algo útil

@@ -62,7 +62,74 @@ export class AdminUploadController {
     @Param('field') field: string,
     @UploadedFile() file: Express.Multer.File,
     @Query('clientId') clientId?: string,
+    @Query('chunkIndex') chunkIndex?: string,
+    @Query('totalChunks') totalChunks?: string,
+    @Query('uploadId') uploadId?: string,
+    @Query('originalName') originalName?: string,
   ) {
+    // ----------------------------------------------------------------------
+    // SOPORTE CHUNKED UPLOAD
+    // ----------------------------------------------------------------------
+    if (chunkIndex !== undefined && totalChunks !== undefined && uploadId && originalName) {
+      if (!file) throw new BadRequestException('No chunk file received');
+      
+      const idx = parseInt(chunkIndex, 10);
+      const total = parseInt(totalChunks, 10);
+      const tmpDir = path.join(process.cwd(), 'public', 'tmp', 'chunks', uploadId);
+      
+      // 1. Mover el chunk a su carpeta temporal
+      await fsp.mkdir(tmpDir, { recursive: true });
+      const chunkPath = path.join(tmpDir, `chunk-${idx}`);
+      await fsp.rename(file.path, chunkPath);
+
+      // 2. Si es el último chunk, reconstruir el archivo
+      if (idx === total - 1) {
+        const finalName = `${uploadId}-${originalName}`;
+        const finalPath = path.join(process.cwd(), 'public', 'tmp', finalName);
+        
+        try {
+          // Concatenar chunks
+          const writeStream = fs.createWriteStream(finalPath);
+          for (let i = 0; i < total; i++) {
+            const p = path.join(tmpDir, `chunk-${i}`);
+            // Verificar si el chunk existe antes de leer
+            if (!fs.existsSync(p)) {
+              throw new Error(`Chunk ${i} faltante para ${originalName}`);
+            }
+            const data = await fsp.readFile(p);
+            writeStream.write(data);
+          }
+          writeStream.end();
+
+          // Esperar a que termine de escribir
+          await new Promise<void>((resolve, reject) => {
+            writeStream.on('finish', () => resolve());
+            writeStream.on('error', reject);
+          });
+        } catch (error) {
+          // Si falla la concatenación, limpiar todo
+          await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+          if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
+          throw new BadRequestException(`Error ensamblando archivo: ${error instanceof Error ? error.message : error}`);
+        }
+
+        // Limpiar chunks exitosamente procesados
+        await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+
+        // Simular objeto 'file' para el resto de la lógica
+        file = {
+          ...file,
+          path: finalPath,
+          originalname: originalName,
+          size: (await fsp.stat(finalPath)).size,
+        };
+      } else {
+        // Si no es el último, retornar OK y esperar al siguiente
+        return { status: 'chunk_received', chunkIndex: idx };
+      }
+    }
+    // ----------------------------------------------------------------------
+
     if (!file?.path)
       throw new BadRequestException('No se recibió ningún archivo.');
 
