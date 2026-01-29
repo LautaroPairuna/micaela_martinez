@@ -609,13 +609,19 @@ export function AdminResourceForm({
 
           const uploadUrlBase = `${API_BASE}/admin/resources/${resource}/${saved.id}/upload/${field.name}`;
 
-          // --- CHUNKED UPLOAD LOGIC ---
-          const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
-          const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-          const uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          const mb = 1024 * 1024;
+          const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '10');
+          const safeChunkMb = Number.isFinite(rawChunkMb) ? rawChunkMb : 10;
+          const boundedChunkMb = Math.min(10, Math.max(1, safeChunkMb));
+          const CHUNK_SIZE = Math.round(boundedChunkMb * mb);
+          const MIN_CHUNK_SIZE = Math.min(5 * mb, CHUNK_SIZE);
+          const stateKey = `admin_upload_state_${resource}_${saved.id}_${field.name}`;
+          const fileFingerprint = `${file.name}:${file.size}:${file.lastModified}`;
+          let uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          let resumeFrom = 0;
           let uploadJson: any;
 
-          if (totalChunks <= 1) {
+          if (file.size <= CHUNK_SIZE) {
             // Subida normal (directa)
             const uploadUrl = clientId
               ? `${uploadUrlBase}?clientId=${encodeURIComponent(clientId)}`
@@ -638,61 +644,138 @@ export function AdminResourceForm({
             }
             uploadJson = await uploadRes.json();
           } else {
-            // Subida por chunks
-            for (let i = 0; i < totalChunks; i++) {
-              const start = i * CHUNK_SIZE;
-              const end = Math.min(start + CHUNK_SIZE, file.size);
-              const chunk = file.slice(start, end);
-
-              const formData = new FormData();
-              formData.append('file', chunk, file.name);
-
-              const query = new URLSearchParams({
-                clientId,
-                chunkIndex: i.toString(),
-                totalChunks: totalChunks.toString(),
-                uploadId,
-                originalName: file.name,
-              });
-
-              const chunkUrl = `${uploadUrlBase}?${query.toString()}`;
-
-              let attempts = 0;
-              let success = false;
-              let lastError;
-
-              while (attempts < 3 && !success) {
+            if (typeof window !== 'undefined') {
+              const rawState = sessionStorage.getItem(stateKey);
+              if (rawState) {
                 try {
-                  const chunkRes = await fetch(chunkUrl, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include',
-                  });
-                  if (!chunkRes.ok) {
-                    const txt = await chunkRes.text();
-                    throw new Error(`Chunk error: ${chunkRes.status} ${txt}`);
+                  const parsed = JSON.parse(rawState) as {
+                    uploadId: string;
+                    chunkSize: number;
+                    totalChunks: number;
+                    nextChunkIndex: number;
+                    fileFingerprint: string;
+                    updatedAt: number;
+                  };
+                  const totalChunksNow = Math.ceil(file.size / CHUNK_SIZE);
+                  const isFresh = Date.now() - parsed.updatedAt < 6 * 60 * 60 * 1000;
+                  if (
+                    isFresh &&
+                    parsed.fileFingerprint === fileFingerprint &&
+                    parsed.chunkSize === CHUNK_SIZE &&
+                    parsed.totalChunks === totalChunksNow &&
+                    parsed.nextChunkIndex > 0 &&
+                    parsed.nextChunkIndex < totalChunksNow
+                  ) {
+                    uploadId = parsed.uploadId;
+                    resumeFrom = parsed.nextChunkIndex;
+                  } else {
+                    sessionStorage.removeItem(stateKey);
                   }
-                  // El último chunk retorna la respuesta final
-                  if (i === totalChunks - 1) {
-                    uploadJson = await chunkRes.json();
-                  }
-                  success = true;
-
-                  // Actualizar progreso UI
-                  const pct = Math.round(((i + 1) / totalChunks) * 100);
-                  setVideoProgress(pct);
-                  setVideoStatusMessage(`Subiendo parte ${i + 1} de ${totalChunks}...`);
-                } catch (e) {
-                  lastError = e;
-                  attempts++;
-                  await new Promise((r) => setTimeout(r, 1000 * attempts));
+                } catch {
+                  sessionStorage.removeItem(stateKey);
                 }
               }
+            }
 
-              if (!success) {
-                throw new Error(
-                  `Falló chunk ${i + 1}/${totalChunks} (${field.name}): ${lastError}`,
+            const saveState = (nextChunkIndex: number, chunkSize: number, totalChunks: number) => {
+              if (typeof window === 'undefined') return;
+              sessionStorage.setItem(
+                stateKey,
+                JSON.stringify({
+                  uploadId,
+                  chunkSize,
+                  totalChunks,
+                  nextChunkIndex,
+                  fileFingerprint,
+                  updatedAt: Date.now(),
+                }),
+              );
+            };
+
+            const clearState = () => {
+              if (typeof window === 'undefined') return;
+              sessionStorage.removeItem(stateKey);
+            };
+
+            const chunkedUpload = async (
+              chunkSize: number,
+              startIndex: number,
+              totalChunksOverride?: number,
+            ) => {
+              const totalChunks = totalChunksOverride ?? Math.ceil(file.size / chunkSize);
+              for (let i = startIndex; i < totalChunks; i++) {
+                const start = i * chunkSize;
+                const end = Math.min(start + chunkSize, file.size);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('file', chunk, file.name);
+
+                const query = new URLSearchParams({
+                  clientId,
+                  chunkIndex: i.toString(),
+                  totalChunks: totalChunks.toString(),
+                  uploadId,
+                  originalName: file.name,
+                });
+
+                const chunkUrl = `${uploadUrlBase}?${query.toString()}`;
+
+                let attempts = 0;
+                let success = false;
+                let lastError: unknown;
+
+                while (attempts < 3 && !success) {
+                  try {
+                    const chunkRes = await fetch(chunkUrl, {
+                      method: 'POST',
+                      body: formData,
+                      credentials: 'include',
+                    });
+                    if (!chunkRes.ok) {
+                      const txt = await chunkRes.text();
+                      throw new Error(`Chunk error: ${chunkRes.status} ${txt}`);
+                    }
+                    if (i === totalChunks - 1) {
+                      uploadJson = await chunkRes.json();
+                    }
+                    success = true;
+
+                    const pct = Math.round(((i + 1) / totalChunks) * 100);
+                    setVideoProgress(pct);
+                    setVideoStatusMessage(
+                      `Subiendo parte ${i + 1} de ${totalChunks}...`,
+                    );
+                    saveState(i + 1, chunkSize, totalChunks);
+                  } catch (e) {
+                    lastError = e;
+                    attempts++;
+                    await new Promise((r) => setTimeout(r, 1000 * attempts));
+                  }
+                }
+
+                if (!success) {
+                  throw new Error(
+                    `Falló chunk ${i + 1}/${totalChunks} (${field.name}): ${lastError}`,
+                  );
+                }
+              }
+              clearState();
+            };
+
+            try {
+              const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+              await chunkedUpload(CHUNK_SIZE, resumeFrom, totalChunks);
+            } catch (err) {
+              if (CHUNK_SIZE > MIN_CHUNK_SIZE) {
+                setVideoStatusMessage(
+                  'Detectamos inestabilidad en el proxy. Reintentando con 5MB...'
                 );
+                if (typeof window !== 'undefined') sessionStorage.removeItem(stateKey);
+                uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+                await chunkedUpload(MIN_CHUNK_SIZE, 0);
+              } else {
+                throw err;
               }
             }
           }

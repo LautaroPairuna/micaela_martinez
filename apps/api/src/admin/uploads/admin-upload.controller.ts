@@ -71,16 +71,10 @@ export class AdminUploadController {
     // SOPORTE CHUNKED UPLOAD
     // ----------------------------------------------------------------------
     if (chunkIndex !== undefined && totalChunks !== undefined && uploadId && originalName) {
-      // FIX: Si falla Multer (por límite u otro error), 'file' puede ser undefined
-      // Pero si llega aquí, Multer ya pasó. 
-      // Si el error 500 es "Chunk error", es probable que sea en el manejo de archivos.
-      
       if (!file) {
-        // Si no hay archivo, puede ser que Multer lo rechazó silenciosamente o no llegó
         throw new BadRequestException('No chunk file received');
       }
 
-      // FIX: Asegurar que el directorio de chunks tenga permisos y exista
       const idx = parseInt(chunkIndex, 10);
       const total = parseInt(totalChunks, 10);
       
@@ -89,8 +83,6 @@ export class AdminUploadController {
       const tmpDir = path.join(process.cwd(), 'public', 'tmp', 'chunks', safeUploadId);
       
       try {
-        // 1. Mover el chunk a su carpeta temporal
-        // Usar retry por si hay bloqueo de archivos en Windows
         await fsp.mkdir(tmpDir, { recursive: true });
         const chunkPath = path.join(tmpDir, `chunk-${idx}`);
         
@@ -117,59 +109,26 @@ export class AdminUploadController {
         throw new BadRequestException(`Error guardando chunk ${idx}: ${err}`);
       }
 
-      // 2. Si es el último chunk, reconstruir el archivo
       if (idx === total - 1) {
-        const finalName = `${uploadId}-${originalName}`;
-        const finalPath = path.join(process.cwd(), 'public', 'tmp', finalName);
-        
-        try {
-          // Concatenar chunks
-          const writeStream = fs.createWriteStream(finalPath);
-          for (let i = 0; i < total; i++) {
-            const p = path.join(tmpDir, `chunk-${i}`);
-            
-            // Reintento de existencia (paranoia para sistemas de archivos lentos/bloqueados)
-            let retries = 0;
-            while (!fs.existsSync(p) && retries < 5) {
-                await new Promise(r => setTimeout(r, 500));
-                retries++;
-            }
+        this.assembleAndProcessVideo(
+            uploadId,
+            originalName,
+            total,
+            tmpDir,
+            resource,
+            id,
+            field,
+            clientId
+        ).catch((err: unknown) => {
+            console.error('[BackgroundUpload] Error crítico no manejado:', err);
+        });
 
-            // Verificar si el chunk existe antes de leer
-            if (!fs.existsSync(p)) {
-              const files = await fsp.readdir(tmpDir).catch(() => []);
-              console.error(`[UploadError] Missing chunk ${i} in ${tmpDir}. Found files: ${files.join(', ')}`);
-              throw new Error(`Chunk ${i} faltante para ${originalName}. En carpeta hay ${files.length} archivos.`);
-            }
-            const data = await fsp.readFile(p);
-            writeStream.write(data);
-          }
-          writeStream.end();
-
-          // Esperar a que termine de escribir
-          await new Promise<void>((resolve, reject) => {
-            writeStream.on('finish', () => resolve());
-            writeStream.on('error', reject);
-          });
-        } catch (error) {
-          // Si falla la concatenación, limpiar todo
-          await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-          if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
-          throw new BadRequestException(`Error ensamblando archivo: ${error instanceof Error ? error.message : error}`);
-        }
-
-        // Limpiar chunks exitosamente procesados
-        await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-
-        // Simular objeto 'file' para el resto de la lógica
-        file = {
-          ...file,
-          path: finalPath,
-          originalname: originalName,
-          size: (await fsp.stat(finalPath)).size,
+        return { 
+            status: 'processing', 
+            message: 'El video se está ensamblando y procesando en segundo plano.',
+            chunkIndex: idx 
         };
       } else {
-        // Si no es el último, retornar OK y esperar al siguiente
         return { status: 'chunk_received', chunkIndex: idx };
       }
     }
@@ -178,6 +137,18 @@ export class AdminUploadController {
     if (!file?.path)
       throw new BadRequestException('No se recibió ningún archivo.');
 
+    // ... Resto del flujo síncrono para archivos pequeños ...
+    return this.handleFileSync(file, resource, id, field, clientId);
+  }
+
+  // Lógica extraída para manejo síncrono (reutilizable)
+  private async handleFileSync(
+    file: Express.Multer.File, 
+    resource: string, 
+    id: number, 
+    field: string, 
+    clientId?: string
+  ) {
     const resourceMeta = await this.adminMeta.getResourceMeta(resource);
     const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
 
@@ -269,18 +240,7 @@ export class AdminUploadController {
       existing.nombre ??
       `${resourceMeta.tableName}-${id}`;
 
-    let filenameOnly: string;
-    let previewUrl: string | undefined;
-
-    // Caso VIDEO: Procesamiento asíncrono para evitar Timeout (502/504)
     if (mediaKind === 'video') {
-      // 1. Definir nombres esperados (optimista)
-      const safeBase = resourceMeta.tableName; // O slugify del título
-      // Nota: MediaStorageService genera su propio uniq, así que no podemos predecirlo 100% 
-      // sin refactorizar el servicio.
-      // ESTRATEGIA: Delegar todo al fondo y notificar por WebSocket.
-      
-      // Lanzar proceso en background ("Fire and forget" desde la vista del HTTP request)
       this.processVideoBackground(
         file,
         folder,
@@ -289,23 +249,22 @@ export class AdminUploadController {
         client,
         id,
         fieldMeta.name,
-      ).catch((err) => {
+      ).catch((err: unknown) => {
         console.error('Error en background video processing:', err);
       });
 
-      // 2. Responder INMEDIATAMENTE al cliente
-      // Devolvemos el registro actual SIN cambios (o con un flag si quisiéramos)
-      // El frontend esperará el evento 'video-done' para saber que terminó.
       return {
-        item: existing, // Devolvemos el item sin actualizar todavía
-        url: '',        // Sin preview inmediato
+        item: existing,
+        url: '',
         kind: mediaKind,
         originalName: file.originalname,
-        status: 'processing', // Señal para el frontend (si lo usara)
+        status: 'processing',
       };
     }
 
-    // Caso NO video (Síncrono como siempre)
+    let filenameOnly: string;
+    let previewUrl: string | undefined;
+
     try {
       if (mediaKind === 'image') {
         const buf = await fsp.readFile(file.path);
@@ -347,7 +306,139 @@ export class AdminUploadController {
     };
   }
 
-  // Método auxiliar para procesamiento en background
+  private async assembleAndProcessVideo(
+    uploadId: string,
+    originalName: string,
+    totalChunks: number,
+    tmpDir: string,
+    resource: string,
+    id: number,
+    field: string,
+    clientId?: string
+  ) {
+    const lockPath = path.join(tmpDir, '.lock');
+    if (fs.existsSync(lockPath)) {
+      return;
+    }
+    await fsp.writeFile(lockPath, '').catch(() => {});
+    const assembleStart = Date.now();
+
+    if (clientId) {
+      this.videoGateway.server.to(clientId).emit('video-stage', {
+        clientId,
+        stage: 'assembling',
+        progress: 0,
+      });
+    }
+
+    const finalName = `${uploadId}-${originalName}`;
+    const finalPath = path.join(process.cwd(), 'public', 'tmp', finalName);
+
+    try {
+        if (fs.existsSync(finalPath)) await fsp.unlink(finalPath);
+
+        for (let i = 0; i < totalChunks; i++) {
+            const chunkPath = path.join(tmpDir, `chunk-${i}`);
+            
+            let retries = 0;
+            while (!fs.existsSync(chunkPath) && retries < 20) {
+                await new Promise(r => setTimeout(r, 500));
+                retries++;
+            }
+
+            if (!fs.existsSync(chunkPath)) {
+                throw new Error(`Chunk ${i} perdido durante el ensamblaje.`);
+            }
+
+            const data = await fsp.readFile(chunkPath);
+            await fsp.appendFile(finalPath, data);
+            
+            if (clientId && i % 10 === 0) {
+              const progress = Math.round((i / totalChunks) * 100);
+              this.videoGateway.server.to(clientId).emit('video-stage', {
+                clientId,
+                stage: 'assembling',
+                progress,
+              });
+            }
+        }
+
+        await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+
+        const stats = await fsp.stat(finalPath);
+        const file: Express.Multer.File = {
+            fieldname: 'file',
+            originalname: originalName,
+            encoding: '7bit',
+            mimetype: 'video/mp4',
+            destination: path.dirname(finalPath),
+            filename: finalName,
+            path: finalPath,
+            size: stats.size,
+            stream: fs.createReadStream(finalPath),
+            buffer: Buffer.alloc(0)
+        };
+
+        console.info('video_assemble_done', {
+          uploadId,
+          resource,
+          id,
+          field,
+          totalChunks,
+          size: stats.size,
+          ms: Date.now() - assembleStart,
+        });
+
+        const resourceMeta = await this.adminMeta.getResourceMeta(resource);
+        const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
+        
+        const prismaModelKey = resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
+        const client = (this.prisma as any)[prismaModelKey];
+        const existing = await client.findUnique({ where: { id } });
+        
+        const baseName = existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
+        const folder = path.join('uploads', 'media');
+
+        if (clientId) {
+          this.videoGateway.server.to(clientId).emit('video-stage', {
+            clientId,
+            stage: 'processing',
+            progress: 0,
+          });
+        }
+
+        await this.processVideoBackground(
+            file,
+            folder,
+            baseName,
+            clientId,
+            client,
+            id,
+            fieldMeta.name
+        );
+
+    } catch (err) {
+        console.error('video_assemble_error', {
+          uploadId,
+          resource,
+          id,
+          field,
+          totalChunks,
+          ms: Date.now() - assembleStart,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
+        
+        if (clientId) {
+            this.videoGateway.server.to(clientId).emit('video-error', {
+                clientId,
+                message: `Error procesando video: ${err instanceof Error ? err.message : err}`
+            });
+        }
+    } finally {
+      await fsp.unlink(lockPath).catch(() => {});
+    }
+  }
   private async processVideoBackground(
     file: Express.Multer.File,
     folder: string,
@@ -357,6 +448,7 @@ export class AdminUploadController {
     id: number,
     fieldName: string,
   ) {
+    const processStart = Date.now();
     try {
       // 1. Comprimir / Transcodificar
       const saved = await this.mediaStorage.saveCompressedVideoFromDisk(
@@ -397,12 +489,24 @@ export class AdminUploadController {
         data: { [fieldName]: filenameOnly },
       });
 
+      console.info('video_process_done', {
+        id,
+        fieldName,
+        filename: filenameOnly,
+        ms: Date.now() - processStart,
+      });
+
       // 4. Notificar fin al Frontend (para que refresque)
       if (clientId) {
         this.videoGateway.emitDone(clientId);
       }
     } catch (err) {
-      console.error('Error en processVideoBackground:', err);
+      console.error('video_process_error', {
+        id,
+        fieldName,
+        ms: Date.now() - processStart,
+        error: err instanceof Error ? err.message : String(err),
+      });
       if (clientId) {
         this.videoGateway.emitError(
           clientId,
