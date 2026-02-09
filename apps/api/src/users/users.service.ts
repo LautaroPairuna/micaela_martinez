@@ -1,8 +1,7 @@
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PRISMA } from '../../src/prisma/prisma.token';
 import { ExtendedPrismaClient } from '../../src/prisma/prisma.extensions';
-import { Prisma } from '../generated/prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { Prisma, EstadoOrden } from '../generated/prisma/client';
 
 export type UserForAuth = {
   id: number;
@@ -144,7 +143,7 @@ export class UsersService {
         usuarioId: Number(userId),
         esSuscripcion: true,
         suscripcionActiva: true,
-        estado: 'PAGADO' as any, // Workaround: Pass Key instead of Mapped Value
+        estado: EstadoOrden.PAGADO,
       },
       orderBy: {
         actualizadoEn: 'desc',

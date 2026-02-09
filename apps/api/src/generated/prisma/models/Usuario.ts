@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -232,21 +232,17 @@ export type UsuarioWhereInput = {
   creadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string
   emailVerificadoEn?: Prisma.DateTimeNullableFilter<"Usuario"> | Date | string | null
-  inscripciones?: Prisma.InscripcionListRelationFilter
-  ordenes?: Prisma.OrdenListRelationFilter
-  resenas?: Prisma.ResenaListRelationFilter
-  cursosDicta?: Prisma.CursoListRelationFilter
-  direcciones?: Prisma.DireccionListRelationFilter
-  favoritos?: Prisma.FavoritoListRelationFilter
   roles?: Prisma.UsuarioRolListRelationFilter
-  likesResenas?: Prisma.ResenaLikeListRelationFilter
-  respuestasResenas?: Prisma.ResenaRespuestaListRelationFilter
-  notificaciones?: Prisma.NotificacionListRelationFilter
-  borradores?: Prisma.ResenaBorradorListRelationFilter
-  preferenciasNotificacion?: Prisma.XOR<Prisma.PreferenciasNotificacionNullableScalarRelationFilter, Prisma.PreferenciasNotificacionWhereInput> | null
+  cursosImpartidos?: Prisma.CursoListRelationFilter
+  inscripciones?: Prisma.InscripcionListRelationFilter
+  resenas?: Prisma.ResenaListRelationFilter
+  resenaRespuestas?: Prisma.ResenaRespuestaListRelationFilter
+  favoritos?: Prisma.FavoritoListRelationFilter
+  resenaLikes?: Prisma.ResenaLikeListRelationFilter
+  ordenes?: Prisma.OrdenListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
-  pagosSuscripcion?: Prisma.PagoSuscripcionListRelationFilter
   carrito?: Prisma.XOR<Prisma.CarritoNullableScalarRelationFilter, Prisma.CarritoWhereInput> | null
+  notificaciones?: Prisma.NotificacionListRelationFilter
 }
 
 export type UsuarioOrderByWithRelationInput = {
@@ -257,21 +253,17 @@ export type UsuarioOrderByWithRelationInput = {
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
   emailVerificadoEn?: Prisma.SortOrderInput | Prisma.SortOrder
-  inscripciones?: Prisma.InscripcionOrderByRelationAggregateInput
-  ordenes?: Prisma.OrdenOrderByRelationAggregateInput
-  resenas?: Prisma.ResenaOrderByRelationAggregateInput
-  cursosDicta?: Prisma.CursoOrderByRelationAggregateInput
-  direcciones?: Prisma.DireccionOrderByRelationAggregateInput
-  favoritos?: Prisma.FavoritoOrderByRelationAggregateInput
   roles?: Prisma.UsuarioRolOrderByRelationAggregateInput
-  likesResenas?: Prisma.ResenaLikeOrderByRelationAggregateInput
-  respuestasResenas?: Prisma.ResenaRespuestaOrderByRelationAggregateInput
-  notificaciones?: Prisma.NotificacionOrderByRelationAggregateInput
-  borradores?: Prisma.ResenaBorradorOrderByRelationAggregateInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionOrderByWithRelationInput
+  cursosImpartidos?: Prisma.CursoOrderByRelationAggregateInput
+  inscripciones?: Prisma.InscripcionOrderByRelationAggregateInput
+  resenas?: Prisma.ResenaOrderByRelationAggregateInput
+  resenaRespuestas?: Prisma.ResenaRespuestaOrderByRelationAggregateInput
+  favoritos?: Prisma.FavoritoOrderByRelationAggregateInput
+  resenaLikes?: Prisma.ResenaLikeOrderByRelationAggregateInput
+  ordenes?: Prisma.OrdenOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionOrderByRelationAggregateInput
   carrito?: Prisma.CarritoOrderByWithRelationInput
+  notificaciones?: Prisma.NotificacionOrderByRelationAggregateInput
   _relevance?: Prisma.UsuarioOrderByRelevanceInput
 }
 
@@ -286,21 +278,17 @@ export type UsuarioWhereUniqueInput = Prisma.AtLeast<{
   creadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string
   emailVerificadoEn?: Prisma.DateTimeNullableFilter<"Usuario"> | Date | string | null
-  inscripciones?: Prisma.InscripcionListRelationFilter
-  ordenes?: Prisma.OrdenListRelationFilter
-  resenas?: Prisma.ResenaListRelationFilter
-  cursosDicta?: Prisma.CursoListRelationFilter
-  direcciones?: Prisma.DireccionListRelationFilter
-  favoritos?: Prisma.FavoritoListRelationFilter
   roles?: Prisma.UsuarioRolListRelationFilter
-  likesResenas?: Prisma.ResenaLikeListRelationFilter
-  respuestasResenas?: Prisma.ResenaRespuestaListRelationFilter
-  notificaciones?: Prisma.NotificacionListRelationFilter
-  borradores?: Prisma.ResenaBorradorListRelationFilter
-  preferenciasNotificacion?: Prisma.XOR<Prisma.PreferenciasNotificacionNullableScalarRelationFilter, Prisma.PreferenciasNotificacionWhereInput> | null
+  cursosImpartidos?: Prisma.CursoListRelationFilter
+  inscripciones?: Prisma.InscripcionListRelationFilter
+  resenas?: Prisma.ResenaListRelationFilter
+  resenaRespuestas?: Prisma.ResenaRespuestaListRelationFilter
+  favoritos?: Prisma.FavoritoListRelationFilter
+  resenaLikes?: Prisma.ResenaLikeListRelationFilter
+  ordenes?: Prisma.OrdenListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
-  pagosSuscripcion?: Prisma.PagoSuscripcionListRelationFilter
   carrito?: Prisma.XOR<Prisma.CarritoNullableScalarRelationFilter, Prisma.CarritoWhereInput> | null
+  notificaciones?: Prisma.NotificacionListRelationFilter
 }, "id" | "email">
 
 export type UsuarioOrderByWithAggregationInput = {
@@ -338,21 +326,17 @@ export type UsuarioCreateInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateInput = {
@@ -363,21 +347,17 @@ export type UsuarioUncheckedCreateInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUpdateInput = {
@@ -387,21 +367,17 @@ export type UsuarioUpdateInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateInput = {
@@ -412,21 +388,17 @@ export type UsuarioUncheckedUpdateInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateManyInput = {
@@ -564,20 +536,20 @@ export type UsuarioUpdateOneRequiredWithoutFavoritosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutFavoritosInput, Prisma.UsuarioUpdateWithoutFavoritosInput>, Prisma.UsuarioUncheckedUpdateWithoutFavoritosInput>
 }
 
-export type UsuarioCreateNestedOneWithoutCursosDictaInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosDictaInput, Prisma.UsuarioUncheckedCreateWithoutCursosDictaInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutCursosDictaInput
+export type UsuarioCreateNestedOneWithoutCursosImpartidosInput = {
+  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosImpartidosInput, Prisma.UsuarioUncheckedCreateWithoutCursosImpartidosInput>
+  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutCursosImpartidosInput
   connect?: Prisma.UsuarioWhereUniqueInput
 }
 
-export type UsuarioUpdateOneWithoutCursosDictaNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosDictaInput, Prisma.UsuarioUncheckedCreateWithoutCursosDictaInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutCursosDictaInput
-  upsert?: Prisma.UsuarioUpsertWithoutCursosDictaInput
+export type UsuarioUpdateOneWithoutCursosImpartidosNestedInput = {
+  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosImpartidosInput, Prisma.UsuarioUncheckedCreateWithoutCursosImpartidosInput>
+  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutCursosImpartidosInput
+  upsert?: Prisma.UsuarioUpsertWithoutCursosImpartidosInput
   disconnect?: Prisma.UsuarioWhereInput | boolean
   delete?: Prisma.UsuarioWhereInput | boolean
   connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutCursosDictaInput, Prisma.UsuarioUpdateWithoutCursosDictaInput>, Prisma.UsuarioUncheckedUpdateWithoutCursosDictaInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutCursosImpartidosInput, Prisma.UsuarioUpdateWithoutCursosImpartidosInput>, Prisma.UsuarioUncheckedUpdateWithoutCursosImpartidosInput>
 }
 
 export type UsuarioCreateNestedOneWithoutInscripcionesInput = {
@@ -608,34 +580,6 @@ export type UsuarioUpdateOneRequiredWithoutOrdenesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutOrdenesInput, Prisma.UsuarioUpdateWithoutOrdenesInput>, Prisma.UsuarioUncheckedUpdateWithoutOrdenesInput>
 }
 
-export type UsuarioCreateNestedOneWithoutPagosSuscripcionInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutPagosSuscripcionInput, Prisma.UsuarioUncheckedCreateWithoutPagosSuscripcionInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutPagosSuscripcionInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-}
-
-export type UsuarioUpdateOneRequiredWithoutPagosSuscripcionNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutPagosSuscripcionInput, Prisma.UsuarioUncheckedCreateWithoutPagosSuscripcionInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutPagosSuscripcionInput
-  upsert?: Prisma.UsuarioUpsertWithoutPagosSuscripcionInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutPagosSuscripcionInput, Prisma.UsuarioUpdateWithoutPagosSuscripcionInput>, Prisma.UsuarioUncheckedUpdateWithoutPagosSuscripcionInput>
-}
-
-export type UsuarioCreateNestedOneWithoutDireccionesInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutDireccionesInput, Prisma.UsuarioUncheckedCreateWithoutDireccionesInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutDireccionesInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-}
-
-export type UsuarioUpdateOneRequiredWithoutDireccionesNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutDireccionesInput, Prisma.UsuarioUncheckedCreateWithoutDireccionesInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutDireccionesInput
-  upsert?: Prisma.UsuarioUpsertWithoutDireccionesInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutDireccionesInput, Prisma.UsuarioUpdateWithoutDireccionesInput>, Prisma.UsuarioUncheckedUpdateWithoutDireccionesInput>
-}
-
 export type UsuarioCreateNestedOneWithoutResenasInput = {
   create?: Prisma.XOR<Prisma.UsuarioCreateWithoutResenasInput, Prisma.UsuarioUncheckedCreateWithoutResenasInput>
   connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutResenasInput
@@ -650,32 +594,32 @@ export type UsuarioUpdateOneRequiredWithoutResenasNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutResenasInput, Prisma.UsuarioUpdateWithoutResenasInput>, Prisma.UsuarioUncheckedUpdateWithoutResenasInput>
 }
 
-export type UsuarioCreateNestedOneWithoutLikesResenasInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutLikesResenasInput, Prisma.UsuarioUncheckedCreateWithoutLikesResenasInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutLikesResenasInput
+export type UsuarioCreateNestedOneWithoutResenaLikesInput = {
+  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaLikesInput, Prisma.UsuarioUncheckedCreateWithoutResenaLikesInput>
+  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutResenaLikesInput
   connect?: Prisma.UsuarioWhereUniqueInput
 }
 
-export type UsuarioUpdateOneRequiredWithoutLikesResenasNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutLikesResenasInput, Prisma.UsuarioUncheckedCreateWithoutLikesResenasInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutLikesResenasInput
-  upsert?: Prisma.UsuarioUpsertWithoutLikesResenasInput
+export type UsuarioUpdateOneRequiredWithoutResenaLikesNestedInput = {
+  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaLikesInput, Prisma.UsuarioUncheckedCreateWithoutResenaLikesInput>
+  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutResenaLikesInput
+  upsert?: Prisma.UsuarioUpsertWithoutResenaLikesInput
   connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutLikesResenasInput, Prisma.UsuarioUpdateWithoutLikesResenasInput>, Prisma.UsuarioUncheckedUpdateWithoutLikesResenasInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutResenaLikesInput, Prisma.UsuarioUpdateWithoutResenaLikesInput>, Prisma.UsuarioUncheckedUpdateWithoutResenaLikesInput>
 }
 
-export type UsuarioCreateNestedOneWithoutRespuestasResenasInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutRespuestasResenasInput, Prisma.UsuarioUncheckedCreateWithoutRespuestasResenasInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutRespuestasResenasInput
+export type UsuarioCreateNestedOneWithoutResenaRespuestasInput = {
+  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaRespuestasInput, Prisma.UsuarioUncheckedCreateWithoutResenaRespuestasInput>
+  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutResenaRespuestasInput
   connect?: Prisma.UsuarioWhereUniqueInput
 }
 
-export type UsuarioUpdateOneRequiredWithoutRespuestasResenasNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutRespuestasResenasInput, Prisma.UsuarioUncheckedCreateWithoutRespuestasResenasInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutRespuestasResenasInput
-  upsert?: Prisma.UsuarioUpsertWithoutRespuestasResenasInput
+export type UsuarioUpdateOneRequiredWithoutResenaRespuestasNestedInput = {
+  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaRespuestasInput, Prisma.UsuarioUncheckedCreateWithoutResenaRespuestasInput>
+  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutResenaRespuestasInput
+  upsert?: Prisma.UsuarioUpsertWithoutResenaRespuestasInput
   connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutRespuestasResenasInput, Prisma.UsuarioUpdateWithoutRespuestasResenasInput>, Prisma.UsuarioUncheckedUpdateWithoutRespuestasResenasInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutResenaRespuestasInput, Prisma.UsuarioUpdateWithoutResenaRespuestasInput>, Prisma.UsuarioUncheckedUpdateWithoutResenaRespuestasInput>
 }
 
 export type UsuarioCreateNestedOneWithoutNotificacionesInput = {
@@ -690,34 +634,6 @@ export type UsuarioUpdateOneRequiredWithoutNotificacionesNestedInput = {
   upsert?: Prisma.UsuarioUpsertWithoutNotificacionesInput
   connect?: Prisma.UsuarioWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutNotificacionesInput, Prisma.UsuarioUpdateWithoutNotificacionesInput>, Prisma.UsuarioUncheckedUpdateWithoutNotificacionesInput>
-}
-
-export type UsuarioCreateNestedOneWithoutPreferenciasNotificacionInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutPreferenciasNotificacionInput, Prisma.UsuarioUncheckedCreateWithoutPreferenciasNotificacionInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutPreferenciasNotificacionInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-}
-
-export type UsuarioUpdateOneRequiredWithoutPreferenciasNotificacionNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutPreferenciasNotificacionInput, Prisma.UsuarioUncheckedCreateWithoutPreferenciasNotificacionInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutPreferenciasNotificacionInput
-  upsert?: Prisma.UsuarioUpsertWithoutPreferenciasNotificacionInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutPreferenciasNotificacionInput, Prisma.UsuarioUpdateWithoutPreferenciasNotificacionInput>, Prisma.UsuarioUncheckedUpdateWithoutPreferenciasNotificacionInput>
-}
-
-export type UsuarioCreateNestedOneWithoutBorradoresInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutBorradoresInput, Prisma.UsuarioUncheckedCreateWithoutBorradoresInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutBorradoresInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-}
-
-export type UsuarioUpdateOneRequiredWithoutBorradoresNestedInput = {
-  create?: Prisma.XOR<Prisma.UsuarioCreateWithoutBorradoresInput, Prisma.UsuarioUncheckedCreateWithoutBorradoresInput>
-  connectOrCreate?: Prisma.UsuarioCreateOrConnectWithoutBorradoresInput
-  upsert?: Prisma.UsuarioUpsertWithoutBorradoresInput
-  connect?: Prisma.UsuarioWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UsuarioUpdateToOneWithWhereWithoutBorradoresInput, Prisma.UsuarioUpdateWithoutBorradoresInput>, Prisma.UsuarioUncheckedUpdateWithoutBorradoresInput>
 }
 
 export type UsuarioCreateNestedOneWithoutAuditLogsInput = {
@@ -755,20 +671,16 @@ export type UsuarioCreateWithoutRolesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutRolesInput = {
@@ -779,20 +691,16 @@ export type UsuarioUncheckedCreateWithoutRolesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutRolesInput = {
@@ -818,20 +726,16 @@ export type UsuarioUpdateWithoutRolesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutRolesInput = {
@@ -842,20 +746,16 @@ export type UsuarioUncheckedUpdateWithoutRolesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateWithoutFavoritosInput = {
@@ -865,20 +765,16 @@ export type UsuarioCreateWithoutFavoritosInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutFavoritosInput = {
@@ -889,20 +785,16 @@ export type UsuarioUncheckedCreateWithoutFavoritosInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutFavoritosInput = {
@@ -928,20 +820,16 @@ export type UsuarioUpdateWithoutFavoritosInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutFavoritosInput = {
@@ -952,46 +840,38 @@ export type UsuarioUncheckedUpdateWithoutFavoritosInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
-export type UsuarioCreateWithoutCursosDictaInput = {
+export type UsuarioCreateWithoutCursosImpartidosInput = {
   email: string
   nombre?: string | null
   passwordHash: string
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
-export type UsuarioUncheckedCreateWithoutCursosDictaInput = {
+export type UsuarioUncheckedCreateWithoutCursosImpartidosInput = {
   id?: number
   email: string
   nombre?: string | null
@@ -999,62 +879,54 @@ export type UsuarioUncheckedCreateWithoutCursosDictaInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
-export type UsuarioCreateOrConnectWithoutCursosDictaInput = {
+export type UsuarioCreateOrConnectWithoutCursosImpartidosInput = {
   where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosDictaInput, Prisma.UsuarioUncheckedCreateWithoutCursosDictaInput>
+  create: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosImpartidosInput, Prisma.UsuarioUncheckedCreateWithoutCursosImpartidosInput>
 }
 
-export type UsuarioUpsertWithoutCursosDictaInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutCursosDictaInput, Prisma.UsuarioUncheckedUpdateWithoutCursosDictaInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosDictaInput, Prisma.UsuarioUncheckedCreateWithoutCursosDictaInput>
+export type UsuarioUpsertWithoutCursosImpartidosInput = {
+  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutCursosImpartidosInput, Prisma.UsuarioUncheckedUpdateWithoutCursosImpartidosInput>
+  create: Prisma.XOR<Prisma.UsuarioCreateWithoutCursosImpartidosInput, Prisma.UsuarioUncheckedCreateWithoutCursosImpartidosInput>
   where?: Prisma.UsuarioWhereInput
 }
 
-export type UsuarioUpdateToOneWithWhereWithoutCursosDictaInput = {
+export type UsuarioUpdateToOneWithWhereWithoutCursosImpartidosInput = {
   where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutCursosDictaInput, Prisma.UsuarioUncheckedUpdateWithoutCursosDictaInput>
+  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutCursosImpartidosInput, Prisma.UsuarioUncheckedUpdateWithoutCursosImpartidosInput>
 }
 
-export type UsuarioUpdateWithoutCursosDictaInput = {
+export type UsuarioUpdateWithoutCursosImpartidosInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
-export type UsuarioUncheckedUpdateWithoutCursosDictaInput = {
+export type UsuarioUncheckedUpdateWithoutCursosImpartidosInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
   nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1062,20 +934,16 @@ export type UsuarioUncheckedUpdateWithoutCursosDictaInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateWithoutInscripcionesInput = {
@@ -1085,20 +953,16 @@ export type UsuarioCreateWithoutInscripcionesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutInscripcionesInput = {
@@ -1109,20 +973,16 @@ export type UsuarioUncheckedCreateWithoutInscripcionesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutInscripcionesInput = {
@@ -1148,20 +1008,16 @@ export type UsuarioUpdateWithoutInscripcionesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutInscripcionesInput = {
@@ -1172,20 +1028,16 @@ export type UsuarioUncheckedUpdateWithoutInscripcionesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateWithoutOrdenesInput = {
@@ -1195,20 +1047,16 @@ export type UsuarioCreateWithoutOrdenesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
+  roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutOrdenesInput = {
@@ -1219,20 +1067,16 @@ export type UsuarioUncheckedCreateWithoutOrdenesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
+  roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutOrdenesInput = {
@@ -1258,20 +1102,16 @@ export type UsuarioUpdateWithoutOrdenesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutOrdenesInput = {
@@ -1282,240 +1122,16 @@ export type UsuarioUncheckedUpdateWithoutOrdenesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioCreateWithoutPagosSuscripcionInput = {
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioUncheckedCreateWithoutPagosSuscripcionInput = {
-  id?: number
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioCreateOrConnectWithoutPagosSuscripcionInput = {
-  where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutPagosSuscripcionInput, Prisma.UsuarioUncheckedCreateWithoutPagosSuscripcionInput>
-}
-
-export type UsuarioUpsertWithoutPagosSuscripcionInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutPagosSuscripcionInput, Prisma.UsuarioUncheckedUpdateWithoutPagosSuscripcionInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutPagosSuscripcionInput, Prisma.UsuarioUncheckedCreateWithoutPagosSuscripcionInput>
-  where?: Prisma.UsuarioWhereInput
-}
-
-export type UsuarioUpdateToOneWithWhereWithoutPagosSuscripcionInput = {
-  where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutPagosSuscripcionInput, Prisma.UsuarioUncheckedUpdateWithoutPagosSuscripcionInput>
-}
-
-export type UsuarioUpdateWithoutPagosSuscripcionInput = {
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioUncheckedUpdateWithoutPagosSuscripcionInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioCreateWithoutDireccionesInput = {
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
-  carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioUncheckedCreateWithoutDireccionesInput = {
-  id?: number
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioCreateOrConnectWithoutDireccionesInput = {
-  where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutDireccionesInput, Prisma.UsuarioUncheckedCreateWithoutDireccionesInput>
-}
-
-export type UsuarioUpsertWithoutDireccionesInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutDireccionesInput, Prisma.UsuarioUncheckedUpdateWithoutDireccionesInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutDireccionesInput, Prisma.UsuarioUncheckedCreateWithoutDireccionesInput>
-  where?: Prisma.UsuarioWhereInput
-}
-
-export type UsuarioUpdateToOneWithWhereWithoutDireccionesInput = {
-  where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutDireccionesInput, Prisma.UsuarioUncheckedUpdateWithoutDireccionesInput>
-}
-
-export type UsuarioUpdateWithoutDireccionesInput = {
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioUncheckedUpdateWithoutDireccionesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
   notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateWithoutResenasInput = {
@@ -1525,20 +1141,16 @@ export type UsuarioCreateWithoutResenasInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutResenasInput = {
@@ -1549,20 +1161,16 @@ export type UsuarioUncheckedCreateWithoutResenasInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutResenasInput = {
@@ -1588,20 +1196,16 @@ export type UsuarioUpdateWithoutResenasInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutResenasInput = {
@@ -1612,46 +1216,38 @@ export type UsuarioUncheckedUpdateWithoutResenasInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
-export type UsuarioCreateWithoutLikesResenasInput = {
+export type UsuarioCreateWithoutResenaLikesInput = {
   email: string
   nombre?: string | null
   passwordHash: string
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
-export type UsuarioUncheckedCreateWithoutLikesResenasInput = {
+export type UsuarioUncheckedCreateWithoutResenaLikesInput = {
   id?: number
   email: string
   nombre?: string | null
@@ -1659,62 +1255,54 @@ export type UsuarioUncheckedCreateWithoutLikesResenasInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
-export type UsuarioCreateOrConnectWithoutLikesResenasInput = {
+export type UsuarioCreateOrConnectWithoutResenaLikesInput = {
   where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutLikesResenasInput, Prisma.UsuarioUncheckedCreateWithoutLikesResenasInput>
+  create: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaLikesInput, Prisma.UsuarioUncheckedCreateWithoutResenaLikesInput>
 }
 
-export type UsuarioUpsertWithoutLikesResenasInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutLikesResenasInput, Prisma.UsuarioUncheckedUpdateWithoutLikesResenasInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutLikesResenasInput, Prisma.UsuarioUncheckedCreateWithoutLikesResenasInput>
+export type UsuarioUpsertWithoutResenaLikesInput = {
+  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutResenaLikesInput, Prisma.UsuarioUncheckedUpdateWithoutResenaLikesInput>
+  create: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaLikesInput, Prisma.UsuarioUncheckedCreateWithoutResenaLikesInput>
   where?: Prisma.UsuarioWhereInput
 }
 
-export type UsuarioUpdateToOneWithWhereWithoutLikesResenasInput = {
+export type UsuarioUpdateToOneWithWhereWithoutResenaLikesInput = {
   where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutLikesResenasInput, Prisma.UsuarioUncheckedUpdateWithoutLikesResenasInput>
+  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutResenaLikesInput, Prisma.UsuarioUncheckedUpdateWithoutResenaLikesInput>
 }
 
-export type UsuarioUpdateWithoutLikesResenasInput = {
+export type UsuarioUpdateWithoutResenaLikesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
-export type UsuarioUncheckedUpdateWithoutLikesResenasInput = {
+export type UsuarioUncheckedUpdateWithoutResenaLikesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
   nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1722,46 +1310,38 @@ export type UsuarioUncheckedUpdateWithoutLikesResenasInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
-export type UsuarioCreateWithoutRespuestasResenasInput = {
+export type UsuarioCreateWithoutResenaRespuestasInput = {
   email: string
   nombre?: string | null
   passwordHash: string
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
-export type UsuarioUncheckedCreateWithoutRespuestasResenasInput = {
+export type UsuarioUncheckedCreateWithoutResenaRespuestasInput = {
   id?: number
   email: string
   nombre?: string | null
@@ -1769,62 +1349,54 @@ export type UsuarioUncheckedCreateWithoutRespuestasResenasInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
-export type UsuarioCreateOrConnectWithoutRespuestasResenasInput = {
+export type UsuarioCreateOrConnectWithoutResenaRespuestasInput = {
   where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutRespuestasResenasInput, Prisma.UsuarioUncheckedCreateWithoutRespuestasResenasInput>
+  create: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaRespuestasInput, Prisma.UsuarioUncheckedCreateWithoutResenaRespuestasInput>
 }
 
-export type UsuarioUpsertWithoutRespuestasResenasInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutRespuestasResenasInput, Prisma.UsuarioUncheckedUpdateWithoutRespuestasResenasInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutRespuestasResenasInput, Prisma.UsuarioUncheckedCreateWithoutRespuestasResenasInput>
+export type UsuarioUpsertWithoutResenaRespuestasInput = {
+  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutResenaRespuestasInput, Prisma.UsuarioUncheckedUpdateWithoutResenaRespuestasInput>
+  create: Prisma.XOR<Prisma.UsuarioCreateWithoutResenaRespuestasInput, Prisma.UsuarioUncheckedCreateWithoutResenaRespuestasInput>
   where?: Prisma.UsuarioWhereInput
 }
 
-export type UsuarioUpdateToOneWithWhereWithoutRespuestasResenasInput = {
+export type UsuarioUpdateToOneWithWhereWithoutResenaRespuestasInput = {
   where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutRespuestasResenasInput, Prisma.UsuarioUncheckedUpdateWithoutRespuestasResenasInput>
+  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutResenaRespuestasInput, Prisma.UsuarioUncheckedUpdateWithoutResenaRespuestasInput>
 }
 
-export type UsuarioUpdateWithoutRespuestasResenasInput = {
+export type UsuarioUpdateWithoutResenaRespuestasInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
-export type UsuarioUncheckedUpdateWithoutRespuestasResenasInput = {
+export type UsuarioUncheckedUpdateWithoutResenaRespuestasInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
   nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1832,20 +1404,16 @@ export type UsuarioUncheckedUpdateWithoutRespuestasResenasInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateWithoutNotificacionesInput = {
@@ -1855,19 +1423,15 @@ export type UsuarioCreateWithoutNotificacionesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
 }
 
@@ -1879,19 +1443,15 @@ export type UsuarioUncheckedCreateWithoutNotificacionesInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
 }
 
@@ -1918,19 +1478,15 @@ export type UsuarioUpdateWithoutNotificacionesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
 }
 
@@ -1942,239 +1498,15 @@ export type UsuarioUncheckedUpdateWithoutNotificacionesInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioCreateWithoutPreferenciasNotificacionInput = {
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
-  carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioUncheckedCreateWithoutPreferenciasNotificacionInput = {
-  id?: number
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioCreateOrConnectWithoutPreferenciasNotificacionInput = {
-  where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutPreferenciasNotificacionInput, Prisma.UsuarioUncheckedCreateWithoutPreferenciasNotificacionInput>
-}
-
-export type UsuarioUpsertWithoutPreferenciasNotificacionInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutPreferenciasNotificacionInput, Prisma.UsuarioUncheckedUpdateWithoutPreferenciasNotificacionInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutPreferenciasNotificacionInput, Prisma.UsuarioUncheckedCreateWithoutPreferenciasNotificacionInput>
-  where?: Prisma.UsuarioWhereInput
-}
-
-export type UsuarioUpdateToOneWithWhereWithoutPreferenciasNotificacionInput = {
-  where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutPreferenciasNotificacionInput, Prisma.UsuarioUncheckedUpdateWithoutPreferenciasNotificacionInput>
-}
-
-export type UsuarioUpdateWithoutPreferenciasNotificacionInput = {
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioUncheckedUpdateWithoutPreferenciasNotificacionInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioCreateWithoutBorradoresInput = {
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
-  carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioUncheckedCreateWithoutBorradoresInput = {
-  id?: number
-  email: string
-  nombre?: string | null
-  passwordHash: string
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
-  roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
-}
-
-export type UsuarioCreateOrConnectWithoutBorradoresInput = {
-  where: Prisma.UsuarioWhereUniqueInput
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutBorradoresInput, Prisma.UsuarioUncheckedCreateWithoutBorradoresInput>
-}
-
-export type UsuarioUpsertWithoutBorradoresInput = {
-  update: Prisma.XOR<Prisma.UsuarioUpdateWithoutBorradoresInput, Prisma.UsuarioUncheckedUpdateWithoutBorradoresInput>
-  create: Prisma.XOR<Prisma.UsuarioCreateWithoutBorradoresInput, Prisma.UsuarioUncheckedCreateWithoutBorradoresInput>
-  where?: Prisma.UsuarioWhereInput
-}
-
-export type UsuarioUpdateToOneWithWhereWithoutBorradoresInput = {
-  where?: Prisma.UsuarioWhereInput
-  data: Prisma.XOR<Prisma.UsuarioUpdateWithoutBorradoresInput, Prisma.UsuarioUncheckedUpdateWithoutBorradoresInput>
-}
-
-export type UsuarioUpdateWithoutBorradoresInput = {
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
-  carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
-}
-
-export type UsuarioUncheckedUpdateWithoutBorradoresInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  nombre?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
   ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
-  roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
 }
 
@@ -2185,20 +1517,16 @@ export type UsuarioCreateWithoutAuditLogsInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutAuditLogsInput = {
@@ -2209,20 +1537,16 @@ export type UsuarioUncheckedCreateWithoutAuditLogsInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   carrito?: Prisma.CarritoUncheckedCreateNestedOneWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutAuditLogsInput = {
@@ -2248,20 +1572,16 @@ export type UsuarioUpdateWithoutAuditLogsInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutAuditLogsInput = {
@@ -2272,20 +1592,16 @@ export type UsuarioUncheckedUpdateWithoutAuditLogsInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   carrito?: Prisma.CarritoUncheckedUpdateOneWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioCreateWithoutCarritoInput = {
@@ -2295,20 +1611,16 @@ export type UsuarioCreateWithoutCarritoInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioUncheckedCreateWithoutCarritoInput = {
@@ -2319,20 +1631,16 @@ export type UsuarioUncheckedCreateWithoutCarritoInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   emailVerificadoEn?: Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
-  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
-  cursosDicta?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
-  direcciones?: Prisma.DireccionUncheckedCreateNestedManyWithoutUsuarioInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
   roles?: Prisma.UsuarioRolUncheckedCreateNestedManyWithoutUsuarioInput
-  likesResenas?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
-  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedCreateNestedOneWithoutUsuarioInput
+  cursosImpartidos?: Prisma.CursoUncheckedCreateNestedManyWithoutInstructorInput
+  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutUsuarioInput
+  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutUsuarioInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutUsuarioInput
+  ordenes?: Prisma.OrdenUncheckedCreateNestedManyWithoutUsuarioInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput
+  notificaciones?: Prisma.NotificacionUncheckedCreateNestedManyWithoutUsuarioInput
 }
 
 export type UsuarioCreateOrConnectWithoutCarritoInput = {
@@ -2358,20 +1666,16 @@ export type UsuarioUpdateWithoutCarritoInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUpdateManyWithoutUsuarioNestedInput
 }
 
 export type UsuarioUncheckedUpdateWithoutCarritoInput = {
@@ -2382,20 +1686,16 @@ export type UsuarioUncheckedUpdateWithoutCarritoInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   emailVerificadoEn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
-  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
-  cursosDicta?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
-  direcciones?: Prisma.DireccionUncheckedUpdateManyWithoutUsuarioNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
   roles?: Prisma.UsuarioRolUncheckedUpdateManyWithoutUsuarioNestedInput
-  likesResenas?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
-  respuestasResenas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
-  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput
-  preferenciasNotificacion?: Prisma.PreferenciasNotificacionUncheckedUpdateOneWithoutUsuarioNestedInput
+  cursosImpartidos?: Prisma.CursoUncheckedUpdateManyWithoutInstructorNestedInput
+  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaRespuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutUsuarioNestedInput
+  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutUsuarioNestedInput
+  resenaLikes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutUsuarioNestedInput
+  ordenes?: Prisma.OrdenUncheckedUpdateManyWithoutUsuarioNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput
+  notificaciones?: Prisma.NotificacionUncheckedUpdateManyWithoutUsuarioNestedInput
 }
 
 
@@ -2404,35 +1704,29 @@ export type UsuarioUncheckedUpdateWithoutCarritoInput = {
  */
 
 export type UsuarioCountOutputType = {
-  inscripciones: number
-  ordenes: number
-  resenas: number
-  cursosDicta: number
-  direcciones: number
-  favoritos: number
   roles: number
-  likesResenas: number
-  respuestasResenas: number
-  notificaciones: number
-  borradores: number
+  cursosImpartidos: number
+  inscripciones: number
+  resenas: number
+  resenaRespuestas: number
+  favoritos: number
+  resenaLikes: number
+  ordenes: number
   auditLogs: number
-  pagosSuscripcion: number
+  notificaciones: number
 }
 
 export type UsuarioCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  inscripciones?: boolean | UsuarioCountOutputTypeCountInscripcionesArgs
-  ordenes?: boolean | UsuarioCountOutputTypeCountOrdenesArgs
-  resenas?: boolean | UsuarioCountOutputTypeCountResenasArgs
-  cursosDicta?: boolean | UsuarioCountOutputTypeCountCursosDictaArgs
-  direcciones?: boolean | UsuarioCountOutputTypeCountDireccionesArgs
-  favoritos?: boolean | UsuarioCountOutputTypeCountFavoritosArgs
   roles?: boolean | UsuarioCountOutputTypeCountRolesArgs
-  likesResenas?: boolean | UsuarioCountOutputTypeCountLikesResenasArgs
-  respuestasResenas?: boolean | UsuarioCountOutputTypeCountRespuestasResenasArgs
-  notificaciones?: boolean | UsuarioCountOutputTypeCountNotificacionesArgs
-  borradores?: boolean | UsuarioCountOutputTypeCountBorradoresArgs
+  cursosImpartidos?: boolean | UsuarioCountOutputTypeCountCursosImpartidosArgs
+  inscripciones?: boolean | UsuarioCountOutputTypeCountInscripcionesArgs
+  resenas?: boolean | UsuarioCountOutputTypeCountResenasArgs
+  resenaRespuestas?: boolean | UsuarioCountOutputTypeCountResenaRespuestasArgs
+  favoritos?: boolean | UsuarioCountOutputTypeCountFavoritosArgs
+  resenaLikes?: boolean | UsuarioCountOutputTypeCountResenaLikesArgs
+  ordenes?: boolean | UsuarioCountOutputTypeCountOrdenesArgs
   auditLogs?: boolean | UsuarioCountOutputTypeCountAuditLogsArgs
-  pagosSuscripcion?: boolean | UsuarioCountOutputTypeCountPagosSuscripcionArgs
+  notificaciones?: boolean | UsuarioCountOutputTypeCountNotificacionesArgs
 }
 
 /**
@@ -2448,15 +1742,22 @@ export type UsuarioCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
 /**
  * UsuarioCountOutputType without action
  */
-export type UsuarioCountOutputTypeCountInscripcionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.InscripcionWhereInput
+export type UsuarioCountOutputTypeCountRolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UsuarioRolWhereInput
 }
 
 /**
  * UsuarioCountOutputType without action
  */
-export type UsuarioCountOutputTypeCountOrdenesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.OrdenWhereInput
+export type UsuarioCountOutputTypeCountCursosImpartidosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CursoWhereInput
+}
+
+/**
+ * UsuarioCountOutputType without action
+ */
+export type UsuarioCountOutputTypeCountInscripcionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InscripcionWhereInput
 }
 
 /**
@@ -2469,15 +1770,8 @@ export type UsuarioCountOutputTypeCountResenasArgs<ExtArgs extends runtime.Types
 /**
  * UsuarioCountOutputType without action
  */
-export type UsuarioCountOutputTypeCountCursosDictaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.CursoWhereInput
-}
-
-/**
- * UsuarioCountOutputType without action
- */
-export type UsuarioCountOutputTypeCountDireccionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.DireccionWhereInput
+export type UsuarioCountOutputTypeCountResenaRespuestasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ResenaRespuestaWhereInput
 }
 
 /**
@@ -2490,36 +1784,15 @@ export type UsuarioCountOutputTypeCountFavoritosArgs<ExtArgs extends runtime.Typ
 /**
  * UsuarioCountOutputType without action
  */
-export type UsuarioCountOutputTypeCountRolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UsuarioRolWhereInput
-}
-
-/**
- * UsuarioCountOutputType without action
- */
-export type UsuarioCountOutputTypeCountLikesResenasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type UsuarioCountOutputTypeCountResenaLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ResenaLikeWhereInput
 }
 
 /**
  * UsuarioCountOutputType without action
  */
-export type UsuarioCountOutputTypeCountRespuestasResenasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ResenaRespuestaWhereInput
-}
-
-/**
- * UsuarioCountOutputType without action
- */
-export type UsuarioCountOutputTypeCountNotificacionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.NotificacionWhereInput
-}
-
-/**
- * UsuarioCountOutputType without action
- */
-export type UsuarioCountOutputTypeCountBorradoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ResenaBorradorWhereInput
+export type UsuarioCountOutputTypeCountOrdenesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrdenWhereInput
 }
 
 /**
@@ -2532,8 +1805,8 @@ export type UsuarioCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Typ
 /**
  * UsuarioCountOutputType without action
  */
-export type UsuarioCountOutputTypeCountPagosSuscripcionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.PagoSuscripcionWhereInput
+export type UsuarioCountOutputTypeCountNotificacionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificacionWhereInput
 }
 
 
@@ -2545,21 +1818,17 @@ export type UsuarioSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   creadoEn?: boolean
   actualizadoEn?: boolean
   emailVerificadoEn?: boolean
-  inscripciones?: boolean | Prisma.Usuario$inscripcionesArgs<ExtArgs>
-  ordenes?: boolean | Prisma.Usuario$ordenesArgs<ExtArgs>
-  resenas?: boolean | Prisma.Usuario$resenasArgs<ExtArgs>
-  cursosDicta?: boolean | Prisma.Usuario$cursosDictaArgs<ExtArgs>
-  direcciones?: boolean | Prisma.Usuario$direccionesArgs<ExtArgs>
-  favoritos?: boolean | Prisma.Usuario$favoritosArgs<ExtArgs>
   roles?: boolean | Prisma.Usuario$rolesArgs<ExtArgs>
-  likesResenas?: boolean | Prisma.Usuario$likesResenasArgs<ExtArgs>
-  respuestasResenas?: boolean | Prisma.Usuario$respuestasResenasArgs<ExtArgs>
-  notificaciones?: boolean | Prisma.Usuario$notificacionesArgs<ExtArgs>
-  borradores?: boolean | Prisma.Usuario$borradoresArgs<ExtArgs>
-  preferenciasNotificacion?: boolean | Prisma.Usuario$preferenciasNotificacionArgs<ExtArgs>
+  cursosImpartidos?: boolean | Prisma.Usuario$cursosImpartidosArgs<ExtArgs>
+  inscripciones?: boolean | Prisma.Usuario$inscripcionesArgs<ExtArgs>
+  resenas?: boolean | Prisma.Usuario$resenasArgs<ExtArgs>
+  resenaRespuestas?: boolean | Prisma.Usuario$resenaRespuestasArgs<ExtArgs>
+  favoritos?: boolean | Prisma.Usuario$favoritosArgs<ExtArgs>
+  resenaLikes?: boolean | Prisma.Usuario$resenaLikesArgs<ExtArgs>
+  ordenes?: boolean | Prisma.Usuario$ordenesArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Usuario$auditLogsArgs<ExtArgs>
-  pagosSuscripcion?: boolean | Prisma.Usuario$pagosSuscripcionArgs<ExtArgs>
   carrito?: boolean | Prisma.Usuario$carritoArgs<ExtArgs>
+  notificaciones?: boolean | Prisma.Usuario$notificacionesArgs<ExtArgs>
   _count?: boolean | Prisma.UsuarioCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["usuario"]>
 
@@ -2577,42 +1846,34 @@ export type UsuarioSelectScalar = {
 
 export type UsuarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "nombre" | "passwordHash" | "creadoEn" | "actualizadoEn" | "emailVerificadoEn", ExtArgs["result"]["usuario"]>
 export type UsuarioInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  inscripciones?: boolean | Prisma.Usuario$inscripcionesArgs<ExtArgs>
-  ordenes?: boolean | Prisma.Usuario$ordenesArgs<ExtArgs>
-  resenas?: boolean | Prisma.Usuario$resenasArgs<ExtArgs>
-  cursosDicta?: boolean | Prisma.Usuario$cursosDictaArgs<ExtArgs>
-  direcciones?: boolean | Prisma.Usuario$direccionesArgs<ExtArgs>
-  favoritos?: boolean | Prisma.Usuario$favoritosArgs<ExtArgs>
   roles?: boolean | Prisma.Usuario$rolesArgs<ExtArgs>
-  likesResenas?: boolean | Prisma.Usuario$likesResenasArgs<ExtArgs>
-  respuestasResenas?: boolean | Prisma.Usuario$respuestasResenasArgs<ExtArgs>
-  notificaciones?: boolean | Prisma.Usuario$notificacionesArgs<ExtArgs>
-  borradores?: boolean | Prisma.Usuario$borradoresArgs<ExtArgs>
-  preferenciasNotificacion?: boolean | Prisma.Usuario$preferenciasNotificacionArgs<ExtArgs>
+  cursosImpartidos?: boolean | Prisma.Usuario$cursosImpartidosArgs<ExtArgs>
+  inscripciones?: boolean | Prisma.Usuario$inscripcionesArgs<ExtArgs>
+  resenas?: boolean | Prisma.Usuario$resenasArgs<ExtArgs>
+  resenaRespuestas?: boolean | Prisma.Usuario$resenaRespuestasArgs<ExtArgs>
+  favoritos?: boolean | Prisma.Usuario$favoritosArgs<ExtArgs>
+  resenaLikes?: boolean | Prisma.Usuario$resenaLikesArgs<ExtArgs>
+  ordenes?: boolean | Prisma.Usuario$ordenesArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Usuario$auditLogsArgs<ExtArgs>
-  pagosSuscripcion?: boolean | Prisma.Usuario$pagosSuscripcionArgs<ExtArgs>
   carrito?: boolean | Prisma.Usuario$carritoArgs<ExtArgs>
+  notificaciones?: boolean | Prisma.Usuario$notificacionesArgs<ExtArgs>
   _count?: boolean | Prisma.UsuarioCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $UsuarioPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Usuario"
   objects: {
-    inscripciones: Prisma.$InscripcionPayload<ExtArgs>[]
-    ordenes: Prisma.$OrdenPayload<ExtArgs>[]
-    resenas: Prisma.$ResenaPayload<ExtArgs>[]
-    cursosDicta: Prisma.$CursoPayload<ExtArgs>[]
-    direcciones: Prisma.$DireccionPayload<ExtArgs>[]
-    favoritos: Prisma.$FavoritoPayload<ExtArgs>[]
     roles: Prisma.$UsuarioRolPayload<ExtArgs>[]
-    likesResenas: Prisma.$ResenaLikePayload<ExtArgs>[]
-    respuestasResenas: Prisma.$ResenaRespuestaPayload<ExtArgs>[]
-    notificaciones: Prisma.$NotificacionPayload<ExtArgs>[]
-    borradores: Prisma.$ResenaBorradorPayload<ExtArgs>[]
-    preferenciasNotificacion: Prisma.$PreferenciasNotificacionPayload<ExtArgs> | null
+    cursosImpartidos: Prisma.$CursoPayload<ExtArgs>[]
+    inscripciones: Prisma.$InscripcionPayload<ExtArgs>[]
+    resenas: Prisma.$ResenaPayload<ExtArgs>[]
+    resenaRespuestas: Prisma.$ResenaRespuestaPayload<ExtArgs>[]
+    favoritos: Prisma.$FavoritoPayload<ExtArgs>[]
+    resenaLikes: Prisma.$ResenaLikePayload<ExtArgs>[]
+    ordenes: Prisma.$OrdenPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
-    pagosSuscripcion: Prisma.$PagoSuscripcionPayload<ExtArgs>[]
     carrito: Prisma.$CarritoPayload<ExtArgs> | null
+    notificaciones: Prisma.$NotificacionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -2962,21 +2223,17 @@ readonly fields: UsuarioFieldRefs;
  */
 export interface Prisma__UsuarioClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  inscripciones<T extends Prisma.Usuario$inscripcionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$inscripcionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InscripcionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  ordenes<T extends Prisma.Usuario$ordenesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$ordenesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  resenas<T extends Prisma.Usuario$resenasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$resenasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  cursosDicta<T extends Prisma.Usuario$cursosDictaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$cursosDictaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CursoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  direcciones<T extends Prisma.Usuario$direccionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$direccionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DireccionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  favoritos<T extends Prisma.Usuario$favoritosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$favoritosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoritoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   roles<T extends Prisma.Usuario$rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UsuarioRolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  likesResenas<T extends Prisma.Usuario$likesResenasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$likesResenasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  respuestasResenas<T extends Prisma.Usuario$respuestasResenasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$respuestasResenasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaRespuestaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  notificaciones<T extends Prisma.Usuario$notificacionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$notificacionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificacionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  borradores<T extends Prisma.Usuario$borradoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$borradoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaBorradorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  preferenciasNotificacion<T extends Prisma.Usuario$preferenciasNotificacionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$preferenciasNotificacionArgs<ExtArgs>>): Prisma.Prisma__PreferenciasNotificacionClient<runtime.Types.Result.GetResult<Prisma.$PreferenciasNotificacionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  cursosImpartidos<T extends Prisma.Usuario$cursosImpartidosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$cursosImpartidosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CursoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inscripciones<T extends Prisma.Usuario$inscripcionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$inscripcionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InscripcionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  resenas<T extends Prisma.Usuario$resenasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$resenasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  resenaRespuestas<T extends Prisma.Usuario$resenaRespuestasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$resenaRespuestasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaRespuestaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  favoritos<T extends Prisma.Usuario$favoritosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$favoritosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoritoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  resenaLikes<T extends Prisma.Usuario$resenaLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$resenaLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  ordenes<T extends Prisma.Usuario$ordenesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$ordenesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.Usuario$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  pagosSuscripcion<T extends Prisma.Usuario$pagosSuscripcionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$pagosSuscripcionArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PagoSuscripcionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   carrito<T extends Prisma.Usuario$carritoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$carritoArgs<ExtArgs>>): Prisma.Prisma__CarritoClient<runtime.Types.Result.GetResult<Prisma.$CarritoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  notificaciones<T extends Prisma.Usuario$notificacionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Usuario$notificacionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificacionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3356,6 +2613,54 @@ export type UsuarioDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
 }
 
 /**
+ * Usuario.roles
+ */
+export type Usuario$rolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UsuarioRol
+   */
+  select?: Prisma.UsuarioRolSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UsuarioRol
+   */
+  omit?: Prisma.UsuarioRolOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UsuarioRolInclude<ExtArgs> | null
+  where?: Prisma.UsuarioRolWhereInput
+  orderBy?: Prisma.UsuarioRolOrderByWithRelationInput | Prisma.UsuarioRolOrderByWithRelationInput[]
+  cursor?: Prisma.UsuarioRolWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UsuarioRolScalarFieldEnum | Prisma.UsuarioRolScalarFieldEnum[]
+}
+
+/**
+ * Usuario.cursosImpartidos
+ */
+export type Usuario$cursosImpartidosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Curso
+   */
+  select?: Prisma.CursoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Curso
+   */
+  omit?: Prisma.CursoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CursoInclude<ExtArgs> | null
+  where?: Prisma.CursoWhereInput
+  orderBy?: Prisma.CursoOrderByWithRelationInput | Prisma.CursoOrderByWithRelationInput[]
+  cursor?: Prisma.CursoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CursoScalarFieldEnum | Prisma.CursoScalarFieldEnum[]
+}
+
+/**
  * Usuario.inscripciones
  */
 export type Usuario$inscripcionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3377,30 +2682,6 @@ export type Usuario$inscripcionesArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.InscripcionScalarFieldEnum | Prisma.InscripcionScalarFieldEnum[]
-}
-
-/**
- * Usuario.ordenes
- */
-export type Usuario$ordenesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Orden
-   */
-  select?: Prisma.OrdenSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Orden
-   */
-  omit?: Prisma.OrdenOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.OrdenInclude<ExtArgs> | null
-  where?: Prisma.OrdenWhereInput
-  orderBy?: Prisma.OrdenOrderByWithRelationInput | Prisma.OrdenOrderByWithRelationInput[]
-  cursor?: Prisma.OrdenWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.OrdenScalarFieldEnum | Prisma.OrdenScalarFieldEnum[]
 }
 
 /**
@@ -3428,51 +2709,27 @@ export type Usuario$resenasArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
- * Usuario.cursosDicta
+ * Usuario.resenaRespuestas
  */
-export type Usuario$cursosDictaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Usuario$resenaRespuestasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Curso
+   * Select specific fields to fetch from the ResenaRespuesta
    */
-  select?: Prisma.CursoSelect<ExtArgs> | null
+  select?: Prisma.ResenaRespuestaSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Curso
+   * Omit specific fields from the ResenaRespuesta
    */
-  omit?: Prisma.CursoOmit<ExtArgs> | null
+  omit?: Prisma.ResenaRespuestaOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.CursoInclude<ExtArgs> | null
-  where?: Prisma.CursoWhereInput
-  orderBy?: Prisma.CursoOrderByWithRelationInput | Prisma.CursoOrderByWithRelationInput[]
-  cursor?: Prisma.CursoWhereUniqueInput
+  include?: Prisma.ResenaRespuestaInclude<ExtArgs> | null
+  where?: Prisma.ResenaRespuestaWhereInput
+  orderBy?: Prisma.ResenaRespuestaOrderByWithRelationInput | Prisma.ResenaRespuestaOrderByWithRelationInput[]
+  cursor?: Prisma.ResenaRespuestaWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.CursoScalarFieldEnum | Prisma.CursoScalarFieldEnum[]
-}
-
-/**
- * Usuario.direcciones
- */
-export type Usuario$direccionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Direccion
-   */
-  select?: Prisma.DireccionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Direccion
-   */
-  omit?: Prisma.DireccionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.DireccionInclude<ExtArgs> | null
-  where?: Prisma.DireccionWhereInput
-  orderBy?: Prisma.DireccionOrderByWithRelationInput | Prisma.DireccionOrderByWithRelationInput[]
-  cursor?: Prisma.DireccionWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.DireccionScalarFieldEnum | Prisma.DireccionScalarFieldEnum[]
+  distinct?: Prisma.ResenaRespuestaScalarFieldEnum | Prisma.ResenaRespuestaScalarFieldEnum[]
 }
 
 /**
@@ -3500,33 +2757,9 @@ export type Usuario$favoritosArgs<ExtArgs extends runtime.Types.Extensions.Inter
 }
 
 /**
- * Usuario.roles
+ * Usuario.resenaLikes
  */
-export type Usuario$rolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UsuarioRol
-   */
-  select?: Prisma.UsuarioRolSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UsuarioRol
-   */
-  omit?: Prisma.UsuarioRolOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UsuarioRolInclude<ExtArgs> | null
-  where?: Prisma.UsuarioRolWhereInput
-  orderBy?: Prisma.UsuarioRolOrderByWithRelationInput | Prisma.UsuarioRolOrderByWithRelationInput[]
-  cursor?: Prisma.UsuarioRolWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UsuarioRolScalarFieldEnum | Prisma.UsuarioRolScalarFieldEnum[]
-}
-
-/**
- * Usuario.likesResenas
- */
-export type Usuario$likesResenasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Usuario$resenaLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the ResenaLike
    */
@@ -3548,94 +2781,27 @@ export type Usuario$likesResenasArgs<ExtArgs extends runtime.Types.Extensions.In
 }
 
 /**
- * Usuario.respuestasResenas
+ * Usuario.ordenes
  */
-export type Usuario$respuestasResenasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Usuario$ordenesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the ResenaRespuesta
+   * Select specific fields to fetch from the Orden
    */
-  select?: Prisma.ResenaRespuestaSelect<ExtArgs> | null
+  select?: Prisma.OrdenSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the ResenaRespuesta
+   * Omit specific fields from the Orden
    */
-  omit?: Prisma.ResenaRespuestaOmit<ExtArgs> | null
+  omit?: Prisma.OrdenOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ResenaRespuestaInclude<ExtArgs> | null
-  where?: Prisma.ResenaRespuestaWhereInput
-  orderBy?: Prisma.ResenaRespuestaOrderByWithRelationInput | Prisma.ResenaRespuestaOrderByWithRelationInput[]
-  cursor?: Prisma.ResenaRespuestaWhereUniqueInput
+  include?: Prisma.OrdenInclude<ExtArgs> | null
+  where?: Prisma.OrdenWhereInput
+  orderBy?: Prisma.OrdenOrderByWithRelationInput | Prisma.OrdenOrderByWithRelationInput[]
+  cursor?: Prisma.OrdenWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.ResenaRespuestaScalarFieldEnum | Prisma.ResenaRespuestaScalarFieldEnum[]
-}
-
-/**
- * Usuario.notificaciones
- */
-export type Usuario$notificacionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Notificacion
-   */
-  select?: Prisma.NotificacionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Notificacion
-   */
-  omit?: Prisma.NotificacionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.NotificacionInclude<ExtArgs> | null
-  where?: Prisma.NotificacionWhereInput
-  orderBy?: Prisma.NotificacionOrderByWithRelationInput | Prisma.NotificacionOrderByWithRelationInput[]
-  cursor?: Prisma.NotificacionWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.NotificacionScalarFieldEnum | Prisma.NotificacionScalarFieldEnum[]
-}
-
-/**
- * Usuario.borradores
- */
-export type Usuario$borradoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ResenaBorrador
-   */
-  select?: Prisma.ResenaBorradorSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ResenaBorrador
-   */
-  omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  where?: Prisma.ResenaBorradorWhereInput
-  orderBy?: Prisma.ResenaBorradorOrderByWithRelationInput | Prisma.ResenaBorradorOrderByWithRelationInput[]
-  cursor?: Prisma.ResenaBorradorWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ResenaBorradorScalarFieldEnum | Prisma.ResenaBorradorScalarFieldEnum[]
-}
-
-/**
- * Usuario.preferenciasNotificacion
- */
-export type Usuario$preferenciasNotificacionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the PreferenciasNotificacion
-   */
-  select?: Prisma.PreferenciasNotificacionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the PreferenciasNotificacion
-   */
-  omit?: Prisma.PreferenciasNotificacionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PreferenciasNotificacionInclude<ExtArgs> | null
-  where?: Prisma.PreferenciasNotificacionWhereInput
+  distinct?: Prisma.OrdenScalarFieldEnum | Prisma.OrdenScalarFieldEnum[]
 }
 
 /**
@@ -3663,30 +2829,6 @@ export type Usuario$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.Inter
 }
 
 /**
- * Usuario.pagosSuscripcion
- */
-export type Usuario$pagosSuscripcionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the PagoSuscripcion
-   */
-  select?: Prisma.PagoSuscripcionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the PagoSuscripcion
-   */
-  omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  where?: Prisma.PagoSuscripcionWhereInput
-  orderBy?: Prisma.PagoSuscripcionOrderByWithRelationInput | Prisma.PagoSuscripcionOrderByWithRelationInput[]
-  cursor?: Prisma.PagoSuscripcionWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.PagoSuscripcionScalarFieldEnum | Prisma.PagoSuscripcionScalarFieldEnum[]
-}
-
-/**
  * Usuario.carrito
  */
 export type Usuario$carritoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3703,6 +2845,30 @@ export type Usuario$carritoArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.CarritoInclude<ExtArgs> | null
   where?: Prisma.CarritoWhereInput
+}
+
+/**
+ * Usuario.notificaciones
+ */
+export type Usuario$notificacionesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notificacion
+   */
+  select?: Prisma.NotificacionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notificacion
+   */
+  omit?: Prisma.NotificacionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificacionInclude<ExtArgs> | null
+  where?: Prisma.NotificacionWhereInput
+  orderBy?: Prisma.NotificacionOrderByWithRelationInput | Prisma.NotificacionOrderByWithRelationInput[]
+  cursor?: Prisma.NotificacionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificacionScalarFieldEnum | Prisma.NotificacionScalarFieldEnum[]
 }
 
 /**

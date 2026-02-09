@@ -61,6 +61,11 @@ export interface FieldMeta {
 
   showInList: boolean;
   showInForm: boolean;
+
+  // UI Enhancements
+  label?: string;
+  help?: string;
+  placeholder?: string;
 }
 
 export interface ResourceMeta {

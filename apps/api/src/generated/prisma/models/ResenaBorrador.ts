@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -256,9 +256,6 @@ export type ResenaBorradorWhereInput = {
   comentario?: Prisma.StringNullableFilter<"ResenaBorrador"> | string | null
   creadoEn?: Prisma.DateTimeFilter<"ResenaBorrador"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"ResenaBorrador"> | Date | string
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
-  curso?: Prisma.XOR<Prisma.CursoNullableScalarRelationFilter, Prisma.CursoWhereInput> | null
-  producto?: Prisma.XOR<Prisma.ProductoNullableScalarRelationFilter, Prisma.ProductoWhereInput> | null
 }
 
 export type ResenaBorradorOrderByWithRelationInput = {
@@ -270,9 +267,6 @@ export type ResenaBorradorOrderByWithRelationInput = {
   comentario?: Prisma.SortOrderInput | Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
-  usuario?: Prisma.UsuarioOrderByWithRelationInput
-  curso?: Prisma.CursoOrderByWithRelationInput
-  producto?: Prisma.ProductoOrderByWithRelationInput
   _relevance?: Prisma.ResenaBorradorOrderByRelevanceInput
 }
 
@@ -290,9 +284,6 @@ export type ResenaBorradorWhereUniqueInput = Prisma.AtLeast<{
   comentario?: Prisma.StringNullableFilter<"ResenaBorrador"> | string | null
   creadoEn?: Prisma.DateTimeFilter<"ResenaBorrador"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"ResenaBorrador"> | Date | string
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
-  curso?: Prisma.XOR<Prisma.CursoNullableScalarRelationFilter, Prisma.CursoWhereInput> | null
-  producto?: Prisma.XOR<Prisma.ProductoNullableScalarRelationFilter, Prisma.ProductoWhereInput> | null
 }, "id" | "cursoId_usuarioId" | "productoId_usuarioId">
 
 export type ResenaBorradorOrderByWithAggregationInput = {
@@ -326,13 +317,13 @@ export type ResenaBorradorScalarWhereWithAggregatesInput = {
 }
 
 export type ResenaBorradorCreateInput = {
+  usuarioId: number
+  cursoId?: number | null
+  productoId?: number | null
   puntaje?: number | null
   comentario?: string | null
   creadoEn?: Date | string
   actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutBorradoresInput
-  curso?: Prisma.CursoCreateNestedOneWithoutBorradoresInput
-  producto?: Prisma.ProductoCreateNestedOneWithoutBorradoresInput
 }
 
 export type ResenaBorradorUncheckedCreateInput = {
@@ -347,13 +338,13 @@ export type ResenaBorradorUncheckedCreateInput = {
 }
 
 export type ResenaBorradorUpdateInput = {
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
+  cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutBorradoresNestedInput
-  curso?: Prisma.CursoUpdateOneWithoutBorradoresNestedInput
-  producto?: Prisma.ProductoUpdateOneWithoutBorradoresNestedInput
 }
 
 export type ResenaBorradorUncheckedUpdateInput = {
@@ -379,6 +370,9 @@ export type ResenaBorradorCreateManyInput = {
 }
 
 export type ResenaBorradorUpdateManyMutationInput = {
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
+  cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -394,16 +388,6 @@ export type ResenaBorradorUncheckedUpdateManyInput = {
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ResenaBorradorListRelationFilter = {
-  every?: Prisma.ResenaBorradorWhereInput
-  some?: Prisma.ResenaBorradorWhereInput
-  none?: Prisma.ResenaBorradorWhereInput
-}
-
-export type ResenaBorradorOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
 }
 
 export type ResenaBorradorOrderByRelevanceInput = {
@@ -471,398 +455,6 @@ export type ResenaBorradorSumOrderByAggregateInput = {
   puntaje?: Prisma.SortOrder
 }
 
-export type ResenaBorradorCreateNestedManyWithoutUsuarioInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput> | Prisma.ResenaBorradorCreateWithoutUsuarioInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput | Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyUsuarioInputEnvelope
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-}
-
-export type ResenaBorradorUncheckedCreateNestedManyWithoutUsuarioInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput> | Prisma.ResenaBorradorCreateWithoutUsuarioInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput | Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyUsuarioInputEnvelope
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-}
-
-export type ResenaBorradorUpdateManyWithoutUsuarioNestedInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput> | Prisma.ResenaBorradorCreateWithoutUsuarioInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput | Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput[]
-  upsert?: Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutUsuarioInput | Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutUsuarioInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyUsuarioInputEnvelope
-  set?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  disconnect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  delete?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  update?: Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutUsuarioInput | Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutUsuarioInput[]
-  updateMany?: Prisma.ResenaBorradorUpdateManyWithWhereWithoutUsuarioInput | Prisma.ResenaBorradorUpdateManyWithWhereWithoutUsuarioInput[]
-  deleteMany?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-}
-
-export type ResenaBorradorUncheckedUpdateManyWithoutUsuarioNestedInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput> | Prisma.ResenaBorradorCreateWithoutUsuarioInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput | Prisma.ResenaBorradorCreateOrConnectWithoutUsuarioInput[]
-  upsert?: Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutUsuarioInput | Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutUsuarioInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyUsuarioInputEnvelope
-  set?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  disconnect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  delete?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  update?: Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutUsuarioInput | Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutUsuarioInput[]
-  updateMany?: Prisma.ResenaBorradorUpdateManyWithWhereWithoutUsuarioInput | Prisma.ResenaBorradorUpdateManyWithWhereWithoutUsuarioInput[]
-  deleteMany?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-}
-
-export type ResenaBorradorCreateNestedManyWithoutCursoInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutCursoInput, Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput> | Prisma.ResenaBorradorCreateWithoutCursoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput | Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyCursoInputEnvelope
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-}
-
-export type ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutCursoInput, Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput> | Prisma.ResenaBorradorCreateWithoutCursoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput | Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyCursoInputEnvelope
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-}
-
-export type ResenaBorradorUpdateManyWithoutCursoNestedInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutCursoInput, Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput> | Prisma.ResenaBorradorCreateWithoutCursoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput | Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput[]
-  upsert?: Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutCursoInput | Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutCursoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyCursoInputEnvelope
-  set?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  disconnect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  delete?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  update?: Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutCursoInput | Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutCursoInput[]
-  updateMany?: Prisma.ResenaBorradorUpdateManyWithWhereWithoutCursoInput | Prisma.ResenaBorradorUpdateManyWithWhereWithoutCursoInput[]
-  deleteMany?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-}
-
-export type ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutCursoInput, Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput> | Prisma.ResenaBorradorCreateWithoutCursoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput | Prisma.ResenaBorradorCreateOrConnectWithoutCursoInput[]
-  upsert?: Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutCursoInput | Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutCursoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyCursoInputEnvelope
-  set?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  disconnect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  delete?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  update?: Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutCursoInput | Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutCursoInput[]
-  updateMany?: Prisma.ResenaBorradorUpdateManyWithWhereWithoutCursoInput | Prisma.ResenaBorradorUpdateManyWithWhereWithoutCursoInput[]
-  deleteMany?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-}
-
-export type ResenaBorradorCreateNestedManyWithoutProductoInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutProductoInput, Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput> | Prisma.ResenaBorradorCreateWithoutProductoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput | Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyProductoInputEnvelope
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-}
-
-export type ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutProductoInput, Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput> | Prisma.ResenaBorradorCreateWithoutProductoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput | Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyProductoInputEnvelope
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-}
-
-export type ResenaBorradorUpdateManyWithoutProductoNestedInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutProductoInput, Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput> | Prisma.ResenaBorradorCreateWithoutProductoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput | Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput[]
-  upsert?: Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutProductoInput | Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutProductoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyProductoInputEnvelope
-  set?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  disconnect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  delete?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  update?: Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutProductoInput | Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutProductoInput[]
-  updateMany?: Prisma.ResenaBorradorUpdateManyWithWhereWithoutProductoInput | Prisma.ResenaBorradorUpdateManyWithWhereWithoutProductoInput[]
-  deleteMany?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-}
-
-export type ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput = {
-  create?: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutProductoInput, Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput> | Prisma.ResenaBorradorCreateWithoutProductoInput[] | Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput[]
-  connectOrCreate?: Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput | Prisma.ResenaBorradorCreateOrConnectWithoutProductoInput[]
-  upsert?: Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutProductoInput | Prisma.ResenaBorradorUpsertWithWhereUniqueWithoutProductoInput[]
-  createMany?: Prisma.ResenaBorradorCreateManyProductoInputEnvelope
-  set?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  disconnect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  delete?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  connect?: Prisma.ResenaBorradorWhereUniqueInput | Prisma.ResenaBorradorWhereUniqueInput[]
-  update?: Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutProductoInput | Prisma.ResenaBorradorUpdateWithWhereUniqueWithoutProductoInput[]
-  updateMany?: Prisma.ResenaBorradorUpdateManyWithWhereWithoutProductoInput | Prisma.ResenaBorradorUpdateManyWithWhereWithoutProductoInput[]
-  deleteMany?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-}
-
-export type ResenaBorradorCreateWithoutUsuarioInput = {
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  curso?: Prisma.CursoCreateNestedOneWithoutBorradoresInput
-  producto?: Prisma.ProductoCreateNestedOneWithoutBorradoresInput
-}
-
-export type ResenaBorradorUncheckedCreateWithoutUsuarioInput = {
-  id?: number
-  cursoId?: number | null
-  productoId?: number | null
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type ResenaBorradorCreateOrConnectWithoutUsuarioInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  create: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput>
-}
-
-export type ResenaBorradorCreateManyUsuarioInputEnvelope = {
-  data: Prisma.ResenaBorradorCreateManyUsuarioInput | Prisma.ResenaBorradorCreateManyUsuarioInput[]
-  skipDuplicates?: boolean
-}
-
-export type ResenaBorradorUpsertWithWhereUniqueWithoutUsuarioInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  update: Prisma.XOR<Prisma.ResenaBorradorUpdateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedUpdateWithoutUsuarioInput>
-  create: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedCreateWithoutUsuarioInput>
-}
-
-export type ResenaBorradorUpdateWithWhereUniqueWithoutUsuarioInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  data: Prisma.XOR<Prisma.ResenaBorradorUpdateWithoutUsuarioInput, Prisma.ResenaBorradorUncheckedUpdateWithoutUsuarioInput>
-}
-
-export type ResenaBorradorUpdateManyWithWhereWithoutUsuarioInput = {
-  where: Prisma.ResenaBorradorScalarWhereInput
-  data: Prisma.XOR<Prisma.ResenaBorradorUpdateManyMutationInput, Prisma.ResenaBorradorUncheckedUpdateManyWithoutUsuarioInput>
-}
-
-export type ResenaBorradorScalarWhereInput = {
-  AND?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-  OR?: Prisma.ResenaBorradorScalarWhereInput[]
-  NOT?: Prisma.ResenaBorradorScalarWhereInput | Prisma.ResenaBorradorScalarWhereInput[]
-  id?: Prisma.IntFilter<"ResenaBorrador"> | number
-  usuarioId?: Prisma.IntFilter<"ResenaBorrador"> | number
-  cursoId?: Prisma.IntNullableFilter<"ResenaBorrador"> | number | null
-  productoId?: Prisma.IntNullableFilter<"ResenaBorrador"> | number | null
-  puntaje?: Prisma.IntNullableFilter<"ResenaBorrador"> | number | null
-  comentario?: Prisma.StringNullableFilter<"ResenaBorrador"> | string | null
-  creadoEn?: Prisma.DateTimeFilter<"ResenaBorrador"> | Date | string
-  actualizadoEn?: Prisma.DateTimeFilter<"ResenaBorrador"> | Date | string
-}
-
-export type ResenaBorradorCreateWithoutCursoInput = {
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutBorradoresInput
-  producto?: Prisma.ProductoCreateNestedOneWithoutBorradoresInput
-}
-
-export type ResenaBorradorUncheckedCreateWithoutCursoInput = {
-  id?: number
-  usuarioId: number
-  productoId?: number | null
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type ResenaBorradorCreateOrConnectWithoutCursoInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  create: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutCursoInput, Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput>
-}
-
-export type ResenaBorradorCreateManyCursoInputEnvelope = {
-  data: Prisma.ResenaBorradorCreateManyCursoInput | Prisma.ResenaBorradorCreateManyCursoInput[]
-  skipDuplicates?: boolean
-}
-
-export type ResenaBorradorUpsertWithWhereUniqueWithoutCursoInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  update: Prisma.XOR<Prisma.ResenaBorradorUpdateWithoutCursoInput, Prisma.ResenaBorradorUncheckedUpdateWithoutCursoInput>
-  create: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutCursoInput, Prisma.ResenaBorradorUncheckedCreateWithoutCursoInput>
-}
-
-export type ResenaBorradorUpdateWithWhereUniqueWithoutCursoInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  data: Prisma.XOR<Prisma.ResenaBorradorUpdateWithoutCursoInput, Prisma.ResenaBorradorUncheckedUpdateWithoutCursoInput>
-}
-
-export type ResenaBorradorUpdateManyWithWhereWithoutCursoInput = {
-  where: Prisma.ResenaBorradorScalarWhereInput
-  data: Prisma.XOR<Prisma.ResenaBorradorUpdateManyMutationInput, Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoInput>
-}
-
-export type ResenaBorradorCreateWithoutProductoInput = {
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutBorradoresInput
-  curso?: Prisma.CursoCreateNestedOneWithoutBorradoresInput
-}
-
-export type ResenaBorradorUncheckedCreateWithoutProductoInput = {
-  id?: number
-  usuarioId: number
-  cursoId?: number | null
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type ResenaBorradorCreateOrConnectWithoutProductoInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  create: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutProductoInput, Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput>
-}
-
-export type ResenaBorradorCreateManyProductoInputEnvelope = {
-  data: Prisma.ResenaBorradorCreateManyProductoInput | Prisma.ResenaBorradorCreateManyProductoInput[]
-  skipDuplicates?: boolean
-}
-
-export type ResenaBorradorUpsertWithWhereUniqueWithoutProductoInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  update: Prisma.XOR<Prisma.ResenaBorradorUpdateWithoutProductoInput, Prisma.ResenaBorradorUncheckedUpdateWithoutProductoInput>
-  create: Prisma.XOR<Prisma.ResenaBorradorCreateWithoutProductoInput, Prisma.ResenaBorradorUncheckedCreateWithoutProductoInput>
-}
-
-export type ResenaBorradorUpdateWithWhereUniqueWithoutProductoInput = {
-  where: Prisma.ResenaBorradorWhereUniqueInput
-  data: Prisma.XOR<Prisma.ResenaBorradorUpdateWithoutProductoInput, Prisma.ResenaBorradorUncheckedUpdateWithoutProductoInput>
-}
-
-export type ResenaBorradorUpdateManyWithWhereWithoutProductoInput = {
-  where: Prisma.ResenaBorradorScalarWhereInput
-  data: Prisma.XOR<Prisma.ResenaBorradorUpdateManyMutationInput, Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoInput>
-}
-
-export type ResenaBorradorCreateManyUsuarioInput = {
-  id?: number
-  cursoId?: number | null
-  productoId?: number | null
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type ResenaBorradorUpdateWithoutUsuarioInput = {
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  curso?: Prisma.CursoUpdateOneWithoutBorradoresNestedInput
-  producto?: Prisma.ProductoUpdateOneWithoutBorradoresNestedInput
-}
-
-export type ResenaBorradorUncheckedUpdateWithoutUsuarioInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ResenaBorradorUncheckedUpdateManyWithoutUsuarioInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ResenaBorradorCreateManyCursoInput = {
-  id?: number
-  usuarioId: number
-  productoId?: number | null
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type ResenaBorradorUpdateWithoutCursoInput = {
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutBorradoresNestedInput
-  producto?: Prisma.ProductoUpdateOneWithoutBorradoresNestedInput
-}
-
-export type ResenaBorradorUncheckedUpdateWithoutCursoInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ResenaBorradorUncheckedUpdateManyWithoutCursoInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ResenaBorradorCreateManyProductoInput = {
-  id?: number
-  usuarioId: number
-  cursoId?: number | null
-  puntaje?: number | null
-  comentario?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type ResenaBorradorUpdateWithoutProductoInput = {
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutBorradoresNestedInput
-  curso?: Prisma.CursoUpdateOneWithoutBorradoresNestedInput
-}
-
-export type ResenaBorradorUncheckedUpdateWithoutProductoInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ResenaBorradorUncheckedUpdateManyWithoutProductoInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  puntaje?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
 
 
 export type ResenaBorradorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -874,9 +466,6 @@ export type ResenaBorradorSelect<ExtArgs extends runtime.Types.Extensions.Intern
   comentario?: boolean
   creadoEn?: boolean
   actualizadoEn?: boolean
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
-  curso?: boolean | Prisma.ResenaBorrador$cursoArgs<ExtArgs>
-  producto?: boolean | Prisma.ResenaBorrador$productoArgs<ExtArgs>
 }, ExtArgs["result"]["resenaBorrador"]>
 
 
@@ -893,19 +482,10 @@ export type ResenaBorradorSelectScalar = {
 }
 
 export type ResenaBorradorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "usuarioId" | "cursoId" | "productoId" | "puntaje" | "comentario" | "creadoEn" | "actualizadoEn", ExtArgs["result"]["resenaBorrador"]>
-export type ResenaBorradorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
-  curso?: boolean | Prisma.ResenaBorrador$cursoArgs<ExtArgs>
-  producto?: boolean | Prisma.ResenaBorrador$productoArgs<ExtArgs>
-}
 
 export type $ResenaBorradorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ResenaBorrador"
-  objects: {
-    usuario: Prisma.$UsuarioPayload<ExtArgs>
-    curso: Prisma.$CursoPayload<ExtArgs> | null
-    producto: Prisma.$ProductoPayload<ExtArgs> | null
-  }
+  objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     usuarioId: number
@@ -1255,9 +835,6 @@ readonly fields: ResenaBorradorFieldRefs;
  */
 export interface Prisma__ResenaBorradorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  usuario<T extends Prisma.UsuarioDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UsuarioDefaultArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  curso<T extends Prisma.ResenaBorrador$cursoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ResenaBorrador$cursoArgs<ExtArgs>>): Prisma.Prisma__CursoClient<runtime.Types.Result.GetResult<Prisma.$CursoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  producto<T extends Prisma.ResenaBorrador$productoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ResenaBorrador$productoArgs<ExtArgs>>): Prisma.Prisma__ProductoClient<runtime.Types.Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1312,10 +889,6 @@ export type ResenaBorradorFindUniqueArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * Filter, which ResenaBorrador to fetch.
    */
   where: Prisma.ResenaBorradorWhereUniqueInput
@@ -1334,10 +907,6 @@ export type ResenaBorradorFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ex
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * Filter, which ResenaBorrador to fetch.
    */
   where: Prisma.ResenaBorradorWhereUniqueInput
@@ -1355,10 +924,6 @@ export type ResenaBorradorFindFirstArgs<ExtArgs extends runtime.Types.Extensions
    * Omit specific fields from the ResenaBorrador
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
   /**
    * Filter, which ResenaBorrador to fetch.
    */
@@ -1408,10 +973,6 @@ export type ResenaBorradorFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ext
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * Filter, which ResenaBorrador to fetch.
    */
   where?: Prisma.ResenaBorradorWhereInput
@@ -1460,10 +1021,6 @@ export type ResenaBorradorFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * Filter, which ResenaBorradors to fetch.
    */
   where?: Prisma.ResenaBorradorWhereInput
@@ -1507,10 +1064,6 @@ export type ResenaBorradorCreateArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * The data needed to create a ResenaBorrador.
    */
   data: Prisma.XOR<Prisma.ResenaBorradorCreateInput, Prisma.ResenaBorradorUncheckedCreateInput>
@@ -1539,10 +1092,6 @@ export type ResenaBorradorUpdateArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the ResenaBorrador
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
   /**
    * The data needed to update a ResenaBorrador.
    */
@@ -1584,10 +1133,6 @@ export type ResenaBorradorUpsertArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * The filter to search for the ResenaBorrador to update in case it exists.
    */
   where: Prisma.ResenaBorradorWhereUniqueInput
@@ -1614,10 +1159,6 @@ export type ResenaBorradorDeleteArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  /**
    * Filter which ResenaBorrador to delete.
    */
   where: Prisma.ResenaBorradorWhereUniqueInput
@@ -1638,44 +1179,6 @@ export type ResenaBorradorDeleteManyArgs<ExtArgs extends runtime.Types.Extension
 }
 
 /**
- * ResenaBorrador.curso
- */
-export type ResenaBorrador$cursoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Curso
-   */
-  select?: Prisma.CursoSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Curso
-   */
-  omit?: Prisma.CursoOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.CursoInclude<ExtArgs> | null
-  where?: Prisma.CursoWhereInput
-}
-
-/**
- * ResenaBorrador.producto
- */
-export type ResenaBorrador$productoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Producto
-   */
-  select?: Prisma.ProductoSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Producto
-   */
-  omit?: Prisma.ProductoOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProductoInclude<ExtArgs> | null
-  where?: Prisma.ProductoWhereInput
-}
-
-/**
  * ResenaBorrador without action
  */
 export type ResenaBorradorDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1687,8 +1190,4 @@ export type ResenaBorradorDefaultArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the ResenaBorrador
    */
   omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
 }

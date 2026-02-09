@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
   previewFeatures = []
 }
 
@@ -13,6 +13,528 @@ generator jsonSchema {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  nombre            String?   @db.VarChar(255)
+  passwordHash      String    @map("password_hash") @db.VarChar(72)
+  creadoEn          DateTime  @default(now()) @map("creado_en")
+  actualizadoEn     DateTime  @updatedAt @map("actualizado_en")
+  emailVerificadoEn DateTime? @map("email_verificado_en")
+
+  roles             UsuarioRol[]
+  cursosImpartidos  Curso[]     @relation("CursoInstructor")
+  inscripciones     Inscripcion[]
+  resenas           Resena[]
+  resenaRespuestas  ResenaRespuesta[]
+  favoritos         Favorito[]
+  resenaLikes       ResenaLike[]
+  ordenes           Orden[]
+  auditLogs         AuditLog[]
+  carrito           Carrito?
+  notificaciones    Notificacion[]
+
+  @@map("usuario")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique @db.VarChar(64)
+  name      String   @db.VarChar(128)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuarios  UsuarioRol[]
+
+  @@map("role")
+}
+
+model UsuarioRol {
+  usuarioId Int @map("usuario_id")
+  roleId    Int @map("role_id")
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  role      Role    @relation(fields: [roleId], references: [id])
+
+  @@id([usuarioId, roleId])
+  @@index([roleId])
+  @@map("usuario_rol")
+}
+
+model Favorito {
+  id         Int      @id @default(autoincrement())
+  usuarioId  Int      @map("usuario_id")
+  productoId Int      @map("producto_id")
+  creadoEn   DateTime @default(now()) @map("creado_en")
+
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  producto   Producto @relation(fields: [productoId], references: [id])
+
+  @@unique([usuarioId, productoId])
+  @@index([usuarioId])
+  @@index([productoId], map: "favorito_producto_id_fkey")
+  @@map("favorito")
+}
+
+model Curso {
+  id            Int        @id @default(autoincrement())
+  slug          String     @unique @db.VarChar(128)
+  titulo        String     @db.VarChar(255)
+  resumen       String?
+  descripcionMD String?    @map("descripcion_md")
+  requisitos    String?    @db.Text
+  precio        Int
+  publicado     Boolean    @default(false)
+  nivel         NivelCurso @default(BASICO)
+  portada       String?    @map("portada_archivo") @db.VarChar(255)
+  destacado     Boolean    @default(false)
+  tags          Json?
+  ratingProm    Decimal?   @map("rating_prom") @db.Decimal(3, 2)
+  ratingConteo  Int        @default(0) @map("rating_conteo")
+  creadoEn      DateTime   @default(now()) @map("creado_en")
+  instructorId  Int?       @map("instructor_id")
+
+  instructor    Usuario?   @relation("CursoInstructor", fields: [instructorId], references: [id])
+  modulos       Modulo[]
+  resenas       Resena[]
+  inscripciones Inscripcion[]
+  itemsCarrito  ItemCarrito[]
+
+  @@index([publicado, destacado, creadoEn])
+  @@index([instructorId], map: "curso_instructor_id_fkey")
+  @@fulltext([titulo, resumen])
+  @@map("curso")
+}
+
+model Inscripcion {
+  id            Int               @id @default(autoincrement())
+  usuarioId     Int               @map("usuario_id")
+  cursoId       Int               @map("curso_id")
+  estado        EstadoInscripcion @default(ACTIVADA)
+  progreso      Json
+  creadoEn      DateTime          @default(now()) @map("creado_en")
+  actualizadoEn DateTime          @updatedAt @map("actualizado_en")
+
+  usuario       Usuario           @relation(fields: [usuarioId], references: [id])
+  curso         Curso             @relation(fields: [cursoId], references: [id])
+
+  @@unique([usuarioId, cursoId])
+  @@index([cursoId], map: "inscripcion_curso_id_fkey")
+  @@map("inscripcion")
+}
+
+model Modulo {
+  id       Int    @id @default(autoincrement())
+  cursoId  Int    @map("curso_id")
+  titulo   String
+  orden    Int
+  parentId Int?   @map("parent_id")
+
+  curso    Curso  @relation(fields: [cursoId], references: [id])
+  lecciones Leccion[]
+
+  @@index([cursoId, orden])
+  @@index([parentId])
+  @@map("modulo")
+}
+
+model Leccion {
+  id          Int         @id @default(autoincrement())
+  moduloId    Int         @map("modulo_id")
+  titulo      String
+  rutaSrc     String?     @map("ruta_src")
+  orden       Int
+  tipo        TipoLeccion @default(TEXTO)
+  descripcion String?     @db.Text
+  contenido   Json?
+  previewUrl  String?     @map("preview_url") @db.VarChar(255)
+  duracion    Float       @default(0) @map("duracion")
+
+  modulo      Modulo      @relation(fields: [moduloId], references: [id])
+
+  @@index([moduloId, orden])
+  @@map("leccion")
+}
+
+model LeccionTipoConfig {
+  id            Int         @id @default(autoincrement())
+  tipo          TipoLeccion @unique
+  schema        Json
+  ui            Json?
+  version       Int         @default(1)
+  creadoEn      DateTime    @default(now()) @map("creado_en")
+  actualizadoEn DateTime    @updatedAt @map("actualizado_en")
+
+  @@map("leccion_tipo_config")
+}
+
+model Producto {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique @db.VarChar(128)
+  titulo        String   @db.VarChar(255)
+  precio        Int
+  stock         Int      @default(0)
+  publicado     Boolean  @default(false)
+  destacado     Boolean  @default(false)
+  imagen        String?  @map("imagen_archivo") @db.VarChar(255)
+  descripcionMD String?  @map("descripcion_md")
+  precioLista   Int?     @map("precio_lista")
+  ratingProm    Decimal? @map("rating_prom") @db.Decimal(3, 2)
+  ratingConteo  Int      @default(0) @map("rating_conteo")
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  marcaId       Int?     @map("marca_id")
+  categoriaId   Int?     @map("categoria_id")
+
+  marca         Marca?   @relation(fields: [marcaId], references: [id])
+  categoria     Categoria? @relation(fields: [categoriaId], references: [id])
+  imagenes      ProductoImagen[]
+  resenas       Resena[]
+  favoritos     Favorito[]
+  itemsCarrito  ItemCarrito[]
+
+  @@index([publicado, destacado, creadoEn])
+  @@index([publicado, precio])
+  @@index([publicado, marcaId, precio])
+  @@index([publicado, categoriaId, precio])
+  @@index([publicado, marcaId, categoriaId])
+  @@index([marcaId])
+  @@index([categoriaId])
+  @@index([ratingProm, ratingConteo])
+  @@index([stock])
+  @@fulltext([titulo])
+  @@map("producto")
+}
+
+model ProductoImagen {
+  id         Int     @id @default(autoincrement())
+  productoId Int     @map("producto_id")
+  archivo    String  @db.VarChar(255)
+  alt        String? @db.VarChar(255)
+  orden      Int     @default(0)
+
+  producto  Producto @relation(fields: [productoId], references: [id])
+
+  @@index([productoId, orden])
+  @@map("producto_imagen")
+}
+
+model Marca {
+  id       Int      @id @default(autoincrement())
+  slug     String   @unique @db.VarChar(128)
+  nombre   String
+  imagen   String?  @map("imagen_archivo") @db.VarChar(255)
+  activa   Boolean  @default(true)
+  orden    Int      @default(0)
+  creadoEn DateTime @default(now()) @map("creado_en")
+
+  productos Producto[]
+
+  @@index([orden])
+  @@map("marca")
+}
+
+model Categoria {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique @db.VarChar(128)
+  nombre      String
+  descripcion String?  @db.VarChar(512)
+  imagen      String?  @map("imagen_archivo") @db.VarChar(255)
+  activa      Boolean  @default(true)
+  orden       Int      @default(0)
+  creadoEn    DateTime @default(now()) @map("creado_en")
+  parentId    Int?     @map("parent_id")
+
+  parent      Categoria?  @relation("CategoriaPadre", fields: [parentId], references: [id])
+  hijos       Categoria[] @relation("CategoriaPadre")
+  productos   Producto[]
+
+  @@index([parentId, orden])
+  @@map("categoria")
+}
+
+model Orden {
+  id                        Int         @id @default(autoincrement())
+  usuarioId                 Int         @map("usuario_id")
+  estado                    EstadoOrden @default(PENDIENTE)
+  total                     Int
+  moneda                    String      @default("ARS")
+  referenciaPago            String?     @map("referencia_pago")
+  creadoEn                  DateTime    @default(now()) @map("creado_en")
+  actualizadoEn             DateTime    @updatedAt @map("actualizado_en")
+  esSuscripcion             Boolean     @default(false) @map("es_suscripcion")
+  suscripcionActiva         Boolean?    @map("suscripcion_activa")
+  suscripcionId             String?     @map("suscripcion_id")
+  suscripcionFrecuencia     Int?        @map("suscripcion_frecuencia")
+  suscripcionTipoFrecuencia String?     @map("suscripcion_tipo_frecuencia")
+  metadatos                 Json?
+  direccionEnvioId          Int?        @map("direccion_envio_id")
+  direccionFacturacionId    Int?        @map("direccion_facturacion_id")
+
+  usuario                   Usuario     @relation(fields: [usuarioId], references: [id])
+  direccionEnvio            Direccion?  @relation("OrdenDireccionEnvio", fields: [direccionEnvioId], references: [id])
+  direccionFacturacion      Direccion?  @relation("OrdenDireccionFacturacion", fields: [direccionFacturacionId], references: [id])
+  items                     ItemOrden[]
+
+  @@index([usuarioId, estado, creadoEn])
+  @@index([esSuscripcion])
+  @@index([suscripcionId])
+  @@index([suscripcionActiva])
+  @@index([referenciaPago])
+  @@index([direccionEnvioId], map: "orden_direccion_envio_id_fkey")
+  @@index([direccionFacturacionId], map: "orden_direccion_facturacion_id_fkey")
+  @@map("orden")
+}
+
+model ItemOrden {
+  id             Int           @id @default(autoincrement())
+  ordenId        Int           @map("orden_id")
+  tipo           TipoItemOrden
+  refId          Int           @map("ref_id")
+  titulo         String        @db.VarChar(255)
+  cantidad       Int           @default(1)
+  precioUnitario Int           @map("precio_unitario")
+
+  orden          Orden         @relation(fields: [ordenId], references: [id])
+
+  @@index([ordenId])
+  @@index([tipo, refId])
+  @@map("item_orden")
+}
+
+model PagoSuscripcion {
+  id             Int      @id @default(autoincrement())
+  ordenId        Int      @map("orden_id")
+  usuarioId      Int      @map("usuario_id")
+  referenciaPago String   @map("referencia_pago")
+  monto          Decimal  @db.Decimal(10, 2)
+  estado         String
+  metadatos      Json?
+  creadoEn       DateTime @default(now()) @map("creado_en")
+  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
+
+  @@index([ordenId])
+  @@index([usuarioId])
+  @@index([referenciaPago])
+  @@index([estado])
+  @@index([creadoEn])
+  @@map("pagos_suscripciones")
+}
+
+model Direccion {
+  id             Int      @id @default(autoincrement())
+  usuarioId      Int      @map("usuario_id")
+  etiqueta       String?  @db.VarChar(64)
+  nombre         String
+  telefono       String?  @db.VarChar(32)
+  calle          String
+  numero         String?  @db.VarChar(32)
+  pisoDepto      String?  @map("piso_depto") @db.VarChar(64)
+  ciudad         String
+  provincia      String
+  cp             String   @db.VarChar(16)
+  pais           String   @default("AR") @db.Char(2)
+  predeterminada Boolean  @default(false)
+  creadoEn       DateTime @default(now()) @map("creado_en")
+  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
+
+  ordenesEnvio       Orden[] @relation("OrdenDireccionEnvio")
+  ordenesFacturacion Orden[] @relation("OrdenDireccionFacturacion")
+
+  @@index([usuarioId, predeterminada])
+  @@map("direccion")
+}
+
+model Slider {
+  id                 Int      @id @default(autoincrement())
+  titulo             String   @db.VarChar(255)
+  alt                String   @db.VarChar(255)
+  archivo            String   @db.VarChar(255)
+  activa             Boolean  @default(true)
+  orden              Int      @default(0)
+  creadoEn           DateTime @default(now()) @map("creado_en")
+  actualizadoEn      DateTime @updatedAt @map("actualizado_en")
+  ctaPrimarioHref    String?  @map("cta_primario_href") @db.VarChar(255)
+  ctaPrimarioTexto   String?  @map("cta_primario_texto") @db.VarChar(80)
+  ctaSecundarioHref  String?  @map("cta_secundario_href") @db.VarChar(255)
+  ctaSecundarioTexto String?  @map("cta_secundario_texto") @db.VarChar(80)
+  descripcion        String?  @db.VarChar(600)
+  etiqueta           String?  @db.VarChar(80)
+  subtitulo          String?  @db.VarChar(255)
+
+  @@index([activa, orden])
+  @@index([orden])
+  @@map("slider")
+}
+
+model Resena {
+  id         Int      @id @default(autoincrement())
+  cursoId    Int?     @map("curso_id")
+  productoId Int?     @map("producto_id")
+  usuarioId  Int      @map("usuario_id")
+  puntaje    Int
+  comentario String?
+  creadoEn   DateTime @default(now()) @map("creado_en")
+
+  curso     Curso?    @relation(fields: [cursoId], references: [id])
+  producto  Producto? @relation(fields: [productoId], references: [id])
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  respuestas ResenaRespuesta[]
+  likes      ResenaLike[]
+
+  @@unique([cursoId, usuarioId], map: "unique_resena_curso_usuario")
+  @@unique([productoId, usuarioId], map: "unique_resena_producto_usuario")
+  @@index([cursoId])
+  @@index([productoId])
+  @@index([usuarioId], map: "resena_usuario_id_fkey")
+  @@map("resena")
+}
+
+model ResenaLike {
+  id        Int      @id @default(autoincrement())
+  resenaId  Int      @map("resena_id")
+  usuarioId Int      @map("usuario_id")
+  tipo      TipoLike
+  creadoEn  DateTime @default(now()) @map("creado_en")
+
+  resena    Resena   @relation(fields: [resenaId], references: [id])
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@unique([resenaId, usuarioId])
+  @@index([resenaId])
+  @@index([usuarioId])
+  @@map("resena_like")
+}
+
+model ResenaRespuesta {
+  id            Int      @id @default(autoincrement())
+  resenaId      Int      @map("resena_id")
+  usuarioId     Int      @map("usuario_id")
+  parentId      Int?     @map("parent_id")
+  contenido     String   @db.Text
+  eliminado     Boolean  @default(false)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  resena    Resena          @relation(fields: [resenaId], references: [id])
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id])
+  parent    ResenaRespuesta? @relation("ResenaRespuestaParent", fields: [parentId], references: [id])
+  hijos     ResenaRespuesta[] @relation("ResenaRespuestaParent")
+
+  @@index([resenaId])
+  @@index([usuarioId])
+  @@index([parentId])
+  @@map("resena_respuesta")
+}
+
+model Notificacion {
+  id        Int              @id @default(autoincrement())
+  usuarioId Int              @map("usuario_id")
+  tipo      TipoNotificacion
+  titulo    String           @db.VarChar(255)
+  mensaje   String           @db.Text
+  leida     Boolean          @default(false)
+  url       String?          @db.VarChar(500)
+  metadata  Json?
+  creadoEn  DateTime         @default(now()) @map("creado_en")
+
+  usuario   Usuario          @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId, leida, creadoEn], map: "idx_usuario_leida_fecha")
+  @@index([usuarioId, tipo, leida], map: "idx_usuario_tipo_leida")
+  @@index([creadoEn, leida], map: "idx_fecha_leida_cleanup")
+  @@index([tipo, creadoEn], map: "idx_tipo_fecha")
+  @@map("notificacion")
+}
+
+model PreferenciasNotificacion {
+  id                         Int      @id @default(autoincrement())
+  usuarioId                  Int      @unique @map("usuario_id")
+  nuevaResena                Boolean  @default(true) @map("nueva_resena")
+  respuestaResena            Boolean  @default(true) @map("respuesta_resena")
+  actualizacionesSistema     Boolean  @default(true) @map("actualizaciones_sistema")
+  mantenimiento              Boolean  @default(true)
+  reporteContenido           Boolean  @default(true) @map("reporte_contenido")
+  contenidoPendiente         Boolean  @default(true) @map("contenido_pendiente")
+  resumenDiario              Boolean  @default(false) @map("resumen_diario")
+  notificacionesInstantaneas Boolean  @default(true) @map("notificaciones_instantaneas")
+  creadoEn                   DateTime @default(now()) @map("creado_en")
+  actualizadoEn              DateTime @updatedAt @map("actualizado_en")
+
+  @@map("preferencias_notificacion")
+}
+
+model ResenaBorrador {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int      @map("usuario_id")
+  cursoId       Int?     @map("curso_id")
+  productoId    Int?     @map("producto_id")
+  puntaje       Int?
+  comentario    String?  @db.Text
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  @@unique([cursoId, usuarioId])
+  @@unique([productoId, usuarioId])
+  @@index([usuarioId])
+  @@index([cursoId])
+  @@index([productoId])
+  @@map("resena_borrador")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  tableName String   @map("table_name") @db.VarChar(50)
+  recordId  String   @map("record_id") @db.VarChar(50)
+  action    String   @db.VarChar(20)
+  oldData   Json?    @map("old_data")
+  newData   Json?    @map("new_data")
+  userId    Int      @map("user_id")
+  userAgent String?  @map("user_agent") @db.Text
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  endpoint  String?  @map("endpoint") @db.VarChar(255)
+  timestamp DateTime @default(now())
+
+  user      Usuario  @relation(fields: [userId], references: [id])
+
+  @@index([userId, timestamp], map: "idx_user_timestamp")
+  @@index([tableName, action, timestamp], map: "idx_table_action_timestamp")
+  @@index([recordId, tableName], map: "idx_record_table")
+  @@index([timestamp], map: "idx_timestamp")
+  @@map("audit_log")
+}
+
+model Carrito {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int      @unique @map("usuario_id")
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  usuario       Usuario       @relation(fields: [usuarioId], references: [id])
+  items         ItemCarrito[]
+
+  @@map("carrito")
+}
+
+model ItemCarrito {
+  id         Int           @id @default(autoincrement())
+  carritoId  Int           @map("carrito_id")
+  tipo       TipoItemOrden
+  productoId Int?          @map("producto_id")
+  cursoId    Int?          @map("curso_id")
+  cantidad   Int           @default(1)
+  creadoEn   DateTime      @default(now()) @map("creado_en")
+
+  carrito    Carrito       @relation(fields: [carritoId], references: [id])
+  producto   Producto?     @relation(fields: [productoId], references: [id])
+  curso      Curso?        @relation(fields: [cursoId], references: [id])
+
+  @@unique([carritoId, tipo, productoId, cursoId], map: "unique_item_carrito")
+  @@index([carritoId])
+  @@index([cursoId], map: "item_carrito_curso_id_fkey")
+  @@index([productoId], map: "item_carrito_producto_id_fkey")
+  @@map("item_carrito")
 }
 
 enum TipoItemOrden {
@@ -57,579 +579,4 @@ enum TipoNotificacion {
   LIKE_RESENA      @map("like_resena")
   MENCION          @map("mencion")
   SISTEMA          @map("sistema")
-}
-
-/**
- * ───── Usuario / Roles / Favoritos ─────
- */
-
-model Usuario {
-  id                Int       @id @default(autoincrement())
-  email             String    @unique @db.VarChar(191)
-  nombre            String?   @db.VarChar(255)
-  passwordHash      String    @map("password_hash") @db.VarChar(72)
-  creadoEn          DateTime  @default(now()) @map("creado_en")
-  actualizadoEn     DateTime  @updatedAt @map("actualizado_en")
-  emailVerificadoEn DateTime? @map("email_verificado_en")
-
-  inscripciones            Inscripcion[]
-  ordenes                  Orden[]
-  resenas                  Resena[]
-  cursosDicta              Curso[]                   @relation("CursoInstructor")
-  direcciones              Direccion[]
-  favoritos                Favorito[]
-  roles                    UsuarioRol[]
-  likesResenas             ResenaLike[]
-  respuestasResenas        ResenaRespuesta[]
-  notificaciones           Notificacion[]
-  borradores               ResenaBorrador[]
-  preferenciasNotificacion PreferenciasNotificacion?
-  auditLogs                AuditLog[]
-  pagosSuscripcion         PagoSuscripcion[]
-  carrito                  Carrito?
-
-  @@map("usuario")
-}
-
-model Role {
-  id        Int          @id @default(autoincrement())
-  slug      String       @unique @db.VarChar(64)
-  name      String       @db.VarChar(128)
-  createdAt DateTime     @default(now()) @map("created_at")
-  users     UsuarioRol[]
-
-  @@map("role")
-}
-
-model UsuarioRol {
-  usuarioId Int @map("usuario_id")
-  roleId    Int @map("role_id")
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@id([usuarioId, roleId])
-  @@index([roleId])
-  @@map("usuario_rol")
-}
-
-model Favorito {
-  id         Int      @id @default(autoincrement())
-  usuarioId  Int      @map("usuario_id")
-  productoId Int      @map("producto_id")
-  creadoEn   DateTime @default(now()) @map("creado_en")
-
-  usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-
-  @@unique([usuarioId, productoId])
-  @@index([usuarioId])
-  @@map("favorito")
-}
-
-/**
- * ───── Cursos ─────
- */
-
-model Curso {
-  id            Int     @id @default(autoincrement())
-  slug          String  @unique @db.VarChar(128)
-  titulo        String  @db.VarChar(255)
-  resumen       String?
-  descripcionMD String? @map("descripcion_md")
-  requisitos    String? @db.Text
-  precio        Int
-  publicado     Boolean @default(false)
-
-  nivel        NivelCurso @default(BASICO)
-  portada      String?    @map("portada_archivo") @db.VarChar(255)
-  destacado    Boolean    @default(false)
-  tags         Json?
-  ratingProm   Decimal?   @map("rating_prom") @db.Decimal(3, 2)
-  ratingConteo Int        @default(0) @map("rating_conteo")
-
-  creadoEn DateTime @default(now()) @map("creado_en")
-
-  modulos       Modulo[]
-  resenas       Resena[]
-  inscripciones Inscripcion[]
-  borradores    ResenaBorrador[]
-  itemsCarrito  ItemCarrito[]
-
-  instructorId Int?     @map("instructor_id")
-  instructor   Usuario? @relation("CursoInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
-
-  @@index([publicado, destacado, creadoEn])
-  @@fulltext([titulo, resumen])
-  @@map("curso")
-}
-
-model Inscripcion {
-  id            Int               @id @default(autoincrement())
-  usuarioId     Int               @map("usuario_id")
-  cursoId       Int               @map("curso_id")
-  estado        EstadoInscripcion @default(ACTIVADA)
-  progreso      Json
-  creadoEn      DateTime          @default(now()) @map("creado_en")
-  actualizadoEn DateTime          @updatedAt @map("actualizado_en")
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  curso   Curso   @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-
-  @@unique([usuarioId, cursoId])
-  @@map("inscripcion")
-}
-
-model Modulo {
-  id       Int    @id @default(autoincrement())
-  cursoId  Int    @map("curso_id")
-  titulo   String
-  orden    Int
-  parentId Int?   @map("parent_id")
-
-  curso     Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  parent    Modulo?   @relation("ModuloSelf", fields: [parentId], references: [id], onDelete: SetNull)
-  hijos     Modulo[]  @relation("ModuloSelf")
-  lecciones Leccion[]
-
-  @@index([cursoId, orden])
-  @@index([parentId])
-  @@map("modulo")
-}
-
-model Leccion {
-  id          Int         @id @default(autoincrement())
-  moduloId    Int         @map("modulo_id")
-  titulo      String
-  duracionS   Int         @default(0) @map("duracion_s")
-  rutaSrc     String?     @map("ruta_src")
-  previewUrl  String?     @map("preview_url") @db.VarChar(255)
-  orden       Int
-  tipo        TipoLeccion @default(TEXTO)
-  descripcion String?     @db.Text
-  contenido   Json?
-
-  modulo Modulo @relation(fields: [moduloId], references: [id], onDelete: Cascade)
-
-  @@index([moduloId, orden])
-  @@map("leccion")
-}
-
-/**
- * ───── Tienda ─────
- */
-
-model Producto {
-  id            Int      @id @default(autoincrement())
-  slug          String   @unique @db.VarChar(128)
-  titulo        String   @db.VarChar(255)
-  precio        Int
-  stock         Int      @default(0)
-  publicado     Boolean  @default(false)
-  destacado     Boolean  @default(false)
-  imagen        String?  @map("imagen_archivo") @db.VarChar(255)
-  descripcionMD String?  @map("descripcion_md")
-  precioLista   Int?     @map("precio_lista")
-  ratingProm    Decimal? @map("rating_prom") @db.Decimal(3, 2)
-  ratingConteo  Int      @default(0) @map("rating_conteo")
-  creadoEn      DateTime @default(now()) @map("creado_en")
-
-  marcaId     Int? @map("marca_id")
-  categoriaId Int? @map("categoria_id")
-
-  marca        Marca?           @relation(fields: [marcaId], references: [id], onDelete: SetNull)
-  categoria    Categoria?       @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
-  imagenes     ProductoImagen[]
-  resenas      Resena[]
-  favoritos    Favorito[]
-  borradores   ResenaBorrador[]
-  itemsCarrito ItemCarrito[]
-
-  // ✅ Índices optimizados para consultas frecuentes
-  @@index([publicado, destacado, creadoEn]) // Consultas de productos publicados y destacados
-  @@index([publicado, precio]) // Filtros por precio en productos publicados
-  @@index([publicado, marcaId, precio]) // Filtros combinados marca + precio
-  @@index([publicado, categoriaId, precio]) // Filtros combinados categoría + precio
-  @@index([publicado, marcaId, categoriaId]) // Filtros combinados marca + categoría
-  @@index([marcaId]) // Consultas por marca
-  @@index([categoriaId]) // Consultas por categoría
-  @@index([ratingProm, ratingConteo]) // Ordenamiento por rating
-  @@index([stock]) // Consultas de disponibilidad
-  @@fulltext([titulo]) // Búsqueda de texto completo
-  @@map("producto")
-}
-
-model ProductoImagen {
-  id         Int     @id @default(autoincrement())
-  productoId Int     @map("producto_id")
-  archivo    String  @db.VarChar(255)
-  alt        String? @db.VarChar(255)
-  orden      Int     @default(0)
-
-  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-
-  @@index([productoId, orden])
-  @@map("producto_imagen")
-}
-
-model Marca {
-  id       Int      @id @default(autoincrement())
-  slug     String   @unique @db.VarChar(128)
-  nombre   String   @db.VarChar(191)
-  imagen   String?  @map("imagen_archivo") @db.VarChar(255)
-  activa   Boolean  @default(true)
-  orden    Int      @default(0)
-  creadoEn DateTime @default(now()) @map("creado_en")
-
-  productos Producto[]
-
-  @@index([orden])
-  @@map("marca")
-}
-
-model Categoria {
-  id          Int      @id @default(autoincrement())
-  slug        String   @unique @db.VarChar(128)
-  nombre      String   @db.VarChar(191)
-  descripcion String?  @db.VarChar(512)
-  imagen      String?  @map("imagen_archivo") @db.VarChar(255)
-  activa      Boolean  @default(true)
-  orden       Int      @default(0)
-  creadoEn    DateTime @default(now()) @map("creado_en")
-
-  parentId Int?        @map("parent_id")
-  parent   Categoria?  @relation("CategoriaSelf", fields: [parentId], references: [id], onDelete: SetNull)
-  hijos    Categoria[] @relation("CategoriaSelf")
-
-  productos Producto[]
-
-  @@index([parentId, orden])
-  @@map("categoria")
-}
-
-/**
- * ───── Órdenes / Checkout ─────
- */
-
-model Orden {
-  id                        Int         @id @default(autoincrement())
-  usuarioId                 Int         @map("usuario_id")
-  estado                    EstadoOrden @default(PENDIENTE)
-  total                     Int
-  moneda                    String      @default("ARS")
-  referenciaPago            String?     @map("referencia_pago")
-  creadoEn                  DateTime    @default(now()) @map("creado_en")
-  actualizadoEn             DateTime    @updatedAt @map("actualizado_en")
-  esSuscripcion             Boolean     @default(false) @map("es_suscripcion")
-  suscripcionActiva         Boolean?    @map("suscripcion_activa")
-  suscripcionId             String?     @map("suscripcion_id")
-  suscripcionFrecuencia     Int?        @map("suscripcion_frecuencia")
-  suscripcionTipoFrecuencia String?     @map("suscripcion_tipo_frecuencia")
-  metadatos                 Json?
-
-  direccionEnvioId       Int? @map("direccion_envio_id")
-  direccionFacturacionId Int? @map("direccion_facturacion_id")
-
-  direccionEnvio       Direccion? @relation("OrdenEnvio", fields: [direccionEnvioId], references: [id], onDelete: SetNull)
-  direccionFacturacion Direccion? @relation("OrdenFacturacion", fields: [direccionFacturacionId], references: [id], onDelete: SetNull)
-
-  usuario          Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  items            ItemOrden[]
-  pagosSuscripcion PagoSuscripcion[]
-
-  @@index([usuarioId, estado, creadoEn])
-  @@index([esSuscripcion])
-  @@index([suscripcionId])
-  @@index([suscripcionActiva])
-  @@index([referenciaPago]) // ← usado por webhooks/suscripciones
-  @@map("orden")
-}
-
-model ItemOrden {
-  id             Int           @id @default(autoincrement())
-  ordenId        Int           @map("orden_id")
-  tipo           TipoItemOrden
-  refId          Int           @map("ref_id") // ← ahora Int: productoId o cursoId según tipo
-  titulo         String        @db.VarChar(255)
-  cantidad       Int           @default(1)
-  precioUnitario Int           @map("precio_unitario")
-
-  orden Orden @relation(fields: [ordenId], references: [id], onDelete: Cascade)
-
-  @@index([ordenId])
-  @@index([tipo, refId])
-  @@map("item_orden")
-}
-
-/**
- * ───── Suscripciones ─────
- */
-
-model PagoSuscripcion {
-  id             Int      @id @default(autoincrement())
-  ordenId        Int      @map("orden_id")
-  usuarioId      Int      @map("usuario_id")
-  referenciaPago String   @map("referencia_pago")
-  monto          Decimal  @db.Decimal(10, 2)
-  estado         String
-  metadatos      Json?
-  creadoEn       DateTime @default(now()) @map("creado_en")
-  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
-
-  orden   Orden   @relation(fields: [ordenId], references: [id], onDelete: Cascade)
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  @@index([ordenId])
-  @@index([usuarioId])
-  @@index([referenciaPago])
-  @@index([estado])
-  @@index([creadoEn])
-  @@map("pagos_suscripciones")
-}
-
-/**
- * ───── Direcciones ─────
- */
-
-model Direccion {
-  id             Int     @id @default(autoincrement())
-  usuarioId      Int     @map("usuario_id")
-  usuario        Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  etiqueta       String? @db.VarChar(64)
-  nombre         String  @db.VarChar(191)
-  telefono       String? @db.VarChar(32)
-  calle          String  @db.VarChar(191)
-  numero         String? @db.VarChar(32)
-  pisoDepto      String? @map("piso_depto") @db.VarChar(64)
-  ciudad         String  @db.VarChar(191)
-  provincia      String  @db.VarChar(191)
-  cp             String  @db.VarChar(16)
-  pais           String  @default("AR") @db.Char(2)
-  predeterminada Boolean @default(false)
-
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
-
-  ordenesEnvio       Orden[] @relation("OrdenEnvio")
-  ordenesFacturacion Orden[] @relation("OrdenFacturacion")
-
-  @@index([usuarioId, predeterminada])
-  @@map("direccion")
-}
-
-/**
- * ───── Slider Images ─────
- */
-
-model Slider {
-  id            Int      @id @default(autoincrement())
-  titulo        String   @db.VarChar(255)
-  alt           String   @db.VarChar(255)
-  archivo       String   @db.VarChar(255)
-
-  // ✅ Contenido opcional “pro” (todo en español)
-  subtitulo     String?  @db.VarChar(255)
-  descripcion   String?  @db.VarChar(600)
-  etiqueta      String?  @db.VarChar(80)  // ej: "+500 alumnas", "Envío gratis", etc.
-
-  // ✅ Botones/CTAs (opcionales)
-  ctaPrimarioTexto  String? @map("cta_primario_texto") @db.VarChar(80)
-  ctaPrimarioHref   String? @map("cta_primario_href")  @db.VarChar(255)
-  ctaSecundarioTexto String? @map("cta_secundario_texto") @db.VarChar(80)
-  ctaSecundarioHref  String? @map("cta_secundario_href")  @db.VarChar(255)
-
-  // ✅ Control
-  activa        Boolean  @default(true)
-  orden         Int      @default(0)
-
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
-
-  @@index([activa, orden])
-  @@index([orden])
-  @@map("slider")
-}
-
-/**
- * ───── Reseñas polimórficas ─────
- */
-
-model Resena {
-  id         Int      @id @default(autoincrement())
-  cursoId    Int?     @map("curso_id")
-  productoId Int      @map("producto_id")
-  usuarioId  Int      @map("usuario_id")
-  puntaje    Int
-  comentario String?
-  creadoEn   DateTime @default(now()) @map("creado_en")
-
-  curso    Curso?    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  producto Producto? @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  usuario  Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  likes      ResenaLike[]
-  respuestas ResenaRespuesta[]
-
-  @@unique([cursoId, usuarioId], map: "unique_resena_curso_usuario")
-  @@unique([productoId, usuarioId], map: "unique_resena_producto_usuario")
-  @@index([cursoId])
-  @@index([productoId])
-  @@map("resena")
-}
-
-model ResenaLike {
-  id        Int      @id @default(autoincrement())
-  resenaId  Int      @map("resena_id")
-  usuarioId Int      @map("usuario_id")
-  tipo      TipoLike
-  creadoEn  DateTime @default(now()) @map("creado_en")
-
-  resena  Resena  @relation(fields: [resenaId], references: [id], onDelete: Cascade)
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  @@unique([resenaId, usuarioId])
-  @@index([resenaId])
-  @@index([usuarioId])
-  @@map("resena_like")
-}
-
-model ResenaRespuesta {
-  id            Int      @id @default(autoincrement())
-  resenaId      Int      @map("resena_id")
-  usuarioId     Int      @map("usuario_id")
-  parentId      Int?     @map("parent_id")
-  contenido     String   @db.Text
-  eliminado     Boolean  @default(false)
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
-
-  resena  Resena            @relation(fields: [resenaId], references: [id], onDelete: Cascade)
-  usuario Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  parent  ResenaRespuesta?  @relation("RespuestaHijos", fields: [parentId], references: [id], onDelete: Cascade)
-  hijos   ResenaRespuesta[] @relation("RespuestaHijos")
-
-  @@index([resenaId])
-  @@index([usuarioId])
-  @@index([parentId])
-  @@map("resena_respuesta")
-}
-
-model Notificacion {
-  id        Int              @id @default(autoincrement())
-  usuarioId Int              @map("usuario_id")
-  tipo      TipoNotificacion
-  titulo    String           @db.VarChar(255)
-  mensaje   String           @db.Text
-  leida     Boolean          @default(false)
-  url       String?          @db.VarChar(500)
-  metadata  Json?
-  creadoEn  DateTime         @default(now()) @map("creado_en")
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  @@index([usuarioId, leida, creadoEn], name: "idx_usuario_leida_fecha")
-  @@index([usuarioId, tipo, leida], name: "idx_usuario_tipo_leida")
-  @@index([creadoEn, leida], name: "idx_fecha_leida_cleanup")
-  @@index([tipo, creadoEn], name: "idx_tipo_fecha")
-  @@map("notificacion")
-}
-
-model PreferenciasNotificacion {
-  id        Int @id @default(autoincrement())
-  usuarioId Int @unique @map("usuario_id")
-
-  nuevaResena            Boolean @default(true) @map("nueva_resena")
-  respuestaResena        Boolean @default(true) @map("respuesta_resena")
-  actualizacionesSistema Boolean @default(true) @map("actualizaciones_sistema")
-  mantenimiento          Boolean @default(true)
-  reporteContenido       Boolean @default(true) @map("reporte_contenido")
-  contenidoPendiente     Boolean @default(true) @map("contenido_pendiente")
-
-  resumenDiario              Boolean @default(false) @map("resumen_diario")
-  notificacionesInstantaneas Boolean @default(true) @map("notificaciones_instantaneas")
-
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  @@map("preferencias_notificacion")
-}
-
-model ResenaBorrador {
-  id            Int      @id @default(autoincrement())
-  usuarioId     Int      @map("usuario_id")
-  cursoId       Int?     @map("curso_id")
-  productoId    Int?     @map("producto_id")
-  puntaje       Int?
-  comentario    String?  @db.Text
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
-
-  usuario  Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  curso    Curso?    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  producto Producto? @relation(fields: [productoId], references: [id], onDelete: Cascade)
-
-  @@unique([cursoId, usuarioId])
-  @@unique([productoId, usuarioId])
-  @@index([usuarioId])
-  @@index([cursoId])
-  @@index([productoId])
-  @@map("resena_borrador")
-}
-
-model AuditLog {
-  id        Int      @id @default(autoincrement())
-  tableName String   @map("table_name") @db.VarChar(50)
-  recordId  String   @map("record_id") @db.VarChar(50)
-  action    String   @db.VarChar(20)
-  oldData   Json?    @map("old_data")
-  newData   Json?    @map("new_data")
-  userId    Int      @map("user_id")
-  userAgent String?  @map("user_agent") @db.Text
-  ipAddress String?  @map("ip_address") @db.VarChar(45)
-  endpoint  String?  @map("endpoint") @db.VarChar(255)
-  timestamp DateTime @default(now())
-
-  user Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, timestamp], name: "idx_user_timestamp")
-  @@index([tableName, action, timestamp], name: "idx_table_action_timestamp")
-  @@index([recordId, tableName], name: "idx_record_table")
-  @@index([timestamp], name: "idx_timestamp")
-  @@map("audit_log")
-}
-
-/**
- * ───── Carrito de Compras ─────
- */
-
-model Carrito {
-  id            Int      @id @default(autoincrement())
-  usuarioId     Int      @unique @map("usuario_id")
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
-
-  usuario Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  items   ItemCarrito[]
-
-  @@map("carrito")
-}
-
-model ItemCarrito {
-  id         Int           @id @default(autoincrement())
-  carritoId  Int           @map("carrito_id")
-  tipo       TipoItemOrden
-  productoId Int?          @map("producto_id")
-  cursoId    Int?          @map("curso_id")
-  cantidad   Int           @default(1)
-  creadoEn   DateTime      @default(now()) @map("creado_en")
-
-  carrito  Carrito   @relation(fields: [carritoId], references: [id], onDelete: Cascade)
-  producto Producto? @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  curso    Curso?    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-
-  @@unique([carritoId, tipo, productoId, cursoId], map: "unique_item_carrito")
-  @@index([carritoId])
-  @@map("item_carrito")
 }

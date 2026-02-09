@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -238,7 +238,7 @@ export type UsuarioRolScalarWhereWithAggregatesInput = {
 
 export type UsuarioRolCreateInput = {
   usuario: Prisma.UsuarioCreateNestedOneWithoutRolesInput
-  role: Prisma.RoleCreateNestedOneWithoutUsersInput
+  role: Prisma.RoleCreateNestedOneWithoutUsuariosInput
 }
 
 export type UsuarioRolUncheckedCreateInput = {
@@ -248,7 +248,7 @@ export type UsuarioRolUncheckedCreateInput = {
 
 export type UsuarioRolUpdateInput = {
   usuario?: Prisma.UsuarioUpdateOneRequiredWithoutRolesNestedInput
-  role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
+  role?: Prisma.RoleUpdateOneRequiredWithoutUsuariosNestedInput
 }
 
 export type UsuarioRolUncheckedUpdateInput = {
@@ -395,7 +395,7 @@ export type UsuarioRolUncheckedUpdateManyWithoutRoleNestedInput = {
 }
 
 export type UsuarioRolCreateWithoutUsuarioInput = {
-  role: Prisma.RoleCreateNestedOneWithoutUsersInput
+  role: Prisma.RoleCreateNestedOneWithoutUsuariosInput
 }
 
 export type UsuarioRolUncheckedCreateWithoutUsuarioInput = {
@@ -475,7 +475,7 @@ export type UsuarioRolCreateManyUsuarioInput = {
 }
 
 export type UsuarioRolUpdateWithoutUsuarioInput = {
-  role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
+  role?: Prisma.RoleUpdateOneRequiredWithoutUsuariosNestedInput
 }
 
 export type UsuarioRolUncheckedUpdateWithoutUsuarioInput = {

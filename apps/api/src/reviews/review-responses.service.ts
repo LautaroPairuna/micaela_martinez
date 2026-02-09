@@ -39,6 +39,12 @@ type ResenaRespuestaWithRelations = Prisma.ResenaRespuestaGetPayload<{
   };
 }>;
 
+type ResponseWithEdit = ResenaRespuestaWithRelations & { editado: boolean };
+
+export type ResponseTree = Omit<ResponseWithEdit, 'hijos'> & {
+  hijos: ResponseTree[];
+};
+
 @Injectable()
 export class ReviewResponsesService {
   constructor(
@@ -143,7 +149,7 @@ export class ReviewResponsesService {
     })) as ResenaRespuestaWithRelations[];
 
     // Agregar flag de edición
-    const respuestasConEdicion = respuestas.map((r) => ({
+    const respuestasConEdicion: ResponseWithEdit[] = respuestas.map((r) => ({
       ...r,
       editado: r.creadoEn.getTime() !== r.actualizadoEn.getTime(),
       hijos: r.hijos.map((h) => ({
@@ -159,18 +165,18 @@ export class ReviewResponsesService {
   }
 
   private buildResponseTree(
-    respuestasRaiz: ResenaRespuestaWithRelations[],
-    todas: ResenaRespuestaWithRelations[],
-  ): ResenaRespuestaWithRelations[] {
+    respuestasRaiz: ResponseWithEdit[],
+    todas: ResponseWithEdit[],
+  ): ResponseTree[] {
     return respuestasRaiz.map((resp) => {
       const hijosRespuestas = todas.filter((r) => r.parentId === resp.id);
       return {
         ...resp,
         hijos:
           hijosRespuestas.length > 0
-            ? (this.buildResponseTree(hijosRespuestas, todas) as any)
+            ? this.buildResponseTree(hijosRespuestas, todas)
             : [],
-      } as ResenaRespuestaWithRelations;
+      } as ResponseTree;
     });
   }
 

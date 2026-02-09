@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -210,7 +210,7 @@ export type ResenaGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 export type ResenaGroupByOutputType = {
   id: number
   cursoId: number | null
-  productoId: number
+  productoId: number | null
   usuarioId: number
   puntaje: number
   comentario: string | null
@@ -243,7 +243,7 @@ export type ResenaWhereInput = {
   NOT?: Prisma.ResenaWhereInput | Prisma.ResenaWhereInput[]
   id?: Prisma.IntFilter<"Resena"> | number
   cursoId?: Prisma.IntNullableFilter<"Resena"> | number | null
-  productoId?: Prisma.IntFilter<"Resena"> | number
+  productoId?: Prisma.IntNullableFilter<"Resena"> | number | null
   usuarioId?: Prisma.IntFilter<"Resena"> | number
   puntaje?: Prisma.IntFilter<"Resena"> | number
   comentario?: Prisma.StringNullableFilter<"Resena"> | string | null
@@ -251,14 +251,14 @@ export type ResenaWhereInput = {
   curso?: Prisma.XOR<Prisma.CursoNullableScalarRelationFilter, Prisma.CursoWhereInput> | null
   producto?: Prisma.XOR<Prisma.ProductoNullableScalarRelationFilter, Prisma.ProductoWhereInput> | null
   usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
-  likes?: Prisma.ResenaLikeListRelationFilter
   respuestas?: Prisma.ResenaRespuestaListRelationFilter
+  likes?: Prisma.ResenaLikeListRelationFilter
 }
 
 export type ResenaOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   cursoId?: Prisma.SortOrderInput | Prisma.SortOrder
-  productoId?: Prisma.SortOrder
+  productoId?: Prisma.SortOrderInput | Prisma.SortOrder
   usuarioId?: Prisma.SortOrder
   puntaje?: Prisma.SortOrder
   comentario?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -266,8 +266,8 @@ export type ResenaOrderByWithRelationInput = {
   curso?: Prisma.CursoOrderByWithRelationInput
   producto?: Prisma.ProductoOrderByWithRelationInput
   usuario?: Prisma.UsuarioOrderByWithRelationInput
-  likes?: Prisma.ResenaLikeOrderByRelationAggregateInput
   respuestas?: Prisma.ResenaRespuestaOrderByRelationAggregateInput
+  likes?: Prisma.ResenaLikeOrderByRelationAggregateInput
   _relevance?: Prisma.ResenaOrderByRelevanceInput
 }
 
@@ -279,7 +279,7 @@ export type ResenaWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ResenaWhereInput[]
   NOT?: Prisma.ResenaWhereInput | Prisma.ResenaWhereInput[]
   cursoId?: Prisma.IntNullableFilter<"Resena"> | number | null
-  productoId?: Prisma.IntFilter<"Resena"> | number
+  productoId?: Prisma.IntNullableFilter<"Resena"> | number | null
   usuarioId?: Prisma.IntFilter<"Resena"> | number
   puntaje?: Prisma.IntFilter<"Resena"> | number
   comentario?: Prisma.StringNullableFilter<"Resena"> | string | null
@@ -287,14 +287,14 @@ export type ResenaWhereUniqueInput = Prisma.AtLeast<{
   curso?: Prisma.XOR<Prisma.CursoNullableScalarRelationFilter, Prisma.CursoWhereInput> | null
   producto?: Prisma.XOR<Prisma.ProductoNullableScalarRelationFilter, Prisma.ProductoWhereInput> | null
   usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
-  likes?: Prisma.ResenaLikeListRelationFilter
   respuestas?: Prisma.ResenaRespuestaListRelationFilter
+  likes?: Prisma.ResenaLikeListRelationFilter
 }, "id" | "cursoId_usuarioId" | "productoId_usuarioId">
 
 export type ResenaOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   cursoId?: Prisma.SortOrderInput | Prisma.SortOrder
-  productoId?: Prisma.SortOrder
+  productoId?: Prisma.SortOrderInput | Prisma.SortOrder
   usuarioId?: Prisma.SortOrder
   puntaje?: Prisma.SortOrder
   comentario?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -312,7 +312,7 @@ export type ResenaScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ResenaScalarWhereWithAggregatesInput | Prisma.ResenaScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Resena"> | number
   cursoId?: Prisma.IntNullableWithAggregatesFilter<"Resena"> | number | null
-  productoId?: Prisma.IntWithAggregatesFilter<"Resena"> | number
+  productoId?: Prisma.IntNullableWithAggregatesFilter<"Resena"> | number | null
   usuarioId?: Prisma.IntWithAggregatesFilter<"Resena"> | number
   puntaje?: Prisma.IntWithAggregatesFilter<"Resena"> | number
   comentario?: Prisma.StringNullableWithAggregatesFilter<"Resena"> | string | null
@@ -326,20 +326,20 @@ export type ResenaCreateInput = {
   curso?: Prisma.CursoCreateNestedOneWithoutResenasInput
   producto?: Prisma.ProductoCreateNestedOneWithoutResenasInput
   usuario: Prisma.UsuarioCreateNestedOneWithoutResenasInput
-  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaUncheckedCreateInput = {
   id?: number
   cursoId?: number | null
-  productoId: number
+  productoId?: number | null
   usuarioId: number
   puntaje: number
   comentario?: string | null
   creadoEn?: Date | string
-  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaUpdateInput = {
@@ -349,26 +349,26 @@ export type ResenaUpdateInput = {
   curso?: Prisma.CursoUpdateOneWithoutResenasNestedInput
   producto?: Prisma.ProductoUpdateOneWithoutResenasNestedInput
   usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenasNestedInput
-  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaCreateManyInput = {
   id?: number
   cursoId?: number | null
-  productoId: number
+  productoId?: number | null
   usuarioId: number
   puntaje: number
   comentario?: string | null
@@ -384,7 +384,7 @@ export type ResenaUpdateManyMutationInput = {
 export type ResenaUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -628,19 +628,19 @@ export type ResenaCreateWithoutUsuarioInput = {
   creadoEn?: Date | string
   curso?: Prisma.CursoCreateNestedOneWithoutResenasInput
   producto?: Prisma.ProductoCreateNestedOneWithoutResenasInput
-  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaUncheckedCreateWithoutUsuarioInput = {
   id?: number
   cursoId?: number | null
-  productoId: number
+  productoId?: number | null
   puntaje: number
   comentario?: string | null
   creadoEn?: Date | string
-  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaCreateOrConnectWithoutUsuarioInput = {
@@ -675,7 +675,7 @@ export type ResenaScalarWhereInput = {
   NOT?: Prisma.ResenaScalarWhereInput | Prisma.ResenaScalarWhereInput[]
   id?: Prisma.IntFilter<"Resena"> | number
   cursoId?: Prisma.IntNullableFilter<"Resena"> | number | null
-  productoId?: Prisma.IntFilter<"Resena"> | number
+  productoId?: Prisma.IntNullableFilter<"Resena"> | number | null
   usuarioId?: Prisma.IntFilter<"Resena"> | number
   puntaje?: Prisma.IntFilter<"Resena"> | number
   comentario?: Prisma.StringNullableFilter<"Resena"> | string | null
@@ -688,19 +688,19 @@ export type ResenaCreateWithoutCursoInput = {
   creadoEn?: Date | string
   producto?: Prisma.ProductoCreateNestedOneWithoutResenasInput
   usuario: Prisma.UsuarioCreateNestedOneWithoutResenasInput
-  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaUncheckedCreateWithoutCursoInput = {
   id?: number
-  productoId: number
+  productoId?: number | null
   usuarioId: number
   puntaje: number
   comentario?: string | null
   creadoEn?: Date | string
-  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaCreateOrConnectWithoutCursoInput = {
@@ -735,8 +735,8 @@ export type ResenaCreateWithoutProductoInput = {
   creadoEn?: Date | string
   curso?: Prisma.CursoCreateNestedOneWithoutResenasInput
   usuario: Prisma.UsuarioCreateNestedOneWithoutResenasInput
-  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaUncheckedCreateWithoutProductoInput = {
@@ -746,8 +746,8 @@ export type ResenaUncheckedCreateWithoutProductoInput = {
   puntaje: number
   comentario?: string | null
   creadoEn?: Date | string
-  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
   respuestas?: Prisma.ResenaRespuestaUncheckedCreateNestedManyWithoutResenaInput
+  likes?: Prisma.ResenaLikeUncheckedCreateNestedManyWithoutResenaInput
 }
 
 export type ResenaCreateOrConnectWithoutProductoInput = {
@@ -789,7 +789,7 @@ export type ResenaCreateWithoutLikesInput = {
 export type ResenaUncheckedCreateWithoutLikesInput = {
   id?: number
   cursoId?: number | null
-  productoId: number
+  productoId?: number | null
   usuarioId: number
   puntaje: number
   comentario?: string | null
@@ -826,7 +826,7 @@ export type ResenaUpdateWithoutLikesInput = {
 export type ResenaUncheckedUpdateWithoutLikesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -847,7 +847,7 @@ export type ResenaCreateWithoutRespuestasInput = {
 export type ResenaUncheckedCreateWithoutRespuestasInput = {
   id?: number
   cursoId?: number | null
-  productoId: number
+  productoId?: number | null
   usuarioId: number
   puntaje: number
   comentario?: string | null
@@ -884,7 +884,7 @@ export type ResenaUpdateWithoutRespuestasInput = {
 export type ResenaUncheckedUpdateWithoutRespuestasInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -895,7 +895,7 @@ export type ResenaUncheckedUpdateWithoutRespuestasInput = {
 export type ResenaCreateManyUsuarioInput = {
   id?: number
   cursoId?: number | null
-  productoId: number
+  productoId?: number | null
   puntaje: number
   comentario?: string | null
   creadoEn?: Date | string
@@ -907,25 +907,25 @@ export type ResenaUpdateWithoutUsuarioInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   curso?: Prisma.CursoUpdateOneWithoutResenasNestedInput
   producto?: Prisma.ProductoUpdateOneWithoutResenasNestedInput
-  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateWithoutUsuarioInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateManyWithoutUsuarioInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   cursoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -933,7 +933,7 @@ export type ResenaUncheckedUpdateManyWithoutUsuarioInput = {
 
 export type ResenaCreateManyCursoInput = {
   id?: number
-  productoId: number
+  productoId?: number | null
   usuarioId: number
   puntaje: number
   comentario?: string | null
@@ -946,24 +946,24 @@ export type ResenaUpdateWithoutCursoInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   producto?: Prisma.ProductoUpdateOneWithoutResenasNestedInput
   usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenasNestedInput
-  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateWithoutCursoInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateManyWithoutCursoInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  productoId?: Prisma.IntFieldUpdateOperationsInput | number
+  productoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -985,8 +985,8 @@ export type ResenaUpdateWithoutProductoInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   curso?: Prisma.CursoUpdateOneWithoutResenasNestedInput
   usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenasNestedInput
-  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateWithoutProductoInput = {
@@ -996,8 +996,8 @@ export type ResenaUncheckedUpdateWithoutProductoInput = {
   puntaje?: Prisma.IntFieldUpdateOperationsInput | number
   comentario?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
   respuestas?: Prisma.ResenaRespuestaUncheckedUpdateManyWithoutResenaNestedInput
+  likes?: Prisma.ResenaLikeUncheckedUpdateManyWithoutResenaNestedInput
 }
 
 export type ResenaUncheckedUpdateManyWithoutProductoInput = {
@@ -1015,13 +1015,13 @@ export type ResenaUncheckedUpdateManyWithoutProductoInput = {
  */
 
 export type ResenaCountOutputType = {
-  likes: number
   respuestas: number
+  likes: number
 }
 
 export type ResenaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  likes?: boolean | ResenaCountOutputTypeCountLikesArgs
   respuestas?: boolean | ResenaCountOutputTypeCountRespuestasArgs
+  likes?: boolean | ResenaCountOutputTypeCountLikesArgs
 }
 
 /**
@@ -1037,15 +1037,15 @@ export type ResenaCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exten
 /**
  * ResenaCountOutputType without action
  */
-export type ResenaCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ResenaLikeWhereInput
+export type ResenaCountOutputTypeCountRespuestasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ResenaRespuestaWhereInput
 }
 
 /**
  * ResenaCountOutputType without action
  */
-export type ResenaCountOutputTypeCountRespuestasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ResenaRespuestaWhereInput
+export type ResenaCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ResenaLikeWhereInput
 }
 
 
@@ -1060,8 +1060,8 @@ export type ResenaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   curso?: boolean | Prisma.Resena$cursoArgs<ExtArgs>
   producto?: boolean | Prisma.Resena$productoArgs<ExtArgs>
   usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
-  likes?: boolean | Prisma.Resena$likesArgs<ExtArgs>
   respuestas?: boolean | Prisma.Resena$respuestasArgs<ExtArgs>
+  likes?: boolean | Prisma.Resena$likesArgs<ExtArgs>
   _count?: boolean | Prisma.ResenaCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["resena"]>
 
@@ -1082,8 +1082,8 @@ export type ResenaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   curso?: boolean | Prisma.Resena$cursoArgs<ExtArgs>
   producto?: boolean | Prisma.Resena$productoArgs<ExtArgs>
   usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
-  likes?: boolean | Prisma.Resena$likesArgs<ExtArgs>
   respuestas?: boolean | Prisma.Resena$respuestasArgs<ExtArgs>
+  likes?: boolean | Prisma.Resena$likesArgs<ExtArgs>
   _count?: boolean | Prisma.ResenaCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -1093,13 +1093,13 @@ export type $ResenaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     curso: Prisma.$CursoPayload<ExtArgs> | null
     producto: Prisma.$ProductoPayload<ExtArgs> | null
     usuario: Prisma.$UsuarioPayload<ExtArgs>
-    likes: Prisma.$ResenaLikePayload<ExtArgs>[]
     respuestas: Prisma.$ResenaRespuestaPayload<ExtArgs>[]
+    likes: Prisma.$ResenaLikePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     cursoId: number | null
-    productoId: number
+    productoId: number | null
     usuarioId: number
     puntaje: number
     comentario: string | null
@@ -1447,8 +1447,8 @@ export interface Prisma__ResenaClient<T, Null = never, ExtArgs extends runtime.T
   curso<T extends Prisma.Resena$cursoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Resena$cursoArgs<ExtArgs>>): Prisma.Prisma__CursoClient<runtime.Types.Result.GetResult<Prisma.$CursoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   producto<T extends Prisma.Resena$productoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Resena$productoArgs<ExtArgs>>): Prisma.Prisma__ProductoClient<runtime.Types.Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   usuario<T extends Prisma.UsuarioDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UsuarioDefaultArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  likes<T extends Prisma.Resena$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Resena$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   respuestas<T extends Prisma.Resena$respuestasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Resena$respuestasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaRespuestaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  likes<T extends Prisma.Resena$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Resena$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1866,30 +1866,6 @@ export type Resena$productoArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
- * Resena.likes
- */
-export type Resena$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ResenaLike
-   */
-  select?: Prisma.ResenaLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ResenaLike
-   */
-  omit?: Prisma.ResenaLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaLikeInclude<ExtArgs> | null
-  where?: Prisma.ResenaLikeWhereInput
-  orderBy?: Prisma.ResenaLikeOrderByWithRelationInput | Prisma.ResenaLikeOrderByWithRelationInput[]
-  cursor?: Prisma.ResenaLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ResenaLikeScalarFieldEnum | Prisma.ResenaLikeScalarFieldEnum[]
-}
-
-/**
  * Resena.respuestas
  */
 export type Resena$respuestasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1911,6 +1887,30 @@ export type Resena$respuestasArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.ResenaRespuestaScalarFieldEnum | Prisma.ResenaRespuestaScalarFieldEnum[]
+}
+
+/**
+ * Resena.likes
+ */
+export type Resena$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ResenaLike
+   */
+  select?: Prisma.ResenaLikeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ResenaLike
+   */
+  omit?: Prisma.ResenaLikeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ResenaLikeInclude<ExtArgs> | null
+  where?: Prisma.ResenaLikeWhereInput
+  orderBy?: Prisma.ResenaLikeOrderByWithRelationInput | Prisma.ResenaLikeOrderByWithRelationInput[]
+  cursor?: Prisma.ResenaLikeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ResenaLikeScalarFieldEnum | Prisma.ResenaLikeScalarFieldEnum[]
 }
 
 /**

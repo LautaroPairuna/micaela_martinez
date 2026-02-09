@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -29,52 +29,52 @@ export type AggregateLeccion = {
 export type LeccionAvgAggregateOutputType = {
   id: number | null
   moduloId: number | null
-  duracionS: number | null
   orden: number | null
+  duracion: number | null
 }
 
 export type LeccionSumAggregateOutputType = {
   id: number | null
   moduloId: number | null
-  duracionS: number | null
   orden: number | null
+  duracion: number | null
 }
 
 export type LeccionMinAggregateOutputType = {
   id: number | null
   moduloId: number | null
   titulo: string | null
-  duracionS: number | null
   rutaSrc: string | null
-  previewUrl: string | null
   orden: number | null
   tipo: $Enums.TipoLeccion | null
   descripcion: string | null
+  previewUrl: string | null
+  duracion: number | null
 }
 
 export type LeccionMaxAggregateOutputType = {
   id: number | null
   moduloId: number | null
   titulo: string | null
-  duracionS: number | null
   rutaSrc: string | null
-  previewUrl: string | null
   orden: number | null
   tipo: $Enums.TipoLeccion | null
   descripcion: string | null
+  previewUrl: string | null
+  duracion: number | null
 }
 
 export type LeccionCountAggregateOutputType = {
   id: number
   moduloId: number
   titulo: number
-  duracionS: number
   rutaSrc: number
-  previewUrl: number
   orden: number
   tipo: number
   descripcion: number
   contenido: number
+  previewUrl: number
+  duracion: number
   _all: number
 }
 
@@ -82,52 +82,52 @@ export type LeccionCountAggregateOutputType = {
 export type LeccionAvgAggregateInputType = {
   id?: true
   moduloId?: true
-  duracionS?: true
   orden?: true
+  duracion?: true
 }
 
 export type LeccionSumAggregateInputType = {
   id?: true
   moduloId?: true
-  duracionS?: true
   orden?: true
+  duracion?: true
 }
 
 export type LeccionMinAggregateInputType = {
   id?: true
   moduloId?: true
   titulo?: true
-  duracionS?: true
   rutaSrc?: true
-  previewUrl?: true
   orden?: true
   tipo?: true
   descripcion?: true
+  previewUrl?: true
+  duracion?: true
 }
 
 export type LeccionMaxAggregateInputType = {
   id?: true
   moduloId?: true
   titulo?: true
-  duracionS?: true
   rutaSrc?: true
-  previewUrl?: true
   orden?: true
   tipo?: true
   descripcion?: true
+  previewUrl?: true
+  duracion?: true
 }
 
 export type LeccionCountAggregateInputType = {
   id?: true
   moduloId?: true
   titulo?: true
-  duracionS?: true
   rutaSrc?: true
-  previewUrl?: true
   orden?: true
   tipo?: true
   descripcion?: true
   contenido?: true
+  previewUrl?: true
+  duracion?: true
   _all?: true
 }
 
@@ -221,13 +221,13 @@ export type LeccionGroupByOutputType = {
   id: number
   moduloId: number
   titulo: string
-  duracionS: number
   rutaSrc: string | null
-  previewUrl: string | null
   orden: number
   tipo: $Enums.TipoLeccion
   descripcion: string | null
   contenido: runtime.JsonValue | null
+  previewUrl: string | null
+  duracion: number
   _count: LeccionCountAggregateOutputType | null
   _avg: LeccionAvgAggregateOutputType | null
   _sum: LeccionSumAggregateOutputType | null
@@ -257,13 +257,13 @@ export type LeccionWhereInput = {
   id?: Prisma.IntFilter<"Leccion"> | number
   moduloId?: Prisma.IntFilter<"Leccion"> | number
   titulo?: Prisma.StringFilter<"Leccion"> | string
-  duracionS?: Prisma.IntFilter<"Leccion"> | number
   rutaSrc?: Prisma.StringNullableFilter<"Leccion"> | string | null
-  previewUrl?: Prisma.StringNullableFilter<"Leccion"> | string | null
   orden?: Prisma.IntFilter<"Leccion"> | number
   tipo?: Prisma.EnumTipoLeccionFilter<"Leccion"> | $Enums.TipoLeccion
   descripcion?: Prisma.StringNullableFilter<"Leccion"> | string | null
   contenido?: Prisma.JsonNullableFilter<"Leccion">
+  previewUrl?: Prisma.StringNullableFilter<"Leccion"> | string | null
+  duracion?: Prisma.FloatFilter<"Leccion"> | number
   modulo?: Prisma.XOR<Prisma.ModuloScalarRelationFilter, Prisma.ModuloWhereInput>
 }
 
@@ -271,13 +271,13 @@ export type LeccionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
   titulo?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   rutaSrc?: Prisma.SortOrderInput | Prisma.SortOrder
-  previewUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   orden?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   descripcion?: Prisma.SortOrderInput | Prisma.SortOrder
   contenido?: Prisma.SortOrderInput | Prisma.SortOrder
+  previewUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  duracion?: Prisma.SortOrder
   modulo?: Prisma.ModuloOrderByWithRelationInput
   _relevance?: Prisma.LeccionOrderByRelevanceInput
 }
@@ -289,13 +289,13 @@ export type LeccionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.LeccionWhereInput | Prisma.LeccionWhereInput[]
   moduloId?: Prisma.IntFilter<"Leccion"> | number
   titulo?: Prisma.StringFilter<"Leccion"> | string
-  duracionS?: Prisma.IntFilter<"Leccion"> | number
   rutaSrc?: Prisma.StringNullableFilter<"Leccion"> | string | null
-  previewUrl?: Prisma.StringNullableFilter<"Leccion"> | string | null
   orden?: Prisma.IntFilter<"Leccion"> | number
   tipo?: Prisma.EnumTipoLeccionFilter<"Leccion"> | $Enums.TipoLeccion
   descripcion?: Prisma.StringNullableFilter<"Leccion"> | string | null
   contenido?: Prisma.JsonNullableFilter<"Leccion">
+  previewUrl?: Prisma.StringNullableFilter<"Leccion"> | string | null
+  duracion?: Prisma.FloatFilter<"Leccion"> | number
   modulo?: Prisma.XOR<Prisma.ModuloScalarRelationFilter, Prisma.ModuloWhereInput>
 }, "id">
 
@@ -303,13 +303,13 @@ export type LeccionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
   titulo?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   rutaSrc?: Prisma.SortOrderInput | Prisma.SortOrder
-  previewUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   orden?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   descripcion?: Prisma.SortOrderInput | Prisma.SortOrder
   contenido?: Prisma.SortOrderInput | Prisma.SortOrder
+  previewUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  duracion?: Prisma.SortOrder
   _count?: Prisma.LeccionCountOrderByAggregateInput
   _avg?: Prisma.LeccionAvgOrderByAggregateInput
   _max?: Prisma.LeccionMaxOrderByAggregateInput
@@ -324,24 +324,24 @@ export type LeccionScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Leccion"> | number
   moduloId?: Prisma.IntWithAggregatesFilter<"Leccion"> | number
   titulo?: Prisma.StringWithAggregatesFilter<"Leccion"> | string
-  duracionS?: Prisma.IntWithAggregatesFilter<"Leccion"> | number
   rutaSrc?: Prisma.StringNullableWithAggregatesFilter<"Leccion"> | string | null
-  previewUrl?: Prisma.StringNullableWithAggregatesFilter<"Leccion"> | string | null
   orden?: Prisma.IntWithAggregatesFilter<"Leccion"> | number
   tipo?: Prisma.EnumTipoLeccionWithAggregatesFilter<"Leccion"> | $Enums.TipoLeccion
   descripcion?: Prisma.StringNullableWithAggregatesFilter<"Leccion"> | string | null
   contenido?: Prisma.JsonNullableWithAggregatesFilter<"Leccion">
+  previewUrl?: Prisma.StringNullableWithAggregatesFilter<"Leccion"> | string | null
+  duracion?: Prisma.FloatWithAggregatesFilter<"Leccion"> | number
 }
 
 export type LeccionCreateInput = {
   titulo: string
-  duracionS?: number
   rutaSrc?: string | null
-  previewUrl?: string | null
   orden: number
   tipo?: $Enums.TipoLeccion
   descripcion?: string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: string | null
+  duracion?: number
   modulo: Prisma.ModuloCreateNestedOneWithoutLeccionesInput
 }
 
@@ -349,24 +349,24 @@ export type LeccionUncheckedCreateInput = {
   id?: number
   moduloId: number
   titulo: string
-  duracionS?: number
   rutaSrc?: string | null
-  previewUrl?: string | null
   orden: number
   tipo?: $Enums.TipoLeccion
   descripcion?: string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: string | null
+  duracion?: number
 }
 
 export type LeccionUpdateInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
   modulo?: Prisma.ModuloUpdateOneRequiredWithoutLeccionesNestedInput
 }
 
@@ -374,50 +374,50 @@ export type LeccionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moduloId?: Prisma.IntFieldUpdateOperationsInput | number
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type LeccionCreateManyInput = {
   id?: number
   moduloId: number
   titulo: string
-  duracionS?: number
   rutaSrc?: string | null
-  previewUrl?: string | null
   orden: number
   tipo?: $Enums.TipoLeccion
   descripcion?: string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: string | null
+  duracion?: number
 }
 
 export type LeccionUpdateManyMutationInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type LeccionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moduloId?: Prisma.IntFieldUpdateOperationsInput | number
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type LeccionListRelationFilter = {
@@ -440,51 +440,51 @@ export type LeccionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
   titulo?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   rutaSrc?: Prisma.SortOrder
-  previewUrl?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   descripcion?: Prisma.SortOrder
   contenido?: Prisma.SortOrder
+  previewUrl?: Prisma.SortOrder
+  duracion?: Prisma.SortOrder
 }
 
 export type LeccionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   orden?: Prisma.SortOrder
+  duracion?: Prisma.SortOrder
 }
 
 export type LeccionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
   titulo?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   rutaSrc?: Prisma.SortOrder
-  previewUrl?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   descripcion?: Prisma.SortOrder
+  previewUrl?: Prisma.SortOrder
+  duracion?: Prisma.SortOrder
 }
 
 export type LeccionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
   titulo?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   rutaSrc?: Prisma.SortOrder
-  previewUrl?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   descripcion?: Prisma.SortOrder
+  previewUrl?: Prisma.SortOrder
+  duracion?: Prisma.SortOrder
 }
 
 export type LeccionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moduloId?: Prisma.SortOrder
-  duracionS?: Prisma.SortOrder
   orden?: Prisma.SortOrder
+  duracion?: Prisma.SortOrder
 }
 
 export type LeccionCreateNestedManyWithoutModuloInput = {
@@ -533,27 +533,35 @@ export type EnumTipoLeccionFieldUpdateOperationsInput = {
   set?: $Enums.TipoLeccion
 }
 
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type LeccionCreateWithoutModuloInput = {
   titulo: string
-  duracionS?: number
   rutaSrc?: string | null
-  previewUrl?: string | null
   orden: number
   tipo?: $Enums.TipoLeccion
   descripcion?: string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: string | null
+  duracion?: number
 }
 
 export type LeccionUncheckedCreateWithoutModuloInput = {
   id?: number
   titulo: string
-  duracionS?: number
   rutaSrc?: string | null
-  previewUrl?: string | null
   orden: number
   tipo?: $Enums.TipoLeccion
   descripcion?: string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: string | null
+  duracion?: number
 }
 
 export type LeccionCreateOrConnectWithoutModuloInput = {
@@ -589,60 +597,60 @@ export type LeccionScalarWhereInput = {
   id?: Prisma.IntFilter<"Leccion"> | number
   moduloId?: Prisma.IntFilter<"Leccion"> | number
   titulo?: Prisma.StringFilter<"Leccion"> | string
-  duracionS?: Prisma.IntFilter<"Leccion"> | number
   rutaSrc?: Prisma.StringNullableFilter<"Leccion"> | string | null
-  previewUrl?: Prisma.StringNullableFilter<"Leccion"> | string | null
   orden?: Prisma.IntFilter<"Leccion"> | number
   tipo?: Prisma.EnumTipoLeccionFilter<"Leccion"> | $Enums.TipoLeccion
   descripcion?: Prisma.StringNullableFilter<"Leccion"> | string | null
   contenido?: Prisma.JsonNullableFilter<"Leccion">
+  previewUrl?: Prisma.StringNullableFilter<"Leccion"> | string | null
+  duracion?: Prisma.FloatFilter<"Leccion"> | number
 }
 
 export type LeccionCreateManyModuloInput = {
   id?: number
   titulo: string
-  duracionS?: number
   rutaSrc?: string | null
-  previewUrl?: string | null
   orden: number
   tipo?: $Enums.TipoLeccion
   descripcion?: string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: string | null
+  duracion?: number
 }
 
 export type LeccionUpdateWithoutModuloInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type LeccionUncheckedUpdateWithoutModuloInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type LeccionUncheckedUpdateManyWithoutModuloInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  duracionS?: Prisma.IntFieldUpdateOperationsInput | number
   rutaSrc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   tipo?: Prisma.EnumTipoLeccionFieldUpdateOperationsInput | $Enums.TipoLeccion
   descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contenido?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  previewUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  duracion?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 
@@ -651,13 +659,13 @@ export type LeccionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   id?: boolean
   moduloId?: boolean
   titulo?: boolean
-  duracionS?: boolean
   rutaSrc?: boolean
-  previewUrl?: boolean
   orden?: boolean
   tipo?: boolean
   descripcion?: boolean
   contenido?: boolean
+  previewUrl?: boolean
+  duracion?: boolean
   modulo?: boolean | Prisma.ModuloDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["leccion"]>
 
@@ -667,16 +675,16 @@ export type LeccionSelectScalar = {
   id?: boolean
   moduloId?: boolean
   titulo?: boolean
-  duracionS?: boolean
   rutaSrc?: boolean
-  previewUrl?: boolean
   orden?: boolean
   tipo?: boolean
   descripcion?: boolean
   contenido?: boolean
+  previewUrl?: boolean
+  duracion?: boolean
 }
 
-export type LeccionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "moduloId" | "titulo" | "duracionS" | "rutaSrc" | "previewUrl" | "orden" | "tipo" | "descripcion" | "contenido", ExtArgs["result"]["leccion"]>
+export type LeccionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "moduloId" | "titulo" | "rutaSrc" | "orden" | "tipo" | "descripcion" | "contenido" | "previewUrl" | "duracion", ExtArgs["result"]["leccion"]>
 export type LeccionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   modulo?: boolean | Prisma.ModuloDefaultArgs<ExtArgs>
 }
@@ -690,13 +698,13 @@ export type $LeccionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: number
     moduloId: number
     titulo: string
-    duracionS: number
     rutaSrc: string | null
-    previewUrl: string | null
     orden: number
     tipo: $Enums.TipoLeccion
     descripcion: string | null
     contenido: runtime.JsonValue | null
+    previewUrl: string | null
+    duracion: number
   }, ExtArgs["result"]["leccion"]>
   composites: {}
 }
@@ -1070,13 +1078,13 @@ export interface LeccionFieldRefs {
   readonly id: Prisma.FieldRef<"Leccion", 'Int'>
   readonly moduloId: Prisma.FieldRef<"Leccion", 'Int'>
   readonly titulo: Prisma.FieldRef<"Leccion", 'String'>
-  readonly duracionS: Prisma.FieldRef<"Leccion", 'Int'>
   readonly rutaSrc: Prisma.FieldRef<"Leccion", 'String'>
-  readonly previewUrl: Prisma.FieldRef<"Leccion", 'String'>
   readonly orden: Prisma.FieldRef<"Leccion", 'Int'>
   readonly tipo: Prisma.FieldRef<"Leccion", 'TipoLeccion'>
   readonly descripcion: Prisma.FieldRef<"Leccion", 'String'>
   readonly contenido: Prisma.FieldRef<"Leccion", 'Json'>
+  readonly previewUrl: Prisma.FieldRef<"Leccion", 'String'>
+  readonly duracion: Prisma.FieldRef<"Leccion", 'Float'>
 }
     
 

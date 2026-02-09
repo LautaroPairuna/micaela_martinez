@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -328,7 +328,7 @@ export type ResenaRespuestaCreateInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   resena: Prisma.ResenaCreateNestedOneWithoutRespuestasInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutRespuestasResenasInput
+  usuario: Prisma.UsuarioCreateNestedOneWithoutResenaRespuestasInput
   parent?: Prisma.ResenaRespuestaCreateNestedOneWithoutHijosInput
   hijos?: Prisma.ResenaRespuestaCreateNestedManyWithoutParentInput
 }
@@ -351,7 +351,7 @@ export type ResenaRespuestaUpdateInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resena?: Prisma.ResenaUpdateOneRequiredWithoutRespuestasNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutRespuestasResenasNestedInput
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenaRespuestasNestedInput
   parent?: Prisma.ResenaRespuestaUpdateOneWithoutHijosNestedInput
   hijos?: Prisma.ResenaRespuestaUpdateManyWithoutParentNestedInput
 }
@@ -673,7 +673,7 @@ export type ResenaRespuestaCreateWithoutResenaInput = {
   eliminado?: boolean
   creadoEn?: Date | string
   actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutRespuestasResenasInput
+  usuario: Prisma.UsuarioCreateNestedOneWithoutResenaRespuestasInput
   parent?: Prisma.ResenaRespuestaCreateNestedOneWithoutHijosInput
   hijos?: Prisma.ResenaRespuestaCreateNestedManyWithoutParentInput
 }
@@ -721,7 +721,7 @@ export type ResenaRespuestaCreateWithoutHijosInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   resena: Prisma.ResenaCreateNestedOneWithoutRespuestasInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutRespuestasResenasInput
+  usuario: Prisma.UsuarioCreateNestedOneWithoutResenaRespuestasInput
   parent?: Prisma.ResenaRespuestaCreateNestedOneWithoutHijosInput
 }
 
@@ -747,7 +747,7 @@ export type ResenaRespuestaCreateWithoutParentInput = {
   creadoEn?: Date | string
   actualizadoEn?: Date | string
   resena: Prisma.ResenaCreateNestedOneWithoutRespuestasInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutRespuestasResenasInput
+  usuario: Prisma.UsuarioCreateNestedOneWithoutResenaRespuestasInput
   hijos?: Prisma.ResenaRespuestaCreateNestedManyWithoutParentInput
 }
 
@@ -789,7 +789,7 @@ export type ResenaRespuestaUpdateWithoutHijosInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resena?: Prisma.ResenaUpdateOneRequiredWithoutRespuestasNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutRespuestasResenasNestedInput
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenaRespuestasNestedInput
   parent?: Prisma.ResenaRespuestaUpdateOneWithoutHijosNestedInput
 }
 
@@ -876,7 +876,7 @@ export type ResenaRespuestaUpdateWithoutResenaInput = {
   eliminado?: Prisma.BoolFieldUpdateOperationsInput | boolean
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutRespuestasResenasNestedInput
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenaRespuestasNestedInput
   parent?: Prisma.ResenaRespuestaUpdateOneWithoutHijosNestedInput
   hijos?: Prisma.ResenaRespuestaUpdateManyWithoutParentNestedInput
 }
@@ -918,7 +918,7 @@ export type ResenaRespuestaUpdateWithoutParentInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resena?: Prisma.ResenaUpdateOneRequiredWithoutRespuestasNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutRespuestasResenasNestedInput
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenaRespuestasNestedInput
   hijos?: Prisma.ResenaRespuestaUpdateManyWithoutParentNestedInput
 }
 

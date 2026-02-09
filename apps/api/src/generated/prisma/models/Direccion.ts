@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -300,7 +300,6 @@ export type DireccionWhereInput = {
   predeterminada?: Prisma.BoolFilter<"Direccion"> | boolean
   creadoEn?: Prisma.DateTimeFilter<"Direccion"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"Direccion"> | Date | string
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
   ordenesEnvio?: Prisma.OrdenListRelationFilter
   ordenesFacturacion?: Prisma.OrdenListRelationFilter
 }
@@ -321,7 +320,6 @@ export type DireccionOrderByWithRelationInput = {
   predeterminada?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
-  usuario?: Prisma.UsuarioOrderByWithRelationInput
   ordenesEnvio?: Prisma.OrdenOrderByRelationAggregateInput
   ordenesFacturacion?: Prisma.OrdenOrderByRelationAggregateInput
   _relevance?: Prisma.DireccionOrderByRelevanceInput
@@ -346,7 +344,6 @@ export type DireccionWhereUniqueInput = Prisma.AtLeast<{
   predeterminada?: Prisma.BoolFilter<"Direccion"> | boolean
   creadoEn?: Prisma.DateTimeFilter<"Direccion"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"Direccion"> | Date | string
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
   ordenesEnvio?: Prisma.OrdenListRelationFilter
   ordenesFacturacion?: Prisma.OrdenListRelationFilter
 }, "id">
@@ -396,6 +393,7 @@ export type DireccionScalarWhereWithAggregatesInput = {
 }
 
 export type DireccionCreateInput = {
+  usuarioId: number
   etiqueta?: string | null
   nombre: string
   telefono?: string | null
@@ -409,7 +407,6 @@ export type DireccionCreateInput = {
   predeterminada?: boolean
   creadoEn?: Date | string
   actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutDireccionesInput
   ordenesEnvio?: Prisma.OrdenCreateNestedManyWithoutDireccionEnvioInput
   ordenesFacturacion?: Prisma.OrdenCreateNestedManyWithoutDireccionFacturacionInput
 }
@@ -435,6 +432,7 @@ export type DireccionUncheckedCreateInput = {
 }
 
 export type DireccionUpdateInput = {
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nombre?: Prisma.StringFieldUpdateOperationsInput | string
   telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -448,7 +446,6 @@ export type DireccionUpdateInput = {
   predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutDireccionesNestedInput
   ordenesEnvio?: Prisma.OrdenUpdateManyWithoutDireccionEnvioNestedInput
   ordenesFacturacion?: Prisma.OrdenUpdateManyWithoutDireccionFacturacionNestedInput
 }
@@ -492,6 +489,7 @@ export type DireccionCreateManyInput = {
 }
 
 export type DireccionUpdateManyMutationInput = {
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nombre?: Prisma.StringFieldUpdateOperationsInput | string
   telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -523,16 +521,6 @@ export type DireccionUncheckedUpdateManyInput = {
   predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type DireccionListRelationFilter = {
-  every?: Prisma.DireccionWhereInput
-  some?: Prisma.DireccionWhereInput
-  none?: Prisma.DireccionWhereInput
-}
-
-export type DireccionOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
 }
 
 export type DireccionNullableScalarRelationFilter = {
@@ -610,48 +598,6 @@ export type DireccionSumOrderByAggregateInput = {
   usuarioId?: Prisma.SortOrder
 }
 
-export type DireccionCreateNestedManyWithoutUsuarioInput = {
-  create?: Prisma.XOR<Prisma.DireccionCreateWithoutUsuarioInput, Prisma.DireccionUncheckedCreateWithoutUsuarioInput> | Prisma.DireccionCreateWithoutUsuarioInput[] | Prisma.DireccionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.DireccionCreateOrConnectWithoutUsuarioInput | Prisma.DireccionCreateOrConnectWithoutUsuarioInput[]
-  createMany?: Prisma.DireccionCreateManyUsuarioInputEnvelope
-  connect?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-}
-
-export type DireccionUncheckedCreateNestedManyWithoutUsuarioInput = {
-  create?: Prisma.XOR<Prisma.DireccionCreateWithoutUsuarioInput, Prisma.DireccionUncheckedCreateWithoutUsuarioInput> | Prisma.DireccionCreateWithoutUsuarioInput[] | Prisma.DireccionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.DireccionCreateOrConnectWithoutUsuarioInput | Prisma.DireccionCreateOrConnectWithoutUsuarioInput[]
-  createMany?: Prisma.DireccionCreateManyUsuarioInputEnvelope
-  connect?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-}
-
-export type DireccionUpdateManyWithoutUsuarioNestedInput = {
-  create?: Prisma.XOR<Prisma.DireccionCreateWithoutUsuarioInput, Prisma.DireccionUncheckedCreateWithoutUsuarioInput> | Prisma.DireccionCreateWithoutUsuarioInput[] | Prisma.DireccionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.DireccionCreateOrConnectWithoutUsuarioInput | Prisma.DireccionCreateOrConnectWithoutUsuarioInput[]
-  upsert?: Prisma.DireccionUpsertWithWhereUniqueWithoutUsuarioInput | Prisma.DireccionUpsertWithWhereUniqueWithoutUsuarioInput[]
-  createMany?: Prisma.DireccionCreateManyUsuarioInputEnvelope
-  set?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  disconnect?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  delete?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  connect?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  update?: Prisma.DireccionUpdateWithWhereUniqueWithoutUsuarioInput | Prisma.DireccionUpdateWithWhereUniqueWithoutUsuarioInput[]
-  updateMany?: Prisma.DireccionUpdateManyWithWhereWithoutUsuarioInput | Prisma.DireccionUpdateManyWithWhereWithoutUsuarioInput[]
-  deleteMany?: Prisma.DireccionScalarWhereInput | Prisma.DireccionScalarWhereInput[]
-}
-
-export type DireccionUncheckedUpdateManyWithoutUsuarioNestedInput = {
-  create?: Prisma.XOR<Prisma.DireccionCreateWithoutUsuarioInput, Prisma.DireccionUncheckedCreateWithoutUsuarioInput> | Prisma.DireccionCreateWithoutUsuarioInput[] | Prisma.DireccionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.DireccionCreateOrConnectWithoutUsuarioInput | Prisma.DireccionCreateOrConnectWithoutUsuarioInput[]
-  upsert?: Prisma.DireccionUpsertWithWhereUniqueWithoutUsuarioInput | Prisma.DireccionUpsertWithWhereUniqueWithoutUsuarioInput[]
-  createMany?: Prisma.DireccionCreateManyUsuarioInputEnvelope
-  set?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  disconnect?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  delete?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  connect?: Prisma.DireccionWhereUniqueInput | Prisma.DireccionWhereUniqueInput[]
-  update?: Prisma.DireccionUpdateWithWhereUniqueWithoutUsuarioInput | Prisma.DireccionUpdateWithWhereUniqueWithoutUsuarioInput[]
-  updateMany?: Prisma.DireccionUpdateManyWithWhereWithoutUsuarioInput | Prisma.DireccionUpdateManyWithWhereWithoutUsuarioInput[]
-  deleteMany?: Prisma.DireccionScalarWhereInput | Prisma.DireccionScalarWhereInput[]
-}
-
 export type DireccionCreateNestedOneWithoutOrdenesEnvioInput = {
   create?: Prisma.XOR<Prisma.DireccionCreateWithoutOrdenesEnvioInput, Prisma.DireccionUncheckedCreateWithoutOrdenesEnvioInput>
   connectOrCreate?: Prisma.DireccionCreateOrConnectWithoutOrdenesEnvioInput
@@ -684,91 +630,8 @@ export type DireccionUpdateOneWithoutOrdenesFacturacionNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DireccionUpdateToOneWithWhereWithoutOrdenesFacturacionInput, Prisma.DireccionUpdateWithoutOrdenesFacturacionInput>, Prisma.DireccionUncheckedUpdateWithoutOrdenesFacturacionInput>
 }
 
-export type DireccionCreateWithoutUsuarioInput = {
-  etiqueta?: string | null
-  nombre: string
-  telefono?: string | null
-  calle: string
-  numero?: string | null
-  pisoDepto?: string | null
-  ciudad: string
-  provincia: string
-  cp: string
-  pais?: string
-  predeterminada?: boolean
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  ordenesEnvio?: Prisma.OrdenCreateNestedManyWithoutDireccionEnvioInput
-  ordenesFacturacion?: Prisma.OrdenCreateNestedManyWithoutDireccionFacturacionInput
-}
-
-export type DireccionUncheckedCreateWithoutUsuarioInput = {
-  id?: number
-  etiqueta?: string | null
-  nombre: string
-  telefono?: string | null
-  calle: string
-  numero?: string | null
-  pisoDepto?: string | null
-  ciudad: string
-  provincia: string
-  cp: string
-  pais?: string
-  predeterminada?: boolean
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  ordenesEnvio?: Prisma.OrdenUncheckedCreateNestedManyWithoutDireccionEnvioInput
-  ordenesFacturacion?: Prisma.OrdenUncheckedCreateNestedManyWithoutDireccionFacturacionInput
-}
-
-export type DireccionCreateOrConnectWithoutUsuarioInput = {
-  where: Prisma.DireccionWhereUniqueInput
-  create: Prisma.XOR<Prisma.DireccionCreateWithoutUsuarioInput, Prisma.DireccionUncheckedCreateWithoutUsuarioInput>
-}
-
-export type DireccionCreateManyUsuarioInputEnvelope = {
-  data: Prisma.DireccionCreateManyUsuarioInput | Prisma.DireccionCreateManyUsuarioInput[]
-  skipDuplicates?: boolean
-}
-
-export type DireccionUpsertWithWhereUniqueWithoutUsuarioInput = {
-  where: Prisma.DireccionWhereUniqueInput
-  update: Prisma.XOR<Prisma.DireccionUpdateWithoutUsuarioInput, Prisma.DireccionUncheckedUpdateWithoutUsuarioInput>
-  create: Prisma.XOR<Prisma.DireccionCreateWithoutUsuarioInput, Prisma.DireccionUncheckedCreateWithoutUsuarioInput>
-}
-
-export type DireccionUpdateWithWhereUniqueWithoutUsuarioInput = {
-  where: Prisma.DireccionWhereUniqueInput
-  data: Prisma.XOR<Prisma.DireccionUpdateWithoutUsuarioInput, Prisma.DireccionUncheckedUpdateWithoutUsuarioInput>
-}
-
-export type DireccionUpdateManyWithWhereWithoutUsuarioInput = {
-  where: Prisma.DireccionScalarWhereInput
-  data: Prisma.XOR<Prisma.DireccionUpdateManyMutationInput, Prisma.DireccionUncheckedUpdateManyWithoutUsuarioInput>
-}
-
-export type DireccionScalarWhereInput = {
-  AND?: Prisma.DireccionScalarWhereInput | Prisma.DireccionScalarWhereInput[]
-  OR?: Prisma.DireccionScalarWhereInput[]
-  NOT?: Prisma.DireccionScalarWhereInput | Prisma.DireccionScalarWhereInput[]
-  id?: Prisma.IntFilter<"Direccion"> | number
-  usuarioId?: Prisma.IntFilter<"Direccion"> | number
-  etiqueta?: Prisma.StringNullableFilter<"Direccion"> | string | null
-  nombre?: Prisma.StringFilter<"Direccion"> | string
-  telefono?: Prisma.StringNullableFilter<"Direccion"> | string | null
-  calle?: Prisma.StringFilter<"Direccion"> | string
-  numero?: Prisma.StringNullableFilter<"Direccion"> | string | null
-  pisoDepto?: Prisma.StringNullableFilter<"Direccion"> | string | null
-  ciudad?: Prisma.StringFilter<"Direccion"> | string
-  provincia?: Prisma.StringFilter<"Direccion"> | string
-  cp?: Prisma.StringFilter<"Direccion"> | string
-  pais?: Prisma.StringFilter<"Direccion"> | string
-  predeterminada?: Prisma.BoolFilter<"Direccion"> | boolean
-  creadoEn?: Prisma.DateTimeFilter<"Direccion"> | Date | string
-  actualizadoEn?: Prisma.DateTimeFilter<"Direccion"> | Date | string
-}
-
 export type DireccionCreateWithoutOrdenesEnvioInput = {
+  usuarioId: number
   etiqueta?: string | null
   nombre: string
   telefono?: string | null
@@ -782,7 +645,6 @@ export type DireccionCreateWithoutOrdenesEnvioInput = {
   predeterminada?: boolean
   creadoEn?: Date | string
   actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutDireccionesInput
   ordenesFacturacion?: Prisma.OrdenCreateNestedManyWithoutDireccionFacturacionInput
 }
 
@@ -811,6 +673,7 @@ export type DireccionCreateOrConnectWithoutOrdenesEnvioInput = {
 }
 
 export type DireccionCreateWithoutOrdenesFacturacionInput = {
+  usuarioId: number
   etiqueta?: string | null
   nombre: string
   telefono?: string | null
@@ -824,7 +687,6 @@ export type DireccionCreateWithoutOrdenesFacturacionInput = {
   predeterminada?: boolean
   creadoEn?: Date | string
   actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutDireccionesInput
   ordenesEnvio?: Prisma.OrdenCreateNestedManyWithoutDireccionEnvioInput
 }
 
@@ -864,6 +726,7 @@ export type DireccionUpdateToOneWithWhereWithoutOrdenesEnvioInput = {
 }
 
 export type DireccionUpdateWithoutOrdenesEnvioInput = {
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nombre?: Prisma.StringFieldUpdateOperationsInput | string
   telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -877,7 +740,6 @@ export type DireccionUpdateWithoutOrdenesEnvioInput = {
   predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutDireccionesNestedInput
   ordenesFacturacion?: Prisma.OrdenUpdateManyWithoutDireccionFacturacionNestedInput
 }
 
@@ -912,6 +774,7 @@ export type DireccionUpdateToOneWithWhereWithoutOrdenesFacturacionInput = {
 }
 
 export type DireccionUpdateWithoutOrdenesFacturacionInput = {
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nombre?: Prisma.StringFieldUpdateOperationsInput | string
   telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -925,7 +788,6 @@ export type DireccionUpdateWithoutOrdenesFacturacionInput = {
   predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutDireccionesNestedInput
   ordenesEnvio?: Prisma.OrdenUpdateManyWithoutDireccionEnvioNestedInput
 }
 
@@ -946,77 +808,6 @@ export type DireccionUncheckedUpdateWithoutOrdenesFacturacionInput = {
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ordenesEnvio?: Prisma.OrdenUncheckedUpdateManyWithoutDireccionEnvioNestedInput
-}
-
-export type DireccionCreateManyUsuarioInput = {
-  id?: number
-  etiqueta?: string | null
-  nombre: string
-  telefono?: string | null
-  calle: string
-  numero?: string | null
-  pisoDepto?: string | null
-  ciudad: string
-  provincia: string
-  cp: string
-  pais?: string
-  predeterminada?: boolean
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type DireccionUpdateWithoutUsuarioInput = {
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nombre?: Prisma.StringFieldUpdateOperationsInput | string
-  telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  calle?: Prisma.StringFieldUpdateOperationsInput | string
-  numero?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  pisoDepto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ciudad?: Prisma.StringFieldUpdateOperationsInput | string
-  provincia?: Prisma.StringFieldUpdateOperationsInput | string
-  cp?: Prisma.StringFieldUpdateOperationsInput | string
-  pais?: Prisma.StringFieldUpdateOperationsInput | string
-  predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ordenesEnvio?: Prisma.OrdenUpdateManyWithoutDireccionEnvioNestedInput
-  ordenesFacturacion?: Prisma.OrdenUpdateManyWithoutDireccionFacturacionNestedInput
-}
-
-export type DireccionUncheckedUpdateWithoutUsuarioInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nombre?: Prisma.StringFieldUpdateOperationsInput | string
-  telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  calle?: Prisma.StringFieldUpdateOperationsInput | string
-  numero?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  pisoDepto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ciudad?: Prisma.StringFieldUpdateOperationsInput | string
-  provincia?: Prisma.StringFieldUpdateOperationsInput | string
-  cp?: Prisma.StringFieldUpdateOperationsInput | string
-  pais?: Prisma.StringFieldUpdateOperationsInput | string
-  predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ordenesEnvio?: Prisma.OrdenUncheckedUpdateManyWithoutDireccionEnvioNestedInput
-  ordenesFacturacion?: Prisma.OrdenUncheckedUpdateManyWithoutDireccionFacturacionNestedInput
-}
-
-export type DireccionUncheckedUpdateManyWithoutUsuarioInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nombre?: Prisma.StringFieldUpdateOperationsInput | string
-  telefono?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  calle?: Prisma.StringFieldUpdateOperationsInput | string
-  numero?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  pisoDepto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ciudad?: Prisma.StringFieldUpdateOperationsInput | string
-  provincia?: Prisma.StringFieldUpdateOperationsInput | string
-  cp?: Prisma.StringFieldUpdateOperationsInput | string
-  pais?: Prisma.StringFieldUpdateOperationsInput | string
-  predeterminada?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -1075,7 +866,6 @@ export type DireccionSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   predeterminada?: boolean
   creadoEn?: boolean
   actualizadoEn?: boolean
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
   ordenesEnvio?: boolean | Prisma.Direccion$ordenesEnvioArgs<ExtArgs>
   ordenesFacturacion?: boolean | Prisma.Direccion$ordenesFacturacionArgs<ExtArgs>
   _count?: boolean | Prisma.DireccionCountOutputTypeDefaultArgs<ExtArgs>
@@ -1103,7 +893,6 @@ export type DireccionSelectScalar = {
 
 export type DireccionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "usuarioId" | "etiqueta" | "nombre" | "telefono" | "calle" | "numero" | "pisoDepto" | "ciudad" | "provincia" | "cp" | "pais" | "predeterminada" | "creadoEn" | "actualizadoEn", ExtArgs["result"]["direccion"]>
 export type DireccionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
   ordenesEnvio?: boolean | Prisma.Direccion$ordenesEnvioArgs<ExtArgs>
   ordenesFacturacion?: boolean | Prisma.Direccion$ordenesFacturacionArgs<ExtArgs>
   _count?: boolean | Prisma.DireccionCountOutputTypeDefaultArgs<ExtArgs>
@@ -1112,7 +901,6 @@ export type DireccionInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type $DireccionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Direccion"
   objects: {
-    usuario: Prisma.$UsuarioPayload<ExtArgs>
     ordenesEnvio: Prisma.$OrdenPayload<ExtArgs>[]
     ordenesFacturacion: Prisma.$OrdenPayload<ExtArgs>[]
   }
@@ -1472,7 +1260,6 @@ readonly fields: DireccionFieldRefs;
  */
 export interface Prisma__DireccionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  usuario<T extends Prisma.UsuarioDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UsuarioDefaultArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   ordenesEnvio<T extends Prisma.Direccion$ordenesEnvioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Direccion$ordenesEnvioArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ordenesFacturacion<T extends Prisma.Direccion$ordenesFacturacionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Direccion$ordenesFacturacionArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**

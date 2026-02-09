@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -316,12 +316,11 @@ export type CursoWhereInput = {
   ratingConteo?: Prisma.IntFilter<"Curso"> | number
   creadoEn?: Prisma.DateTimeFilter<"Curso"> | Date | string
   instructorId?: Prisma.IntNullableFilter<"Curso"> | number | null
+  instructor?: Prisma.XOR<Prisma.UsuarioNullableScalarRelationFilter, Prisma.UsuarioWhereInput> | null
   modulos?: Prisma.ModuloListRelationFilter
   resenas?: Prisma.ResenaListRelationFilter
   inscripciones?: Prisma.InscripcionListRelationFilter
-  borradores?: Prisma.ResenaBorradorListRelationFilter
   itemsCarrito?: Prisma.ItemCarritoListRelationFilter
-  instructor?: Prisma.XOR<Prisma.UsuarioNullableScalarRelationFilter, Prisma.UsuarioWhereInput> | null
 }
 
 export type CursoOrderByWithRelationInput = {
@@ -341,12 +340,11 @@ export type CursoOrderByWithRelationInput = {
   ratingConteo?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   instructorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  instructor?: Prisma.UsuarioOrderByWithRelationInput
   modulos?: Prisma.ModuloOrderByRelationAggregateInput
   resenas?: Prisma.ResenaOrderByRelationAggregateInput
   inscripciones?: Prisma.InscripcionOrderByRelationAggregateInput
-  borradores?: Prisma.ResenaBorradorOrderByRelationAggregateInput
   itemsCarrito?: Prisma.ItemCarritoOrderByRelationAggregateInput
-  instructor?: Prisma.UsuarioOrderByWithRelationInput
   _relevance?: Prisma.CursoOrderByRelevanceInput
 }
 
@@ -370,12 +368,11 @@ export type CursoWhereUniqueInput = Prisma.AtLeast<{
   ratingConteo?: Prisma.IntFilter<"Curso"> | number
   creadoEn?: Prisma.DateTimeFilter<"Curso"> | Date | string
   instructorId?: Prisma.IntNullableFilter<"Curso"> | number | null
+  instructor?: Prisma.XOR<Prisma.UsuarioNullableScalarRelationFilter, Prisma.UsuarioWhereInput> | null
   modulos?: Prisma.ModuloListRelationFilter
   resenas?: Prisma.ResenaListRelationFilter
   inscripciones?: Prisma.InscripcionListRelationFilter
-  borradores?: Prisma.ResenaBorradorListRelationFilter
   itemsCarrito?: Prisma.ItemCarritoListRelationFilter
-  instructor?: Prisma.XOR<Prisma.UsuarioNullableScalarRelationFilter, Prisma.UsuarioWhereInput> | null
 }, "id" | "slug">
 
 export type CursoOrderByWithAggregationInput = {
@@ -439,12 +436,11 @@ export type CursoCreateInput = {
   ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: number
   creadoEn?: Date | string
+  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosImpartidosInput
   modulos?: Prisma.ModuloCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutCursoInput
-  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosDictaInput
 }
 
 export type CursoUncheckedCreateInput = {
@@ -467,7 +463,6 @@ export type CursoUncheckedCreateInput = {
   modulos?: Prisma.ModuloUncheckedCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutCursoInput
 }
 
@@ -486,12 +481,11 @@ export type CursoUpdateInput = {
   ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instructor?: Prisma.UsuarioUpdateOneWithoutCursosImpartidosNestedInput
   modulos?: Prisma.ModuloUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutCursoNestedInput
-  instructor?: Prisma.UsuarioUpdateOneWithoutCursosDictaNestedInput
 }
 
 export type CursoUncheckedUpdateInput = {
@@ -514,7 +508,6 @@ export type CursoUncheckedUpdateInput = {
   modulos?: Prisma.ModuloUncheckedUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutCursoNestedInput
 }
 
@@ -780,22 +773,6 @@ export type CursoUpdateOneWithoutResenasNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CursoUpdateToOneWithWhereWithoutResenasInput, Prisma.CursoUpdateWithoutResenasInput>, Prisma.CursoUncheckedUpdateWithoutResenasInput>
 }
 
-export type CursoCreateNestedOneWithoutBorradoresInput = {
-  create?: Prisma.XOR<Prisma.CursoCreateWithoutBorradoresInput, Prisma.CursoUncheckedCreateWithoutBorradoresInput>
-  connectOrCreate?: Prisma.CursoCreateOrConnectWithoutBorradoresInput
-  connect?: Prisma.CursoWhereUniqueInput
-}
-
-export type CursoUpdateOneWithoutBorradoresNestedInput = {
-  create?: Prisma.XOR<Prisma.CursoCreateWithoutBorradoresInput, Prisma.CursoUncheckedCreateWithoutBorradoresInput>
-  connectOrCreate?: Prisma.CursoCreateOrConnectWithoutBorradoresInput
-  upsert?: Prisma.CursoUpsertWithoutBorradoresInput
-  disconnect?: Prisma.CursoWhereInput | boolean
-  delete?: Prisma.CursoWhereInput | boolean
-  connect?: Prisma.CursoWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.CursoUpdateToOneWithWhereWithoutBorradoresInput, Prisma.CursoUpdateWithoutBorradoresInput>, Prisma.CursoUncheckedUpdateWithoutBorradoresInput>
-}
-
 export type CursoCreateNestedOneWithoutItemsCarritoInput = {
   create?: Prisma.XOR<Prisma.CursoCreateWithoutItemsCarritoInput, Prisma.CursoUncheckedCreateWithoutItemsCarritoInput>
   connectOrCreate?: Prisma.CursoCreateOrConnectWithoutItemsCarritoInput
@@ -830,7 +807,6 @@ export type CursoCreateWithoutInstructorInput = {
   modulos?: Prisma.ModuloCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutCursoInput
 }
 
@@ -853,7 +829,6 @@ export type CursoUncheckedCreateWithoutInstructorInput = {
   modulos?: Prisma.ModuloUncheckedCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutCursoInput
 }
 
@@ -920,11 +895,10 @@ export type CursoCreateWithoutInscripcionesInput = {
   ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: number
   creadoEn?: Date | string
+  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosImpartidosInput
   modulos?: Prisma.ModuloCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutCursoInput
-  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosDictaInput
 }
 
 export type CursoUncheckedCreateWithoutInscripcionesInput = {
@@ -946,7 +920,6 @@ export type CursoUncheckedCreateWithoutInscripcionesInput = {
   instructorId?: number | null
   modulos?: Prisma.ModuloUncheckedCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutCursoInput
 }
 
@@ -981,11 +954,10 @@ export type CursoUpdateWithoutInscripcionesInput = {
   ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instructor?: Prisma.UsuarioUpdateOneWithoutCursosImpartidosNestedInput
   modulos?: Prisma.ModuloUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutCursoNestedInput
-  instructor?: Prisma.UsuarioUpdateOneWithoutCursosDictaNestedInput
 }
 
 export type CursoUncheckedUpdateWithoutInscripcionesInput = {
@@ -1007,7 +979,6 @@ export type CursoUncheckedUpdateWithoutInscripcionesInput = {
   instructorId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   modulos?: Prisma.ModuloUncheckedUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutCursoNestedInput
 }
 
@@ -1026,11 +997,10 @@ export type CursoCreateWithoutModulosInput = {
   ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: number
   creadoEn?: Date | string
+  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosImpartidosInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutCursoInput
-  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosDictaInput
 }
 
 export type CursoUncheckedCreateWithoutModulosInput = {
@@ -1052,7 +1022,6 @@ export type CursoUncheckedCreateWithoutModulosInput = {
   instructorId?: number | null
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutCursoInput
 }
 
@@ -1087,11 +1056,10 @@ export type CursoUpdateWithoutModulosInput = {
   ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instructor?: Prisma.UsuarioUpdateOneWithoutCursosImpartidosNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutCursoNestedInput
-  instructor?: Prisma.UsuarioUpdateOneWithoutCursosDictaNestedInput
 }
 
 export type CursoUncheckedUpdateWithoutModulosInput = {
@@ -1113,7 +1081,6 @@ export type CursoUncheckedUpdateWithoutModulosInput = {
   instructorId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutCursoNestedInput
 }
 
@@ -1132,11 +1099,10 @@ export type CursoCreateWithoutResenasInput = {
   ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: number
   creadoEn?: Date | string
+  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosImpartidosInput
   modulos?: Prisma.ModuloCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutCursoInput
-  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosDictaInput
 }
 
 export type CursoUncheckedCreateWithoutResenasInput = {
@@ -1158,7 +1124,6 @@ export type CursoUncheckedCreateWithoutResenasInput = {
   instructorId?: number | null
   modulos?: Prisma.ModuloUncheckedCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutCursoInput
 }
 
@@ -1193,11 +1158,10 @@ export type CursoUpdateWithoutResenasInput = {
   ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instructor?: Prisma.UsuarioUpdateOneWithoutCursosImpartidosNestedInput
   modulos?: Prisma.ModuloUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutCursoNestedInput
-  instructor?: Prisma.UsuarioUpdateOneWithoutCursosDictaNestedInput
 }
 
 export type CursoUncheckedUpdateWithoutResenasInput = {
@@ -1219,113 +1183,6 @@ export type CursoUncheckedUpdateWithoutResenasInput = {
   instructorId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   modulos?: Prisma.ModuloUncheckedUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput
-  itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutCursoNestedInput
-}
-
-export type CursoCreateWithoutBorradoresInput = {
-  slug: string
-  titulo: string
-  resumen?: string | null
-  descripcionMD?: string | null
-  requisitos?: string | null
-  precio: number
-  publicado?: boolean
-  nivel?: $Enums.NivelCurso
-  portada?: string | null
-  destacado?: boolean
-  tags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: number
-  creadoEn?: Date | string
-  modulos?: Prisma.ModuloCreateNestedManyWithoutCursoInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutCursoInput
-  inscripciones?: Prisma.InscripcionCreateNestedManyWithoutCursoInput
-  itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutCursoInput
-  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosDictaInput
-}
-
-export type CursoUncheckedCreateWithoutBorradoresInput = {
-  id?: number
-  slug: string
-  titulo: string
-  resumen?: string | null
-  descripcionMD?: string | null
-  requisitos?: string | null
-  precio: number
-  publicado?: boolean
-  nivel?: $Enums.NivelCurso
-  portada?: string | null
-  destacado?: boolean
-  tags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: number
-  creadoEn?: Date | string
-  instructorId?: number | null
-  modulos?: Prisma.ModuloUncheckedCreateNestedManyWithoutCursoInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutCursoInput
-  inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutCursoInput
-  itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutCursoInput
-}
-
-export type CursoCreateOrConnectWithoutBorradoresInput = {
-  where: Prisma.CursoWhereUniqueInput
-  create: Prisma.XOR<Prisma.CursoCreateWithoutBorradoresInput, Prisma.CursoUncheckedCreateWithoutBorradoresInput>
-}
-
-export type CursoUpsertWithoutBorradoresInput = {
-  update: Prisma.XOR<Prisma.CursoUpdateWithoutBorradoresInput, Prisma.CursoUncheckedUpdateWithoutBorradoresInput>
-  create: Prisma.XOR<Prisma.CursoCreateWithoutBorradoresInput, Prisma.CursoUncheckedCreateWithoutBorradoresInput>
-  where?: Prisma.CursoWhereInput
-}
-
-export type CursoUpdateToOneWithWhereWithoutBorradoresInput = {
-  where?: Prisma.CursoWhereInput
-  data: Prisma.XOR<Prisma.CursoUpdateWithoutBorradoresInput, Prisma.CursoUncheckedUpdateWithoutBorradoresInput>
-}
-
-export type CursoUpdateWithoutBorradoresInput = {
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  resumen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcionMD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requisitos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  precio?: Prisma.IntFieldUpdateOperationsInput | number
-  publicado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  nivel?: Prisma.EnumNivelCursoFieldUpdateOperationsInput | $Enums.NivelCurso
-  portada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  destacado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  tags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modulos?: Prisma.ModuloUpdateManyWithoutCursoNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutCursoNestedInput
-  inscripciones?: Prisma.InscripcionUpdateManyWithoutCursoNestedInput
-  itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutCursoNestedInput
-  instructor?: Prisma.UsuarioUpdateOneWithoutCursosDictaNestedInput
-}
-
-export type CursoUncheckedUpdateWithoutBorradoresInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  resumen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcionMD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requisitos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  precio?: Prisma.IntFieldUpdateOperationsInput | number
-  publicado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  nivel?: Prisma.EnumNivelCursoFieldUpdateOperationsInput | $Enums.NivelCurso
-  portada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  destacado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  tags?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  instructorId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  modulos?: Prisma.ModuloUncheckedUpdateManyWithoutCursoNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutCursoNestedInput
-  inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutCursoNestedInput
 }
 
@@ -1344,11 +1201,10 @@ export type CursoCreateWithoutItemsCarritoInput = {
   ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: number
   creadoEn?: Date | string
+  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosImpartidosInput
   modulos?: Prisma.ModuloCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutCursoInput
-  instructor?: Prisma.UsuarioCreateNestedOneWithoutCursosDictaInput
 }
 
 export type CursoUncheckedCreateWithoutItemsCarritoInput = {
@@ -1371,7 +1227,6 @@ export type CursoUncheckedCreateWithoutItemsCarritoInput = {
   modulos?: Prisma.ModuloUncheckedCreateNestedManyWithoutCursoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutCursoInput
   inscripciones?: Prisma.InscripcionUncheckedCreateNestedManyWithoutCursoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutCursoInput
 }
 
 export type CursoCreateOrConnectWithoutItemsCarritoInput = {
@@ -1405,11 +1260,10 @@ export type CursoUpdateWithoutItemsCarritoInput = {
   ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  instructor?: Prisma.UsuarioUpdateOneWithoutCursosImpartidosNestedInput
   modulos?: Prisma.ModuloUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutCursoNestedInput
-  instructor?: Prisma.UsuarioUpdateOneWithoutCursosDictaNestedInput
 }
 
 export type CursoUncheckedUpdateWithoutItemsCarritoInput = {
@@ -1432,7 +1286,6 @@ export type CursoUncheckedUpdateWithoutItemsCarritoInput = {
   modulos?: Prisma.ModuloUncheckedUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput
 }
 
 export type CursoCreateManyInstructorInput = {
@@ -1471,7 +1324,6 @@ export type CursoUpdateWithoutInstructorInput = {
   modulos?: Prisma.ModuloUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutCursoNestedInput
 }
 
@@ -1494,7 +1346,6 @@ export type CursoUncheckedUpdateWithoutInstructorInput = {
   modulos?: Prisma.ModuloUncheckedUpdateManyWithoutCursoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutCursoNestedInput
   inscripciones?: Prisma.InscripcionUncheckedUpdateManyWithoutCursoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutCursoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutCursoNestedInput
 }
 
@@ -1525,7 +1376,6 @@ export type CursoCountOutputType = {
   modulos: number
   resenas: number
   inscripciones: number
-  borradores: number
   itemsCarrito: number
 }
 
@@ -1533,7 +1383,6 @@ export type CursoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   modulos?: boolean | CursoCountOutputTypeCountModulosArgs
   resenas?: boolean | CursoCountOutputTypeCountResenasArgs
   inscripciones?: boolean | CursoCountOutputTypeCountInscripcionesArgs
-  borradores?: boolean | CursoCountOutputTypeCountBorradoresArgs
   itemsCarrito?: boolean | CursoCountOutputTypeCountItemsCarritoArgs
 }
 
@@ -1571,13 +1420,6 @@ export type CursoCountOutputTypeCountInscripcionesArgs<ExtArgs extends runtime.T
 /**
  * CursoCountOutputType without action
  */
-export type CursoCountOutputTypeCountBorradoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ResenaBorradorWhereInput
-}
-
-/**
- * CursoCountOutputType without action
- */
 export type CursoCountOutputTypeCountItemsCarritoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ItemCarritoWhereInput
 }
@@ -1600,12 +1442,11 @@ export type CursoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ratingConteo?: boolean
   creadoEn?: boolean
   instructorId?: boolean
+  instructor?: boolean | Prisma.Curso$instructorArgs<ExtArgs>
   modulos?: boolean | Prisma.Curso$modulosArgs<ExtArgs>
   resenas?: boolean | Prisma.Curso$resenasArgs<ExtArgs>
   inscripciones?: boolean | Prisma.Curso$inscripcionesArgs<ExtArgs>
-  borradores?: boolean | Prisma.Curso$borradoresArgs<ExtArgs>
   itemsCarrito?: boolean | Prisma.Curso$itemsCarritoArgs<ExtArgs>
-  instructor?: boolean | Prisma.Curso$instructorArgs<ExtArgs>
   _count?: boolean | Prisma.CursoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["curso"]>
 
@@ -1632,24 +1473,22 @@ export type CursoSelectScalar = {
 
 export type CursoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "titulo" | "resumen" | "descripcionMD" | "requisitos" | "precio" | "publicado" | "nivel" | "portada" | "destacado" | "tags" | "ratingProm" | "ratingConteo" | "creadoEn" | "instructorId", ExtArgs["result"]["curso"]>
 export type CursoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  instructor?: boolean | Prisma.Curso$instructorArgs<ExtArgs>
   modulos?: boolean | Prisma.Curso$modulosArgs<ExtArgs>
   resenas?: boolean | Prisma.Curso$resenasArgs<ExtArgs>
   inscripciones?: boolean | Prisma.Curso$inscripcionesArgs<ExtArgs>
-  borradores?: boolean | Prisma.Curso$borradoresArgs<ExtArgs>
   itemsCarrito?: boolean | Prisma.Curso$itemsCarritoArgs<ExtArgs>
-  instructor?: boolean | Prisma.Curso$instructorArgs<ExtArgs>
   _count?: boolean | Prisma.CursoCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $CursoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Curso"
   objects: {
+    instructor: Prisma.$UsuarioPayload<ExtArgs> | null
     modulos: Prisma.$ModuloPayload<ExtArgs>[]
     resenas: Prisma.$ResenaPayload<ExtArgs>[]
     inscripciones: Prisma.$InscripcionPayload<ExtArgs>[]
-    borradores: Prisma.$ResenaBorradorPayload<ExtArgs>[]
     itemsCarrito: Prisma.$ItemCarritoPayload<ExtArgs>[]
-    instructor: Prisma.$UsuarioPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -2008,12 +1847,11 @@ readonly fields: CursoFieldRefs;
  */
 export interface Prisma__CursoClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  instructor<T extends Prisma.Curso$instructorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$instructorArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   modulos<T extends Prisma.Curso$modulosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$modulosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ModuloPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   resenas<T extends Prisma.Curso$resenasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$resenasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   inscripciones<T extends Prisma.Curso$inscripcionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$inscripcionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InscripcionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  borradores<T extends Prisma.Curso$borradoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$borradoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaBorradorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   itemsCarrito<T extends Prisma.Curso$itemsCarritoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$itemsCarritoArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ItemCarritoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  instructor<T extends Prisma.Curso$instructorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Curso$instructorArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2402,6 +2240,25 @@ export type CursoDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
+ * Curso.instructor
+ */
+export type Curso$instructorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Usuario
+   */
+  select?: Prisma.UsuarioSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Usuario
+   */
+  omit?: Prisma.UsuarioOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UsuarioInclude<ExtArgs> | null
+  where?: Prisma.UsuarioWhereInput
+}
+
+/**
  * Curso.modulos
  */
 export type Curso$modulosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2474,30 +2331,6 @@ export type Curso$inscripcionesArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
- * Curso.borradores
- */
-export type Curso$borradoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ResenaBorrador
-   */
-  select?: Prisma.ResenaBorradorSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ResenaBorrador
-   */
-  omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  where?: Prisma.ResenaBorradorWhereInput
-  orderBy?: Prisma.ResenaBorradorOrderByWithRelationInput | Prisma.ResenaBorradorOrderByWithRelationInput[]
-  cursor?: Prisma.ResenaBorradorWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ResenaBorradorScalarFieldEnum | Prisma.ResenaBorradorScalarFieldEnum[]
-}
-
-/**
  * Curso.itemsCarrito
  */
 export type Curso$itemsCarritoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2519,25 +2352,6 @@ export type Curso$itemsCarritoArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ItemCarritoScalarFieldEnum | Prisma.ItemCarritoScalarFieldEnum[]
-}
-
-/**
- * Curso.instructor
- */
-export type Curso$instructorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Usuario
-   */
-  select?: Prisma.UsuarioSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Usuario
-   */
-  omit?: Prisma.UsuarioOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UsuarioInclude<ExtArgs> | null
-  where?: Prisma.UsuarioWhereInput
 }
 
 /**

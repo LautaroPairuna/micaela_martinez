@@ -24,30 +24,28 @@ export const Decimal = runtime.Decimal
 
 
 export const NullTypes = {
-  DbNull: runtime.NullTypes.DbNull as (new (secret: never) => typeof runtime.DbNull),
-  JsonNull: runtime.NullTypes.JsonNull as (new (secret: never) => typeof runtime.JsonNull),
-  AnyNull: runtime.NullTypes.AnyNull as (new (secret: never) => typeof runtime.AnyNull),
+  DbNull: runtime.objectEnumValues.classes.DbNull as (new (secret: never) => typeof runtime.objectEnumValues.instances.DbNull),
+  JsonNull: runtime.objectEnumValues.classes.JsonNull as (new (secret: never) => typeof runtime.objectEnumValues.instances.JsonNull),
+  AnyNull: runtime.objectEnumValues.classes.AnyNull as (new (secret: never) => typeof runtime.objectEnumValues.instances.AnyNull),
 }
 /**
  * Helper for filtering JSON entries that have `null` on the database (empty on the db)
  *
  * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
  */
-export const DbNull = runtime.DbNull
-
+export const DbNull = runtime.objectEnumValues.instances.DbNull
 /**
  * Helper for filtering JSON entries that have JSON `null` values (not empty on the db)
  *
  * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
  */
-export const JsonNull = runtime.JsonNull
-
+export const JsonNull = runtime.objectEnumValues.instances.JsonNull
 /**
  * Helper for filtering JSON entries that are `Prisma.DbNull` or `Prisma.JsonNull`
  *
  * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
  */
-export const AnyNull = runtime.AnyNull
+export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 
 export const ModelName = {
@@ -59,6 +57,7 @@ export const ModelName = {
   Inscripcion: 'Inscripcion',
   Modulo: 'Modulo',
   Leccion: 'Leccion',
+  LeccionTipoConfig: 'LeccionTipoConfig',
   Producto: 'Producto',
   ProductoImagen: 'ProductoImagen',
   Marca: 'Marca',
@@ -85,12 +84,12 @@ export type ModelName = (typeof ModelName)[keyof typeof ModelName]
  * Enums
  */
 
-export const TransactionIsolationLevel = {
+export const TransactionIsolationLevel = runtime.makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
   RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
-} as const
+} as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
@@ -186,16 +185,29 @@ export const LeccionScalarFieldEnum = {
   id: 'id',
   moduloId: 'moduloId',
   titulo: 'titulo',
-  duracionS: 'duracionS',
   rutaSrc: 'rutaSrc',
-  previewUrl: 'previewUrl',
   orden: 'orden',
   tipo: 'tipo',
   descripcion: 'descripcion',
-  contenido: 'contenido'
+  contenido: 'contenido',
+  previewUrl: 'previewUrl',
+  duracion: 'duracion'
 } as const
 
 export type LeccionScalarFieldEnum = (typeof LeccionScalarFieldEnum)[keyof typeof LeccionScalarFieldEnum]
+
+
+export const LeccionTipoConfigScalarFieldEnum = {
+  id: 'id',
+  tipo: 'tipo',
+  schema: 'schema',
+  ui: 'ui',
+  version: 'version',
+  creadoEn: 'creadoEn',
+  actualizadoEn: 'actualizadoEn'
+} as const
+
+export type LeccionTipoConfigScalarFieldEnum = (typeof LeccionTipoConfigScalarFieldEnum)[keyof typeof LeccionTipoConfigScalarFieldEnum]
 
 
 export const ProductoScalarFieldEnum = {
@@ -334,17 +346,17 @@ export const SliderScalarFieldEnum = {
   titulo: 'titulo',
   alt: 'alt',
   archivo: 'archivo',
-  subtitulo: 'subtitulo',
-  descripcion: 'descripcion',
-  etiqueta: 'etiqueta',
-  ctaPrimarioTexto: 'ctaPrimarioTexto',
-  ctaPrimarioHref: 'ctaPrimarioHref',
-  ctaSecundarioTexto: 'ctaSecundarioTexto',
-  ctaSecundarioHref: 'ctaSecundarioHref',
   activa: 'activa',
   orden: 'orden',
   creadoEn: 'creadoEn',
-  actualizadoEn: 'actualizadoEn'
+  actualizadoEn: 'actualizadoEn',
+  ctaPrimarioHref: 'ctaPrimarioHref',
+  ctaPrimarioTexto: 'ctaPrimarioTexto',
+  ctaSecundarioHref: 'ctaSecundarioHref',
+  ctaSecundarioTexto: 'ctaSecundarioTexto',
+  descripcion: 'descripcion',
+  etiqueta: 'etiqueta',
+  subtitulo: 'subtitulo'
 } as const
 
 export type SliderScalarFieldEnum = (typeof SliderScalarFieldEnum)[keyof typeof SliderScalarFieldEnum]
@@ -484,15 +496,15 @@ export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
 export const NullableJsonNullValueInput = {
-  DbNull: 'DbNull',
-  JsonNull: 'JsonNull'
+  DbNull: DbNull,
+  JsonNull: JsonNull
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const JsonNullValueInput = {
-  JsonNull: 'JsonNull'
+  JsonNull: JsonNull
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
@@ -524,9 +536,9 @@ export type RoleOrderByRelevanceFieldEnum = (typeof RoleOrderByRelevanceFieldEnu
 
 
 export const JsonNullValueFilter = {
-  DbNull: 'DbNull',
-  JsonNull: 'JsonNull',
-  AnyNull: 'AnyNull'
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
@@ -562,8 +574,8 @@ export type ModuloOrderByRelevanceFieldEnum = (typeof ModuloOrderByRelevanceFiel
 export const LeccionOrderByRelevanceFieldEnum = {
   titulo: 'titulo',
   rutaSrc: 'rutaSrc',
-  previewUrl: 'previewUrl',
-  descripcion: 'descripcion'
+  descripcion: 'descripcion',
+  previewUrl: 'previewUrl'
 } as const
 
 export type LeccionOrderByRelevanceFieldEnum = (typeof LeccionOrderByRelevanceFieldEnum)[keyof typeof LeccionOrderByRelevanceFieldEnum]
@@ -651,13 +663,13 @@ export const SliderOrderByRelevanceFieldEnum = {
   titulo: 'titulo',
   alt: 'alt',
   archivo: 'archivo',
-  subtitulo: 'subtitulo',
+  ctaPrimarioHref: 'ctaPrimarioHref',
+  ctaPrimarioTexto: 'ctaPrimarioTexto',
+  ctaSecundarioHref: 'ctaSecundarioHref',
+  ctaSecundarioTexto: 'ctaSecundarioTexto',
   descripcion: 'descripcion',
   etiqueta: 'etiqueta',
-  ctaPrimarioTexto: 'ctaPrimarioTexto',
-  ctaPrimarioHref: 'ctaPrimarioHref',
-  ctaSecundarioTexto: 'ctaSecundarioTexto',
-  ctaSecundarioHref: 'ctaSecundarioHref'
+  subtitulo: 'subtitulo'
 } as const
 
 export type SliderOrderByRelevanceFieldEnum = (typeof SliderOrderByRelevanceFieldEnum)[keyof typeof SliderOrderByRelevanceFieldEnum]

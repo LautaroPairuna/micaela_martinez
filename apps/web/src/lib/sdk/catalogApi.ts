@@ -64,7 +64,7 @@ export type CourseDetail = CourseListItem & {
     lecciones?: Array<{ 
       id: string;
       titulo?: string | null; 
-      duracionS?: number | null; 
+      duracion?: number | null; 
       rutaSrc?: string | null;
       tipo?: 'VIDEO' | 'TEXTO' | 'DOCUMENTO' | 'QUIZ';
       contenido?: Record<string, unknown>;

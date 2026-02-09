@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -41,17 +41,17 @@ export type SliderMinAggregateOutputType = {
   titulo: string | null
   alt: string | null
   archivo: string | null
-  subtitulo: string | null
-  descripcion: string | null
-  etiqueta: string | null
-  ctaPrimarioTexto: string | null
-  ctaPrimarioHref: string | null
-  ctaSecundarioTexto: string | null
-  ctaSecundarioHref: string | null
   activa: boolean | null
   orden: number | null
   creadoEn: Date | null
   actualizadoEn: Date | null
+  ctaPrimarioHref: string | null
+  ctaPrimarioTexto: string | null
+  ctaSecundarioHref: string | null
+  ctaSecundarioTexto: string | null
+  descripcion: string | null
+  etiqueta: string | null
+  subtitulo: string | null
 }
 
 export type SliderMaxAggregateOutputType = {
@@ -59,17 +59,17 @@ export type SliderMaxAggregateOutputType = {
   titulo: string | null
   alt: string | null
   archivo: string | null
-  subtitulo: string | null
-  descripcion: string | null
-  etiqueta: string | null
-  ctaPrimarioTexto: string | null
-  ctaPrimarioHref: string | null
-  ctaSecundarioTexto: string | null
-  ctaSecundarioHref: string | null
   activa: boolean | null
   orden: number | null
   creadoEn: Date | null
   actualizadoEn: Date | null
+  ctaPrimarioHref: string | null
+  ctaPrimarioTexto: string | null
+  ctaSecundarioHref: string | null
+  ctaSecundarioTexto: string | null
+  descripcion: string | null
+  etiqueta: string | null
+  subtitulo: string | null
 }
 
 export type SliderCountAggregateOutputType = {
@@ -77,17 +77,17 @@ export type SliderCountAggregateOutputType = {
   titulo: number
   alt: number
   archivo: number
-  subtitulo: number
-  descripcion: number
-  etiqueta: number
-  ctaPrimarioTexto: number
-  ctaPrimarioHref: number
-  ctaSecundarioTexto: number
-  ctaSecundarioHref: number
   activa: number
   orden: number
   creadoEn: number
   actualizadoEn: number
+  ctaPrimarioHref: number
+  ctaPrimarioTexto: number
+  ctaSecundarioHref: number
+  ctaSecundarioTexto: number
+  descripcion: number
+  etiqueta: number
+  subtitulo: number
   _all: number
 }
 
@@ -107,17 +107,17 @@ export type SliderMinAggregateInputType = {
   titulo?: true
   alt?: true
   archivo?: true
-  subtitulo?: true
-  descripcion?: true
-  etiqueta?: true
-  ctaPrimarioTexto?: true
-  ctaPrimarioHref?: true
-  ctaSecundarioTexto?: true
-  ctaSecundarioHref?: true
   activa?: true
   orden?: true
   creadoEn?: true
   actualizadoEn?: true
+  ctaPrimarioHref?: true
+  ctaPrimarioTexto?: true
+  ctaSecundarioHref?: true
+  ctaSecundarioTexto?: true
+  descripcion?: true
+  etiqueta?: true
+  subtitulo?: true
 }
 
 export type SliderMaxAggregateInputType = {
@@ -125,17 +125,17 @@ export type SliderMaxAggregateInputType = {
   titulo?: true
   alt?: true
   archivo?: true
-  subtitulo?: true
-  descripcion?: true
-  etiqueta?: true
-  ctaPrimarioTexto?: true
-  ctaPrimarioHref?: true
-  ctaSecundarioTexto?: true
-  ctaSecundarioHref?: true
   activa?: true
   orden?: true
   creadoEn?: true
   actualizadoEn?: true
+  ctaPrimarioHref?: true
+  ctaPrimarioTexto?: true
+  ctaSecundarioHref?: true
+  ctaSecundarioTexto?: true
+  descripcion?: true
+  etiqueta?: true
+  subtitulo?: true
 }
 
 export type SliderCountAggregateInputType = {
@@ -143,17 +143,17 @@ export type SliderCountAggregateInputType = {
   titulo?: true
   alt?: true
   archivo?: true
-  subtitulo?: true
-  descripcion?: true
-  etiqueta?: true
-  ctaPrimarioTexto?: true
-  ctaPrimarioHref?: true
-  ctaSecundarioTexto?: true
-  ctaSecundarioHref?: true
   activa?: true
   orden?: true
   creadoEn?: true
   actualizadoEn?: true
+  ctaPrimarioHref?: true
+  ctaPrimarioTexto?: true
+  ctaSecundarioHref?: true
+  ctaSecundarioTexto?: true
+  descripcion?: true
+  etiqueta?: true
+  subtitulo?: true
   _all?: true
 }
 
@@ -248,17 +248,17 @@ export type SliderGroupByOutputType = {
   titulo: string
   alt: string
   archivo: string
-  subtitulo: string | null
-  descripcion: string | null
-  etiqueta: string | null
-  ctaPrimarioTexto: string | null
-  ctaPrimarioHref: string | null
-  ctaSecundarioTexto: string | null
-  ctaSecundarioHref: string | null
   activa: boolean
   orden: number
   creadoEn: Date
   actualizadoEn: Date
+  ctaPrimarioHref: string | null
+  ctaPrimarioTexto: string | null
+  ctaSecundarioHref: string | null
+  ctaSecundarioTexto: string | null
+  descripcion: string | null
+  etiqueta: string | null
+  subtitulo: string | null
   _count: SliderCountAggregateOutputType | null
   _avg: SliderAvgAggregateOutputType | null
   _sum: SliderSumAggregateOutputType | null
@@ -289,17 +289,17 @@ export type SliderWhereInput = {
   titulo?: Prisma.StringFilter<"Slider"> | string
   alt?: Prisma.StringFilter<"Slider"> | string
   archivo?: Prisma.StringFilter<"Slider"> | string
-  subtitulo?: Prisma.StringNullableFilter<"Slider"> | string | null
-  descripcion?: Prisma.StringNullableFilter<"Slider"> | string | null
-  etiqueta?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaPrimarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaPrimarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaSecundarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaSecundarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
   activa?: Prisma.BoolFilter<"Slider"> | boolean
   orden?: Prisma.IntFilter<"Slider"> | number
   creadoEn?: Prisma.DateTimeFilter<"Slider"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"Slider"> | Date | string
+  ctaPrimarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
+  ctaPrimarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
+  ctaSecundarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
+  ctaSecundarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
+  descripcion?: Prisma.StringNullableFilter<"Slider"> | string | null
+  etiqueta?: Prisma.StringNullableFilter<"Slider"> | string | null
+  subtitulo?: Prisma.StringNullableFilter<"Slider"> | string | null
 }
 
 export type SliderOrderByWithRelationInput = {
@@ -307,17 +307,17 @@ export type SliderOrderByWithRelationInput = {
   titulo?: Prisma.SortOrder
   alt?: Prisma.SortOrder
   archivo?: Prisma.SortOrder
-  subtitulo?: Prisma.SortOrderInput | Prisma.SortOrder
-  descripcion?: Prisma.SortOrderInput | Prisma.SortOrder
-  etiqueta?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaPrimarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaPrimarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaSecundarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaSecundarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
   activa?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
+  ctaPrimarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
+  ctaPrimarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
+  ctaSecundarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
+  ctaSecundarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
+  descripcion?: Prisma.SortOrderInput | Prisma.SortOrder
+  etiqueta?: Prisma.SortOrderInput | Prisma.SortOrder
+  subtitulo?: Prisma.SortOrderInput | Prisma.SortOrder
   _relevance?: Prisma.SliderOrderByRelevanceInput
 }
 
@@ -329,17 +329,17 @@ export type SliderWhereUniqueInput = Prisma.AtLeast<{
   titulo?: Prisma.StringFilter<"Slider"> | string
   alt?: Prisma.StringFilter<"Slider"> | string
   archivo?: Prisma.StringFilter<"Slider"> | string
-  subtitulo?: Prisma.StringNullableFilter<"Slider"> | string | null
-  descripcion?: Prisma.StringNullableFilter<"Slider"> | string | null
-  etiqueta?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaPrimarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaPrimarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaSecundarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
-  ctaSecundarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
   activa?: Prisma.BoolFilter<"Slider"> | boolean
   orden?: Prisma.IntFilter<"Slider"> | number
   creadoEn?: Prisma.DateTimeFilter<"Slider"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"Slider"> | Date | string
+  ctaPrimarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
+  ctaPrimarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
+  ctaSecundarioHref?: Prisma.StringNullableFilter<"Slider"> | string | null
+  ctaSecundarioTexto?: Prisma.StringNullableFilter<"Slider"> | string | null
+  descripcion?: Prisma.StringNullableFilter<"Slider"> | string | null
+  etiqueta?: Prisma.StringNullableFilter<"Slider"> | string | null
+  subtitulo?: Prisma.StringNullableFilter<"Slider"> | string | null
 }, "id">
 
 export type SliderOrderByWithAggregationInput = {
@@ -347,17 +347,17 @@ export type SliderOrderByWithAggregationInput = {
   titulo?: Prisma.SortOrder
   alt?: Prisma.SortOrder
   archivo?: Prisma.SortOrder
-  subtitulo?: Prisma.SortOrderInput | Prisma.SortOrder
-  descripcion?: Prisma.SortOrderInput | Prisma.SortOrder
-  etiqueta?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaPrimarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaPrimarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaSecundarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
-  ctaSecundarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
   activa?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
+  ctaPrimarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
+  ctaPrimarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
+  ctaSecundarioHref?: Prisma.SortOrderInput | Prisma.SortOrder
+  ctaSecundarioTexto?: Prisma.SortOrderInput | Prisma.SortOrder
+  descripcion?: Prisma.SortOrderInput | Prisma.SortOrder
+  etiqueta?: Prisma.SortOrderInput | Prisma.SortOrder
+  subtitulo?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.SliderCountOrderByAggregateInput
   _avg?: Prisma.SliderAvgOrderByAggregateInput
   _max?: Prisma.SliderMaxOrderByAggregateInput
@@ -373,34 +373,34 @@ export type SliderScalarWhereWithAggregatesInput = {
   titulo?: Prisma.StringWithAggregatesFilter<"Slider"> | string
   alt?: Prisma.StringWithAggregatesFilter<"Slider"> | string
   archivo?: Prisma.StringWithAggregatesFilter<"Slider"> | string
-  subtitulo?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
-  descripcion?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
-  etiqueta?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
-  ctaPrimarioTexto?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
-  ctaPrimarioHref?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
-  ctaSecundarioTexto?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
-  ctaSecundarioHref?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
   activa?: Prisma.BoolWithAggregatesFilter<"Slider"> | boolean
   orden?: Prisma.IntWithAggregatesFilter<"Slider"> | number
   creadoEn?: Prisma.DateTimeWithAggregatesFilter<"Slider"> | Date | string
   actualizadoEn?: Prisma.DateTimeWithAggregatesFilter<"Slider"> | Date | string
+  ctaPrimarioHref?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
+  ctaPrimarioTexto?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
+  ctaSecundarioHref?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
+  ctaSecundarioTexto?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
+  descripcion?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
+  etiqueta?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
+  subtitulo?: Prisma.StringNullableWithAggregatesFilter<"Slider"> | string | null
 }
 
 export type SliderCreateInput = {
   titulo: string
   alt: string
   archivo: string
-  subtitulo?: string | null
-  descripcion?: string | null
-  etiqueta?: string | null
-  ctaPrimarioTexto?: string | null
-  ctaPrimarioHref?: string | null
-  ctaSecundarioTexto?: string | null
-  ctaSecundarioHref?: string | null
   activa?: boolean
   orden?: number
   creadoEn?: Date | string
   actualizadoEn?: Date | string
+  ctaPrimarioHref?: string | null
+  ctaPrimarioTexto?: string | null
+  ctaSecundarioHref?: string | null
+  ctaSecundarioTexto?: string | null
+  descripcion?: string | null
+  etiqueta?: string | null
+  subtitulo?: string | null
 }
 
 export type SliderUncheckedCreateInput = {
@@ -408,34 +408,34 @@ export type SliderUncheckedCreateInput = {
   titulo: string
   alt: string
   archivo: string
-  subtitulo?: string | null
-  descripcion?: string | null
-  etiqueta?: string | null
-  ctaPrimarioTexto?: string | null
-  ctaPrimarioHref?: string | null
-  ctaSecundarioTexto?: string | null
-  ctaSecundarioHref?: string | null
   activa?: boolean
   orden?: number
   creadoEn?: Date | string
   actualizadoEn?: Date | string
+  ctaPrimarioHref?: string | null
+  ctaPrimarioTexto?: string | null
+  ctaSecundarioHref?: string | null
+  ctaSecundarioTexto?: string | null
+  descripcion?: string | null
+  etiqueta?: string | null
+  subtitulo?: string | null
 }
 
 export type SliderUpdateInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   alt?: Prisma.StringFieldUpdateOperationsInput | string
   archivo?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SliderUncheckedUpdateInput = {
@@ -443,17 +443,17 @@ export type SliderUncheckedUpdateInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   alt?: Prisma.StringFieldUpdateOperationsInput | string
   archivo?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SliderCreateManyInput = {
@@ -461,34 +461,34 @@ export type SliderCreateManyInput = {
   titulo: string
   alt: string
   archivo: string
-  subtitulo?: string | null
-  descripcion?: string | null
-  etiqueta?: string | null
-  ctaPrimarioTexto?: string | null
-  ctaPrimarioHref?: string | null
-  ctaSecundarioTexto?: string | null
-  ctaSecundarioHref?: string | null
   activa?: boolean
   orden?: number
   creadoEn?: Date | string
   actualizadoEn?: Date | string
+  ctaPrimarioHref?: string | null
+  ctaPrimarioTexto?: string | null
+  ctaSecundarioHref?: string | null
+  ctaSecundarioTexto?: string | null
+  descripcion?: string | null
+  etiqueta?: string | null
+  subtitulo?: string | null
 }
 
 export type SliderUpdateManyMutationInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   alt?: Prisma.StringFieldUpdateOperationsInput | string
   archivo?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SliderUncheckedUpdateManyInput = {
@@ -496,17 +496,17 @@ export type SliderUncheckedUpdateManyInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   alt?: Prisma.StringFieldUpdateOperationsInput | string
   archivo?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activa?: Prisma.BoolFieldUpdateOperationsInput | boolean
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ctaPrimarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaPrimarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioHref?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ctaSecundarioTexto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descripcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  etiqueta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subtitulo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SliderOrderByRelevanceInput = {
@@ -520,17 +520,17 @@ export type SliderCountOrderByAggregateInput = {
   titulo?: Prisma.SortOrder
   alt?: Prisma.SortOrder
   archivo?: Prisma.SortOrder
-  subtitulo?: Prisma.SortOrder
-  descripcion?: Prisma.SortOrder
-  etiqueta?: Prisma.SortOrder
-  ctaPrimarioTexto?: Prisma.SortOrder
-  ctaPrimarioHref?: Prisma.SortOrder
-  ctaSecundarioTexto?: Prisma.SortOrder
-  ctaSecundarioHref?: Prisma.SortOrder
   activa?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
+  ctaPrimarioHref?: Prisma.SortOrder
+  ctaPrimarioTexto?: Prisma.SortOrder
+  ctaSecundarioHref?: Prisma.SortOrder
+  ctaSecundarioTexto?: Prisma.SortOrder
+  descripcion?: Prisma.SortOrder
+  etiqueta?: Prisma.SortOrder
+  subtitulo?: Prisma.SortOrder
 }
 
 export type SliderAvgOrderByAggregateInput = {
@@ -543,17 +543,17 @@ export type SliderMaxOrderByAggregateInput = {
   titulo?: Prisma.SortOrder
   alt?: Prisma.SortOrder
   archivo?: Prisma.SortOrder
-  subtitulo?: Prisma.SortOrder
-  descripcion?: Prisma.SortOrder
-  etiqueta?: Prisma.SortOrder
-  ctaPrimarioTexto?: Prisma.SortOrder
-  ctaPrimarioHref?: Prisma.SortOrder
-  ctaSecundarioTexto?: Prisma.SortOrder
-  ctaSecundarioHref?: Prisma.SortOrder
   activa?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
+  ctaPrimarioHref?: Prisma.SortOrder
+  ctaPrimarioTexto?: Prisma.SortOrder
+  ctaSecundarioHref?: Prisma.SortOrder
+  ctaSecundarioTexto?: Prisma.SortOrder
+  descripcion?: Prisma.SortOrder
+  etiqueta?: Prisma.SortOrder
+  subtitulo?: Prisma.SortOrder
 }
 
 export type SliderMinOrderByAggregateInput = {
@@ -561,17 +561,17 @@ export type SliderMinOrderByAggregateInput = {
   titulo?: Prisma.SortOrder
   alt?: Prisma.SortOrder
   archivo?: Prisma.SortOrder
-  subtitulo?: Prisma.SortOrder
-  descripcion?: Prisma.SortOrder
-  etiqueta?: Prisma.SortOrder
-  ctaPrimarioTexto?: Prisma.SortOrder
-  ctaPrimarioHref?: Prisma.SortOrder
-  ctaSecundarioTexto?: Prisma.SortOrder
-  ctaSecundarioHref?: Prisma.SortOrder
   activa?: Prisma.SortOrder
   orden?: Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
+  ctaPrimarioHref?: Prisma.SortOrder
+  ctaPrimarioTexto?: Prisma.SortOrder
+  ctaSecundarioHref?: Prisma.SortOrder
+  ctaSecundarioTexto?: Prisma.SortOrder
+  descripcion?: Prisma.SortOrder
+  etiqueta?: Prisma.SortOrder
+  subtitulo?: Prisma.SortOrder
 }
 
 export type SliderSumOrderByAggregateInput = {
@@ -586,17 +586,17 @@ export type SliderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   titulo?: boolean
   alt?: boolean
   archivo?: boolean
-  subtitulo?: boolean
-  descripcion?: boolean
-  etiqueta?: boolean
-  ctaPrimarioTexto?: boolean
-  ctaPrimarioHref?: boolean
-  ctaSecundarioTexto?: boolean
-  ctaSecundarioHref?: boolean
   activa?: boolean
   orden?: boolean
   creadoEn?: boolean
   actualizadoEn?: boolean
+  ctaPrimarioHref?: boolean
+  ctaPrimarioTexto?: boolean
+  ctaSecundarioHref?: boolean
+  ctaSecundarioTexto?: boolean
+  descripcion?: boolean
+  etiqueta?: boolean
+  subtitulo?: boolean
 }, ExtArgs["result"]["slider"]>
 
 
@@ -606,20 +606,20 @@ export type SliderSelectScalar = {
   titulo?: boolean
   alt?: boolean
   archivo?: boolean
-  subtitulo?: boolean
-  descripcion?: boolean
-  etiqueta?: boolean
-  ctaPrimarioTexto?: boolean
-  ctaPrimarioHref?: boolean
-  ctaSecundarioTexto?: boolean
-  ctaSecundarioHref?: boolean
   activa?: boolean
   orden?: boolean
   creadoEn?: boolean
   actualizadoEn?: boolean
+  ctaPrimarioHref?: boolean
+  ctaPrimarioTexto?: boolean
+  ctaSecundarioHref?: boolean
+  ctaSecundarioTexto?: boolean
+  descripcion?: boolean
+  etiqueta?: boolean
+  subtitulo?: boolean
 }
 
-export type SliderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "titulo" | "alt" | "archivo" | "subtitulo" | "descripcion" | "etiqueta" | "ctaPrimarioTexto" | "ctaPrimarioHref" | "ctaSecundarioTexto" | "ctaSecundarioHref" | "activa" | "orden" | "creadoEn" | "actualizadoEn", ExtArgs["result"]["slider"]>
+export type SliderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "titulo" | "alt" | "archivo" | "activa" | "orden" | "creadoEn" | "actualizadoEn" | "ctaPrimarioHref" | "ctaPrimarioTexto" | "ctaSecundarioHref" | "ctaSecundarioTexto" | "descripcion" | "etiqueta" | "subtitulo", ExtArgs["result"]["slider"]>
 
 export type $SliderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Slider"
@@ -629,17 +629,17 @@ export type $SliderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     titulo: string
     alt: string
     archivo: string
-    subtitulo: string | null
-    descripcion: string | null
-    etiqueta: string | null
-    ctaPrimarioTexto: string | null
-    ctaPrimarioHref: string | null
-    ctaSecundarioTexto: string | null
-    ctaSecundarioHref: string | null
     activa: boolean
     orden: number
     creadoEn: Date
     actualizadoEn: Date
+    ctaPrimarioHref: string | null
+    ctaPrimarioTexto: string | null
+    ctaSecundarioHref: string | null
+    ctaSecundarioTexto: string | null
+    descripcion: string | null
+    etiqueta: string | null
+    subtitulo: string | null
   }, ExtArgs["result"]["slider"]>
   composites: {}
 }
@@ -1013,17 +1013,17 @@ export interface SliderFieldRefs {
   readonly titulo: Prisma.FieldRef<"Slider", 'String'>
   readonly alt: Prisma.FieldRef<"Slider", 'String'>
   readonly archivo: Prisma.FieldRef<"Slider", 'String'>
-  readonly subtitulo: Prisma.FieldRef<"Slider", 'String'>
-  readonly descripcion: Prisma.FieldRef<"Slider", 'String'>
-  readonly etiqueta: Prisma.FieldRef<"Slider", 'String'>
-  readonly ctaPrimarioTexto: Prisma.FieldRef<"Slider", 'String'>
-  readonly ctaPrimarioHref: Prisma.FieldRef<"Slider", 'String'>
-  readonly ctaSecundarioTexto: Prisma.FieldRef<"Slider", 'String'>
-  readonly ctaSecundarioHref: Prisma.FieldRef<"Slider", 'String'>
   readonly activa: Prisma.FieldRef<"Slider", 'Boolean'>
   readonly orden: Prisma.FieldRef<"Slider", 'Int'>
   readonly creadoEn: Prisma.FieldRef<"Slider", 'DateTime'>
   readonly actualizadoEn: Prisma.FieldRef<"Slider", 'DateTime'>
+  readonly ctaPrimarioHref: Prisma.FieldRef<"Slider", 'String'>
+  readonly ctaPrimarioTexto: Prisma.FieldRef<"Slider", 'String'>
+  readonly ctaSecundarioHref: Prisma.FieldRef<"Slider", 'String'>
+  readonly ctaSecundarioTexto: Prisma.FieldRef<"Slider", 'String'>
+  readonly descripcion: Prisma.FieldRef<"Slider", 'String'>
+  readonly etiqueta: Prisma.FieldRef<"Slider", 'String'>
+  readonly subtitulo: Prisma.FieldRef<"Slider", 'String'>
 }
     
 

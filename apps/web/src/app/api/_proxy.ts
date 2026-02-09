@@ -15,13 +15,13 @@ const joinApi = (base: string, path: string) => {
 
 /** SOLO server: usa la URL interna del backend (hostname del servicio Docker) */
 function computeApiBase(): string {
-  const internal = process.env.BACKEND_INTERNAL_URL?.trim();
-  if (!internal) {
-    throw new Error(
-      'BACKEND_INTERNAL_URL no definido. Configuralo (p.ej. http://micaela_martinez_backend:3001/api).'
-    );
-  }
-  return strip(internal);
+  const base =
+    process.env.BACKEND_INTERNAL_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    'http://localhost:3001/api';
+
+  return strip(base);
 }
 const API_BASE = computeApiBase();
 

@@ -110,7 +110,9 @@ async function bootstrap() {
   console.log(`🖼  Estáticos: ${IMAGE_PUBLIC_URL} → ${IMAGE_PUBLIC_DIR}`);
   console.log(`🎞  Media:     ${MEDIA_PUBLIC_URL} → ${MEDIA_UPLOAD_DIR}`);
   console.log(`📄  Docs:      ${DOC_PUBLIC_URL} → ${DOC_UPLOAD_DIR}`);
-  console.log(`🔧  Environment: NODE_ENV=${process.env.NODE_ENV}, PORT=${port}`);
+  console.log(
+    `🔧  Environment: NODE_ENV=${process.env.NODE_ENV}, PORT=${port}`,
+  );
 }
 
 bootstrap();

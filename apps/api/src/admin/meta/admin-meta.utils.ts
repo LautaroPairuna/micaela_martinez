@@ -89,7 +89,7 @@ function detectFileField(
     field.name === 'rutaSrc' &&
     field.type === 'String'
   ) {
-    return { isFile: true, fileKind: 'generic' };
+    return { isFile: true, fileKind: 'video' };
   }
   return { isFile: false, fileKind: undefined };
 }
@@ -119,13 +119,15 @@ function inferFkResourceForField(
   return match ? candidate : null;
 }
 
+import { RESOURCE_DEFINITIONS } from './resource-definitions';
+
 function buildFiltersFromFields(fields: FieldMeta[]): FilterMeta[] {
   const filters: FilterMeta[] = [];
 
   for (const field of fields) {
     if (field.kind !== 'scalar' || field.isList) continue;
 
-    const label = humanizeName(field.name);
+    const label = field.label ?? humanizeName(field.name);
 
     if (field.isEnum) {
       filters.push({
@@ -268,6 +270,20 @@ export function buildAdminMetaFromDmmf(dmmf: DmmfLike): ResourceMeta[] {
       if (field.name === 'passwordHash') showInForm = false;
       if (LONG_TEXT_FIELDS.includes(field.name)) showInList = false;
 
+      // ─────────────────────────────────────────────────────────────
+      // ✅ Normalización y Tooltips
+      // ─────────────────────────────────────────────────────────────
+      const modelDef = RESOURCE_DEFINITIONS[model.name] || {};
+      const fieldDef = modelDef[field.name];
+
+      const label = fieldDef?.label;
+      const help = fieldDef?.help;
+      const placeholder = fieldDef?.placeholder;
+
+      // Sobreescribir visibilidad si está definida explícitamente
+      if (fieldDef?.showInList !== undefined) showInList = fieldDef.showInList;
+      if (fieldDef?.showInForm !== undefined) showInForm = fieldDef.showInForm;
+
       fields.push({
         name: field.name,
         type: field.type,
@@ -287,6 +303,9 @@ export function buildAdminMetaFromDmmf(dmmf: DmmfLike): ResourceMeta[] {
         fkResource: fkResource ?? undefined,
         showInList,
         showInForm,
+        label,
+        help,
+        placeholder,
       });
     }
 

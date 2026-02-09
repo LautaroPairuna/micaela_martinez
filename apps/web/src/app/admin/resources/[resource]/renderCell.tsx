@@ -3,7 +3,7 @@
 
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 import Image from 'next/image';
-import { IMAGE_PUBLIC_URL } from '@/lib/adminConstants';
+import { IMAGE_PUBLIC_URL, THUMBNAIL_PUBLIC_URL } from '@/lib/adminConstants';
 
 export function renderCell({
   field,
@@ -34,10 +34,12 @@ export function renderCell({
     } else if (v.includes('/')) {
       // Formato viejo: 'uploads/producto/archivo.webp'
       const clean = v.replace(/^\/+/, '');
-      src = `${IMAGE_PUBLIC_URL}/${clean}`; // /api/media/images/uploads/producto/archivo.webp
+      const thumb = clean.replace(/\.webp$/i, '-thumb.webp');
+      src = `${IMAGE_PUBLIC_URL}/${thumb}`;
     } else {
       // Formato nuevo: solo nombre => /api/media/images/images/<tabla>/<archivo>
-      src = `${IMAGE_PUBLIC_URL}/${meta.tableName}/${v}`;
+      const thumb = v.replace(/\.webp$/i, '-thumb.webp');
+      src = `${IMAGE_PUBLIC_URL}/${meta.tableName}/${thumb}`;
     }
 
     return (
@@ -52,6 +54,42 @@ export function renderCell({
         />
         <span className="max-w-[180px] truncate text-xs text-slate-300">
           {v}
+        </span>
+      </div>
+    );
+  }
+
+  if (field.isFile) {
+    if (!value) return <span className="text-xs text-slate-500">—</span>;
+    const v = String(value);
+    const filename = v.split('/').pop() ?? v;
+    const lower = filename.toLowerCase();
+    const isVideo =
+      field.fileKind === 'video' ||
+      lower.endsWith('.mp4') ||
+      lower.endsWith('.webm') ||
+      lower.endsWith('.mov');
+
+    if (!isVideo) {
+      return (
+        <span className="max-w-[180px] truncate text-xs text-slate-300">
+          {filename}
+        </span>
+      );
+    }
+
+    const thumbSrc = `${THUMBNAIL_PUBLIC_URL}/${filename}`;
+    return (
+      <div className="flex items-center gap-2">
+        <img
+          src={thumbSrc}
+          alt={field.name}
+          width={56}
+          height={42}
+          className="rounded border border-slate-800 object-cover"
+        />
+        <span className="max-w-[180px] truncate text-xs text-slate-300">
+          {filename}
         </span>
       </div>
     );

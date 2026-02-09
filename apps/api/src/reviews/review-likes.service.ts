@@ -1,6 +1,5 @@
 import {
   Injectable,
-  ConflictException,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -215,7 +214,9 @@ export class ReviewLikesService {
       this.prisma.resenaLike.count({
         where: { resenaId: resenaIdNum, tipo: TipoLike.DISLIKE },
       }),
-      usuarioId ? this.getUserLike(String(resenaIdNum), usuarioId) : null,
+      usuarioId
+        ? this.getUserLike(String(resenaIdNum), usuarioId)
+        : Promise.resolve(null),
     ]);
 
     return {

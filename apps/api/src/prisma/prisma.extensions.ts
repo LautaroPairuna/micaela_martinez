@@ -1,6 +1,5 @@
 // apps/api/src/prisma/prisma.extensions.ts
 import { Prisma, PrismaClient, EstadoOrden } from '../generated/prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 export const modelExtension = Prisma.defineExtension({
   name: 'modelExtension',
@@ -127,15 +126,7 @@ export const clientExtension = Prisma.defineExtension({
 });
 
 export const createExtendedClient = () => {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error('DATABASE_URL is missing');
-
-  const connectionString = databaseUrl.includes('?')
-    ? databaseUrl.split('?')[0]
-    : databaseUrl;
-
-  const adapter = new PrismaMariaDb(connectionString);
-  const client = new PrismaClient({ adapter });
+  const client = new PrismaClient();
 
   return client.$extends(modelExtension).$extends(clientExtension);
 };

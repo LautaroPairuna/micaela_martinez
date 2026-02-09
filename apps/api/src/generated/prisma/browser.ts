@@ -58,8 +58,13 @@ export type Modulo = Prisma.ModuloModel
  */
 export type Leccion = Prisma.LeccionModel
 /**
+ * Model LeccionTipoConfig
+ * 
+ */
+export type LeccionTipoConfig = Prisma.LeccionTipoConfigModel
+/**
  * Model Producto
- * @admin.group("Ventas")
+ * 
  */
 export type Producto = Prisma.ProductoModel
 /**

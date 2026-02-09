@@ -986,7 +986,10 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ items, onViewDe
                     </div>
                   </div>
                   <div className="ml-3 flex items-center gap-2">
-                    <span className="whitespace-nowrap text-[10px] text-slate-500">
+                    <span 
+                      className="whitespace-nowrap text-[10px] text-slate-500"
+                      suppressHydrationWarning
+                    >
                       {formatDateTime(item.createdAt)}
                     </span>
                     <Button
@@ -1342,7 +1345,7 @@ const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       {/* Header */}
       <header className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-50">
+          <h1 className="text-2xl font-semibold tracking- text-slate-50">
             Panel de control
           </h1>
           <p className="text-[11px] text-slate-500">

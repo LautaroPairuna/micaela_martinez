@@ -34,16 +34,22 @@
           ],
           "format": "date-time"
         },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsuarioRol"
+          }
+        },
+        "cursosImpartidos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Curso"
+          }
+        },
         "inscripciones": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Inscripcion"
-          }
-        },
-        "ordenes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Orden"
           }
         },
         "resenas": {
@@ -52,16 +58,10 @@
             "$ref": "#/definitions/Resena"
           }
         },
-        "cursosDicta": {
+        "resenaRespuestas": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Curso"
-          }
-        },
-        "direcciones": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Direccion"
+            "$ref": "#/definitions/ResenaRespuesta"
           }
         },
         "favoritos": {
@@ -70,56 +70,22 @@
             "$ref": "#/definitions/Favorito"
           }
         },
-        "roles": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/UsuarioRol"
-          }
-        },
-        "likesResenas": {
+        "resenaLikes": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ResenaLike"
           }
         },
-        "respuestasResenas": {
+        "ordenes": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ResenaRespuesta"
+            "$ref": "#/definitions/Orden"
           }
-        },
-        "notificaciones": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Notificacion"
-          }
-        },
-        "borradores": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ResenaBorrador"
-          }
-        },
-        "preferenciasNotificacion": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PreferenciasNotificacion"
-            },
-            {
-              "type": "null"
-            }
-          ]
         },
         "auditLogs": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AuditLog"
-          }
-        },
-        "pagosSuscripcion": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PagoSuscripcion"
           }
         },
         "carrito": {
@@ -131,6 +97,12 @@
               "type": "null"
             }
           ]
+        },
+        "notificaciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notificacion"
+          }
         }
       },
       "required": [
@@ -155,7 +127,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "users": {
+        "usuarios": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/UsuarioRol"
@@ -296,6 +268,22 @@
           "type": "string",
           "format": "date-time"
         },
+        "instructorId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "instructor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Usuario"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "modulos": {
           "type": "array",
           "items": {
@@ -314,33 +302,11 @@
             "$ref": "#/definitions/Inscripcion"
           }
         },
-        "borradores": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ResenaBorrador"
-          }
-        },
         "itemsCarrito": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ItemCarrito"
           }
-        },
-        "instructorId": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "instructor": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Usuario"
-            },
-            {
-              "type": "null"
-            }
-          ]
         }
       },
       "required": [
@@ -426,22 +392,6 @@
         "curso": {
           "$ref": "#/definitions/Curso"
         },
-        "parent": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Modulo"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "hijos": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Modulo"
-          }
-        },
         "lecciones": {
           "type": "array",
           "items": {
@@ -467,17 +417,7 @@
         "titulo": {
           "type": "string"
         },
-        "duracionS": {
-          "type": "integer",
-          "default": 0
-        },
         "rutaSrc": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "previewUrl": {
           "type": [
             "string",
             "null"
@@ -512,6 +452,16 @@
             "null"
           ]
         },
+        "previewUrl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duracion": {
+          "type": "number",
+          "default": 0
+        },
         "modulo": {
           "$ref": "#/definitions/Modulo"
         }
@@ -520,6 +470,60 @@
         "moduloId",
         "titulo",
         "orden"
+      ]
+    },
+    "LeccionTipoConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "VIDEO",
+            "DOCUMENTO",
+            "QUIZ",
+            "TEXTO"
+          ]
+        },
+        "schema": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "ui": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "default": 1
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "tipo",
+        "schema",
+        "actualizadoEn"
       ]
     },
     "Producto": {
@@ -553,8 +557,7 @@
           "type": [
             "string",
             "null"
-          ],
-          "description": "@admin.file"
+          ]
         },
         "descripcionMD": {
           "type": [
@@ -566,8 +569,7 @@
           "type": [
             "integer",
             "null"
-          ],
-          "description": "@admin.label(\"Precio de Lista\")"
+          ]
         },
         "ratingProm": {
           "type": [
@@ -631,12 +633,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Favorito"
-          }
-        },
-        "borradores": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ResenaBorrador"
           }
         },
         "itemsCarrito": {
@@ -886,6 +882,9 @@
             "null"
           ]
         },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
         "direccionEnvio": {
           "anyOf": [
             {
@@ -906,19 +905,10 @@
             }
           ]
         },
-        "usuario": {
-          "$ref": "#/definitions/Usuario"
-        },
         "items": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ItemOrden"
-          }
-        },
-        "pagosSuscripcion": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PagoSuscripcion"
           }
         }
       },
@@ -1007,12 +997,6 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
-        },
-        "orden": {
-          "$ref": "#/definitions/Orden"
-        },
-        "usuario": {
-          "$ref": "#/definitions/Usuario"
         }
       },
       "required": [
@@ -1032,9 +1016,6 @@
         },
         "usuarioId": {
           "type": "integer"
-        },
-        "usuario": {
-          "$ref": "#/definitions/Usuario"
         },
         "etiqueta": {
           "type": [
@@ -1129,7 +1110,41 @@
         "archivo": {
           "type": "string"
         },
-        "subtitulo": {
+        "activa": {
+          "type": "boolean",
+          "default": true
+        },
+        "orden": {
+          "type": "integer",
+          "default": 0
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actualizadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ctaPrimarioHref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaPrimarioTexto": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaSecundarioHref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ctaSecundarioTexto": {
           "type": [
             "string",
             "null"
@@ -1147,45 +1162,11 @@
             "null"
           ]
         },
-        "ctaPrimarioTexto": {
+        "subtitulo": {
           "type": [
             "string",
             "null"
           ]
-        },
-        "ctaPrimarioHref": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "ctaSecundarioTexto": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "ctaSecundarioHref": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "activa": {
-          "type": "boolean",
-          "default": true
-        },
-        "orden": {
-          "type": "integer",
-          "default": 0
-        },
-        "creadoEn": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "actualizadoEn": {
-          "type": "string",
-          "format": "date-time"
         }
       },
       "required": [
@@ -1208,7 +1189,10 @@
           ]
         },
         "productoId": {
-          "type": "integer"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "usuarioId": {
           "type": "integer"
@@ -1249,21 +1233,20 @@
         "usuario": {
           "$ref": "#/definitions/Usuario"
         },
-        "likes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ResenaLike"
-          }
-        },
         "respuestas": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ResenaRespuesta"
           }
+        },
+        "likes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaLike"
+          }
         }
       },
       "required": [
-        "productoId",
         "usuarioId",
         "puntaje"
       ]
@@ -1474,9 +1457,6 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
-        },
-        "usuario": {
-          "$ref": "#/definitions/Usuario"
         }
       },
       "required": [
@@ -1524,29 +1504,6 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
-        },
-        "usuario": {
-          "$ref": "#/definitions/Usuario"
-        },
-        "curso": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Curso"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "producto": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Producto"
-            },
-            {
-              "type": "null"
-            }
-          ]
         }
       },
       "required": [
@@ -1748,6 +1705,9 @@
     },
     "leccion": {
       "$ref": "#/definitions/Leccion"
+    },
+    "leccionTipoConfig": {
+      "$ref": "#/definitions/LeccionTipoConfig"
     },
     "producto": {
       "$ref": "#/definitions/Producto"

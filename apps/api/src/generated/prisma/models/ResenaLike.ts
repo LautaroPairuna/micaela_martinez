@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -280,7 +280,7 @@ export type ResenaLikeCreateInput = {
   tipo: $Enums.TipoLike
   creadoEn?: Date | string
   resena: Prisma.ResenaCreateNestedOneWithoutLikesInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutLikesResenasInput
+  usuario: Prisma.UsuarioCreateNestedOneWithoutResenaLikesInput
 }
 
 export type ResenaLikeUncheckedCreateInput = {
@@ -295,7 +295,7 @@ export type ResenaLikeUpdateInput = {
   tipo?: Prisma.EnumTipoLikeFieldUpdateOperationsInput | $Enums.TipoLike
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resena?: Prisma.ResenaUpdateOneRequiredWithoutLikesNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutLikesResenasNestedInput
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenaLikesNestedInput
 }
 
 export type ResenaLikeUncheckedUpdateInput = {
@@ -519,7 +519,7 @@ export type ResenaLikeScalarWhereInput = {
 export type ResenaLikeCreateWithoutResenaInput = {
   tipo: $Enums.TipoLike
   creadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutLikesResenasInput
+  usuario: Prisma.UsuarioCreateNestedOneWithoutResenaLikesInput
 }
 
 export type ResenaLikeUncheckedCreateWithoutResenaInput = {
@@ -592,7 +592,7 @@ export type ResenaLikeCreateManyResenaInput = {
 export type ResenaLikeUpdateWithoutResenaInput = {
   tipo?: Prisma.EnumTipoLikeFieldUpdateOperationsInput | $Enums.TipoLike
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutLikesResenasNestedInput
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutResenaLikesNestedInput
 }
 
 export type ResenaLikeUncheckedUpdateWithoutResenaInput = {

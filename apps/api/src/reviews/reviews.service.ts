@@ -7,9 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { getSkipTake } from '../common/utils/pagination';
 import { Prisma, TipoItemOrden, EstadoOrden } from '../generated/prisma/client';
-import { ImageUrlUtil } from '../common/utils/image-url.util';
 
 const toInt = (v: unknown, label = 'id'): number => {
   if (v === null || v === undefined || v === '') {
@@ -108,19 +106,13 @@ export class ReviewsService {
       });
     } else {
       // Crear una nueva reseña
-      const data: any = {
+      const data: Prisma.ResenaUncheckedCreateInput = {
         usuarioId: userIdNum,
         puntaje: dto.puntaje,
         comentario: dto.comentario,
+        ...(cursoIdNum ? { cursoId: cursoIdNum } : {}),
+        ...(productoIdNum ? { productoId: productoIdNum } : {}),
       };
-
-      if (cursoIdNum) {
-        data.cursoId = cursoIdNum;
-      }
-
-      if (productoIdNum) {
-        data.productoId = productoIdNum;
-      }
 
       resena = await this.prisma.resena.create({
         data,

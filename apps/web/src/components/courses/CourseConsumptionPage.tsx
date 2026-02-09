@@ -28,7 +28,7 @@ type CourseDetail = {
     lecciones?: Array<{
       id: string;
       titulo?: string | null;
-      duracionS?: number | null;
+      duracion?: number | null;
       rutaSrc?: string | null;
       tipo?: 'VIDEO' | 'TEXTO' | 'DOCUMENTO' | 'QUIZ';
       contenido?: unknown;
@@ -106,7 +106,7 @@ export function CourseConsumptionPage({
     course.modulos?.reduce(
       (acc, modulo) =>
         acc +
-        (modulo.lecciones?.reduce((lessonAcc, leccion) => lessonAcc + (leccion.duracionS || 0), 0) ||
+        (modulo.lecciones?.reduce((lessonAcc, leccion) => lessonAcc + ((leccion.duracion || 0) * 60), 0) ||
           0),
       0
     ) || 0;
@@ -140,7 +140,7 @@ export function CourseConsumptionPage({
                   titulo: leccion.titulo || `Lección ${leccionIndex + 1}`,
                   descripcion: null as string | null,
                   rutaSrc: leccion.rutaSrc || null,
-                  duracionS: leccion.duracionS ?? null,
+                  duracion: leccion.duracion ?? null,
                   orden: leccionIndex + 1,
                   // El contenido ya viene parseado desde la API
                   contenido: leccion.contenido ?? null,
@@ -374,7 +374,7 @@ export function CourseConsumptionPage({
                       lecciones:
                         modulo.lecciones?.map((leccion, leccionIndex) => ({
                           titulo: leccion.titulo || `Lección ${leccionIndex + 1}`,
-                          duracionS: leccion.duracionS || 0,
+                          duracion: leccion.duracion || 0,
                         })) || [],
                     }))}
                   />

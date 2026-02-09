@@ -1,7 +1,7 @@
 // apps/api/src/admin/meta/admin-meta.service.ts
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type {
+import {
   ResourceMeta,
   FieldMeta,
   FieldKind,
@@ -11,6 +11,7 @@ import type {
   FilterGroup,
   VirtualFilter,
 } from './admin-meta.types';
+import { RESOURCE_DEFINITIONS } from './resource-definitions';
 
 import { Prisma } from '../../../src/generated/prisma/client';
 
@@ -112,7 +113,7 @@ function detectFileField(
     field?.name === 'rutaSrc' &&
     field?.type === 'String'
   ) {
-    return { isFile: true, fileKind: 'generic' };
+    return { isFile: true, fileKind: 'video' };
   }
   return { isFile: false };
 }
@@ -640,8 +641,25 @@ export class AdminMetaService {
         if (fname === 'passwordHash') showInForm = false;
         if (LONG_TEXT_FIELDS.includes(fname)) showInList = false;
 
+        // ✅ Normalización y Tooltips
+        const modelDef = RESOURCE_DEFINITIONS[String(model?.name ?? '')] || {};
+        const fieldDef = modelDef[fname];
+
+        const label = fieldDef?.label;
+        const help = fieldDef?.help;
+        const placeholder = fieldDef?.placeholder;
+
+        // Sobreescribir visibilidad si está definida explícitamente
+        if (fieldDef?.showInList !== undefined)
+          showInList = fieldDef.showInList;
+        if (fieldDef?.showInForm !== undefined)
+          showInForm = fieldDef.showInForm;
+
         fields.push({
           name: fname,
+          label,
+          help,
+          placeholder,
           type: String(field?.type ?? ''),
           kind,
           isId: !!field?.isId,
@@ -751,8 +769,25 @@ export class AdminMetaService {
         if (fname === 'passwordHash') showInForm = false;
         if (LONG_TEXT_FIELDS.includes(fname)) showInList = false;
 
+        // ✅ Normalización y Tooltips
+        const modelDef = RESOURCE_DEFINITIONS[model.name] || {};
+        const fieldDef = modelDef[fname];
+
+        const label = fieldDef?.label;
+        const help = fieldDef?.help;
+        const placeholder = fieldDef?.placeholder;
+
+        // Sobreescribir visibilidad si está definida explícitamente
+        if (fieldDef?.showInList !== undefined)
+          showInList = fieldDef.showInList;
+        if (fieldDef?.showInForm !== undefined)
+          showInForm = fieldDef.showInForm;
+
         fields.push({
           name: fname,
+          label,
+          help,
+          placeholder,
           type: String(field.type ?? ''),
           kind,
           isId: !!field.isId,

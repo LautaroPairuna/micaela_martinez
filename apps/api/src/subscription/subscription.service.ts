@@ -245,14 +245,16 @@ export class SubscriptionService {
 
       // Actualizar cada inscripción para marcar la suscripción como inactiva
       for (const enrollment of enrollments) {
-        const progreso = enrollment.progreso as Record<string, any>;
+        const progreso = enrollment.progreso as unknown as {
+          subscription?: { isActive: boolean; orderId?: number };
+        };
 
         if (progreso?.subscription) {
           progreso.subscription.isActive = false;
 
           await this.prisma.inscripcion.update({
             where: { id: enrollment.id },
-            data: { progreso },
+            data: { progreso: progreso as any }, // Cast back to any/json for Prisma
           });
         }
       }

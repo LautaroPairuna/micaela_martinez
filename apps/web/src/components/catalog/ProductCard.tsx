@@ -9,7 +9,7 @@ import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useFavoritesClient } from '@/hooks/useFavoritesData';
 import { AddProductButton } from '@/components/cart/AddProductButton';
-import { Heart, Star, ShoppingCart } from 'lucide-react';
+import { Heart, Star, ShoppingCart, Eye } from 'lucide-react';
 
 type ProductMinimal = {
   id?: string;
@@ -237,6 +237,32 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
                 {p.categoria.nombre}
               </Link>
             ) : null}
+          </div>
+
+          {/* Botones Móviles (Touch) */}
+          <div className="flex gap-2 mt-3 lg:hidden">
+            <AddProductButton
+              p={{
+                id: p.id || p.slug,
+                slug: p.slug,
+                titulo: p.titulo,
+                precio: p.precio,
+                stock: p.stock,
+                imagen: img,
+                imagenes: p.imagenes,
+              }}
+              className="flex-1 bg-[var(--gold)] text-black text-xs font-bold py-2 rounded-lg hover:bg-[var(--gold-200)] shadow-sm"
+            >
+              <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+              Agregar
+            </AddProductButton>
+            <Link
+              href={`/tienda/producto/${p.slug}`}
+              className="flex items-center justify-center px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-slate-200 hover:bg-[#252525] transition-colors"
+              aria-label="Ver detalles"
+            >
+              <Eye className="h-4 w-4" />
+            </Link>
           </div>
 
           {/* Rating */}

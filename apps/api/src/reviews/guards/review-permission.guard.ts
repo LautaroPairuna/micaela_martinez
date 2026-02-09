@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   EstadoInscripcion,
@@ -37,16 +38,16 @@ export class ReviewPermissionGuard implements CanActivate {
 
     // Verificar permisos según el tipo de contenido
     if (body.cursoId) {
-      await this.validateCourseAccess(user.id, body.cursoId);
+      await this.validateCourseAccess(user.id, String(body.cursoId));
     }
     if (body.productoId) {
-      await this.validateProductPurchase(user.id, body.productoId);
+      await this.validateProductPurchase(user.id, String(body.productoId));
     }
 
     return true;
   }
 
-  private async validateCourseAccess(userId: string, cursoId: string) {
+  private async validateCourseAccess(userId: number | string, cursoId: string) {
     // Verificar que el usuario esté inscrito en el curso
     const enrollment = await this.prisma.inscripcion.findFirst({
       where: {
@@ -63,7 +64,7 @@ export class ReviewPermissionGuard implements CanActivate {
     }
   }
 
-  private async validateProductPurchase(userId: string, productoId: string) {
+  private async validateProductPurchase(userId: number | string, productoId: string) {
     // Verificar que el usuario haya comprado el producto
     const purchase = await this.prisma.itemOrden.findFirst({
       where: {

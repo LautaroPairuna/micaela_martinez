@@ -598,7 +598,15 @@ async function main() {
 
   // ───────────────── Módulos + Lecciones
   const resetCurso = async (cursoId: number) => {
-    await prisma.leccion.deleteMany({ where: { modulo: { cursoId } } });
+    const modulos = await prisma.modulo.findMany({
+      where: { cursoId },
+      select: { id: true },
+    });
+    const moduloIds = modulos.map((m) => m.id);
+
+    if (moduloIds.length > 0) {
+      await prisma.leccion.deleteMany({ where: { moduloId: { in: moduloIds } } });
+    }
     await prisma.modulo.deleteMany({ where: { cursoId } });
   };
 
@@ -618,7 +626,7 @@ async function main() {
         titulo: 'Lección 1: Bienvenida',
         descripcion: 'Bienvenida al curso de prueba',
         contenido: '# Bienvenida\n\nEste es un curso para probar suscripciones.',
-        duracionS: 300,
+        duracion: 5,
         orden: 1,
         rutaSrc: null,
         tipo: E.tipoLeccion(TipoLeccion.TEXTO),
@@ -628,7 +636,7 @@ async function main() {
         titulo: 'Lección 2: Contenido Principal',
         descripcion: 'Contenido principal',
         contenido: '# Contenido Principal\n\nDetalle del curso de prueba.',
-        duracionS: 600,
+        duracion: 10,
         orden: 1,
         rutaSrc: null,
         tipo: E.tipoLeccion(TipoLeccion.TEXTO),
@@ -638,10 +646,245 @@ async function main() {
         titulo: 'Lección 3: Conclusión',
         descripcion: 'Cierre del curso',
         contenido: '# Conclusión\n\n¡Gracias por completar el curso!',
-        duracionS: 300,
+        duracion: 5,
         orden: 2,
         rutaSrc: null,
         tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+    ] as any,
+  });
+
+  // Curso Maquillaje Profesional
+  await resetCurso(cursoMaquId);
+  const modM1 = await prisma.modulo.create({
+    data: { cursoId: cursoMaquId, titulo: 'Módulo 1: Preparación y diagnóstico', orden: 1 } as any,
+  });
+  const modM2 = await prisma.modulo.create({
+    data: { cursoId: cursoMaquId, titulo: 'Módulo 2: Correcciones y base', orden: 2 } as any,
+  });
+  const modM3 = await prisma.modulo.create({
+    data: { cursoId: cursoMaquId, titulo: 'Módulo 3: Ojos, cejas y labios', orden: 3 } as any,
+  });
+
+  await prisma.leccion.createMany({
+    data: [
+      {
+        moduloId: modM1.id,
+        titulo: 'Diagnóstico de piel y objetivos de look',
+        descripcion: 'Cómo leer la piel y definir el resultado final.',
+        contenido: json({
+          contenido:
+            'Antes de maquillar, definí el objetivo del look (social, editorial, día, noche) y el tipo de piel.\n\nChecklist rápido:\n- Tipo de piel: grasa, mixta, seca o sensible\n- Estado: deshidratación, textura, poros, rojeces\n- Preferencia de acabado: mate, natural, glow\n\nCon esta lectura vas a elegir productos, cobertura y técnica correctas.',
+          resumen: 'Diagnóstico inicial para elegir técnica y productos.',
+        }),
+        duracion: 12,
+        orden: 1,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM1.id,
+        titulo: 'Higiene, preparación y herramientas',
+        descripcion: 'Rutina de preparación + brochas y esponjas.',
+        contenido: json({
+          contenido:
+            'Preparación esencial:\n1) Limpieza suave y tónico\n2) Hidratante según tipo de piel\n3) Primer específico (poros, brillo, luminosidad)\n\nHerramientas:\n- Brochas de base: plana y lengua de gato\n- Esponja húmeda para acabado natural\n- Brochas de ojos: blending, precisión, plano\n\nDesinfectá brochas y productos en cada clienta.',
+          resumen: 'Pasos de higiene y set básico de herramientas.',
+        }),
+        duracion: 10,
+        orden: 2,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM1.id,
+        titulo: 'Guía descargable: Preparación de piel',
+        descripcion: 'Material de apoyo con checklist completo.',
+        contenido: json({
+          url: 'https://example.com/guia-preparacion-piel.pdf',
+          nombre: 'Guía de preparación de piel',
+          tipoArchivo: 'PDF',
+          resumen: 'Checklist previo y recomendaciones por tipo de piel.',
+        }),
+        duracion: 5,
+        orden: 3,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.DOCUMENTO),
+      },
+      {
+        moduloId: modM1.id,
+        titulo: 'Quiz: Diagnóstico y preparación',
+        descripcion: 'Evaluá los conceptos clave antes de avanzar.',
+        contenido: json({
+          intro:
+            'Responde las siguientes preguntas para confirmar que dominas diagnóstico, preparación e higiene.',
+          preguntas: [
+            {
+              pregunta: '¿Cuál es el primer paso antes de aplicar cualquier producto de maquillaje?',
+              opciones: [
+                'Aplicar base de alta cobertura',
+                'Limpieza e higiene del rostro',
+                'Sellar con polvo traslúcido',
+                'Aplicar iluminador',
+              ],
+              respuestaCorrecta: 1,
+              explicacion: 'La higiene previa garantiza adherencia, duración y salud de la piel.',
+            },
+            {
+              pregunta: '¿Qué primer es más adecuado para piel grasa?',
+              opciones: [
+                'Primer hidratante glow',
+                'Primer matificante',
+                'Aceite facial nutritivo',
+                'Crema muy emoliente',
+              ],
+              respuestaCorrecta: 1,
+              explicacion: 'El matificante controla brillo y poros visibles.',
+            },
+            {
+              pregunta: '¿Cuál es el objetivo del diagnóstico inicial?',
+              opciones: [
+                'Elegir el labial',
+                'Definir look, técnica y productos',
+                'Seleccionar el peinado',
+                'Aplicar máscara primero',
+              ],
+              respuestaCorrecta: 1,
+              explicacion: 'El diagnóstico guía cobertura, acabado y método.',
+            },
+          ],
+        }),
+        duracion: 8,
+        orden: 4,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.QUIZ),
+      },
+      {
+        moduloId: modM2.id,
+        titulo: 'Correcciones estratégicas y colorimetría',
+        descripcion: 'Cómo neutralizar ojeras, rojeces y manchas.',
+        contenido: json({
+          contenido:
+            'Reglas rápidas de colorimetría:\n- Verde neutraliza rojeces\n- Salmón neutraliza ojeras azuladas\n- Durazno para ojeras marrones\n\nAplica corrector en capas finas y difumina bordes para evitar textura.\nDespués, unifica con base del tono exacto del cuello.',
+          resumen: 'Neutralización de imperfecciones con color corrector.',
+        }),
+        duracion: 14,
+        orden: 1,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM2.id,
+        titulo: 'Demostración: Aplicación de base y sellado',
+        descripcion: 'Técnica paso a paso para acabado profesional.',
+        duracion: 18,
+        orden: 2,
+        rutaSrc: 'base-sellado-pro.mp4',
+        tipo: E.tipoLeccion(TipoLeccion.VIDEO),
+      },
+      {
+        moduloId: modM2.id,
+        titulo: 'Diferencias de acabado: mate, natural y glow',
+        descripcion: 'Cómo ajustar productos según el look.',
+        contenido: json({
+          contenido:
+            'Acabado mate: base oil-free + polvo microfino.\nAcabado natural: base ligera + sellado mínimo.\nAcabado glow: hidratación previa + iluminador líquido en puntos altos.\n\nEn piel grasa, controla brillo en zona T; en piel seca, evita exceso de polvo.',
+          resumen: 'Ajuste de acabado según piel y ocasión.',
+        }),
+        duracion: 9,
+        orden: 3,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM3.id,
+        titulo: 'Diseño de cejas y estructura del rostro',
+        descripcion: 'Balance visual para realzar la mirada.',
+        contenido: json({
+          contenido:
+            'Ubicá tres puntos: inicio (aleta de nariz), arco (pupila) y cola (aleta de nariz y comisura externa).\nRellena con trazos tipo pelo y fija con gel.\nAjusta intensidad según el look final.',
+          resumen: 'Guía de diseño de cejas y proporciones.',
+        }),
+        duracion: 11,
+        orden: 1,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM3.id,
+        titulo: 'Ojos: transición, profundidad y brillo',
+        descripcion: 'Construcción de un smokey suave y versátil.',
+        contenido: json({
+          contenido:
+            'Paso a paso:\n1) Sombra de transición en cuenca\n2) Profundidad en esquina externa\n3) Sombra plana en el párpado móvil\n4) Iluminación en lagrimal\n\nDifumina bordes con brocha limpia para un degradado profesional.',
+          resumen: 'Estructura base para ojos con profundidad.',
+        }),
+        duracion: 13,
+        orden: 2,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM3.id,
+        titulo: 'Labios: definición y duración',
+        descripcion: 'Cómo lograr labios nítidos y de larga duración.',
+        contenido: json({
+          contenido:
+            'Prepara con exfoliación suave y bálsamo.\nPerfila con lápiz del mismo tono del labial.\nAplica color en capas finas, retira exceso con tissue y re-aplica.\nSella con polvo traslúcido si buscas máxima duración.',
+          resumen: 'Técnica de labios con acabado profesional.',
+        }),
+        duracion: 9,
+        orden: 3,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.TEXTO),
+      },
+      {
+        moduloId: modM3.id,
+        titulo: 'Quiz: Ojos, cejas y labios',
+        descripcion: 'Repaso final de conceptos clave.',
+        contenido: json({
+          intro:
+            'Completa este quiz para consolidar técnicas de ojos, cejas y labios.',
+          preguntas: [
+            {
+              pregunta: '¿Qué punto define el arco ideal de la ceja?',
+              opciones: [
+                'Centro de la frente',
+                'Pupila en línea recta con la aleta de la nariz',
+                'Inicio de la ceja',
+                'Comisura interna del ojo',
+              ],
+              respuestaCorrecta: 1,
+              explicacion: 'El arco se define con la línea aleta de nariz–pupila.',
+            },
+            {
+              pregunta: '¿Cuál es el paso clave para un degradado suave en ojos?',
+              opciones: [
+                'Aplicar glitter primero',
+                'Difuminar bordes con brocha limpia',
+                'Usar sombra sin transición',
+                'Sellar con polvo suelto',
+              ],
+              respuestaCorrecta: 1,
+              explicacion: 'El difuminado con brocha limpia evita cortes visibles.',
+            },
+            {
+              pregunta: '¿Qué mejora la duración del labial?',
+              opciones: [
+                'Aplicar una sola capa gruesa',
+                'Sellar entre capas finas',
+                'Evitar delinear',
+                'Usar bálsamo encima',
+              ],
+              respuestaCorrecta: 1,
+              explicacion: 'Capas finas y sellado intermedio prolongan el color.',
+            },
+          ],
+        }),
+        duracion: 7,
+        orden: 4,
+        rutaSrc: null,
+        tipo: E.tipoLeccion(TipoLeccion.QUIZ),
       },
     ] as any,
   });
@@ -658,7 +901,7 @@ async function main() {
           moduloId: a.id,
           titulo: 'Introducción',
           orden: 1,
-          duracionS: 300,
+          duracion: 5,
           rutaSrc: 'intro.mp4',
           tipo: E.tipoLeccion(TipoLeccion.VIDEO),
           descripcion: 'Introducción al módulo.',
@@ -667,7 +910,7 @@ async function main() {
           moduloId: b.id,
           titulo: 'Contenido principal',
           orden: 1,
-          duracionS: 600,
+          duracion: 10,
           rutaSrc: null,
           tipo: E.tipoLeccion(TipoLeccion.TEXTO),
           descripcion: 'Contenido base.',
@@ -818,6 +1061,254 @@ async function main() {
       },
     ] as any,
     skipDuplicates: true,
+  });
+
+  // ───────────────── Formulario dinámico por tipo de lección (contenido)
+  const tipoVideo = E.tipoLeccion(TipoLeccion.VIDEO);
+  const tipoDocumento = E.tipoLeccion(TipoLeccion.DOCUMENTO);
+  const tipoQuiz = E.tipoLeccion(TipoLeccion.QUIZ);
+  const tipoTexto = E.tipoLeccion(TipoLeccion.TEXTO);
+
+  await prisma.leccionTipoConfig.upsert({
+    where: { tipo: tipoVideo },
+    update: {
+      schema: json({
+        version: 2,
+        title: 'Video',
+        fields: [
+          { 
+            key: 'url', 
+            label: 'URL del Video', 
+            type: 'url', 
+            required: true,
+            help: 'Enlace directo al archivo de video (mp4, webm) o plataforma soportada.'
+          },
+          { 
+            key: 'duracionMin', 
+            label: 'Duración (minutos)', 
+            type: 'number', 
+            min: 0,
+            help: 'Tiempo estimado de duración en minutos para mostrar al alumno.'
+          },
+          { 
+            key: 'posterUrl', 
+            label: 'Imagen de Portada (Poster)', 
+            type: 'url',
+            help: 'Imagen que se muestra antes de reproducir el video. Opcional.'
+          },
+          { 
+            key: 'resumen', 
+            label: 'Resumen Corto', 
+            type: 'textarea',
+            help: 'Breve descripción del contenido del video que aparecerá en el listado.'
+          },
+        ],
+      }),
+      ui: json({ layout: '2col' }),
+      version: 2,
+    },
+    create: {
+      tipo: tipoVideo,
+      schema: json({
+        version: 2,
+        title: 'Video',
+        fields: [
+          { 
+            key: 'url', 
+            label: 'URL del Video', 
+            type: 'url', 
+            required: true,
+            help: 'Enlace directo al archivo de video (mp4, webm) o plataforma soportada.'
+          },
+          { 
+            key: 'duracionMin', 
+            label: 'Duración (minutos)', 
+            type: 'number', 
+            min: 0,
+            help: 'Tiempo estimado de duración en minutos para mostrar al alumno.'
+          },
+          { 
+            key: 'posterUrl', 
+            label: 'Imagen de Portada (Poster)', 
+            type: 'url',
+            help: 'Imagen que se muestra antes de reproducir el video. Opcional.'
+          },
+          { 
+            key: 'resumen', 
+            label: 'Resumen Corto', 
+            type: 'textarea',
+            help: 'Breve descripción del contenido del video que aparecerá en el listado.'
+          },
+        ],
+      }),
+      ui: json({ layout: '2col' }),
+      version: 2,
+      creadoEn: new Date(),
+    },
+  });
+
+  await prisma.leccionTipoConfig.upsert({
+    where: { tipo: tipoDocumento },
+    update: {
+      schema: json({
+        version: 2,
+        title: 'Documento',
+        fields: [
+          { 
+            key: 'tituloDoc', 
+            label: 'Título del Archivo', 
+            type: 'text',
+            help: 'Nombre visible del archivo para descargar.'
+          },
+          { 
+            key: 'url', 
+            label: 'URL del Documento', 
+            type: 'url',
+            help: 'Enlace directo al archivo PDF, DOCX, etc.'
+          },
+          { 
+            key: 'resumen', 
+            label: 'Resumen Corto', 
+            type: 'textarea',
+            help: 'Descripción breve sobre qué contiene el documento.'
+          },
+        ],
+      }),
+      ui: json({ layout: '1col' }),
+      version: 2,
+    },
+    create: {
+      tipo: tipoDocumento,
+      schema: json({
+        version: 2,
+        title: 'Documento',
+        fields: [
+          { 
+            key: 'tituloDoc', 
+            label: 'Título del Archivo', 
+            type: 'text',
+            help: 'Nombre visible del archivo para descargar.'
+          },
+          { 
+            key: 'url', 
+            label: 'URL del Documento', 
+            type: 'url',
+            help: 'Enlace directo al archivo PDF, DOCX, etc.'
+          },
+          { 
+            key: 'resumen', 
+            label: 'Resumen Corto', 
+            type: 'textarea',
+            help: 'Descripción breve sobre qué contiene el documento.'
+          },
+        ],
+      }),
+      ui: json({ layout: '1col' }),
+      version: 2,
+      creadoEn: new Date(),
+    },
+  });
+
+  await prisma.leccionTipoConfig.upsert({
+    where: { tipo: tipoQuiz },
+    update: {
+      schema: json({
+        version: 2,
+        title: 'Quiz',
+        fields: [
+          { 
+            key: 'intro', 
+            label: 'Introducción / Instrucciones', 
+            type: 'textarea',
+            help: 'Texto que se mostrará en una pantalla de bienvenida antes de comenzar el quiz. Útil para dar instrucciones o reglas.'
+          },
+          { 
+            key: 'preguntas', 
+            label: 'Preguntas del Cuestionario', 
+            type: 'quiz',
+            help: 'Agrega y configura las preguntas, opciones y respuestas correctas.'
+          },
+        ],
+      }),
+      ui: json({ layout: '1col' }),
+      version: 2,
+    },
+    create: {
+      tipo: tipoQuiz,
+      schema: json({
+        version: 2,
+        title: 'Quiz',
+        fields: [
+          { 
+            key: 'intro', 
+            label: 'Introducción / Instrucciones', 
+            type: 'textarea',
+            help: 'Texto que se mostrará en una pantalla de bienvenida antes de comenzar el quiz. Útil para dar instrucciones o reglas.'
+          },
+          { 
+            key: 'preguntas', 
+            label: 'Preguntas del Cuestionario', 
+            type: 'quiz',
+            help: 'Agrega y configura las preguntas, opciones y respuestas correctas.'
+          },
+        ],
+      }),
+      ui: json({ layout: '1col' }),
+      version: 2,
+      creadoEn: new Date(),
+    },
+  });
+
+  await prisma.leccionTipoConfig.upsert({
+    where: { tipo: tipoTexto },
+    update: {
+      schema: json({
+        version: 2,
+        title: 'Texto',
+        fields: [
+          { 
+            key: 'contenido', 
+            label: 'Contenido Principal', 
+            type: 'richtext', 
+            required: true,
+            help: 'Cuerpo principal de la lección. Puedes usar formato enriquecido, imágenes y enlaces.'
+          },
+          { 
+            key: 'resumen', 
+            label: 'Resumen Corto', 
+            type: 'textarea',
+            help: 'Breve descripción que se muestra en la vista previa de la lección.'
+          },
+        ],
+      }),
+      ui: json({ layout: '1col' }),
+      version: 2,
+    },
+    create: {
+      tipo: tipoTexto,
+      schema: json({
+        version: 2,
+        title: 'Texto',
+        fields: [
+          { 
+            key: 'contenido', 
+            label: 'Contenido Principal', 
+            type: 'richtext', 
+            required: true,
+            help: 'Cuerpo principal de la lección. Puedes usar formato enriquecido, imágenes y enlaces.'
+          },
+          { 
+            key: 'resumen', 
+            label: 'Resumen Corto', 
+            type: 'textarea',
+            help: 'Breve descripción que se muestra en la vista previa de la lección.'
+          },
+        ],
+      }),
+      ui: json({ layout: '1col' }),
+      version: 2,
+      creadoEn: new Date(),
+    },
   });
 
   // ───────────────── Resumen

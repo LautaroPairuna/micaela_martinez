@@ -274,7 +274,7 @@ export function CoursePlayer({
         if (!rawSrc) return null;
       }
 
-      return lesson.duracionS ?? null;
+      return lesson.duracion ? Math.round(lesson.duracion * 60) : null;
     },
     [videoDurationsCache, getRawVideoSrc]
   );

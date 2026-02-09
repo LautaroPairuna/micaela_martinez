@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -320,11 +320,10 @@ export type OrdenWhereInput = {
   metadatos?: Prisma.JsonNullableFilter<"Orden">
   direccionEnvioId?: Prisma.IntNullableFilter<"Orden"> | number | null
   direccionFacturacionId?: Prisma.IntNullableFilter<"Orden"> | number | null
+  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
   direccionEnvio?: Prisma.XOR<Prisma.DireccionNullableScalarRelationFilter, Prisma.DireccionWhereInput> | null
   direccionFacturacion?: Prisma.XOR<Prisma.DireccionNullableScalarRelationFilter, Prisma.DireccionWhereInput> | null
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
   items?: Prisma.ItemOrdenListRelationFilter
-  pagosSuscripcion?: Prisma.PagoSuscripcionListRelationFilter
 }
 
 export type OrdenOrderByWithRelationInput = {
@@ -344,11 +343,10 @@ export type OrdenOrderByWithRelationInput = {
   metadatos?: Prisma.SortOrderInput | Prisma.SortOrder
   direccionEnvioId?: Prisma.SortOrderInput | Prisma.SortOrder
   direccionFacturacionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  usuario?: Prisma.UsuarioOrderByWithRelationInput
   direccionEnvio?: Prisma.DireccionOrderByWithRelationInput
   direccionFacturacion?: Prisma.DireccionOrderByWithRelationInput
-  usuario?: Prisma.UsuarioOrderByWithRelationInput
   items?: Prisma.ItemOrdenOrderByRelationAggregateInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionOrderByRelationAggregateInput
   _relevance?: Prisma.OrdenOrderByRelevanceInput
 }
 
@@ -372,11 +370,10 @@ export type OrdenWhereUniqueInput = Prisma.AtLeast<{
   metadatos?: Prisma.JsonNullableFilter<"Orden">
   direccionEnvioId?: Prisma.IntNullableFilter<"Orden"> | number | null
   direccionFacturacionId?: Prisma.IntNullableFilter<"Orden"> | number | null
+  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
   direccionEnvio?: Prisma.XOR<Prisma.DireccionNullableScalarRelationFilter, Prisma.DireccionWhereInput> | null
   direccionFacturacion?: Prisma.XOR<Prisma.DireccionNullableScalarRelationFilter, Prisma.DireccionWhereInput> | null
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
   items?: Prisma.ItemOrdenListRelationFilter
-  pagosSuscripcion?: Prisma.PagoSuscripcionListRelationFilter
 }, "id">
 
 export type OrdenOrderByWithAggregationInput = {
@@ -438,11 +435,10 @@ export type OrdenCreateInput = {
   suscripcionFrecuencia?: number | null
   suscripcionTipoFrecuencia?: string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
   direccionEnvio?: Prisma.DireccionCreateNestedOneWithoutOrdenesEnvioInput
   direccionFacturacion?: Prisma.DireccionCreateNestedOneWithoutOrdenesFacturacionInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
   items?: Prisma.ItemOrdenCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenUncheckedCreateInput = {
@@ -463,7 +459,6 @@ export type OrdenUncheckedCreateInput = {
   direccionEnvioId?: number | null
   direccionFacturacionId?: number | null
   items?: Prisma.ItemOrdenUncheckedCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenUpdateInput = {
@@ -479,11 +474,10 @@ export type OrdenUpdateInput = {
   suscripcionFrecuencia?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suscripcionTipoFrecuencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
   direccionEnvio?: Prisma.DireccionUpdateOneWithoutOrdenesEnvioNestedInput
   direccionFacturacion?: Prisma.DireccionUpdateOneWithoutOrdenesFacturacionNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
   items?: Prisma.ItemOrdenUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateInput = {
@@ -504,7 +498,6 @@ export type OrdenUncheckedUpdateInput = {
   direccionEnvioId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   direccionFacturacionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   items?: Prisma.ItemOrdenUncheckedUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenCreateManyInput = {
@@ -718,20 +711,6 @@ export type OrdenUpdateOneRequiredWithoutItemsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrdenUpdateToOneWithWhereWithoutItemsInput, Prisma.OrdenUpdateWithoutItemsInput>, Prisma.OrdenUncheckedUpdateWithoutItemsInput>
 }
 
-export type OrdenCreateNestedOneWithoutPagosSuscripcionInput = {
-  create?: Prisma.XOR<Prisma.OrdenCreateWithoutPagosSuscripcionInput, Prisma.OrdenUncheckedCreateWithoutPagosSuscripcionInput>
-  connectOrCreate?: Prisma.OrdenCreateOrConnectWithoutPagosSuscripcionInput
-  connect?: Prisma.OrdenWhereUniqueInput
-}
-
-export type OrdenUpdateOneRequiredWithoutPagosSuscripcionNestedInput = {
-  create?: Prisma.XOR<Prisma.OrdenCreateWithoutPagosSuscripcionInput, Prisma.OrdenUncheckedCreateWithoutPagosSuscripcionInput>
-  connectOrCreate?: Prisma.OrdenCreateOrConnectWithoutPagosSuscripcionInput
-  upsert?: Prisma.OrdenUpsertWithoutPagosSuscripcionInput
-  connect?: Prisma.OrdenWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.OrdenUpdateToOneWithWhereWithoutPagosSuscripcionInput, Prisma.OrdenUpdateWithoutPagosSuscripcionInput>, Prisma.OrdenUncheckedUpdateWithoutPagosSuscripcionInput>
-}
-
 export type OrdenCreateNestedManyWithoutDireccionEnvioInput = {
   create?: Prisma.XOR<Prisma.OrdenCreateWithoutDireccionEnvioInput, Prisma.OrdenUncheckedCreateWithoutDireccionEnvioInput> | Prisma.OrdenCreateWithoutDireccionEnvioInput[] | Prisma.OrdenUncheckedCreateWithoutDireccionEnvioInput[]
   connectOrCreate?: Prisma.OrdenCreateOrConnectWithoutDireccionEnvioInput | Prisma.OrdenCreateOrConnectWithoutDireccionEnvioInput[]
@@ -832,7 +811,6 @@ export type OrdenCreateWithoutUsuarioInput = {
   direccionEnvio?: Prisma.DireccionCreateNestedOneWithoutOrdenesEnvioInput
   direccionFacturacion?: Prisma.DireccionCreateNestedOneWithoutOrdenesFacturacionInput
   items?: Prisma.ItemOrdenCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenUncheckedCreateWithoutUsuarioInput = {
@@ -852,7 +830,6 @@ export type OrdenUncheckedCreateWithoutUsuarioInput = {
   direccionEnvioId?: number | null
   direccionFacturacionId?: number | null
   items?: Prisma.ItemOrdenUncheckedCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenCreateOrConnectWithoutUsuarioInput = {
@@ -916,10 +893,9 @@ export type OrdenCreateWithoutItemsInput = {
   suscripcionFrecuencia?: number | null
   suscripcionTipoFrecuencia?: string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
   direccionEnvio?: Prisma.DireccionCreateNestedOneWithoutOrdenesEnvioInput
   direccionFacturacion?: Prisma.DireccionCreateNestedOneWithoutOrdenesFacturacionInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenUncheckedCreateWithoutItemsInput = {
@@ -939,7 +915,6 @@ export type OrdenUncheckedCreateWithoutItemsInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   direccionEnvioId?: number | null
   direccionFacturacionId?: number | null
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenCreateOrConnectWithoutItemsInput = {
@@ -971,10 +946,9 @@ export type OrdenUpdateWithoutItemsInput = {
   suscripcionFrecuencia?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suscripcionTipoFrecuencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
   direccionEnvio?: Prisma.DireccionUpdateOneWithoutOrdenesEnvioNestedInput
   direccionFacturacion?: Prisma.DireccionUpdateOneWithoutOrdenesFacturacionNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateWithoutItemsInput = {
@@ -994,101 +968,6 @@ export type OrdenUncheckedUpdateWithoutItemsInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   direccionEnvioId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   direccionFacturacionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutOrdenNestedInput
-}
-
-export type OrdenCreateWithoutPagosSuscripcionInput = {
-  estado?: $Enums.EstadoOrden
-  total: number
-  moneda?: string
-  referenciaPago?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  esSuscripcion?: boolean
-  suscripcionActiva?: boolean | null
-  suscripcionId?: string | null
-  suscripcionFrecuencia?: number | null
-  suscripcionTipoFrecuencia?: string | null
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionEnvio?: Prisma.DireccionCreateNestedOneWithoutOrdenesEnvioInput
-  direccionFacturacion?: Prisma.DireccionCreateNestedOneWithoutOrdenesFacturacionInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
-  items?: Prisma.ItemOrdenCreateNestedManyWithoutOrdenInput
-}
-
-export type OrdenUncheckedCreateWithoutPagosSuscripcionInput = {
-  id?: number
-  usuarioId: number
-  estado?: $Enums.EstadoOrden
-  total: number
-  moneda?: string
-  referenciaPago?: string | null
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  esSuscripcion?: boolean
-  suscripcionActiva?: boolean | null
-  suscripcionId?: string | null
-  suscripcionFrecuencia?: number | null
-  suscripcionTipoFrecuencia?: string | null
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionEnvioId?: number | null
-  direccionFacturacionId?: number | null
-  items?: Prisma.ItemOrdenUncheckedCreateNestedManyWithoutOrdenInput
-}
-
-export type OrdenCreateOrConnectWithoutPagosSuscripcionInput = {
-  where: Prisma.OrdenWhereUniqueInput
-  create: Prisma.XOR<Prisma.OrdenCreateWithoutPagosSuscripcionInput, Prisma.OrdenUncheckedCreateWithoutPagosSuscripcionInput>
-}
-
-export type OrdenUpsertWithoutPagosSuscripcionInput = {
-  update: Prisma.XOR<Prisma.OrdenUpdateWithoutPagosSuscripcionInput, Prisma.OrdenUncheckedUpdateWithoutPagosSuscripcionInput>
-  create: Prisma.XOR<Prisma.OrdenCreateWithoutPagosSuscripcionInput, Prisma.OrdenUncheckedCreateWithoutPagosSuscripcionInput>
-  where?: Prisma.OrdenWhereInput
-}
-
-export type OrdenUpdateToOneWithWhereWithoutPagosSuscripcionInput = {
-  where?: Prisma.OrdenWhereInput
-  data: Prisma.XOR<Prisma.OrdenUpdateWithoutPagosSuscripcionInput, Prisma.OrdenUncheckedUpdateWithoutPagosSuscripcionInput>
-}
-
-export type OrdenUpdateWithoutPagosSuscripcionInput = {
-  estado?: Prisma.EnumEstadoOrdenFieldUpdateOperationsInput | $Enums.EstadoOrden
-  total?: Prisma.IntFieldUpdateOperationsInput | number
-  moneda?: Prisma.StringFieldUpdateOperationsInput | string
-  referenciaPago?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  esSuscripcion?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  suscripcionActiva?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  suscripcionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  suscripcionFrecuencia?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  suscripcionTipoFrecuencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionEnvio?: Prisma.DireccionUpdateOneWithoutOrdenesEnvioNestedInput
-  direccionFacturacion?: Prisma.DireccionUpdateOneWithoutOrdenesFacturacionNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
-  items?: Prisma.ItemOrdenUpdateManyWithoutOrdenNestedInput
-}
-
-export type OrdenUncheckedUpdateWithoutPagosSuscripcionInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  estado?: Prisma.EnumEstadoOrdenFieldUpdateOperationsInput | $Enums.EstadoOrden
-  total?: Prisma.IntFieldUpdateOperationsInput | number
-  moneda?: Prisma.StringFieldUpdateOperationsInput | string
-  referenciaPago?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  esSuscripcion?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  suscripcionActiva?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  suscripcionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  suscripcionFrecuencia?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  suscripcionTipoFrecuencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionEnvioId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  direccionFacturacionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  items?: Prisma.ItemOrdenUncheckedUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenCreateWithoutDireccionEnvioInput = {
@@ -1104,10 +983,9 @@ export type OrdenCreateWithoutDireccionEnvioInput = {
   suscripcionFrecuencia?: number | null
   suscripcionTipoFrecuencia?: string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionFacturacion?: Prisma.DireccionCreateNestedOneWithoutOrdenesFacturacionInput
   usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
+  direccionFacturacion?: Prisma.DireccionCreateNestedOneWithoutOrdenesFacturacionInput
   items?: Prisma.ItemOrdenCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenUncheckedCreateWithoutDireccionEnvioInput = {
@@ -1127,7 +1005,6 @@ export type OrdenUncheckedCreateWithoutDireccionEnvioInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   direccionFacturacionId?: number | null
   items?: Prisma.ItemOrdenUncheckedCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenCreateOrConnectWithoutDireccionEnvioInput = {
@@ -1153,10 +1030,9 @@ export type OrdenCreateWithoutDireccionFacturacionInput = {
   suscripcionFrecuencia?: number | null
   suscripcionTipoFrecuencia?: string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionEnvio?: Prisma.DireccionCreateNestedOneWithoutOrdenesEnvioInput
   usuario: Prisma.UsuarioCreateNestedOneWithoutOrdenesInput
+  direccionEnvio?: Prisma.DireccionCreateNestedOneWithoutOrdenesEnvioInput
   items?: Prisma.ItemOrdenCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenUncheckedCreateWithoutDireccionFacturacionInput = {
@@ -1176,7 +1052,6 @@ export type OrdenUncheckedCreateWithoutDireccionFacturacionInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   direccionEnvioId?: number | null
   items?: Prisma.ItemOrdenUncheckedCreateNestedManyWithoutOrdenInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedCreateNestedManyWithoutOrdenInput
 }
 
 export type OrdenCreateOrConnectWithoutDireccionFacturacionInput = {
@@ -1255,7 +1130,6 @@ export type OrdenUpdateWithoutUsuarioInput = {
   direccionEnvio?: Prisma.DireccionUpdateOneWithoutOrdenesEnvioNestedInput
   direccionFacturacion?: Prisma.DireccionUpdateOneWithoutOrdenesFacturacionNestedInput
   items?: Prisma.ItemOrdenUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateWithoutUsuarioInput = {
@@ -1275,7 +1149,6 @@ export type OrdenUncheckedUpdateWithoutUsuarioInput = {
   direccionEnvioId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   direccionFacturacionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   items?: Prisma.ItemOrdenUncheckedUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateManyWithoutUsuarioInput = {
@@ -1345,10 +1218,9 @@ export type OrdenUpdateWithoutDireccionEnvioInput = {
   suscripcionFrecuencia?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suscripcionTipoFrecuencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionFacturacion?: Prisma.DireccionUpdateOneWithoutOrdenesFacturacionNestedInput
   usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
+  direccionFacturacion?: Prisma.DireccionUpdateOneWithoutOrdenesFacturacionNestedInput
   items?: Prisma.ItemOrdenUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateWithoutDireccionEnvioInput = {
@@ -1368,7 +1240,6 @@ export type OrdenUncheckedUpdateWithoutDireccionEnvioInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   direccionFacturacionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   items?: Prisma.ItemOrdenUncheckedUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateManyWithoutDireccionEnvioInput = {
@@ -1402,10 +1273,9 @@ export type OrdenUpdateWithoutDireccionFacturacionInput = {
   suscripcionFrecuencia?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   suscripcionTipoFrecuencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  direccionEnvio?: Prisma.DireccionUpdateOneWithoutOrdenesEnvioNestedInput
   usuario?: Prisma.UsuarioUpdateOneRequiredWithoutOrdenesNestedInput
+  direccionEnvio?: Prisma.DireccionUpdateOneWithoutOrdenesEnvioNestedInput
   items?: Prisma.ItemOrdenUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateWithoutDireccionFacturacionInput = {
@@ -1425,7 +1295,6 @@ export type OrdenUncheckedUpdateWithoutDireccionFacturacionInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   direccionEnvioId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   items?: Prisma.ItemOrdenUncheckedUpdateManyWithoutOrdenNestedInput
-  pagosSuscripcion?: Prisma.PagoSuscripcionUncheckedUpdateManyWithoutOrdenNestedInput
 }
 
 export type OrdenUncheckedUpdateManyWithoutDireccionFacturacionInput = {
@@ -1453,12 +1322,10 @@ export type OrdenUncheckedUpdateManyWithoutDireccionFacturacionInput = {
 
 export type OrdenCountOutputType = {
   items: number
-  pagosSuscripcion: number
 }
 
 export type OrdenCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   items?: boolean | OrdenCountOutputTypeCountItemsArgs
-  pagosSuscripcion?: boolean | OrdenCountOutputTypeCountPagosSuscripcionArgs
 }
 
 /**
@@ -1476,13 +1343,6 @@ export type OrdenCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
  */
 export type OrdenCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ItemOrdenWhereInput
-}
-
-/**
- * OrdenCountOutputType without action
- */
-export type OrdenCountOutputTypeCountPagosSuscripcionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.PagoSuscripcionWhereInput
 }
 
 
@@ -1503,11 +1363,10 @@ export type OrdenSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   metadatos?: boolean
   direccionEnvioId?: boolean
   direccionFacturacionId?: boolean
+  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
   direccionEnvio?: boolean | Prisma.Orden$direccionEnvioArgs<ExtArgs>
   direccionFacturacion?: boolean | Prisma.Orden$direccionFacturacionArgs<ExtArgs>
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Orden$itemsArgs<ExtArgs>
-  pagosSuscripcion?: boolean | Prisma.Orden$pagosSuscripcionArgs<ExtArgs>
   _count?: boolean | Prisma.OrdenCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orden"]>
 
@@ -1534,22 +1393,20 @@ export type OrdenSelectScalar = {
 
 export type OrdenOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "usuarioId" | "estado" | "total" | "moneda" | "referenciaPago" | "creadoEn" | "actualizadoEn" | "esSuscripcion" | "suscripcionActiva" | "suscripcionId" | "suscripcionFrecuencia" | "suscripcionTipoFrecuencia" | "metadatos" | "direccionEnvioId" | "direccionFacturacionId", ExtArgs["result"]["orden"]>
 export type OrdenInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
   direccionEnvio?: boolean | Prisma.Orden$direccionEnvioArgs<ExtArgs>
   direccionFacturacion?: boolean | Prisma.Orden$direccionFacturacionArgs<ExtArgs>
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Orden$itemsArgs<ExtArgs>
-  pagosSuscripcion?: boolean | Prisma.Orden$pagosSuscripcionArgs<ExtArgs>
   _count?: boolean | Prisma.OrdenCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $OrdenPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Orden"
   objects: {
+    usuario: Prisma.$UsuarioPayload<ExtArgs>
     direccionEnvio: Prisma.$DireccionPayload<ExtArgs> | null
     direccionFacturacion: Prisma.$DireccionPayload<ExtArgs> | null
-    usuario: Prisma.$UsuarioPayload<ExtArgs>
     items: Prisma.$ItemOrdenPayload<ExtArgs>[]
-    pagosSuscripcion: Prisma.$PagoSuscripcionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1908,11 +1765,10 @@ readonly fields: OrdenFieldRefs;
  */
 export interface Prisma__OrdenClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  usuario<T extends Prisma.UsuarioDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UsuarioDefaultArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   direccionEnvio<T extends Prisma.Orden$direccionEnvioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Orden$direccionEnvioArgs<ExtArgs>>): Prisma.Prisma__DireccionClient<runtime.Types.Result.GetResult<Prisma.$DireccionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   direccionFacturacion<T extends Prisma.Orden$direccionFacturacionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Orden$direccionFacturacionArgs<ExtArgs>>): Prisma.Prisma__DireccionClient<runtime.Types.Result.GetResult<Prisma.$DireccionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  usuario<T extends Prisma.UsuarioDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UsuarioDefaultArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   items<T extends Prisma.Orden$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Orden$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ItemOrdenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  pagosSuscripcion<T extends Prisma.Orden$pagosSuscripcionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Orden$pagosSuscripcionArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PagoSuscripcionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2360,30 +2216,6 @@ export type Orden$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   distinct?: Prisma.ItemOrdenScalarFieldEnum | Prisma.ItemOrdenScalarFieldEnum[]
-}
-
-/**
- * Orden.pagosSuscripcion
- */
-export type Orden$pagosSuscripcionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the PagoSuscripcion
-   */
-  select?: Prisma.PagoSuscripcionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the PagoSuscripcion
-   */
-  omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  where?: Prisma.PagoSuscripcionWhereInput
-  orderBy?: Prisma.PagoSuscripcionOrderByWithRelationInput | Prisma.PagoSuscripcionOrderByWithRelationInput[]
-  cursor?: Prisma.PagoSuscripcionWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.PagoSuscripcionScalarFieldEnum | Prisma.PagoSuscripcionScalarFieldEnum[]
 }
 
 /**

@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -256,8 +256,6 @@ export type PagoSuscripcionWhereInput = {
   metadatos?: Prisma.JsonNullableFilter<"PagoSuscripcion">
   creadoEn?: Prisma.DateTimeFilter<"PagoSuscripcion"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"PagoSuscripcion"> | Date | string
-  orden?: Prisma.XOR<Prisma.OrdenScalarRelationFilter, Prisma.OrdenWhereInput>
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
 }
 
 export type PagoSuscripcionOrderByWithRelationInput = {
@@ -270,8 +268,6 @@ export type PagoSuscripcionOrderByWithRelationInput = {
   metadatos?: Prisma.SortOrderInput | Prisma.SortOrder
   creadoEn?: Prisma.SortOrder
   actualizadoEn?: Prisma.SortOrder
-  orden?: Prisma.OrdenOrderByWithRelationInput
-  usuario?: Prisma.UsuarioOrderByWithRelationInput
   _relevance?: Prisma.PagoSuscripcionOrderByRelevanceInput
 }
 
@@ -288,8 +284,6 @@ export type PagoSuscripcionWhereUniqueInput = Prisma.AtLeast<{
   metadatos?: Prisma.JsonNullableFilter<"PagoSuscripcion">
   creadoEn?: Prisma.DateTimeFilter<"PagoSuscripcion"> | Date | string
   actualizadoEn?: Prisma.DateTimeFilter<"PagoSuscripcion"> | Date | string
-  orden?: Prisma.XOR<Prisma.OrdenScalarRelationFilter, Prisma.OrdenWhereInput>
-  usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>
 }, "id">
 
 export type PagoSuscripcionOrderByWithAggregationInput = {
@@ -325,14 +319,14 @@ export type PagoSuscripcionScalarWhereWithAggregatesInput = {
 }
 
 export type PagoSuscripcionCreateInput = {
+  ordenId: number
+  usuarioId: number
   referenciaPago: string
   monto: runtime.Decimal | runtime.DecimalJsLike | number | string
   estado: string
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   creadoEn?: Date | string
   actualizadoEn?: Date | string
-  orden: Prisma.OrdenCreateNestedOneWithoutPagosSuscripcionInput
-  usuario: Prisma.UsuarioCreateNestedOneWithoutPagosSuscripcionInput
 }
 
 export type PagoSuscripcionUncheckedCreateInput = {
@@ -348,14 +342,14 @@ export type PagoSuscripcionUncheckedCreateInput = {
 }
 
 export type PagoSuscripcionUpdateInput = {
+  ordenId?: Prisma.IntFieldUpdateOperationsInput | number
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
   monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   estado?: Prisma.StringFieldUpdateOperationsInput | string
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  orden?: Prisma.OrdenUpdateOneRequiredWithoutPagosSuscripcionNestedInput
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutPagosSuscripcionNestedInput
 }
 
 export type PagoSuscripcionUncheckedUpdateInput = {
@@ -383,6 +377,8 @@ export type PagoSuscripcionCreateManyInput = {
 }
 
 export type PagoSuscripcionUpdateManyMutationInput = {
+  ordenId?: Prisma.IntFieldUpdateOperationsInput | number
+  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
   referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
   monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   estado?: Prisma.StringFieldUpdateOperationsInput | string
@@ -401,16 +397,6 @@ export type PagoSuscripcionUncheckedUpdateManyInput = {
   metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type PagoSuscripcionListRelationFilter = {
-  every?: Prisma.PagoSuscripcionWhereInput
-  some?: Prisma.PagoSuscripcionWhereInput
-  none?: Prisma.PagoSuscripcionWhereInput
-}
-
-export type PagoSuscripcionOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
 }
 
 export type PagoSuscripcionOrderByRelevanceInput = {
@@ -467,291 +453,12 @@ export type PagoSuscripcionSumOrderByAggregateInput = {
   monto?: Prisma.SortOrder
 }
 
-export type PagoSuscripcionCreateNestedManyWithoutUsuarioInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput> | Prisma.PagoSuscripcionCreateWithoutUsuarioInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput | Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyUsuarioInputEnvelope
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-}
-
-export type PagoSuscripcionUncheckedCreateNestedManyWithoutUsuarioInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput> | Prisma.PagoSuscripcionCreateWithoutUsuarioInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput | Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyUsuarioInputEnvelope
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-}
-
-export type PagoSuscripcionUpdateManyWithoutUsuarioNestedInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput> | Prisma.PagoSuscripcionCreateWithoutUsuarioInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput | Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput[]
-  upsert?: Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutUsuarioInput | Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutUsuarioInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyUsuarioInputEnvelope
-  set?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  disconnect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  delete?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  update?: Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutUsuarioInput | Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutUsuarioInput[]
-  updateMany?: Prisma.PagoSuscripcionUpdateManyWithWhereWithoutUsuarioInput | Prisma.PagoSuscripcionUpdateManyWithWhereWithoutUsuarioInput[]
-  deleteMany?: Prisma.PagoSuscripcionScalarWhereInput | Prisma.PagoSuscripcionScalarWhereInput[]
-}
-
-export type PagoSuscripcionUncheckedUpdateManyWithoutUsuarioNestedInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput> | Prisma.PagoSuscripcionCreateWithoutUsuarioInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput | Prisma.PagoSuscripcionCreateOrConnectWithoutUsuarioInput[]
-  upsert?: Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutUsuarioInput | Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutUsuarioInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyUsuarioInputEnvelope
-  set?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  disconnect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  delete?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  update?: Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutUsuarioInput | Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutUsuarioInput[]
-  updateMany?: Prisma.PagoSuscripcionUpdateManyWithWhereWithoutUsuarioInput | Prisma.PagoSuscripcionUpdateManyWithWhereWithoutUsuarioInput[]
-  deleteMany?: Prisma.PagoSuscripcionScalarWhereInput | Prisma.PagoSuscripcionScalarWhereInput[]
-}
-
-export type PagoSuscripcionCreateNestedManyWithoutOrdenInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput> | Prisma.PagoSuscripcionCreateWithoutOrdenInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput | Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyOrdenInputEnvelope
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-}
-
-export type PagoSuscripcionUncheckedCreateNestedManyWithoutOrdenInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput> | Prisma.PagoSuscripcionCreateWithoutOrdenInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput | Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyOrdenInputEnvelope
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-}
-
-export type PagoSuscripcionUpdateManyWithoutOrdenNestedInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput> | Prisma.PagoSuscripcionCreateWithoutOrdenInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput | Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput[]
-  upsert?: Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutOrdenInput | Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutOrdenInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyOrdenInputEnvelope
-  set?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  disconnect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  delete?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  update?: Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutOrdenInput | Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutOrdenInput[]
-  updateMany?: Prisma.PagoSuscripcionUpdateManyWithWhereWithoutOrdenInput | Prisma.PagoSuscripcionUpdateManyWithWhereWithoutOrdenInput[]
-  deleteMany?: Prisma.PagoSuscripcionScalarWhereInput | Prisma.PagoSuscripcionScalarWhereInput[]
-}
-
-export type PagoSuscripcionUncheckedUpdateManyWithoutOrdenNestedInput = {
-  create?: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput> | Prisma.PagoSuscripcionCreateWithoutOrdenInput[] | Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput[]
-  connectOrCreate?: Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput | Prisma.PagoSuscripcionCreateOrConnectWithoutOrdenInput[]
-  upsert?: Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutOrdenInput | Prisma.PagoSuscripcionUpsertWithWhereUniqueWithoutOrdenInput[]
-  createMany?: Prisma.PagoSuscripcionCreateManyOrdenInputEnvelope
-  set?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  disconnect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  delete?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  connect?: Prisma.PagoSuscripcionWhereUniqueInput | Prisma.PagoSuscripcionWhereUniqueInput[]
-  update?: Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutOrdenInput | Prisma.PagoSuscripcionUpdateWithWhereUniqueWithoutOrdenInput[]
-  updateMany?: Prisma.PagoSuscripcionUpdateManyWithWhereWithoutOrdenInput | Prisma.PagoSuscripcionUpdateManyWithWhereWithoutOrdenInput[]
-  deleteMany?: Prisma.PagoSuscripcionScalarWhereInput | Prisma.PagoSuscripcionScalarWhereInput[]
-}
-
 export type DecimalFieldUpdateOperationsInput = {
   set?: runtime.Decimal | runtime.DecimalJsLike | number | string
   increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
   decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
   multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
-}
-
-export type PagoSuscripcionCreateWithoutUsuarioInput = {
-  referenciaPago: string
-  monto: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado: string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  orden: Prisma.OrdenCreateNestedOneWithoutPagosSuscripcionInput
-}
-
-export type PagoSuscripcionUncheckedCreateWithoutUsuarioInput = {
-  id?: number
-  ordenId: number
-  referenciaPago: string
-  monto: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado: string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type PagoSuscripcionCreateOrConnectWithoutUsuarioInput = {
-  where: Prisma.PagoSuscripcionWhereUniqueInput
-  create: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput>
-}
-
-export type PagoSuscripcionCreateManyUsuarioInputEnvelope = {
-  data: Prisma.PagoSuscripcionCreateManyUsuarioInput | Prisma.PagoSuscripcionCreateManyUsuarioInput[]
-  skipDuplicates?: boolean
-}
-
-export type PagoSuscripcionUpsertWithWhereUniqueWithoutUsuarioInput = {
-  where: Prisma.PagoSuscripcionWhereUniqueInput
-  update: Prisma.XOR<Prisma.PagoSuscripcionUpdateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedUpdateWithoutUsuarioInput>
-  create: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedCreateWithoutUsuarioInput>
-}
-
-export type PagoSuscripcionUpdateWithWhereUniqueWithoutUsuarioInput = {
-  where: Prisma.PagoSuscripcionWhereUniqueInput
-  data: Prisma.XOR<Prisma.PagoSuscripcionUpdateWithoutUsuarioInput, Prisma.PagoSuscripcionUncheckedUpdateWithoutUsuarioInput>
-}
-
-export type PagoSuscripcionUpdateManyWithWhereWithoutUsuarioInput = {
-  where: Prisma.PagoSuscripcionScalarWhereInput
-  data: Prisma.XOR<Prisma.PagoSuscripcionUpdateManyMutationInput, Prisma.PagoSuscripcionUncheckedUpdateManyWithoutUsuarioInput>
-}
-
-export type PagoSuscripcionScalarWhereInput = {
-  AND?: Prisma.PagoSuscripcionScalarWhereInput | Prisma.PagoSuscripcionScalarWhereInput[]
-  OR?: Prisma.PagoSuscripcionScalarWhereInput[]
-  NOT?: Prisma.PagoSuscripcionScalarWhereInput | Prisma.PagoSuscripcionScalarWhereInput[]
-  id?: Prisma.IntFilter<"PagoSuscripcion"> | number
-  ordenId?: Prisma.IntFilter<"PagoSuscripcion"> | number
-  usuarioId?: Prisma.IntFilter<"PagoSuscripcion"> | number
-  referenciaPago?: Prisma.StringFilter<"PagoSuscripcion"> | string
-  monto?: Prisma.DecimalFilter<"PagoSuscripcion"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFilter<"PagoSuscripcion"> | string
-  metadatos?: Prisma.JsonNullableFilter<"PagoSuscripcion">
-  creadoEn?: Prisma.DateTimeFilter<"PagoSuscripcion"> | Date | string
-  actualizadoEn?: Prisma.DateTimeFilter<"PagoSuscripcion"> | Date | string
-}
-
-export type PagoSuscripcionCreateWithoutOrdenInput = {
-  referenciaPago: string
-  monto: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado: string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-  usuario: Prisma.UsuarioCreateNestedOneWithoutPagosSuscripcionInput
-}
-
-export type PagoSuscripcionUncheckedCreateWithoutOrdenInput = {
-  id?: number
-  usuarioId: number
-  referenciaPago: string
-  monto: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado: string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type PagoSuscripcionCreateOrConnectWithoutOrdenInput = {
-  where: Prisma.PagoSuscripcionWhereUniqueInput
-  create: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput>
-}
-
-export type PagoSuscripcionCreateManyOrdenInputEnvelope = {
-  data: Prisma.PagoSuscripcionCreateManyOrdenInput | Prisma.PagoSuscripcionCreateManyOrdenInput[]
-  skipDuplicates?: boolean
-}
-
-export type PagoSuscripcionUpsertWithWhereUniqueWithoutOrdenInput = {
-  where: Prisma.PagoSuscripcionWhereUniqueInput
-  update: Prisma.XOR<Prisma.PagoSuscripcionUpdateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedUpdateWithoutOrdenInput>
-  create: Prisma.XOR<Prisma.PagoSuscripcionCreateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedCreateWithoutOrdenInput>
-}
-
-export type PagoSuscripcionUpdateWithWhereUniqueWithoutOrdenInput = {
-  where: Prisma.PagoSuscripcionWhereUniqueInput
-  data: Prisma.XOR<Prisma.PagoSuscripcionUpdateWithoutOrdenInput, Prisma.PagoSuscripcionUncheckedUpdateWithoutOrdenInput>
-}
-
-export type PagoSuscripcionUpdateManyWithWhereWithoutOrdenInput = {
-  where: Prisma.PagoSuscripcionScalarWhereInput
-  data: Prisma.XOR<Prisma.PagoSuscripcionUpdateManyMutationInput, Prisma.PagoSuscripcionUncheckedUpdateManyWithoutOrdenInput>
-}
-
-export type PagoSuscripcionCreateManyUsuarioInput = {
-  id?: number
-  ordenId: number
-  referenciaPago: string
-  monto: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado: string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type PagoSuscripcionUpdateWithoutUsuarioInput = {
-  referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
-  monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFieldUpdateOperationsInput | string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  orden?: Prisma.OrdenUpdateOneRequiredWithoutPagosSuscripcionNestedInput
-}
-
-export type PagoSuscripcionUncheckedUpdateWithoutUsuarioInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  ordenId?: Prisma.IntFieldUpdateOperationsInput | number
-  referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
-  monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFieldUpdateOperationsInput | string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type PagoSuscripcionUncheckedUpdateManyWithoutUsuarioInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  ordenId?: Prisma.IntFieldUpdateOperationsInput | number
-  referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
-  monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFieldUpdateOperationsInput | string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type PagoSuscripcionCreateManyOrdenInput = {
-  id?: number
-  usuarioId: number
-  referenciaPago: string
-  monto: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado: string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Date | string
-  actualizadoEn?: Date | string
-}
-
-export type PagoSuscripcionUpdateWithoutOrdenInput = {
-  referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
-  monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFieldUpdateOperationsInput | string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  usuario?: Prisma.UsuarioUpdateOneRequiredWithoutPagosSuscripcionNestedInput
-}
-
-export type PagoSuscripcionUncheckedUpdateWithoutOrdenInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
-  monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFieldUpdateOperationsInput | string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type PagoSuscripcionUncheckedUpdateManyWithoutOrdenInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  usuarioId?: Prisma.IntFieldUpdateOperationsInput | number
-  referenciaPago?: Prisma.StringFieldUpdateOperationsInput | string
-  monto?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estado?: Prisma.StringFieldUpdateOperationsInput | string
-  metadatos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -766,8 +473,6 @@ export type PagoSuscripcionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   metadatos?: boolean
   creadoEn?: boolean
   actualizadoEn?: boolean
-  orden?: boolean | Prisma.OrdenDefaultArgs<ExtArgs>
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["pagoSuscripcion"]>
 
 
@@ -785,17 +490,10 @@ export type PagoSuscripcionSelectScalar = {
 }
 
 export type PagoSuscripcionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ordenId" | "usuarioId" | "referenciaPago" | "monto" | "estado" | "metadatos" | "creadoEn" | "actualizadoEn", ExtArgs["result"]["pagoSuscripcion"]>
-export type PagoSuscripcionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  orden?: boolean | Prisma.OrdenDefaultArgs<ExtArgs>
-  usuario?: boolean | Prisma.UsuarioDefaultArgs<ExtArgs>
-}
 
 export type $PagoSuscripcionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PagoSuscripcion"
-  objects: {
-    orden: Prisma.$OrdenPayload<ExtArgs>
-    usuario: Prisma.$UsuarioPayload<ExtArgs>
-  }
+  objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     ordenId: number
@@ -1146,8 +844,6 @@ readonly fields: PagoSuscripcionFieldRefs;
  */
 export interface Prisma__PagoSuscripcionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  orden<T extends Prisma.OrdenDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrdenDefaultArgs<ExtArgs>>): Prisma.Prisma__OrdenClient<runtime.Types.Result.GetResult<Prisma.$OrdenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  usuario<T extends Prisma.UsuarioDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UsuarioDefaultArgs<ExtArgs>>): Prisma.Prisma__UsuarioClient<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1203,10 +899,6 @@ export type PagoSuscripcionFindUniqueArgs<ExtArgs extends runtime.Types.Extensio
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  /**
    * Filter, which PagoSuscripcion to fetch.
    */
   where: Prisma.PagoSuscripcionWhereUniqueInput
@@ -1225,10 +917,6 @@ export type PagoSuscripcionFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.E
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  /**
    * Filter, which PagoSuscripcion to fetch.
    */
   where: Prisma.PagoSuscripcionWhereUniqueInput
@@ -1246,10 +934,6 @@ export type PagoSuscripcionFindFirstArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the PagoSuscripcion
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
   /**
    * Filter, which PagoSuscripcion to fetch.
    */
@@ -1299,10 +983,6 @@ export type PagoSuscripcionFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ex
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  /**
    * Filter, which PagoSuscripcion to fetch.
    */
   where?: Prisma.PagoSuscripcionWhereInput
@@ -1351,10 +1031,6 @@ export type PagoSuscripcionFindManyArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  /**
    * Filter, which PagoSuscripcions to fetch.
    */
   where?: Prisma.PagoSuscripcionWhereInput
@@ -1398,10 +1074,6 @@ export type PagoSuscripcionCreateArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  /**
    * The data needed to create a PagoSuscripcion.
    */
   data: Prisma.XOR<Prisma.PagoSuscripcionCreateInput, Prisma.PagoSuscripcionUncheckedCreateInput>
@@ -1430,10 +1102,6 @@ export type PagoSuscripcionUpdateArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the PagoSuscripcion
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
   /**
    * The data needed to update a PagoSuscripcion.
    */
@@ -1475,10 +1143,6 @@ export type PagoSuscripcionUpsertArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
-  /**
    * The filter to search for the PagoSuscripcion to update in case it exists.
    */
   where: Prisma.PagoSuscripcionWhereUniqueInput
@@ -1504,10 +1168,6 @@ export type PagoSuscripcionDeleteArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the PagoSuscripcion
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
   /**
    * Filter which PagoSuscripcion to delete.
    */
@@ -1540,8 +1200,4 @@ export type PagoSuscripcionDefaultArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the PagoSuscripcion
    */
   omit?: Prisma.PagoSuscripcionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.PagoSuscripcionInclude<ExtArgs> | null
 }

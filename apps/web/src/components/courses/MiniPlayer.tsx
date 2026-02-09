@@ -10,7 +10,7 @@ type Lesson = {
   titulo: string;
   descripcion?: string | null;
   rutaSrc?: string | null;
-  duracionS?: number | null;
+  duracion?: number | null;
   orden: number;
   tipo?: 'VIDEO' | 'TEXTO' | 'DOCUMENTO' | 'QUIZ';
 };

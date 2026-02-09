@@ -10,65 +10,65 @@
 */
 
 export const TipoItemOrden = {
-  CURSO: 'curso',
-  PRODUCTO: 'producto'
+  CURSO: 'CURSO',
+  PRODUCTO: 'PRODUCTO'
 } as const
 
 export type TipoItemOrden = (typeof TipoItemOrden)[keyof typeof TipoItemOrden]
 
 
 export const EstadoOrden = {
-  PENDIENTE: 'pendiente',
-  PAGADO: 'pagado',
-  CUMPLIDO: 'cumplido',
-  CANCELADO: 'cancelado',
-  REEMBOLSADO: 'reembolsado'
+  PENDIENTE: 'PENDIENTE',
+  PAGADO: 'PAGADO',
+  CUMPLIDO: 'CUMPLIDO',
+  CANCELADO: 'CANCELADO',
+  REEMBOLSADO: 'REEMBOLSADO'
 } as const
 
 export type EstadoOrden = (typeof EstadoOrden)[keyof typeof EstadoOrden]
 
 
 export const NivelCurso = {
-  BASICO: 'basico',
-  INTERMEDIO: 'intermedio',
-  AVANZADO: 'avanzado'
+  BASICO: 'BASICO',
+  INTERMEDIO: 'INTERMEDIO',
+  AVANZADO: 'AVANZADO'
 } as const
 
 export type NivelCurso = (typeof NivelCurso)[keyof typeof NivelCurso]
 
 
 export const EstadoInscripcion = {
-  ACTIVADA: 'activada',
-  PAUSADA: 'pausada',
-  DESACTIVADA: 'desactivada'
+  ACTIVADA: 'ACTIVADA',
+  PAUSADA: 'PAUSADA',
+  DESACTIVADA: 'DESACTIVADA'
 } as const
 
 export type EstadoInscripcion = (typeof EstadoInscripcion)[keyof typeof EstadoInscripcion]
 
 
 export const TipoLike = {
-  LIKE: 'like',
-  DISLIKE: 'dislike'
+  LIKE: 'LIKE',
+  DISLIKE: 'DISLIKE'
 } as const
 
 export type TipoLike = (typeof TipoLike)[keyof typeof TipoLike]
 
 
 export const TipoLeccion = {
-  VIDEO: 'video',
-  DOCUMENTO: 'documento',
-  QUIZ: 'quiz',
-  TEXTO: 'texto'
+  VIDEO: 'VIDEO',
+  DOCUMENTO: 'DOCUMENTO',
+  QUIZ: 'QUIZ',
+  TEXTO: 'TEXTO'
 } as const
 
 export type TipoLeccion = (typeof TipoLeccion)[keyof typeof TipoLeccion]
 
 
 export const TipoNotificacion = {
-  RESPUESTA_RESENA: 'respuesta_resena',
-  LIKE_RESENA: 'like_resena',
-  MENCION: 'mencion',
-  SISTEMA: 'sistema'
+  RESPUESTA_RESENA: 'RESPUESTA_RESENA',
+  LIKE_RESENA: 'LIKE_RESENA',
+  MENCION: 'MENCION',
+  SISTEMA: 'SISTEMA'
 } as const
 
 export type TipoNotificacion = (typeof TipoNotificacion)[keyof typeof TipoNotificacion]

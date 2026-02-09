@@ -70,39 +70,55 @@ export class AdminUploadController {
     // ----------------------------------------------------------------------
     // SOPORTE CHUNKED UPLOAD
     // ----------------------------------------------------------------------
-    if (chunkIndex !== undefined && totalChunks !== undefined && uploadId && originalName) {
+    if (
+      chunkIndex !== undefined &&
+      totalChunks !== undefined &&
+      uploadId &&
+      originalName
+    ) {
       if (!file) {
         throw new BadRequestException('No chunk file received');
       }
 
       const idx = parseInt(chunkIndex, 10);
       const total = parseInt(totalChunks, 10);
-      
+
       // Sanitizar uploadId para evitar path traversal
       const safeUploadId = uploadId.replace(/[^a-zA-Z0-9-]/g, '');
-      const tmpDir = path.join(process.cwd(), 'public', 'tmp', 'chunks', safeUploadId);
-      
+      const tmpDir = path.join(
+        process.cwd(),
+        'public',
+        'tmp',
+        'chunks',
+        safeUploadId,
+      );
+
       try {
         await fsp.mkdir(tmpDir, { recursive: true });
         const chunkPath = path.join(tmpDir, `chunk-${idx}`);
-        
+
         // Mover (rename) puede fallar entre discos/particiones, copy+unlink es más seguro
         try {
-            await fsp.rename(file.path, chunkPath);
+          await fsp.rename(file.path, chunkPath);
         } catch (e) {
-            await fsp.copyFile(file.path, chunkPath);
-            await fsp.unlink(file.path).catch(() => {});
+          await fsp.copyFile(file.path, chunkPath);
+          await fsp.unlink(file.path).catch(() => {});
         }
 
         // VERIFICACIÓN EXTRA: Asegurar que el archivo existe y tiene tamaño
         try {
-            const stats = await fsp.stat(chunkPath);
-            if (stats.size === 0) {
-                throw new Error('File is empty after save');
-            }
+          const stats = await fsp.stat(chunkPath);
+          if (stats.size === 0) {
+            throw new Error('File is empty after save');
+          }
         } catch (verifyErr) {
-             console.error(`[ChunkUpload] Error verifying chunk ${idx}:`, verifyErr);
-             throw new BadRequestException(`Error verificando chunk ${idx}: ${verifyErr}`);
+          console.error(
+            `[ChunkUpload] Error verifying chunk ${idx}:`,
+            verifyErr,
+          );
+          throw new BadRequestException(
+            `Error verificando chunk ${idx}: ${verifyErr}`,
+          );
         }
       } catch (err) {
         console.error('Error saving chunk:', err);
@@ -111,22 +127,23 @@ export class AdminUploadController {
 
       if (idx === total - 1) {
         this.assembleAndProcessVideo(
-            uploadId,
-            originalName,
-            total,
-            tmpDir,
-            resource,
-            id,
-            field,
-            clientId
+          uploadId,
+          originalName,
+          total,
+          tmpDir,
+          resource,
+          id,
+          field,
+          clientId,
         ).catch((err: unknown) => {
-            console.error('[BackgroundUpload] Error crítico no manejado:', err);
+          console.error('[BackgroundUpload] Error crítico no manejado:', err);
         });
 
-        return { 
-            status: 'processing', 
-            message: 'El video se está ensamblando y procesando en segundo plano.',
-            chunkIndex: idx 
+        return {
+          status: 'processing',
+          message:
+            'El video se está ensamblando y procesando en segundo plano.',
+          chunkIndex: idx,
         };
       } else {
         return { status: 'chunk_received', chunkIndex: idx };
@@ -143,11 +160,11 @@ export class AdminUploadController {
 
   // Lógica extraída para manejo síncrono (reutilizable)
   private async handleFileSync(
-    file: Express.Multer.File, 
-    resource: string, 
-    id: number, 
-    field: string, 
-    clientId?: string
+    file: Express.Multer.File,
+    resource: string,
+    id: number,
+    field: string,
+    clientId?: string,
   ) {
     const resourceMeta = await this.adminMeta.getResourceMeta(resource);
     const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
@@ -241,6 +258,8 @@ export class AdminUploadController {
       `${resourceMeta.tableName}-${id}`;
 
     if (mediaKind === 'video') {
+      const isLesson =
+        resourceMeta.tableName === 'leccion' || resourceMeta.name === 'Leccion';
       this.processVideoBackground(
         file,
         folder,
@@ -249,6 +268,7 @@ export class AdminUploadController {
         client,
         id,
         fieldMeta.name,
+        isLesson,
       ).catch((err: unknown) => {
         console.error('Error en background video processing:', err);
       });
@@ -314,7 +334,7 @@ export class AdminUploadController {
     resource: string,
     id: number,
     field: string,
-    clientId?: string
+    clientId?: string,
   ) {
     const lockPath = path.join(tmpDir, '.lock');
     if (fs.existsSync(lockPath)) {
@@ -335,106 +355,110 @@ export class AdminUploadController {
     const finalPath = path.join(process.cwd(), 'public', 'tmp', finalName);
 
     try {
-        if (fs.existsSync(finalPath)) await fsp.unlink(finalPath);
+      if (fs.existsSync(finalPath)) await fsp.unlink(finalPath);
 
-        for (let i = 0; i < totalChunks; i++) {
-            const chunkPath = path.join(tmpDir, `chunk-${i}`);
-            
-            let retries = 0;
-            while (!fs.existsSync(chunkPath) && retries < 20) {
-                await new Promise(r => setTimeout(r, 500));
-                retries++;
-            }
+      for (let i = 0; i < totalChunks; i++) {
+        const chunkPath = path.join(tmpDir, `chunk-${i}`);
 
-            if (!fs.existsSync(chunkPath)) {
-                throw new Error(`Chunk ${i} perdido durante el ensamblaje.`);
-            }
-
-            const data = await fsp.readFile(chunkPath);
-            await fsp.appendFile(finalPath, data);
-            
-            if (clientId && i % 10 === 0) {
-              const progress = Math.round((i / totalChunks) * 100);
-              this.videoGateway.server.to(clientId).emit('video-stage', {
-                clientId,
-                stage: 'assembling',
-                progress,
-              });
-            }
+        let retries = 0;
+        while (!fs.existsSync(chunkPath) && retries < 20) {
+          await new Promise((r) => setTimeout(r, 500));
+          retries++;
         }
 
-        await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+        if (!fs.existsSync(chunkPath)) {
+          throw new Error(`Chunk ${i} perdido durante el ensamblaje.`);
+        }
 
-        const stats = await fsp.stat(finalPath);
-        const file: Express.Multer.File = {
-            fieldname: 'file',
-            originalname: originalName,
-            encoding: '7bit',
-            mimetype: 'video/mp4',
-            destination: path.dirname(finalPath),
-            filename: finalName,
-            path: finalPath,
-            size: stats.size,
-            stream: fs.createReadStream(finalPath),
-            buffer: Buffer.alloc(0)
-        };
+        const data = await fsp.readFile(chunkPath);
+        await fsp.appendFile(finalPath, data);
 
-        console.info('video_assemble_done', {
-          uploadId,
-          resource,
-          id,
-          field,
-          totalChunks,
-          size: stats.size,
-          ms: Date.now() - assembleStart,
-        });
-
-        const resourceMeta = await this.adminMeta.getResourceMeta(resource);
-        const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
-        
-        const prismaModelKey = resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
-        const client = (this.prisma as any)[prismaModelKey];
-        const existing = await client.findUnique({ where: { id } });
-        
-        const baseName = existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
-        const folder = path.join('uploads', 'media');
-
-        if (clientId) {
+        if (clientId && i % 10 === 0) {
+          const progress = Math.round((i / totalChunks) * 100);
           this.videoGateway.server.to(clientId).emit('video-stage', {
             clientId,
-            stage: 'processing',
-            progress: 0,
+            stage: 'assembling',
+            progress,
           });
         }
+      }
 
-        await this.processVideoBackground(
-            file,
-            folder,
-            baseName,
-            clientId,
-            client,
-            id,
-            fieldMeta.name
-        );
+      await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
-    } catch (err) {
-        console.error('video_assemble_error', {
-          uploadId,
-          resource,
-          id,
-          field,
-          totalChunks,
-          ms: Date.now() - assembleStart,
-          error: err instanceof Error ? err.message : String(err),
+      const stats = await fsp.stat(finalPath);
+      const file: Express.Multer.File = {
+        fieldname: 'file',
+        originalname: originalName,
+        encoding: '7bit',
+        mimetype: 'video/mp4',
+        destination: path.dirname(finalPath),
+        filename: finalName,
+        path: finalPath,
+        size: stats.size,
+        stream: fs.createReadStream(finalPath),
+        buffer: Buffer.alloc(0),
+      };
+
+      console.info('video_assemble_done', {
+        uploadId,
+        resource,
+        id,
+        field,
+        totalChunks,
+        size: stats.size,
+        ms: Date.now() - assembleStart,
+      });
+
+      const resourceMeta = await this.adminMeta.getResourceMeta(resource);
+      const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
+      const isLesson =
+        resourceMeta.tableName === 'leccion' || resourceMeta.name === 'Leccion';
+
+      const prismaModelKey =
+        resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
+      const client = (this.prisma as any)[prismaModelKey];
+      const existing = await client.findUnique({ where: { id } });
+
+      const baseName =
+        existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
+      const folder = path.join('uploads', 'media');
+
+      if (clientId) {
+        this.videoGateway.server.to(clientId).emit('video-stage', {
+          clientId,
+          stage: 'processing',
+          progress: 0,
         });
-        if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
-        
-        if (clientId) {
-            this.videoGateway.server.to(clientId).emit('video-error', {
-                clientId,
-                message: `Error procesando video: ${err instanceof Error ? err.message : err}`
-            });
-        }
+      }
+
+      await this.processVideoBackground(
+        file,
+        folder,
+        baseName,
+        clientId,
+        client,
+        id,
+        fieldMeta.name,
+        isLesson,
+      );
+    } catch (err) {
+      console.error('video_assemble_error', {
+        uploadId,
+        resource,
+        id,
+        field,
+        totalChunks,
+        ms: Date.now() - assembleStart,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
+
+      if (clientId) {
+        this.videoGateway.server.to(clientId).emit('video-error', {
+          clientId,
+          message: `Error procesando video: ${err instanceof Error ? err.message : err}`,
+        });
+      }
     } finally {
       await fsp.unlink(lockPath).catch(() => {});
     }
@@ -447,6 +471,7 @@ export class AdminUploadController {
     client: any,
     id: number,
     fieldName: string,
+    isLesson: boolean,
   ) {
     const processStart = Date.now();
     try {
@@ -462,37 +487,79 @@ export class AdminUploadController {
       );
 
       const filenameOnly = path.basename(saved.path);
+      const absoluteVideoPath = path.join(process.cwd(), 'public', saved.path);
+      let durationS: number | null = null;
+      try {
+        const duration =
+          await this.mediaStorage.getVideoDurationSeconds(absoluteVideoPath);
+        durationS = Math.round(duration);
+      } catch (e) {
+        console.error('Error obteniendo duración de video:', e);
+      }
 
+      let previewVttUrl: string | null = null;
+      let thumbUrl: string | null = null;
       // 2. VTT / Sprite (Best effort)
       try {
         const baseNameForVtt = path.basename(
           filenameOnly,
           path.extname(filenameOnly),
         );
-        const absoluteVideoPath = path.join(
-          process.cwd(),
-          'public',
-          saved.path,
-        );
-        await this.mediaStorage.generateVttAndSprite(
+        const preview = await this.mediaStorage.generateVttAndSprite(
           absoluteVideoPath,
           'uploads/media',
           baseNameForVtt,
         );
+        previewVttUrl = preview?.vttUrl ?? null;
+        const thumb = await this.mediaStorage.generateVideoThumbnailWebp(
+          absoluteVideoPath,
+          'uploads/thumbnails',
+          baseNameForVtt,
+        );
+        thumbUrl = thumb.thumbUrl ?? null;
       } catch (e) {
         console.error('Error generando VTT en admin upload:', e);
       }
 
       // 3. Actualizar BD con el nombre final
+      const updateData: Record<string, unknown> = {
+        [fieldName]: filenameOnly,
+      };
+      if (isLesson && fieldName === 'rutaSrc') {
+        // Asignar duración (MINUTOS)
+        // Convertimos segundos a minutos (con decimales)
+        if (typeof durationS === 'number' && durationS > 0) {
+          updateData.duracion = parseFloat((durationS / 60).toFixed(2));
+        }
+
+        // Asignar previewUrl (Miniatura/Thumbnail hardcodeado)
+        // El usuario pidió "ruta hardcodeada" y "primer frame".
+        // thumbUrl viene de generateVideoThumbnailWebp como /api/media/thumbnails/xxx-thumb.webp
+        if (thumbUrl) {
+          updateData.previewUrl = thumbUrl;
+        } else if (previewVttUrl) {
+          // Fallback al VTT si no hay thumb (aunque thumb debería generarse siempre si hay ffmpeg)
+          // Pero idealmente previewUrl es una imagen.
+          console.warn(
+            'No se generó thumbUrl, usando VTT para previewUrl como fallback',
+          );
+          // updateData.previewUrl = previewVttUrl; // Comentado para no ensuciar si se espera imagen
+        }
+      }
+
       await client.update({
         where: { id },
-        data: { [fieldName]: filenameOnly },
+        data: updateData,
       });
 
       console.info('video_process_done', {
         id,
         fieldName,
         filename: filenameOnly,
+        durationS,
+        previewVttUrl,
+        thumbUrl,
+        updateData, // Log para verificar qué se guardó
         ms: Date.now() - processStart,
       });
 
@@ -513,7 +580,9 @@ export class AdminUploadController {
           err instanceof Error ? err.message : String(err),
         );
       }
-      // Limpieza en caso de fallo total (si quedó el archivo temporal)
+    } finally {
+      // Limpieza final de temporales (siempre intentar borrar el input original si quedó)
+      // saveCompressedVideoFromDisk debería haberlo borrado, pero por seguridad:
       await fsp.unlink(file.path).catch(() => {});
     }
   }

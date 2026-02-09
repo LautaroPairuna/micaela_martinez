@@ -84,7 +84,7 @@ export class CoursesService {
           modulos: {
             select: {
               lecciones: {
-                select: { id: true, duracionS: true },
+                select: { id: true, duracion: true },
               },
             },
           },
@@ -101,7 +101,11 @@ export class CoursesService {
       );
       const totalDurationS = item.modulos.reduce(
         (acc, mod) =>
-          acc + mod.lecciones.reduce((sum, l) => sum + (l.duracionS || 0), 0),
+          acc +
+          mod.lecciones.reduce(
+            (sum, l) => sum + Math.round((l.duracion || 0) * 60),
+            0,
+          ),
         0,
       );
 
@@ -207,7 +211,7 @@ export class CoursesService {
               select: {
                 id: true,
                 titulo: true,
-                duracionS: true,
+                duracion: true,
                 orden: true,
                 rutaSrc: true,
                 tipo: true,
@@ -269,7 +273,9 @@ export class CoursesService {
 
     // Duración total calculada (en segundos)
     const duracionTotalS = modulos.reduce(
-      (acc, m) => acc + m.lecciones.reduce((a, l) => a + (l.duracionS ?? 0), 0),
+      (acc, m) =>
+        acc +
+        m.lecciones.reduce((a, l) => a + Math.round((l.duracion ?? 0) * 60), 0),
       0,
     );
 

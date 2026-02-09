@@ -471,6 +471,12 @@ export function AdminResourceClient({
         return all.filter((r) => allowed.includes(r.name));
       }
 
+      // Regla específica para Usuario: filtrar relaciones relevantes
+      if (resource.toLowerCase() === 'usuario') {
+        const allowed = ['ordenes', 'inscripciones', 'roles', 'direcciones'];
+        return all.filter((r) => allowed.includes(r.name));
+      }
+
       return all;
     },
     [meta.fields, resource],
@@ -516,11 +522,11 @@ export function AdminResourceClient({
   );
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-4 overflow-x-hidden">
+    <div className="w-full px-4 space-y-4 overflow-x-hidden">
       {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2a2a2a] pb-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-50">
+          <h1 className="text-2xl font-semibold tracking-widest text-slate-50 uppercase">
             {meta.displayName}
           </h1>
           <p className="text-xs text-slate-400">
@@ -779,29 +785,29 @@ export function AdminResourceClient({
       </div>
 
       {/* Tabla */}
-      <section className="overflow-hidden border border-[#2a2a2a] bg-[#1a1a1a]">
+      <section className="overflow-hidden rounded-lg border border-[#2a2a2a] bg-[#1a1a1a]">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
             <thead className="bg-[#1e1e1e]">
               <tr>
                 <th
-                  className="sticky left-0 z-20 border-b border-[#2a2a2a] bg-[#1c1c1c] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
+                  className="sticky left-0 z-20 border-b border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
                   style={{ minWidth: '96px' }}
                 />
                 {listFields.map((field) => (
                   <th
                     key={field.name}
-                    className="border-b border-[#2a2a2a] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
+                    className="border-b border-[#2a2a2a] px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
                   >
-                    {field.name}
+                    {field.label ?? field.name}
                   </th>
                 ))}
                 {relationFields.map((relation) => (
                   <th
                     key={relation.name}
-                    className="border-b border-[#2a2a2a] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
+                    className="border-b border-[#2a2a2a] px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
                   >
-                    {formatRelationLabel(relation.name)}
+                    {relation.label ?? formatRelationLabel(relation.name)}
                   </th>
                 ))}
               </tr>
@@ -823,25 +829,25 @@ export function AdminResourceClient({
                     className="bg-[#101010] border-b border-[#1f1f1f] hover:bg-[#181818]"
                   >
                     <td
-                      className="sticky left-0 z-10 bg-[#101010] px-4 py-3 align-middle"
+                      className="sticky left-0 z-10 bg-[#101010] px-3 py-2 align-middle"
                       style={{ minWidth: '96px' }}
                     >
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(row)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-sky-200 hover:bg-[#262626] hover:text-sky-100"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-sky-200 hover:bg-[#262626] hover:text-sky-100"
                           aria-label="Editar"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(row)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-rose-300 hover:bg-[#262626] hover:text-rose-200"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-rose-300 hover:bg-[#262626] hover:text-rose-200"
                           aria-label="Borrar"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>
@@ -849,29 +855,52 @@ export function AdminResourceClient({
                     {listFields.map((field) => (
                       <td
                         key={field.name}
-                        className="px-4 py-3 align-middle"
+                        className="px-3 py-2 align-middle"
                       >
                         {renderCell({ field, row, meta })}
                       </td>
                     ))}
 
                     {relationFields.map((relation) => {
+                      // Caso especial: Roles de Usuario
+                      if (resource.toLowerCase() === 'usuario' && relation.name === 'roles') {
+                        const rolesList = row.roles;
+                        return (
+                          <td key={relation.name} className="px-3 py-2 align-middle">
+                            <div className="flex flex-wrap gap-1">
+                              {Array.isArray(rolesList) && rolesList.length > 0 ? (
+                                rolesList.map((ur: any, i: number) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex rounded bg-purple-900/40 border border-purple-500/30 px-2 py-0.5 text-[10px] text-purple-200"
+                                  >
+                                    {ur.role?.name || 'Rol'}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] text-slate-500">—</span>
+                              )}
+                            </div>
+                          </td>
+                        );
+                      }
+
                       const count = row?._count?.[relation.name] ?? 0;
                       const href = buildRelationHref(relation, row);
                       const disabled = href === '#';
-                      const label = formatRelationLabel(relation.name);
+                      const label = relation.label ?? formatRelationLabel(relation.name);
                       return (
-                        <td key={relation.name} className="px-4 py-3 align-middle">
+                        <td key={relation.name} className="px-3 py-2 align-middle">
                           {disabled ? (
                             <span
-                              className="inline-flex rounded border border-[#2a2a2a] bg-[#1a1a1a] px-2 py-1 text-[11px] text-slate-500"
+                              className="inline-flex rounded border border-[#2a2a2a] bg-[#1a1a1a] px-2 py-0.5 text-[10px] text-slate-500"
                             >
                               {label} ({count})
                             </span>
                           ) : (
                             <Link
                               href={href}
-                              className="inline-flex rounded border border-[#2a2a2a] bg-[#1a1a1a] px-2 py-1 text-[11px] text-slate-200 hover:bg-[#262626]"
+                              className="inline-flex rounded border border-[#2a2a2a] bg-[#1a1a1a] px-2 py-0.5 text-[10px] text-slate-200 hover:bg-[#262626]"
                             >
                               {label} ({count})
                             </Link>

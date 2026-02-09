@@ -121,7 +121,7 @@ export default async function LessonPage({
                   titulo: leccionItem.titulo || `Lección ${leccionIndex + 1}`,
                   descripcion: null as string | null,
                   rutaSrc: leccionItem.rutaSrc || null,
-                  duracionS: leccionItem.duracionS ?? null,
+                  duracion: leccionItem.duracion ?? null,
                   orden: leccionIndex + 1,
                   contenido: leccionItem.contenido ?? null,
                   tipo:

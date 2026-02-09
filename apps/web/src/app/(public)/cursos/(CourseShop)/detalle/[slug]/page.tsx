@@ -40,11 +40,11 @@ function qsFromSearch(searchParams?: Record<string, string | undefined>) {
 }
 
 // Tipos mínimos para lectura de API (evitar any)
-type LessonMini = { titulo?: string | null; duracionS?: number | null };
+type LessonMini = { titulo?: string | null; duracion?: number | null };
 type ModuleMini = { titulo?: string | null; lecciones?: LessonMini[] | null };
 
 // Tipos que exige CourseCurriculum
-type CurriculumLesson = { titulo: string; duracionS?: number };
+type CurriculumLesson = { titulo: string; duracion?: number };
 type CurriculumModule = { titulo: string; lecciones: CurriculumLesson[] };
 
 export async function generateMetadata({
@@ -147,8 +147,8 @@ export default async function CursoPage({
     const leccionesSrc = Array.isArray(m.lecciones) ? m.lecciones : [];
     const lecciones: CurriculumLesson[] = leccionesSrc.map((l, j) => {
       const titulo = (l?.titulo ?? `Lección ${j + 1}`).toString();
-      const dur = l?.duracionS;
-      return typeof dur === 'number' ? { titulo, duracionS: dur } : { titulo };
+      const dur = l?.duracion;
+      return typeof dur === 'number' ? { titulo, duracion: dur } : { titulo };
     });
 
     return {
@@ -316,19 +316,19 @@ export default async function CursoPage({
                                {mod.titulo || `Módulo ${modIndex + 1}`}
                              </h3>
                              <p className="text-sm text-muted">
-                               {mod.lecciones?.length || 0} clases • {formatDuration(mod.lecciones?.reduce((acc, l) => acc + (l.duracionS || 0), 0) || 0)}
-                             </p>
-                           </div>
-                         </div>
-                       </summary>
-                       <div className="px-4 pb-4">
-                         {mod.lecciones?.map((leccion, lecIndex) => (
-                           <div key={lecIndex} className="flex items-center gap-3 py-2 text-sm">
-                             <PlayCircle className="size-4 text-muted" />
-                             <span className="text-[var(--fg)]">{leccion.titulo}</span>
-                             <span className="text-muted ml-auto">{formatDuration(leccion.duracionS || 0)}</span>
-                           </div>
-                         ))}
+                               {mod.lecciones?.length || 0} clases • {formatDuration(mod.lecciones?.reduce((acc, l) => acc + ((l.duracion || 0) * 60), 0) || 0)}
+                            </p>
+                          </div>
+                        </div>
+                      </summary>
+                      <div className="px-4 pb-4">
+                        {mod.lecciones?.map((leccion, lecIndex) => (
+                          <div key={lecIndex} className="flex items-center gap-3 py-2 text-sm">
+                            <PlayCircle className="size-4 text-muted" />
+                            <span className="text-[var(--fg)]">{leccion.titulo}</span>
+                            <span className="text-muted ml-auto">{formatDuration((leccion.duracion || 0) * 60)}</span>
+                          </div>
+                        ))}
                        </div>
                      </details>
                    ))}

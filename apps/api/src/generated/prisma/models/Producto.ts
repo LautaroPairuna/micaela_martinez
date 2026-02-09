@@ -8,13 +8,13 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model Producto
- * @admin.group("Ventas")
+ * 
  */
 export type ProductoModel = runtime.Types.Result.DefaultSelection<Prisma.$ProductoPayload>
 
@@ -329,7 +329,6 @@ export type ProductoWhereInput = {
   imagenes?: Prisma.ProductoImagenListRelationFilter
   resenas?: Prisma.ResenaListRelationFilter
   favoritos?: Prisma.FavoritoListRelationFilter
-  borradores?: Prisma.ResenaBorradorListRelationFilter
   itemsCarrito?: Prisma.ItemCarritoListRelationFilter
 }
 
@@ -354,7 +353,6 @@ export type ProductoOrderByWithRelationInput = {
   imagenes?: Prisma.ProductoImagenOrderByRelationAggregateInput
   resenas?: Prisma.ResenaOrderByRelationAggregateInput
   favoritos?: Prisma.FavoritoOrderByRelationAggregateInput
-  borradores?: Prisma.ResenaBorradorOrderByRelationAggregateInput
   itemsCarrito?: Prisma.ItemCarritoOrderByRelationAggregateInput
   _relevance?: Prisma.ProductoOrderByRelevanceInput
 }
@@ -383,7 +381,6 @@ export type ProductoWhereUniqueInput = Prisma.AtLeast<{
   imagenes?: Prisma.ProductoImagenListRelationFilter
   resenas?: Prisma.ResenaListRelationFilter
   favoritos?: Prisma.FavoritoListRelationFilter
-  borradores?: Prisma.ResenaBorradorListRelationFilter
   itemsCarrito?: Prisma.ItemCarritoListRelationFilter
 }, "id" | "slug">
 
@@ -449,7 +446,6 @@ export type ProductoCreateInput = {
   imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
 }
 
@@ -472,7 +468,6 @@ export type ProductoUncheckedCreateInput = {
   imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
 }
 
@@ -494,7 +489,6 @@ export type ProductoUpdateInput = {
   imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
 }
 
@@ -517,7 +511,6 @@ export type ProductoUncheckedUpdateInput = {
   imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
 }
 
@@ -802,22 +795,6 @@ export type ProductoUpdateOneWithoutResenasNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProductoUpdateToOneWithWhereWithoutResenasInput, Prisma.ProductoUpdateWithoutResenasInput>, Prisma.ProductoUncheckedUpdateWithoutResenasInput>
 }
 
-export type ProductoCreateNestedOneWithoutBorradoresInput = {
-  create?: Prisma.XOR<Prisma.ProductoCreateWithoutBorradoresInput, Prisma.ProductoUncheckedCreateWithoutBorradoresInput>
-  connectOrCreate?: Prisma.ProductoCreateOrConnectWithoutBorradoresInput
-  connect?: Prisma.ProductoWhereUniqueInput
-}
-
-export type ProductoUpdateOneWithoutBorradoresNestedInput = {
-  create?: Prisma.XOR<Prisma.ProductoCreateWithoutBorradoresInput, Prisma.ProductoUncheckedCreateWithoutBorradoresInput>
-  connectOrCreate?: Prisma.ProductoCreateOrConnectWithoutBorradoresInput
-  upsert?: Prisma.ProductoUpsertWithoutBorradoresInput
-  disconnect?: Prisma.ProductoWhereInput | boolean
-  delete?: Prisma.ProductoWhereInput | boolean
-  connect?: Prisma.ProductoWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductoUpdateToOneWithWhereWithoutBorradoresInput, Prisma.ProductoUpdateWithoutBorradoresInput>, Prisma.ProductoUncheckedUpdateWithoutBorradoresInput>
-}
-
 export type ProductoCreateNestedOneWithoutItemsCarritoInput = {
   create?: Prisma.XOR<Prisma.ProductoCreateWithoutItemsCarritoInput, Prisma.ProductoUncheckedCreateWithoutItemsCarritoInput>
   connectOrCreate?: Prisma.ProductoCreateOrConnectWithoutItemsCarritoInput
@@ -851,7 +828,6 @@ export type ProductoCreateWithoutFavoritosInput = {
   categoria?: Prisma.CategoriaCreateNestedOneWithoutProductosInput
   imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
 }
 
@@ -873,7 +849,6 @@ export type ProductoUncheckedCreateWithoutFavoritosInput = {
   categoriaId?: number | null
   imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
 }
 
@@ -910,7 +885,6 @@ export type ProductoUpdateWithoutFavoritosInput = {
   categoria?: Prisma.CategoriaUpdateOneWithoutProductosNestedInput
   imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
 }
 
@@ -932,7 +906,6 @@ export type ProductoUncheckedUpdateWithoutFavoritosInput = {
   categoriaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
 }
 
@@ -953,7 +926,6 @@ export type ProductoCreateWithoutImagenesInput = {
   categoria?: Prisma.CategoriaCreateNestedOneWithoutProductosInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
 }
 
@@ -975,7 +947,6 @@ export type ProductoUncheckedCreateWithoutImagenesInput = {
   categoriaId?: number | null
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
 }
 
@@ -1012,7 +983,6 @@ export type ProductoUpdateWithoutImagenesInput = {
   categoria?: Prisma.CategoriaUpdateOneWithoutProductosNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
 }
 
@@ -1034,7 +1004,6 @@ export type ProductoUncheckedUpdateWithoutImagenesInput = {
   categoriaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
 }
 
@@ -1055,7 +1024,6 @@ export type ProductoCreateWithoutMarcaInput = {
   imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
 }
 
@@ -1077,7 +1045,6 @@ export type ProductoUncheckedCreateWithoutMarcaInput = {
   imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
 }
 
@@ -1145,7 +1112,6 @@ export type ProductoCreateWithoutCategoriaInput = {
   imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
 }
 
@@ -1167,7 +1133,6 @@ export type ProductoUncheckedCreateWithoutCategoriaInput = {
   imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
 }
 
@@ -1214,7 +1179,6 @@ export type ProductoCreateWithoutResenasInput = {
   categoria?: Prisma.CategoriaCreateNestedOneWithoutProductosInput
   imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
 }
 
@@ -1236,7 +1200,6 @@ export type ProductoUncheckedCreateWithoutResenasInput = {
   categoriaId?: number | null
   imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
 }
 
@@ -1273,7 +1236,6 @@ export type ProductoUpdateWithoutResenasInput = {
   categoria?: Prisma.CategoriaUpdateOneWithoutProductosNestedInput
   imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
 }
 
@@ -1294,109 +1256,6 @@ export type ProductoUncheckedUpdateWithoutResenasInput = {
   marcaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   categoriaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
-  favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
-  itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
-}
-
-export type ProductoCreateWithoutBorradoresInput = {
-  slug: string
-  titulo: string
-  precio: number
-  stock?: number
-  publicado?: boolean
-  destacado?: boolean
-  imagen?: string | null
-  descripcionMD?: string | null
-  precioLista?: number | null
-  ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: number
-  creadoEn?: Date | string
-  marca?: Prisma.MarcaCreateNestedOneWithoutProductosInput
-  categoria?: Prisma.CategoriaCreateNestedOneWithoutProductosInput
-  imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
-  resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
-  favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  itemsCarrito?: Prisma.ItemCarritoCreateNestedManyWithoutProductoInput
-}
-
-export type ProductoUncheckedCreateWithoutBorradoresInput = {
-  id?: number
-  slug: string
-  titulo: string
-  precio: number
-  stock?: number
-  publicado?: boolean
-  destacado?: boolean
-  imagen?: string | null
-  descripcionMD?: string | null
-  precioLista?: number | null
-  ratingProm?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: number
-  creadoEn?: Date | string
-  marcaId?: number | null
-  categoriaId?: number | null
-  imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
-  resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
-  favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  itemsCarrito?: Prisma.ItemCarritoUncheckedCreateNestedManyWithoutProductoInput
-}
-
-export type ProductoCreateOrConnectWithoutBorradoresInput = {
-  where: Prisma.ProductoWhereUniqueInput
-  create: Prisma.XOR<Prisma.ProductoCreateWithoutBorradoresInput, Prisma.ProductoUncheckedCreateWithoutBorradoresInput>
-}
-
-export type ProductoUpsertWithoutBorradoresInput = {
-  update: Prisma.XOR<Prisma.ProductoUpdateWithoutBorradoresInput, Prisma.ProductoUncheckedUpdateWithoutBorradoresInput>
-  create: Prisma.XOR<Prisma.ProductoCreateWithoutBorradoresInput, Prisma.ProductoUncheckedCreateWithoutBorradoresInput>
-  where?: Prisma.ProductoWhereInput
-}
-
-export type ProductoUpdateToOneWithWhereWithoutBorradoresInput = {
-  where?: Prisma.ProductoWhereInput
-  data: Prisma.XOR<Prisma.ProductoUpdateWithoutBorradoresInput, Prisma.ProductoUncheckedUpdateWithoutBorradoresInput>
-}
-
-export type ProductoUpdateWithoutBorradoresInput = {
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  precio?: Prisma.IntFieldUpdateOperationsInput | number
-  stock?: Prisma.IntFieldUpdateOperationsInput | number
-  publicado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  destacado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  imagen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcionMD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  precioLista?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  marca?: Prisma.MarcaUpdateOneWithoutProductosNestedInput
-  categoria?: Prisma.CategoriaUpdateOneWithoutProductosNestedInput
-  imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
-  resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
-  favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
-}
-
-export type ProductoUncheckedUpdateWithoutBorradoresInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  precio?: Prisma.IntFieldUpdateOperationsInput | number
-  stock?: Prisma.IntFieldUpdateOperationsInput | number
-  publicado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  destacado?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  imagen?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  descripcionMD?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  precioLista?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ratingProm?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  ratingConteo?: Prisma.IntFieldUpdateOperationsInput | number
-  creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  marcaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  categoriaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
-  resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
 }
@@ -1419,7 +1278,6 @@ export type ProductoCreateWithoutItemsCarritoInput = {
   imagenes?: Prisma.ProductoImagenCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorCreateNestedManyWithoutProductoInput
 }
 
 export type ProductoUncheckedCreateWithoutItemsCarritoInput = {
@@ -1441,7 +1299,6 @@ export type ProductoUncheckedCreateWithoutItemsCarritoInput = {
   imagenes?: Prisma.ProductoImagenUncheckedCreateNestedManyWithoutProductoInput
   resenas?: Prisma.ResenaUncheckedCreateNestedManyWithoutProductoInput
   favoritos?: Prisma.FavoritoUncheckedCreateNestedManyWithoutProductoInput
-  borradores?: Prisma.ResenaBorradorUncheckedCreateNestedManyWithoutProductoInput
 }
 
 export type ProductoCreateOrConnectWithoutItemsCarritoInput = {
@@ -1478,7 +1335,6 @@ export type ProductoUpdateWithoutItemsCarritoInput = {
   imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
 }
 
 export type ProductoUncheckedUpdateWithoutItemsCarritoInput = {
@@ -1500,7 +1356,6 @@ export type ProductoUncheckedUpdateWithoutItemsCarritoInput = {
   imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
 }
 
 export type ProductoCreateManyMarcaInput = {
@@ -1537,7 +1392,6 @@ export type ProductoUpdateWithoutMarcaInput = {
   imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
 }
 
@@ -1559,7 +1413,6 @@ export type ProductoUncheckedUpdateWithoutMarcaInput = {
   imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
 }
 
@@ -1614,7 +1467,6 @@ export type ProductoUpdateWithoutCategoriaInput = {
   imagenes?: Prisma.ProductoImagenUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUpdateManyWithoutProductoNestedInput
 }
 
@@ -1636,7 +1488,6 @@ export type ProductoUncheckedUpdateWithoutCategoriaInput = {
   imagenes?: Prisma.ProductoImagenUncheckedUpdateManyWithoutProductoNestedInput
   resenas?: Prisma.ResenaUncheckedUpdateManyWithoutProductoNestedInput
   favoritos?: Prisma.FavoritoUncheckedUpdateManyWithoutProductoNestedInput
-  borradores?: Prisma.ResenaBorradorUncheckedUpdateManyWithoutProductoNestedInput
   itemsCarrito?: Prisma.ItemCarritoUncheckedUpdateManyWithoutProductoNestedInput
 }
 
@@ -1666,7 +1517,6 @@ export type ProductoCountOutputType = {
   imagenes: number
   resenas: number
   favoritos: number
-  borradores: number
   itemsCarrito: number
 }
 
@@ -1674,7 +1524,6 @@ export type ProductoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   imagenes?: boolean | ProductoCountOutputTypeCountImagenesArgs
   resenas?: boolean | ProductoCountOutputTypeCountResenasArgs
   favoritos?: boolean | ProductoCountOutputTypeCountFavoritosArgs
-  borradores?: boolean | ProductoCountOutputTypeCountBorradoresArgs
   itemsCarrito?: boolean | ProductoCountOutputTypeCountItemsCarritoArgs
 }
 
@@ -1712,13 +1561,6 @@ export type ProductoCountOutputTypeCountFavoritosArgs<ExtArgs extends runtime.Ty
 /**
  * ProductoCountOutputType without action
  */
-export type ProductoCountOutputTypeCountBorradoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ResenaBorradorWhereInput
-}
-
-/**
- * ProductoCountOutputType without action
- */
 export type ProductoCountOutputTypeCountItemsCarritoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ItemCarritoWhereInput
 }
@@ -1745,7 +1587,6 @@ export type ProductoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   imagenes?: boolean | Prisma.Producto$imagenesArgs<ExtArgs>
   resenas?: boolean | Prisma.Producto$resenasArgs<ExtArgs>
   favoritos?: boolean | Prisma.Producto$favoritosArgs<ExtArgs>
-  borradores?: boolean | Prisma.Producto$borradoresArgs<ExtArgs>
   itemsCarrito?: boolean | Prisma.Producto$itemsCarritoArgs<ExtArgs>
   _count?: boolean | Prisma.ProductoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["producto"]>
@@ -1777,7 +1618,6 @@ export type ProductoInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   imagenes?: boolean | Prisma.Producto$imagenesArgs<ExtArgs>
   resenas?: boolean | Prisma.Producto$resenasArgs<ExtArgs>
   favoritos?: boolean | Prisma.Producto$favoritosArgs<ExtArgs>
-  borradores?: boolean | Prisma.Producto$borradoresArgs<ExtArgs>
   itemsCarrito?: boolean | Prisma.Producto$itemsCarritoArgs<ExtArgs>
   _count?: boolean | Prisma.ProductoCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1790,7 +1630,6 @@ export type $ProductoPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     imagenes: Prisma.$ProductoImagenPayload<ExtArgs>[]
     resenas: Prisma.$ResenaPayload<ExtArgs>[]
     favoritos: Prisma.$FavoritoPayload<ExtArgs>[]
-    borradores: Prisma.$ResenaBorradorPayload<ExtArgs>[]
     itemsCarrito: Prisma.$ItemCarritoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1801,14 +1640,8 @@ export type $ProductoPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     stock: number
     publicado: boolean
     destacado: boolean
-    /**
-     * @admin.file
-     */
     imagen: string | null
     descripcionMD: string | null
-    /**
-     * @admin.label("Precio de Lista")
-     */
     precioLista: number | null
     ratingProm: runtime.Decimal | null
     ratingConteo: number
@@ -2160,7 +1993,6 @@ export interface Prisma__ProductoClient<T, Null = never, ExtArgs extends runtime
   imagenes<T extends Prisma.Producto$imagenesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Producto$imagenesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductoImagenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   resenas<T extends Prisma.Producto$resenasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Producto$resenasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   favoritos<T extends Prisma.Producto$favoritosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Producto$favoritosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoritoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  borradores<T extends Prisma.Producto$borradoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Producto$borradoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResenaBorradorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   itemsCarrito<T extends Prisma.Producto$itemsCarritoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Producto$itemsCarritoArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ItemCarritoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2656,30 +2488,6 @@ export type Producto$favoritosArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.FavoritoScalarFieldEnum | Prisma.FavoritoScalarFieldEnum[]
-}
-
-/**
- * Producto.borradores
- */
-export type Producto$borradoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ResenaBorrador
-   */
-  select?: Prisma.ResenaBorradorSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ResenaBorrador
-   */
-  omit?: Prisma.ResenaBorradorOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ResenaBorradorInclude<ExtArgs> | null
-  where?: Prisma.ResenaBorradorWhereInput
-  orderBy?: Prisma.ResenaBorradorOrderByWithRelationInput | Prisma.ResenaBorradorOrderByWithRelationInput[]
-  cursor?: Prisma.ResenaBorradorWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ResenaBorradorScalarFieldEnum | Prisma.ResenaBorradorScalarFieldEnum[]
 }
 
 /**

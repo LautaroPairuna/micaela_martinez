@@ -11,7 +11,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [PrismaModule, AdminMetaModule],
   controllers: [MediaController],
-  providers: [MediaService, MediaStorageService, VideoProgressGateway, MediaCleanupService],
+  providers: [
+    MediaService,
+    MediaStorageService,
+    VideoProgressGateway,
+    MediaCleanupService,
+  ],
   exports: [MediaService, MediaStorageService, VideoProgressGateway],
 })
 export class MediaModule {}

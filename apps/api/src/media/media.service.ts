@@ -425,6 +425,23 @@ export class MediaService {
       }
     }
 
+    if (!fullPath && safe.endsWith('-thumb.webp')) {
+      const originalSafe = safe.replace(/-thumb\.webp$/i, '.webp');
+      const fallbackCandidates: string[] = [];
+      for (const root of publicRoots) {
+        fallbackCandidates.push(path.resolve(root, originalSafe));
+        if (!originalSafe.startsWith('uploads/')) {
+          fallbackCandidates.push(path.resolve(root, 'uploads', originalSafe));
+        }
+      }
+      for (const p of fallbackCandidates) {
+        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+          fullPath = p;
+          break;
+        }
+      }
+    }
+
     if (!fullPath) {
       throw new NotFoundException(
         `Imagen pública no encontrada: ${filename} (candidatos: ${candidates.join(
@@ -451,31 +468,32 @@ export class MediaService {
    * Busca un archivo .jpg con el mismo nombre que el video
    */
   getVideoThumbnail(filename: string): StreamPayload {
-    // Quitamos la extensión del video y buscamos un .jpg
     const baseName = filename.replace(/\.[^.]+$/, '');
-    const thumbFilename = `${baseName}.jpg`;
-
-    // Buscamos en varias ubicaciones posibles
-    const roots = this.roots();
     const candidates = [
-      // Thumbnails específicos
-      ...roots.map((r) =>
-        path.resolve(r, 'public', 'uploads', 'thumbnails', thumbFilename),
-      ),
-      ...roots.map((r) =>
-        path.resolve(r, 'public', 'thumbnails', thumbFilename),
-      ),
-      ...roots.map((r) => path.resolve(r, 'thumbnails', thumbFilename)),
-      // Junto a los videos
-      ...roots.map((r) =>
-        path.resolve(r, 'public', 'uploads', 'media', thumbFilename),
-      ),
-      ...roots.map((r) => path.resolve(r, 'public', 'media', thumbFilename)),
-      ...roots.map((r) => path.resolve(r, 'media', thumbFilename)),
+      `${baseName}-thumb.webp`,
+      `${baseName}.webp`,
+      `${baseName}.jpg`,
     ];
 
+    const roots = this.roots();
+    const paths: string[] = [];
+    for (const name of candidates) {
+      paths.push(
+        ...roots.map((r) =>
+          path.resolve(r, 'public', 'uploads', 'thumbnails', name),
+        ),
+        ...roots.map((r) => path.resolve(r, 'public', 'thumbnails', name)),
+        ...roots.map((r) => path.resolve(r, 'thumbnails', name)),
+        ...roots.map((r) =>
+          path.resolve(r, 'public', 'uploads', 'media', name),
+        ),
+        ...roots.map((r) => path.resolve(r, 'public', 'media', name)),
+        ...roots.map((r) => path.resolve(r, 'media', name)),
+      );
+    }
+
     let fullPath = '';
-    for (const p of candidates) {
+    for (const p of paths) {
       if (fs.existsSync(p) && fs.statSync(p).isFile()) {
         fullPath = p;
         break;

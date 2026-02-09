@@ -44,7 +44,7 @@ export function CourseProgress({
           totalLessons++;
           const lessonDuration = getLessonDuration
             ? (getLessonDuration(lesson) ?? 0)
-            : (lesson.duracionS || 0);
+            : (lesson.duracion ? Math.round(lesson.duracion * 60) : 0);
           totalDuration += lessonDuration;
 
           if (lessonProgress[getLessonProgressKey(module.id, lesson.id)]) {

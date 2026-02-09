@@ -382,6 +382,16 @@ export class AdminCrudService {
         select: Object.fromEntries(countFields.map((f) => [f.name, true])),
       };
     }
+
+    // Include específico para Roles de Usuario para mostrar nombres en la lista
+    if (meta.name === 'Usuario') {
+      include.roles = {
+        include: {
+          role: true,
+        },
+      };
+    }
+
     return include;
   }
 

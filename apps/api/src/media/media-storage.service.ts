@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { randomBytes } from 'crypto';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const sharp = require('sharp');
 const ffmpeg = require('fluent-ffmpeg');
 
@@ -81,6 +80,8 @@ export class MediaStorageService {
     await fs.mkdir(folderPath, { recursive: true });
 
     const fullPath = path.join(folderPath, filename);
+    const thumbName = `${safeBase}-${hash}-thumb.webp`;
+    const thumbPath = path.join(folderPath, thumbName);
 
     const webpBuffer = await sharp(file.buffer)
       .resize({ width, withoutEnlargement: true })
@@ -88,6 +89,12 @@ export class MediaStorageService {
       .toBuffer();
 
     await fs.writeFile(fullPath, webpBuffer);
+
+    const thumbBuffer = await sharp(file.buffer)
+      .resize({ width: 320, withoutEnlargement: true })
+      .webp({ quality: 75 })
+      .toBuffer();
+    await fs.writeFile(thumbPath, thumbBuffer);
 
     const relativePath = path.join(opts.folder, filename).replace(/\\/g, '/');
     const url = `/api/media/images/${relativePath}`;
@@ -102,6 +109,14 @@ export class MediaStorageService {
   async delete(relativePath: string): Promise<void> {
     const fullPath = path.join(this.publicRoot, relativePath);
     await fs.rm(fullPath, { force: true });
+    if (
+      relativePath.endsWith('.webp') &&
+      !relativePath.endsWith('-thumb.webp')
+    ) {
+      const thumbPath = relativePath.replace(/\.webp$/i, '-thumb.webp');
+      const fullThumbPath = path.join(this.publicRoot, thumbPath);
+      await fs.rm(fullThumbPath, { force: true });
+    }
   }
 
   // ---------- VIDEO: (VIEJO) buffer -> tmp -> ffmpeg ----------
@@ -610,13 +625,59 @@ export class MediaStorageService {
     };
   }
 
+  async getVideoDurationSeconds(videoPath: string): Promise<number> {
+    return this.getVideoDuration(videoPath);
+  }
+
+  async generateVideoThumbnailWebp(
+    videoPath: string,
+    outputDir: string,
+    baseName: string,
+  ): Promise<{ thumbUrl: string | null }> {
+    const fullOutputDir = path.resolve(this.publicRoot, outputDir);
+    await fs.mkdir(fullOutputDir, { recursive: true });
+
+    const thumbName = `${baseName}-thumb.webp`;
+    const thumbPath = path.join(fullOutputDir, thumbName);
+
+    // Requisito: Primer frame (seek 0)
+    const seek = 0;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg(videoPath)
+          .inputOptions(['-ss', String(seek)])
+          .outputOptions(['-frames:v', '1', '-vf', 'scale=480:-1'])
+          .output(thumbPath)
+          .on('end', () => resolve())
+          .on('error', (err: Error) => reject(err))
+          .run();
+      });
+
+      const relativePath = path.join(outputDir, thumbName).replace(/\\/g, '/');
+      // Ajustar según prefijo de API. Asumimos /media/ para archivos estáticos si outputDir es uploads/thumbnails
+      // O si hay un controller específico. El código original usaba /api/media/thumbnails/
+      // Vamos a usar una ruta relativa estándar a public o la que usaba el controller.
+      // El controller espera una URL absoluta o relativa a la raiz del sitio.
+      // En saveImageWebp retorna: /api/media/images/...
+      // Aquí retornaremos: /api/media/thumbnails/nombre-archivo
+      return { thumbUrl: `/api/media/thumbnails/${thumbName}` };
+    } catch (e) {
+      this.logger.error(
+        `Error generando thumbnail de video: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      return { thumbUrl: null };
+    }
+  }
+
   private getVideoDuration(path: string): Promise<number> {
     return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(path, (err: Error | null, metadata: any) => {
         if (err) return reject(err);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const duration = (metadata?.format?.duration as number) || 0;
-        resolve(duration);
+        const val = metadata?.format?.duration;
+        const duration = parseFloat(val);
+        resolve(isNaN(duration) ? 0 : duration);
       });
     });
   }

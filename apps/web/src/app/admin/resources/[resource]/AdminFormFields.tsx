@@ -9,6 +9,8 @@ import React, {
 } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
+import { THUMBNAIL_PUBLIC_URL } from '@/lib/adminConstants';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
@@ -45,17 +47,22 @@ export function getOptionLabel(row: any): string {
 
 type BooleanSwitchProps = {
   label: string;
+  help?: string;
   checked: boolean;
   onChange: (value: boolean) => void;
 };
 
 const BooleanSwitch: React.FC<BooleanSwitchProps> = ({
   label,
+  help,
   checked,
   onChange,
 }) => (
   <div className="flex items-center justify-between rounded-md bg-[#101010] px-3 py-2">
-    <span className="text-xs text-slate-100">{label}</span>
+    <div className="flex flex-col">
+      <span className="text-xs text-slate-100">{label}</span>
+      {help && <span className="text-[10px] text-slate-500 mt-0.5">{help}</span>}
+    </div>
     <button
       type="button"
       onClick={() => onChange(!checked)}
@@ -78,6 +85,7 @@ const BooleanSwitch: React.FC<BooleanSwitchProps> = ({
 
 type ImageDropzoneProps = {
   label: string;
+  help?: string;
   tableName: string;
   storedValue: string | null | undefined;
   onFileSelected: (file: File | null) => void;
@@ -85,6 +93,7 @@ type ImageDropzoneProps = {
 
 const ImageDropzone: React.FC<ImageDropzoneProps> = ({
   label,
+  help,
   tableName,
   storedValue,
   onFileSelected,
@@ -99,8 +108,8 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
     if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
       previewSrc = v;
     } else {
-      // nombre de archivo guardado en BD: foo.webp → /media/images/uploads/tabla/foo.webp
-      previewSrc = `${API_BASE}/media/images/uploads/${tableName}/${v}`;
+      const thumb = v.replace(/\.webp$/i, '-thumb.webp');
+      previewSrc = `${API_BASE}/media/images/uploads/${tableName}/${thumb}`;
     }
   }
 
@@ -181,9 +190,12 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
 
   return (
     <div className="space-y-2 md:col-span-2">
-      <label className="block text-xs font-medium text-slate-100">
-        {label}
-      </label>
+      <div className="flex items-center gap-2 mb-1">
+        <label className="block text-xs font-medium text-slate-100">
+          {label}
+        </label>
+        {help && <Tooltip content={help} />}
+      </div>
 
       <div
         onDragOver={handleDragOver}
@@ -246,6 +258,7 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
 
 type MediaDropzoneProps = {
   label: string;
+  help?: string;
   fileKind?: 'video' | 'document' | 'generic';
   storedValue: string | null | undefined;
   onFileSelected: (file: File | null) => void;
@@ -253,6 +266,7 @@ type MediaDropzoneProps = {
 
 const MediaDropzone: React.FC<MediaDropzoneProps> = ({
   label,
+  help,
   fileKind = 'generic',
   storedValue,
   onFileSelected,
@@ -350,7 +364,8 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
   );
 
   // Preview básico
-  let previewKind: 'video' | 'document' | 'none' = 'none';
+  let previewKind: 'video' | 'document' | 'none' =
+    fileKind === 'video' ? 'video' : fileKind === 'document' ? 'document' : 'none';
   let previewSrc: string | undefined;
 
   if (storedValue) {
@@ -364,12 +379,10 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
     }
 
     if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
-      // preview cuando viene de un File recién cargado o una URL absoluta
       previewSrc = v;
     } else {
-      // preview cuando viene de la BD (solo filename)
       if (previewKind === 'video') {
-        previewSrc = `${API_BASE}/media/videos/${v}`;
+        previewSrc = `${THUMBNAIL_PUBLIC_URL}/${v}`;
       } else if (previewKind === 'document') {
         previewSrc = `${API_BASE}/media/documents/${v}`;
       } else {
@@ -380,9 +393,12 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
 
   return (
     <div className="space-y-2 md:col-span-2">
-      <label className="block text-xs font-medium text-slate-100">
-        {label}
-      </label>
+      <div className="flex items-center gap-2 mb-1">
+        <label className="block text-xs font-medium text-slate-100">
+          {label}
+        </label>
+        {help && <Tooltip content={help} />}
+      </div>
 
       <div
         onDragOver={handleDragOver}
@@ -399,18 +415,24 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
         <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-md border border-[#2a2a2a] bg-[#1a1a1a]">
           {previewSrc ? (
             previewKind === 'video' ? (
-              <video
-                src={previewSrc}
-                className="h-full w-full object-cover"
-                muted
-                controls
-                preload="metadata"
-              />
+              previewSrc.startsWith('blob:') ? (
+                <video
+                  src={previewSrc}
+                  className="h-full w-full object-cover"
+                  muted
+                  controls
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={previewSrc}
+                  alt={label}
+                  className="h-full w-full object-cover"
+                />
+              )
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
-                <span className="text-[11px] text-slate-100">
-                  Documento
-                </span>
+                <span className="text-[11px] text-slate-100">Documento</span>
                 <span className="break-all text-[9px] text-slate-400">
                   {storedValue}
                 </span>
@@ -491,7 +513,16 @@ export function renderAdminField({
   onChangeField,
 }: RenderAdminFieldProps) {
   const label =
-    field.name.charAt(0).toUpperCase() + field.name.slice(1);
+    field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1);
+
+  const LabelWithTooltip = () => (
+    <div className="flex items-center gap-2 mb-1">
+      <label className="block text-xs font-medium text-slate-100">
+        {label}
+      </label>
+      {field.help && <Tooltip content={field.help} />}
+    </div>
+  );
 
   /* FK select */
   if (field.isForeignKey && field.fkResource) {
@@ -500,9 +531,7 @@ export function renderAdminField({
 
     return (
       <div key={field.name} className="space-y-1 md:col-span-2">
-        <label className="block text-xs font-medium text-slate-100">
-          {label}
-        </label>
+        <LabelWithTooltip />
         <div className="relative group">
           <select
             className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
@@ -545,6 +574,7 @@ export function renderAdminField({
       <ImageDropzone
         key={field.name}
         label={label}
+        help={field.help}
         tableName={meta.tableName}
         storedValue={stored}
         onFileSelected={(file) => {
@@ -578,6 +608,7 @@ export function renderAdminField({
       <MediaDropzone
         key={field.name}
         label={label}
+        help={field.help}
         fileKind={field.fileKind as any}
         storedValue={stored}
         onFileSelected={(file) => {
@@ -610,6 +641,7 @@ export function renderAdminField({
       <BooleanSwitch
         key={field.name}
         label={label}
+        help={field.help}
         checked={checked}
         onChange={(val) =>
           setFormValues((prev) => ({
@@ -625,9 +657,7 @@ export function renderAdminField({
   if (field.isEnum && field.enumValues?.length) {
     return (
       <div key={field.name} className="space-y-1">
-        <label className="block text-xs font-medium text-slate-100">
-          {label}
-        </label>
+        <LabelWithTooltip />
         <div className="relative group">
           <select
             className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
@@ -652,9 +682,7 @@ export function renderAdminField({
   if (field.type === 'DateTime') {
     return (
       <div key={field.name} className="space-y-1">
-        <label className="block text-xs font-medium text-slate-100">
-          {label}
-        </label>
+        <LabelWithTooltip />
         <input
           type="datetime-local"
           className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
@@ -669,9 +697,7 @@ export function renderAdminField({
   if (field.type === 'Json') {
     return (
       <div key={field.name} className="space-y-1 md:col-span-2">
-        <label className="block text-xs font-medium text-slate-100">
-          {label}
-        </label>
+        <LabelWithTooltip />
         <textarea
           className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-xs text-slate-100"
           rows={4}
@@ -694,9 +720,7 @@ export function renderAdminField({
   if (isLongText) {
     return (
       <div key={field.name} className="space-y-1 md:col-span-2">
-        <label className="block text-xs font-medium text-slate-100">
-          {label}
-        </label>
+        <LabelWithTooltip />
         <textarea
           className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-xs text-slate-100"
           rows={4}
@@ -713,9 +737,7 @@ export function renderAdminField({
 
   return (
     <div key={field.name} className="space-y-1">
-      <label className="block text-xs font-medium text-slate-100">
-        {label}
-      </label>
+      <LabelWithTooltip />
       <input
         type={inputType}
         className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"

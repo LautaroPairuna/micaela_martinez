@@ -99,7 +99,7 @@ export function CourseModuleSidebar({
     if (!module.lecciones?.length) return 0;
 
     return module.lecciones.reduce((total, lesson) => {
-      const duration = getLessonDuration ? (getLessonDuration(lesson) ?? 0) : (lesson.duracionS ?? 0);
+      const duration = getLessonDuration ? (getLessonDuration(lesson) ?? 0) : (lesson.duracion ? Math.round(lesson.duracion * 60) : 0);
       return total + duration;
     }, 0);
   };
@@ -409,7 +409,7 @@ export function CourseModuleSidebar({
                                     displayDuration = duration ?? null;
                                   } else {
                                     // Fallback al comportamiento anterior
-                                    displayDuration = isCurrentLesson && actualVideoDuration ? actualVideoDuration : (lesson.duracionS ?? null);
+                                    displayDuration = isCurrentLesson && actualVideoDuration ? actualVideoDuration : (lesson.duracion ? Math.round(lesson.duracion * 60) : null);
                                   }
                                   
                                   return displayDuration !== null && displayDuration > 0 ? (

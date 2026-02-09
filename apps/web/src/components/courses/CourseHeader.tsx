@@ -30,7 +30,7 @@ export function CourseHeader({
   // Usar función helper si está disponible, sino fallback al comportamiento anterior
   const displayDuration = getLessonDuration 
     ? (getLessonDuration(currentLesson) || 0)
-    : (actualVideoDuration || currentLesson.duracionS || 0);
+    : (actualVideoDuration || (currentLesson.duracion ? Math.round(currentLesson.duracion * 60) : 0));
   return (
     <header className="bg-[var(--bg)] border-b border-[var(--border)]">
       <div className="px-4 py-4 lg:px-6 lg:py-5">

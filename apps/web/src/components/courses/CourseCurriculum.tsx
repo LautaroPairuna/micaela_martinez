@@ -1,10 +1,10 @@
 import { formatDuration } from '@/lib/utils';
 import { Clock, PlayCircle } from 'lucide-react';
 
-export function CourseCurriculum({ modules }: { modules: { titulo: string; lecciones: { titulo: string; duracionS?: number }[] }[] }) {
+export function CourseCurriculum({ modules }: { modules: { titulo: string; lecciones: { titulo: string; duracion?: number }[] }[] }) {
   // Calcular duración total de un módulo
-  const getModuleDuration = (lecciones: { duracionS?: number }[]) => {
-    return lecciones.reduce((total, leccion) => total + (leccion.duracionS || 0), 0);
+  const getModuleDuration = (lecciones: { duracion?: number }[]) => {
+    return lecciones.reduce((total, leccion) => total + (leccion.duracion ? Math.round(leccion.duracion * 60) : 0), 0);
   };
 
   return (
@@ -38,10 +38,10 @@ export function CourseCurriculum({ modules }: { modules: { titulo: string; lecci
                     {l.titulo}
                   </span>
                   <span className="text-muted text-xs flex items-center gap-1">
-                    {(l.duracionS && l.duracionS > 0) ? (
+                    {(l.duracion && l.duracion > 0) ? (
                       <>
                         <Clock className="size-3" />
-                        {formatDuration(l.duracionS)}
+                        {formatDuration(Math.round(l.duracion * 60))}
                       </>
                     ) : (
                       <span className="text-muted/60">Sin duración</span>

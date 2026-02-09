@@ -13,7 +13,9 @@ import {
   GraduationCap,
   Settings,
   MoreHorizontal,
+  User,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HIDDEN_RESOURCES = [
   'AuditLog',
@@ -27,6 +29,35 @@ const HIDDEN_RESOURCES = [
   'Favorito',
   'ItemOrden',
 ];
+
+const RESOURCE_LABELS: Record<string, string> = {
+  // Usuarios & Accesos
+  Usuario: 'Usuarios',
+  Role: 'Roles',
+  
+  // Catálogo & Ventas
+  Producto: 'Productos',
+  ProductoImagen: 'Imágenes de Productos',
+  Marca: 'Marcas',
+  Categoria: 'Categorías',
+  Orden: 'Pedidos',
+  Slider: 'Banners',
+  
+  // Cursos & Lecciones
+  Curso: 'Cursos',
+  Leccion: 'Lecciones',
+  Modulo: 'Módulos',
+  Inscripcion: 'Inscripciones',
+  
+  // Sistema
+  Direccion: 'Direcciones',
+  
+  // Otros
+  Carrito: 'Carritos',
+  ItemCarrito: 'Items Carrito',
+  LeccionTipoConfig: 'Config. Lecciones',
+  Resena: 'Reseñas',
+};
 
 const RESOURCE_GROUPS: {
   id: string;
@@ -75,6 +106,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 export function AdminSidebar({ resources }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const visibleResources = useMemo(
     () =>
@@ -249,7 +281,7 @@ export function AdminSidebar({ resources }: AdminSidebarProps) {
                           ].join(' ')}
                         >
                           <span className="truncate font-medium">
-                            {r.displayName}
+                          {RESOURCE_LABELS[r.name] || r.displayName || r.name}
                           </span>
                           <span className="flex-shrink-0 text-[10px] text-slate-500 group-hover:text-sky-300">
                             {countLabel}
@@ -264,7 +296,7 @@ export function AdminSidebar({ resources }: AdminSidebarProps) {
           );
         })}
 
-        {others.length > 0 && (
+        {others.length > 0 && false && (
           <section className="mt-4 border-t border-[#252525] pt-3">
             <button
               type="button"
@@ -303,7 +335,7 @@ export function AdminSidebar({ resources }: AdminSidebarProps) {
                         ].join(' ')}
                       >
                         <span className="truncate font-medium">
-                          {r.displayName}
+                          {RESOURCE_LABELS[r.name] || r.displayName || r.name}
                         </span>
                         <span className="flex-shrink-0 text-[10px] text-slate-500 group-hover:text-sky-300">
                           {countLabel}
@@ -318,8 +350,20 @@ export function AdminSidebar({ resources }: AdminSidebarProps) {
         )}
       </nav>
 
-      <footer className="border-t border-[#252525] px-5 py-3 text-[11px] text-slate-500">
-        MicaAdmin • v1
+      <footer className="border-t border-[#252525] p-3">
+        <div className="flex items-center gap-3 rounded-lg bg-[#1c1c1c] p-2">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2a2a2a] text-slate-300">
+            <User className="h-4 w-4" />
+          </div>
+          <div className="truncate">
+            <p className="truncate text-xs font-medium text-slate-200">
+              {user?.nombre || 'Admin'}
+            </p>
+            <p className="truncate text-[10px] text-slate-500">
+              {user?.email || 'admin@micapestanas.com'}
+            </p>
+          </div>
+        </div>
       </footer>
     </aside>
   );

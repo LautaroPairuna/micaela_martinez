@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -229,8 +229,6 @@ export type ModuloWhereInput = {
   orden?: Prisma.IntFilter<"Modulo"> | number
   parentId?: Prisma.IntNullableFilter<"Modulo"> | number | null
   curso?: Prisma.XOR<Prisma.CursoScalarRelationFilter, Prisma.CursoWhereInput>
-  parent?: Prisma.XOR<Prisma.ModuloNullableScalarRelationFilter, Prisma.ModuloWhereInput> | null
-  hijos?: Prisma.ModuloListRelationFilter
   lecciones?: Prisma.LeccionListRelationFilter
 }
 
@@ -241,8 +239,6 @@ export type ModuloOrderByWithRelationInput = {
   orden?: Prisma.SortOrder
   parentId?: Prisma.SortOrderInput | Prisma.SortOrder
   curso?: Prisma.CursoOrderByWithRelationInput
-  parent?: Prisma.ModuloOrderByWithRelationInput
-  hijos?: Prisma.ModuloOrderByRelationAggregateInput
   lecciones?: Prisma.LeccionOrderByRelationAggregateInput
   _relevance?: Prisma.ModuloOrderByRelevanceInput
 }
@@ -257,8 +253,6 @@ export type ModuloWhereUniqueInput = Prisma.AtLeast<{
   orden?: Prisma.IntFilter<"Modulo"> | number
   parentId?: Prisma.IntNullableFilter<"Modulo"> | number | null
   curso?: Prisma.XOR<Prisma.CursoScalarRelationFilter, Prisma.CursoWhereInput>
-  parent?: Prisma.XOR<Prisma.ModuloNullableScalarRelationFilter, Prisma.ModuloWhereInput> | null
-  hijos?: Prisma.ModuloListRelationFilter
   lecciones?: Prisma.LeccionListRelationFilter
 }, "id">
 
@@ -289,9 +283,8 @@ export type ModuloScalarWhereWithAggregatesInput = {
 export type ModuloCreateInput = {
   titulo: string
   orden: number
+  parentId?: number | null
   curso: Prisma.CursoCreateNestedOneWithoutModulosInput
-  parent?: Prisma.ModuloCreateNestedOneWithoutHijosInput
-  hijos?: Prisma.ModuloCreateNestedManyWithoutParentInput
   lecciones?: Prisma.LeccionCreateNestedManyWithoutModuloInput
 }
 
@@ -301,16 +294,14 @@ export type ModuloUncheckedCreateInput = {
   titulo: string
   orden: number
   parentId?: number | null
-  hijos?: Prisma.ModuloUncheckedCreateNestedManyWithoutParentInput
   lecciones?: Prisma.LeccionUncheckedCreateNestedManyWithoutModuloInput
 }
 
 export type ModuloUpdateInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   curso?: Prisma.CursoUpdateOneRequiredWithoutModulosNestedInput
-  parent?: Prisma.ModuloUpdateOneWithoutHijosNestedInput
-  hijos?: Prisma.ModuloUpdateManyWithoutParentNestedInput
   lecciones?: Prisma.LeccionUpdateManyWithoutModuloNestedInput
 }
 
@@ -320,7 +311,6 @@ export type ModuloUncheckedUpdateInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hijos?: Prisma.ModuloUncheckedUpdateManyWithoutParentNestedInput
   lecciones?: Prisma.LeccionUncheckedUpdateManyWithoutModuloNestedInput
 }
 
@@ -335,6 +325,7 @@ export type ModuloCreateManyInput = {
 export type ModuloUpdateManyMutationInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type ModuloUncheckedUpdateManyInput = {
@@ -353,11 +344,6 @@ export type ModuloListRelationFilter = {
 
 export type ModuloOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type ModuloNullableScalarRelationFilter = {
-  is?: Prisma.ModuloWhereInput | null
-  isNot?: Prisma.ModuloWhereInput | null
 }
 
 export type ModuloOrderByRelevanceInput = {
@@ -451,64 +437,6 @@ export type ModuloUncheckedUpdateManyWithoutCursoNestedInput = {
   deleteMany?: Prisma.ModuloScalarWhereInput | Prisma.ModuloScalarWhereInput[]
 }
 
-export type ModuloCreateNestedOneWithoutHijosInput = {
-  create?: Prisma.XOR<Prisma.ModuloCreateWithoutHijosInput, Prisma.ModuloUncheckedCreateWithoutHijosInput>
-  connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutHijosInput
-  connect?: Prisma.ModuloWhereUniqueInput
-}
-
-export type ModuloCreateNestedManyWithoutParentInput = {
-  create?: Prisma.XOR<Prisma.ModuloCreateWithoutParentInput, Prisma.ModuloUncheckedCreateWithoutParentInput> | Prisma.ModuloCreateWithoutParentInput[] | Prisma.ModuloUncheckedCreateWithoutParentInput[]
-  connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutParentInput | Prisma.ModuloCreateOrConnectWithoutParentInput[]
-  createMany?: Prisma.ModuloCreateManyParentInputEnvelope
-  connect?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-}
-
-export type ModuloUncheckedCreateNestedManyWithoutParentInput = {
-  create?: Prisma.XOR<Prisma.ModuloCreateWithoutParentInput, Prisma.ModuloUncheckedCreateWithoutParentInput> | Prisma.ModuloCreateWithoutParentInput[] | Prisma.ModuloUncheckedCreateWithoutParentInput[]
-  connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutParentInput | Prisma.ModuloCreateOrConnectWithoutParentInput[]
-  createMany?: Prisma.ModuloCreateManyParentInputEnvelope
-  connect?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-}
-
-export type ModuloUpdateOneWithoutHijosNestedInput = {
-  create?: Prisma.XOR<Prisma.ModuloCreateWithoutHijosInput, Prisma.ModuloUncheckedCreateWithoutHijosInput>
-  connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutHijosInput
-  upsert?: Prisma.ModuloUpsertWithoutHijosInput
-  disconnect?: Prisma.ModuloWhereInput | boolean
-  delete?: Prisma.ModuloWhereInput | boolean
-  connect?: Prisma.ModuloWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ModuloUpdateToOneWithWhereWithoutHijosInput, Prisma.ModuloUpdateWithoutHijosInput>, Prisma.ModuloUncheckedUpdateWithoutHijosInput>
-}
-
-export type ModuloUpdateManyWithoutParentNestedInput = {
-  create?: Prisma.XOR<Prisma.ModuloCreateWithoutParentInput, Prisma.ModuloUncheckedCreateWithoutParentInput> | Prisma.ModuloCreateWithoutParentInput[] | Prisma.ModuloUncheckedCreateWithoutParentInput[]
-  connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutParentInput | Prisma.ModuloCreateOrConnectWithoutParentInput[]
-  upsert?: Prisma.ModuloUpsertWithWhereUniqueWithoutParentInput | Prisma.ModuloUpsertWithWhereUniqueWithoutParentInput[]
-  createMany?: Prisma.ModuloCreateManyParentInputEnvelope
-  set?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  disconnect?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  delete?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  connect?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  update?: Prisma.ModuloUpdateWithWhereUniqueWithoutParentInput | Prisma.ModuloUpdateWithWhereUniqueWithoutParentInput[]
-  updateMany?: Prisma.ModuloUpdateManyWithWhereWithoutParentInput | Prisma.ModuloUpdateManyWithWhereWithoutParentInput[]
-  deleteMany?: Prisma.ModuloScalarWhereInput | Prisma.ModuloScalarWhereInput[]
-}
-
-export type ModuloUncheckedUpdateManyWithoutParentNestedInput = {
-  create?: Prisma.XOR<Prisma.ModuloCreateWithoutParentInput, Prisma.ModuloUncheckedCreateWithoutParentInput> | Prisma.ModuloCreateWithoutParentInput[] | Prisma.ModuloUncheckedCreateWithoutParentInput[]
-  connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutParentInput | Prisma.ModuloCreateOrConnectWithoutParentInput[]
-  upsert?: Prisma.ModuloUpsertWithWhereUniqueWithoutParentInput | Prisma.ModuloUpsertWithWhereUniqueWithoutParentInput[]
-  createMany?: Prisma.ModuloCreateManyParentInputEnvelope
-  set?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  disconnect?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  delete?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  connect?: Prisma.ModuloWhereUniqueInput | Prisma.ModuloWhereUniqueInput[]
-  update?: Prisma.ModuloUpdateWithWhereUniqueWithoutParentInput | Prisma.ModuloUpdateWithWhereUniqueWithoutParentInput[]
-  updateMany?: Prisma.ModuloUpdateManyWithWhereWithoutParentInput | Prisma.ModuloUpdateManyWithWhereWithoutParentInput[]
-  deleteMany?: Prisma.ModuloScalarWhereInput | Prisma.ModuloScalarWhereInput[]
-}
-
 export type ModuloCreateNestedOneWithoutLeccionesInput = {
   create?: Prisma.XOR<Prisma.ModuloCreateWithoutLeccionesInput, Prisma.ModuloUncheckedCreateWithoutLeccionesInput>
   connectOrCreate?: Prisma.ModuloCreateOrConnectWithoutLeccionesInput
@@ -526,8 +454,7 @@ export type ModuloUpdateOneRequiredWithoutLeccionesNestedInput = {
 export type ModuloCreateWithoutCursoInput = {
   titulo: string
   orden: number
-  parent?: Prisma.ModuloCreateNestedOneWithoutHijosInput
-  hijos?: Prisma.ModuloCreateNestedManyWithoutParentInput
+  parentId?: number | null
   lecciones?: Prisma.LeccionCreateNestedManyWithoutModuloInput
 }
 
@@ -536,7 +463,6 @@ export type ModuloUncheckedCreateWithoutCursoInput = {
   titulo: string
   orden: number
   parentId?: number | null
-  hijos?: Prisma.ModuloUncheckedCreateNestedManyWithoutParentInput
   lecciones?: Prisma.LeccionUncheckedCreateNestedManyWithoutModuloInput
 }
 
@@ -577,105 +503,11 @@ export type ModuloScalarWhereInput = {
   parentId?: Prisma.IntNullableFilter<"Modulo"> | number | null
 }
 
-export type ModuloCreateWithoutHijosInput = {
-  titulo: string
-  orden: number
-  curso: Prisma.CursoCreateNestedOneWithoutModulosInput
-  parent?: Prisma.ModuloCreateNestedOneWithoutHijosInput
-  lecciones?: Prisma.LeccionCreateNestedManyWithoutModuloInput
-}
-
-export type ModuloUncheckedCreateWithoutHijosInput = {
-  id?: number
-  cursoId: number
-  titulo: string
-  orden: number
-  parentId?: number | null
-  lecciones?: Prisma.LeccionUncheckedCreateNestedManyWithoutModuloInput
-}
-
-export type ModuloCreateOrConnectWithoutHijosInput = {
-  where: Prisma.ModuloWhereUniqueInput
-  create: Prisma.XOR<Prisma.ModuloCreateWithoutHijosInput, Prisma.ModuloUncheckedCreateWithoutHijosInput>
-}
-
-export type ModuloCreateWithoutParentInput = {
-  titulo: string
-  orden: number
-  curso: Prisma.CursoCreateNestedOneWithoutModulosInput
-  hijos?: Prisma.ModuloCreateNestedManyWithoutParentInput
-  lecciones?: Prisma.LeccionCreateNestedManyWithoutModuloInput
-}
-
-export type ModuloUncheckedCreateWithoutParentInput = {
-  id?: number
-  cursoId: number
-  titulo: string
-  orden: number
-  hijos?: Prisma.ModuloUncheckedCreateNestedManyWithoutParentInput
-  lecciones?: Prisma.LeccionUncheckedCreateNestedManyWithoutModuloInput
-}
-
-export type ModuloCreateOrConnectWithoutParentInput = {
-  where: Prisma.ModuloWhereUniqueInput
-  create: Prisma.XOR<Prisma.ModuloCreateWithoutParentInput, Prisma.ModuloUncheckedCreateWithoutParentInput>
-}
-
-export type ModuloCreateManyParentInputEnvelope = {
-  data: Prisma.ModuloCreateManyParentInput | Prisma.ModuloCreateManyParentInput[]
-  skipDuplicates?: boolean
-}
-
-export type ModuloUpsertWithoutHijosInput = {
-  update: Prisma.XOR<Prisma.ModuloUpdateWithoutHijosInput, Prisma.ModuloUncheckedUpdateWithoutHijosInput>
-  create: Prisma.XOR<Prisma.ModuloCreateWithoutHijosInput, Prisma.ModuloUncheckedCreateWithoutHijosInput>
-  where?: Prisma.ModuloWhereInput
-}
-
-export type ModuloUpdateToOneWithWhereWithoutHijosInput = {
-  where?: Prisma.ModuloWhereInput
-  data: Prisma.XOR<Prisma.ModuloUpdateWithoutHijosInput, Prisma.ModuloUncheckedUpdateWithoutHijosInput>
-}
-
-export type ModuloUpdateWithoutHijosInput = {
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  orden?: Prisma.IntFieldUpdateOperationsInput | number
-  curso?: Prisma.CursoUpdateOneRequiredWithoutModulosNestedInput
-  parent?: Prisma.ModuloUpdateOneWithoutHijosNestedInput
-  lecciones?: Prisma.LeccionUpdateManyWithoutModuloNestedInput
-}
-
-export type ModuloUncheckedUpdateWithoutHijosInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.IntFieldUpdateOperationsInput | number
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  orden?: Prisma.IntFieldUpdateOperationsInput | number
-  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  lecciones?: Prisma.LeccionUncheckedUpdateManyWithoutModuloNestedInput
-}
-
-export type ModuloUpsertWithWhereUniqueWithoutParentInput = {
-  where: Prisma.ModuloWhereUniqueInput
-  update: Prisma.XOR<Prisma.ModuloUpdateWithoutParentInput, Prisma.ModuloUncheckedUpdateWithoutParentInput>
-  create: Prisma.XOR<Prisma.ModuloCreateWithoutParentInput, Prisma.ModuloUncheckedCreateWithoutParentInput>
-}
-
-export type ModuloUpdateWithWhereUniqueWithoutParentInput = {
-  where: Prisma.ModuloWhereUniqueInput
-  data: Prisma.XOR<Prisma.ModuloUpdateWithoutParentInput, Prisma.ModuloUncheckedUpdateWithoutParentInput>
-}
-
-export type ModuloUpdateManyWithWhereWithoutParentInput = {
-  where: Prisma.ModuloScalarWhereInput
-  data: Prisma.XOR<Prisma.ModuloUpdateManyMutationInput, Prisma.ModuloUncheckedUpdateManyWithoutParentInput>
-}
-
 export type ModuloCreateWithoutLeccionesInput = {
   titulo: string
   orden: number
+  parentId?: number | null
   curso: Prisma.CursoCreateNestedOneWithoutModulosInput
-  parent?: Prisma.ModuloCreateNestedOneWithoutHijosInput
-  hijos?: Prisma.ModuloCreateNestedManyWithoutParentInput
 }
 
 export type ModuloUncheckedCreateWithoutLeccionesInput = {
@@ -684,7 +516,6 @@ export type ModuloUncheckedCreateWithoutLeccionesInput = {
   titulo: string
   orden: number
   parentId?: number | null
-  hijos?: Prisma.ModuloUncheckedCreateNestedManyWithoutParentInput
 }
 
 export type ModuloCreateOrConnectWithoutLeccionesInput = {
@@ -706,9 +537,8 @@ export type ModuloUpdateToOneWithWhereWithoutLeccionesInput = {
 export type ModuloUpdateWithoutLeccionesInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   curso?: Prisma.CursoUpdateOneRequiredWithoutModulosNestedInput
-  parent?: Prisma.ModuloUpdateOneWithoutHijosNestedInput
-  hijos?: Prisma.ModuloUpdateManyWithoutParentNestedInput
 }
 
 export type ModuloUncheckedUpdateWithoutLeccionesInput = {
@@ -717,7 +547,6 @@ export type ModuloUncheckedUpdateWithoutLeccionesInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hijos?: Prisma.ModuloUncheckedUpdateManyWithoutParentNestedInput
 }
 
 export type ModuloCreateManyCursoInput = {
@@ -730,8 +559,7 @@ export type ModuloCreateManyCursoInput = {
 export type ModuloUpdateWithoutCursoInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
-  parent?: Prisma.ModuloUpdateOneWithoutHijosNestedInput
-  hijos?: Prisma.ModuloUpdateManyWithoutParentNestedInput
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lecciones?: Prisma.LeccionUpdateManyWithoutModuloNestedInput
 }
 
@@ -740,7 +568,6 @@ export type ModuloUncheckedUpdateWithoutCursoInput = {
   titulo?: Prisma.StringFieldUpdateOperationsInput | string
   orden?: Prisma.IntFieldUpdateOperationsInput | number
   parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hijos?: Prisma.ModuloUncheckedUpdateManyWithoutParentNestedInput
   lecciones?: Prisma.LeccionUncheckedUpdateManyWithoutModuloNestedInput
 }
 
@@ -751,49 +578,16 @@ export type ModuloUncheckedUpdateManyWithoutCursoInput = {
   parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
-export type ModuloCreateManyParentInput = {
-  id?: number
-  cursoId: number
-  titulo: string
-  orden: number
-}
-
-export type ModuloUpdateWithoutParentInput = {
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  orden?: Prisma.IntFieldUpdateOperationsInput | number
-  curso?: Prisma.CursoUpdateOneRequiredWithoutModulosNestedInput
-  hijos?: Prisma.ModuloUpdateManyWithoutParentNestedInput
-  lecciones?: Prisma.LeccionUpdateManyWithoutModuloNestedInput
-}
-
-export type ModuloUncheckedUpdateWithoutParentInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.IntFieldUpdateOperationsInput | number
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  orden?: Prisma.IntFieldUpdateOperationsInput | number
-  hijos?: Prisma.ModuloUncheckedUpdateManyWithoutParentNestedInput
-  lecciones?: Prisma.LeccionUncheckedUpdateManyWithoutModuloNestedInput
-}
-
-export type ModuloUncheckedUpdateManyWithoutParentInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  cursoId?: Prisma.IntFieldUpdateOperationsInput | number
-  titulo?: Prisma.StringFieldUpdateOperationsInput | string
-  orden?: Prisma.IntFieldUpdateOperationsInput | number
-}
-
 
 /**
  * Count Type ModuloCountOutputType
  */
 
 export type ModuloCountOutputType = {
-  hijos: number
   lecciones: number
 }
 
 export type ModuloCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  hijos?: boolean | ModuloCountOutputTypeCountHijosArgs
   lecciones?: boolean | ModuloCountOutputTypeCountLeccionesArgs
 }
 
@@ -805,13 +599,6 @@ export type ModuloCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exten
    * Select specific fields to fetch from the ModuloCountOutputType
    */
   select?: Prisma.ModuloCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * ModuloCountOutputType without action
- */
-export type ModuloCountOutputTypeCountHijosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ModuloWhereInput
 }
 
 /**
@@ -829,8 +616,6 @@ export type ModuloSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   orden?: boolean
   parentId?: boolean
   curso?: boolean | Prisma.CursoDefaultArgs<ExtArgs>
-  parent?: boolean | Prisma.Modulo$parentArgs<ExtArgs>
-  hijos?: boolean | Prisma.Modulo$hijosArgs<ExtArgs>
   lecciones?: boolean | Prisma.Modulo$leccionesArgs<ExtArgs>
   _count?: boolean | Prisma.ModuloCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["modulo"]>
@@ -848,8 +633,6 @@ export type ModuloSelectScalar = {
 export type ModuloOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cursoId" | "titulo" | "orden" | "parentId", ExtArgs["result"]["modulo"]>
 export type ModuloInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   curso?: boolean | Prisma.CursoDefaultArgs<ExtArgs>
-  parent?: boolean | Prisma.Modulo$parentArgs<ExtArgs>
-  hijos?: boolean | Prisma.Modulo$hijosArgs<ExtArgs>
   lecciones?: boolean | Prisma.Modulo$leccionesArgs<ExtArgs>
   _count?: boolean | Prisma.ModuloCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -858,8 +641,6 @@ export type $ModuloPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name: "Modulo"
   objects: {
     curso: Prisma.$CursoPayload<ExtArgs>
-    parent: Prisma.$ModuloPayload<ExtArgs> | null
-    hijos: Prisma.$ModuloPayload<ExtArgs>[]
     lecciones: Prisma.$LeccionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1209,8 +990,6 @@ readonly fields: ModuloFieldRefs;
 export interface Prisma__ModuloClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   curso<T extends Prisma.CursoDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CursoDefaultArgs<ExtArgs>>): Prisma.Prisma__CursoClient<runtime.Types.Result.GetResult<Prisma.$CursoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  parent<T extends Prisma.Modulo$parentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Modulo$parentArgs<ExtArgs>>): Prisma.Prisma__ModuloClient<runtime.Types.Result.GetResult<Prisma.$ModuloPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  hijos<T extends Prisma.Modulo$hijosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Modulo$hijosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ModuloPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lecciones<T extends Prisma.Modulo$leccionesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Modulo$leccionesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeccionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1586,49 +1365,6 @@ export type ModuloDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Modulos to delete.
    */
   limit?: number
-}
-
-/**
- * Modulo.parent
- */
-export type Modulo$parentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Modulo
-   */
-  select?: Prisma.ModuloSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Modulo
-   */
-  omit?: Prisma.ModuloOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ModuloInclude<ExtArgs> | null
-  where?: Prisma.ModuloWhereInput
-}
-
-/**
- * Modulo.hijos
- */
-export type Modulo$hijosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Modulo
-   */
-  select?: Prisma.ModuloSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Modulo
-   */
-  omit?: Prisma.ModuloOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ModuloInclude<ExtArgs> | null
-  where?: Prisma.ModuloWhereInput
-  orderBy?: Prisma.ModuloOrderByWithRelationInput | Prisma.ModuloOrderByWithRelationInput[]
-  cursor?: Prisma.ModuloWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ModuloScalarFieldEnum | Prisma.ModuloScalarFieldEnum[]
 }
 
 /**

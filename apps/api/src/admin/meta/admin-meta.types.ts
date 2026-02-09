@@ -108,6 +108,11 @@ export interface FieldMeta {
 
   showInList: boolean;
   showInForm: boolean;
+
+  // UI Enhancements
+  label?: string; // Título amigable del campo (ej: "Precio de Venta")
+  help?: string; // Tooltip o texto de ayuda
+  placeholder?: string;
 }
 
 export interface ResourceMeta {

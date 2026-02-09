@@ -39,7 +39,7 @@ export interface Lesson {
   titulo: string;
   descripcion?: string | null;
   rutaSrc?: string | null;
-  duracionS?: number | null;
+  duracion?: number | null; // en minutos
   orden: number;
   tipo?: LessonType;
   contenido?: LessonContent;

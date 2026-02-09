@@ -5,9 +5,7 @@ import { FileText, BookOpen, HelpCircle, Download, ExternalLink, CheckCircle } f
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { getSecureDocumentUrl } from '@/lib/media-utils';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
+
 
 // Tipos locales mínimos para evitar choques con otros "Lesson"
 type QuizQuestion = {
@@ -21,10 +19,20 @@ type QuizQuestion = {
 type ContentObj =
   | string
   | {
+      contenido?: string;
+      markdown?: string;
+      content?: string;
+      body?: string;
       texto?: string;
+      url?: string;
+      nombre?: string;
+      tituloDoc?: string;
+      tipoArchivo?: string;
       documento?: { url: string; nombre?: string; tipo?: string };
       quiz?: QuizQuestion;
       preguntas?: QuizQuestion[];
+      intro?: string;
+      modo?: string;
       tipo?: 'QUIZ' | 'TEXTO' | 'DOCUMENTO';
       data?: {
         preguntas?: QuizQuestion[];
@@ -34,9 +42,14 @@ type ContentObj =
           puntuacionMinima?: number;
         };
         contenido?: string; // TEXTO unificado
+        markdown?: string;
+        content?: string;
+        body?: string;
         url?: string; // DOCUMENTO unificado
         nombre?: string;
         tipoArchivo?: string;
+        intro?: string;
+        modo?: string;
       };
     }
   | null;
@@ -45,7 +58,7 @@ type ContentPlayerLesson = {
   id: string;
   titulo: string;
   tipo?: string;
-  duracionS?: number | null;
+  duracion?: number | null;
   contenido?: ContentObj;
 };
 
@@ -65,56 +78,97 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
   const textContent = useMemo<string | null>(() => {
     const c = lesson.contenido;
     if (!c) return null;
+    const extractFromObject = (obj: Record<string, unknown>): string | null => {
+      const direct = obj.contenido ?? obj.texto ?? obj.markdown ?? obj.content ?? obj.body;
+      if (typeof direct === 'string' && direct.trim() !== '') return direct;
+      const data = obj.data;
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        const dataObj = data as Record<string, unknown>;
+        const dataDirect =
+          dataObj.contenido ?? dataObj.texto ?? dataObj.markdown ?? dataObj.content ?? dataObj.body;
+        if (typeof dataDirect === 'string' && dataDirect.trim() !== '') return dataDirect;
+      }
+      return null;
+    };
     // Si viene como string, intentamos parsear JSON para extraer "contenido"/"texto"
     if (typeof c === 'string') {
       const raw = c.trim();
       if (raw.startsWith('{') || raw.startsWith('[')) {
         try {
           const parsed = JSON.parse(raw) as unknown;
-          if (
-            typeof parsed === 'object' &&
-            parsed !== null &&
-            'contenido' in (parsed as Record<string, unknown>) &&
-            typeof (parsed as Record<string, unknown>).contenido === 'string'
-          ) {
-            return (parsed as Record<string, string>).contenido;
-          }
-          if (
-            typeof parsed === 'object' &&
-            parsed !== null &&
-            'texto' in (parsed as Record<string, unknown>) &&
-            typeof (parsed as Record<string, unknown>).texto === 'string'
-          ) {
-            return (parsed as Record<string, string>).texto;
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            const extracted = extractFromObject(parsed as Record<string, unknown>);
+            if (extracted) return extracted;
           }
         } catch {}
       }
       return c; // texto plano
     }
-    if (c.tipo === 'TEXTO' && c.data?.contenido) return c.data.contenido;
-    if (c.texto) return c.texto;
+    if (typeof c === 'object') {
+      return extractFromObject(c as Record<string, unknown>);
+    }
     return null;
   }, [lesson.contenido]);
 
   // ---- Normalización DOCUMENTO ----
   const documentInfo = useMemo<null | { url: string; nombre?: string; tipo?: string }>(() => {
     const c = lesson.contenido;
-    if (!c || typeof c === 'string') return null;
+    if (!c) return null;
 
-    if (c.tipo === 'DOCUMENTO' && c.data?.url) {
+    const fromObject = (obj: Record<string, unknown>) => {
+      const data = obj.data && typeof obj.data === 'object' && !Array.isArray(obj.data)
+        ? (obj.data as Record<string, unknown>)
+        : null;
+      const documento = obj.documento && typeof obj.documento === 'object' && !Array.isArray(obj.documento)
+        ? (obj.documento as Record<string, unknown>)
+        : null;
+
+      const urlCandidate =
+        (typeof obj.url === 'string' ? obj.url : null) ||
+        (data && typeof data.url === 'string' ? (data.url as string) : null) ||
+        (documento && typeof documento.url === 'string' ? (documento.url as string) : null);
+
+      if (!urlCandidate || urlCandidate.trim() === '') return null;
+
+      const nameCandidate =
+        (typeof obj.nombre === 'string' ? obj.nombre : null) ||
+        (typeof obj.tituloDoc === 'string' ? obj.tituloDoc : null) ||
+        (data && typeof data.nombre === 'string' ? (data.nombre as string) : null) ||
+        (documento && typeof documento.nombre === 'string' ? (documento.nombre as string) : null) ||
+        lesson.titulo ||
+        'Documento';
+
+      const typeCandidate =
+        (data && typeof data.tipoArchivo === 'string' ? (data.tipoArchivo as string) : null) ||
+        (typeof obj.tipoArchivo === 'string' ? obj.tipoArchivo : null) ||
+        (documento && typeof documento.tipo === 'string' ? (documento.tipo as string) : null) ||
+        'PDF';
+
       return {
-        url: c.data.url,
-        nombre: c.data.nombre || lesson.titulo || 'Documento',
-        tipo: (c.data.tipoArchivo || 'PDF').toUpperCase(),
+        url: urlCandidate,
+        nombre: nameCandidate,
+        tipo: typeCandidate.toUpperCase(),
       };
+    };
+
+    if (typeof c === 'string') {
+      const raw = c.trim();
+      if (!raw) return null;
+      if (raw.startsWith('{') || raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw) as unknown;
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return fromObject(parsed as Record<string, unknown>);
+          }
+        } catch {}
+      }
+      return null;
     }
-    if (c.documento?.url) {
-      return {
-        url: c.documento.url,
-        nombre: c.documento.nombre || lesson.titulo || 'Documento',
-        tipo: (c.documento.tipo || 'PDF').toUpperCase(),
-      };
+
+    if (typeof c === 'object') {
+      return fromObject(c as Record<string, unknown>);
     }
+
     return null;
   }, [lesson.contenido, lesson.titulo]);
 
@@ -123,37 +177,46 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
     const c = lesson.contenido;
     if (!c) return [];
 
+    const fromObject = (obj: Record<string, unknown>): QuizQuestion[] => {
+      const data = obj.data && typeof obj.data === 'object' && !Array.isArray(obj.data)
+        ? (obj.data as Record<string, unknown>)
+        : null;
+      const dataQuestions = data?.preguntas;
+      if (Array.isArray(dataQuestions)) return dataQuestions as QuizQuestion[];
+      if (Array.isArray(obj.preguntas)) return obj.preguntas as QuizQuestion[];
+      if (obj.quiz && typeof obj.quiz === 'object') return [obj.quiz as QuizQuestion];
+      return [];
+    };
+
     // Si viene como string, intentamos parsear JSON
     if (typeof c === 'string') {
       const raw = c.trim();
       if (!raw) return [];
       try {
-        const parsed = JSON.parse(raw) as {
-          tipo?: string;
-          data?: { preguntas?: QuizQuestion[] };
-          preguntas?: QuizQuestion[];
-          quiz?: QuizQuestion;
-        };
-        if (parsed?.tipo === 'QUIZ' && Array.isArray(parsed?.data?.preguntas)) {
-          return parsed.data.preguntas as QuizQuestion[];
+        const parsed = JSON.parse(raw) as unknown;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return fromObject(parsed as Record<string, unknown>);
         }
-        if (Array.isArray(parsed?.preguntas)) return parsed.preguntas as QuizQuestion[];
-        if (parsed?.quiz) return [parsed.quiz as QuizQuestion];
       } catch {}
       return [];
     }
 
-    if (c.tipo === 'QUIZ' && Array.isArray(c.data?.preguntas)) return c.data.preguntas!;
-    if (Array.isArray(c.preguntas)) return c.preguntas;
-    if (c.quiz) return [c.quiz];
+    if (typeof c === 'object') {
+      return fromObject(c as Record<string, unknown>);
+    }
+
     return [];
   }, [lesson.contenido]);
 
   const contentType: 'TEXTO' | 'DOCUMENTO' | 'QUIZ' = useMemo(() => {
+    const lessonType = String(lesson.tipo ?? '').toUpperCase();
+    if (lessonType === 'QUIZ') return 'QUIZ';
+    if (lessonType === 'DOCUMENTO') return 'DOCUMENTO';
+    if (lessonType === 'TEXTO') return 'TEXTO';
     if (quizQuestions.length > 0) return 'QUIZ';
     if (documentInfo) return 'DOCUMENTO';
     return 'TEXTO';
-  }, [quizQuestions.length, documentInfo]);
+  }, [quizQuestions.length, documentInfo, lesson.tipo]);
 
   // ---- Estado QUIZ ----
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -201,12 +264,12 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
           <div className="p-2 bg-gray-100 rounded-lg">{icon}</div>
           <div className="flex items-center gap-3 text-sm text-gray-500">
             <span className="px-3 py-1 bg-gray-50 text-gray-700 rounded-full font-medium">{label}</span>
-            {typeof lesson.duracionS === 'number' && lesson.duracionS > 0 && (
+            {typeof lesson.duracion === 'number' && lesson.duracion > 0 && (
               <>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <span>⏱️</span>
-                  {minutesFromSeconds(lesson.duracionS)} min
+                  {lesson.duracion} min
                 </span>
               </>
             )}
@@ -217,28 +280,31 @@ export function ContentPlayer({ lesson, onComplete, onProgress, className }: Con
     </div>
   );
 
-  const renderText = () => (
-    <div className="flex-1 overflow-auto bg-white">
-      <Header label="Lección de texto" icon={<FileText className="w-5 h-5 text-blue-600" />} />
-      <div className="px-6 py-8">
-        <div className="max-w-4xl mx-auto">
-          <article className="prose prose-lg max-w-none">
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 md:p-12">
-              <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
+  const renderText = () => {
+    return (
+      <div className="flex-1 overflow-auto bg-gray-50/50">
+        <Header label="Lección de texto" icon={<FileText className="w-5 h-5 text-rose-500" />} />
+        <div className="px-4 py-8 md:px-8 md:py-12">
+          <div className="max-w-3xl mx-auto">
+            <article className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 md:p-12 transition-all text-gray-900">
+              <div className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-rose-600 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700 prose-img:rounded-xl">
                 {textContent ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                    {textContent}
-                  </ReactMarkdown>
+                  <div dangerouslySetInnerHTML={{ __html: textContent }} />
                 ) : (
-                  <p className="text-gray-600">El contenido de texto para esta lección aún no está disponible.</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="bg-gray-50 p-4 rounded-full mb-4">
+                      <FileText className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <p className="text-gray-500">El contenido de texto para esta lección aún no está disponible.</p>
+                  </div>
                 )}
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderDocument = () => (
     <div className="flex-1 overflow-auto bg-white">

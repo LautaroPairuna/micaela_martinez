@@ -22,11 +22,38 @@ function getApiBase() {
 
 const API_BASE = getApiBase();
 
+/* ───────────── Helper Retry ───────────── */
+async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 2): Promise<Response> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      // Si es exitoso o es un error cliente (4xx) que no sea 429, retornamos
+      // 429 (Too Many Requests) o 5xx (Server Error) -> retry
+      if (res.ok) return res;
+      if (res.status < 500 && res.status !== 429) return res;
+
+      // Si es el último intento, retornamos la respuesta tal cual
+      if (i === retries) return res;
+      
+      // Esperar exponencial: 500ms, 1000ms, ...
+      const delay = 500 * Math.pow(2, i);
+      console.warn(`[AdminMeta] Retrying ${url} (${res.status}) in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+    } catch (err) {
+      if (i === retries) throw err;
+      const delay = 500 * Math.pow(2, i);
+      console.warn(`[AdminMeta] Network error ${url}, retrying in ${delay}ms...`, err);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw new Error('Unreachable');
+}
+
 // 👇 NUEVA: listar todos los recursos del admin
 export async function fetchAllResourcesMeta(): Promise<ResourceMeta[]> {
   const url = `${API_BASE}/admin/meta/resources`;
   try {
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       cache: 'no-store',
     });
 
@@ -53,7 +80,7 @@ export async function fetchAllResourcesMeta(): Promise<ResourceMeta[]> {
 
 // 👇 ya la tenías: meta de un recurso
 export async function fetchResourceMeta(resource: string): Promise<ResourceMeta> {
-  const res = await fetch(`${API_BASE}/admin/meta/resources/${resource}`, {
+  const res = await fetchWithRetry(`${API_BASE}/admin/meta/resources/${resource}`, {
     cache: 'no-store',
   });
 
@@ -97,7 +124,7 @@ export async function fetchAdminList<T = any>(
     search.set('filters', JSON.stringify(params.filters));
   }
 
-  const res = await fetch(
+  const res = await fetchWithRetry(
     `${API_BASE}/admin/resources/${resource}?${search.toString()}`,
     { cache: 'no-store' },
   );

@@ -38,10 +38,14 @@ export class MediaCleanupService {
         if (age > this.MAX_AGE_MS) {
           if (entry.isDirectory()) {
             await fsp.rm(fullPath, { recursive: true, force: true });
-            this.logger.log(`Directorio temporal eliminado por antigüedad: ${entry.name}`);
+            this.logger.log(
+              `Directorio temporal eliminado por antigüedad: ${entry.name}`,
+            );
           } else {
             await fsp.unlink(fullPath);
-            this.logger.log(`Archivo temporal eliminado por antigüedad: ${entry.name}`);
+            this.logger.log(
+              `Archivo temporal eliminado por antigüedad: ${entry.name}`,
+            );
           }
         } else if (entry.isDirectory()) {
           // Si es un directorio reciente, podríamo querer limpiar dentro,

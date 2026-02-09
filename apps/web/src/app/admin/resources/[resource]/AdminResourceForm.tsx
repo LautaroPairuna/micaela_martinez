@@ -17,7 +17,10 @@ import {
 } from './AdminFormFields';
 import { useAdminToast } from '@/contexts/AdminToastContext';
 import { buildZodSchemaFromFields } from '@/lib/admin/validation';
-import { io, type Socket } from 'socket.io-client'; // 👈 NUEVO
+import { io, type Socket } from 'socket.io-client';
+import { AdminRichTextEditor } from './AdminRichTextEditor';
+import { QuizBuilder, type QuizQuestion } from './QuizBuilder';
+import { Tooltip } from '@/components/ui/Tooltip'; // 👈 NUEVO
 
 const getApiBase = () => {
   // 1. Si hay una URL base explícita pública, usarla
@@ -53,6 +56,7 @@ export interface AdminResourceFormProps {
   currentRow: any | null;
   onClose: () => void;
   onSaved: (row: any, mode: FormMode) => void;
+  hideUploads?: boolean;
 }
 
 /* ───────────── Tipos auxiliares FK ───────────── */
@@ -61,6 +65,36 @@ type FkOptionsState = Record<string, ForeignOption[]>;
 type FkLoadingState = Record<string, boolean>;
 
 type VideoStatus = 'idle' | 'uploading' | 'processing' | 'done' | 'error';
+
+type LessonFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'boolean'
+  | 'select'
+  | 'json'
+  | 'url'
+  | 'richtext'
+  | 'quiz';
+
+type LessonFieldSchema = {
+  key: string;
+  label: string;
+  type: LessonFieldType;
+  required?: boolean;
+  placeholder?: string;
+  help?: string;
+  min?: number;
+  max?: number;
+  options?: Array<{ label: string; value: string }>;
+  default?: unknown;
+};
+
+type LessonFormSchema = {
+  version: number;
+  title?: string;
+  fields: LessonFieldSchema[];
+};
 
 /* ───────────── Componente principal ───────────── */
 
@@ -72,11 +106,14 @@ export function AdminResourceForm({
   currentRow,
   onClose,
   onSaved,
+  hideUploads,
 }: AdminResourceFormProps) {
   const { showToast } = useAdminToast();
 
   const [isSaving, setIsSaving] = useState(false);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
+  const [lessonFormSchema, setLessonFormSchema] = useState<LessonFormSchema | null>(null);
+  const [lessonFormLoading, setLessonFormLoading] = useState(false);
 
   // Imágenes (campos isImage)
   const [imageFiles, setImageFiles] = useState<Record<string, File | null>>({});
@@ -275,7 +312,7 @@ export function AdminResourceForm({
     return () => {
       progressSocket.disconnect();
     };
-  }, [clientId, showToast]);
+  }, [clientId, onClose, showToast]);
 
   // Campos de formulario alineados con el backend:
   const formFields: FieldMeta[] = useMemo(
@@ -287,6 +324,18 @@ export function AdminResourceForm({
   );
 
   const hasEditor = formFields.length > 0;
+  const isLessonResource =
+    meta.tableName === 'leccion' || meta.name === 'Leccion' || resource === 'leccion';
+
+  // Lógica dinámica para ocultar uploads en TEXTO/QUIZ
+  const shouldHideUploads = useMemo(() => {
+    if (hideUploads) return true;
+    if (!isLessonResource) return false;
+    
+    const t = String(formValues.tipo ?? '').toUpperCase();
+    // Ajustar según los valores reales de tu enum o strings
+    return t === 'TEXTO' || t === 'QUIZ';
+  }, [hideUploads, isLessonResource, formValues.tipo]);
 
   // Schema Zod construido desde FieldMeta
   const schema = useMemo(
@@ -322,8 +371,14 @@ export function AdminResourceForm({
             .toISOString()
             .slice(0, 16); // yyyy-MM-ddTHH:mm
           initial[field.name] = local;
-        } else if (field.type === 'Json' && v) {
-          initial[field.name] = JSON.stringify(v, null, 2);
+        } else if (field.type === 'Json') {
+          if (isLessonResource && field.name === 'contenido') {
+            initial[field.name] = v ?? {};
+          } else if (v) {
+            initial[field.name] = JSON.stringify(v, null, 2);
+          } else {
+            initial[field.name] = '';
+          }
         } else if (field.type === 'Boolean') {
           initial[field.name] = Boolean(v);
         } else {
@@ -341,7 +396,9 @@ export function AdminResourceForm({
         }
 
         if (field.type === 'Boolean') initial[field.name] = false;
-        else initial[field.name] = '';
+        else if (field.type === 'Json' && isLessonResource && field.name === 'contenido') {
+          initial[field.name] = {};
+        } else initial[field.name] = '';
       }
     }
 
@@ -353,7 +410,81 @@ export function AdminResourceForm({
     setVideoStatus('idle');
     setVideoProgress(null);
     setVideoStatusMessage(null);
-  }, [open, mode, currentRow, formFields, hasEditor]);
+  }, [open, mode, currentRow, formFields, hasEditor, isLessonResource]);
+
+  useEffect(() => {
+    if (!open || !isLessonResource) return;
+    const rawTipo = formValues.tipo;
+    const tipo = typeof rawTipo === 'string' ? rawTipo.trim() : '';
+    if (!tipo) {
+      setLessonFormSchema(null);
+      return;
+    }
+
+    let cancelled = false;
+    const load = async () => {
+      setLessonFormLoading(true);
+      
+      let lastError: unknown = null;
+      let success = false;
+      let json: any = null;
+
+      // Retry logic (3 intentos)
+      for (let i = 0; i < 3; i++) {
+        if (cancelled) return;
+        try {
+          const res = await fetch(
+            `${API_BASE}/admin/lesson-form-config/${encodeURIComponent(tipo)}`,
+            { credentials: 'include' },
+          );
+          
+          if (!res.ok) {
+            if (res.status === 404) {
+              // No existe config, es válido (null schema)
+              success = true;
+              break;
+            }
+            // Si es error de servidor, lanzamos para reintentar
+            if (res.status >= 500) {
+              throw new Error(`Error ${res.status}`);
+            }
+            // Errores 4xx (salvo 404) no se reintentan
+            throw new Error(`Error cliente: ${res.status}`);
+          }
+          
+          json = await res.json();
+          success = true;
+          break; // Éxito
+        } catch (err) {
+          lastError = err;
+          // Si no es el último intento, esperamos
+          if (i < 2) {
+             const delay = 500 * Math.pow(2, i); // 500, 1000
+             await new Promise((r) => setTimeout(r, delay));
+          }
+        }
+      }
+
+      if (cancelled) return;
+
+      if (success) {
+        setLessonFormSchema(json?.schema ?? null);
+      } else {
+        setLessonFormSchema(null);
+        showToast({
+          variant: 'error',
+          title: 'Error cargando formulario dinámico',
+          message: lastError instanceof Error ? lastError.message : 'Error de conexión',
+        });
+      }
+      setLessonFormLoading(false);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isLessonResource, formValues.tipo, showToast]);
 
   /* ───────────── Carga de opciones FK ───────────── */
 
@@ -466,6 +597,202 @@ export function AdminResourceForm({
     [],
   );
 
+  const updateContenidoField = useCallback(
+    (key: string, value: unknown) => {
+      setFormValues((prev) => {
+        const current = prev.contenido;
+        const base =
+          current && typeof current === 'object' && !Array.isArray(current)
+            ? (current as Record<string, unknown>)
+            : {};
+        return {
+          ...prev,
+          contenido: {
+            ...base,
+            [key]: value,
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const renderLessonField = useCallback(
+    (field: LessonFieldSchema) => {
+      const current = formValues.contenido;
+      const contenido =
+        current && typeof current === 'object' && !Array.isArray(current)
+          ? (current as Record<string, unknown>)
+          : {};
+      const fallback = field.default ?? (field.type === 'boolean' ? false : '');
+      let value = contenido[field.key];
+      
+      // Fallback para estructura anidada en 'data' (legacy/unificada)
+      if (value === undefined && contenido.data && typeof contenido.data === 'object') {
+        value = (contenido.data as Record<string, unknown>)[field.key];
+      }
+      
+      value = value ?? fallback;
+      const inputId = `lesson-${field.key}`;
+
+      const LabelWithTooltip = () => (
+        <div className="flex items-center gap-2 mb-1">
+          <label className="block text-xs font-medium text-slate-100" htmlFor={inputId}>
+            {field.label}
+          </label>
+          {field.help && <Tooltip content={field.help} />}
+        </div>
+      );
+
+      if (field.type === 'richtext') {
+        return (
+          <div key={field.key} className="space-y-1 md:col-span-2">
+            <LabelWithTooltip />
+            <AdminRichTextEditor
+              value={String(value ?? '')}
+              onChange={(val) => updateContenidoField(field.key, val)}
+              placeholder={field.placeholder}
+            />
+          </div>
+        );
+      }
+
+      if (field.type === 'quiz') {
+        return (
+          <div key={field.key} className="space-y-1 md:col-span-2">
+            <LabelWithTooltip />
+            <QuizBuilder
+              value={(value as QuizQuestion[]) || []}
+              onChange={(val) => updateContenidoField(field.key, val)}
+            />
+          </div>
+        );
+      }
+
+      if (field.type === 'textarea') {
+        return (
+          <div key={field.key} className="space-y-1 md:col-span-2">
+            <LabelWithTooltip />
+            <textarea
+              id={inputId}
+              className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-xs text-slate-100"
+              rows={4}
+              value={String(value ?? '')}
+              placeholder={field.placeholder}
+              onChange={(e) => updateContenidoField(field.key, e.target.value)}
+            />
+          </div>
+        );
+      }
+
+      if (field.type === 'boolean') {
+        return (
+          <div key={field.key} className="flex items-center justify-between rounded-md bg-[#101010] px-3 py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-100">{field.label}</span>
+              {field.help && <Tooltip content={field.help} />}
+            </div>
+            <button
+              type="button"
+              onClick={() => updateContenidoField(field.key, !Boolean(value))}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full border transition-colors ${
+                Boolean(value)
+                  ? 'border-emerald-500 bg-emerald-500'
+                  : 'border-[#3a3a3a] bg-[#181818]'
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                  Boolean(value) ? 'translate-x-3.5' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        );
+      }
+
+      if (field.type === 'select') {
+        return (
+          <div key={field.key} className="space-y-1">
+            <LabelWithTooltip />
+            <div className="relative group">
+              <select
+                id={inputId}
+                className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
+                value={String(value ?? '')}
+                onChange={(e) => updateContenidoField(field.key, e.target.value)}
+                style={{ colorScheme: 'dark' }}
+              >
+                <option value="">—</option>
+                {(field.options ?? []).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+      }
+
+      if (field.type === 'number') {
+        return (
+          <div key={field.key} className="space-y-1">
+            <LabelWithTooltip />
+            <input
+              id={inputId}
+              type="number"
+              className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
+              value={value === '' || value === null || value === undefined ? '' : String(value)}
+              min={field.min}
+              max={field.max}
+              placeholder={field.placeholder}
+              onChange={(e) => updateContenidoField(field.key, e.target.value === '' ? '' : Number(e.target.value))}
+            />
+          </div>
+        );
+      }
+
+      if (field.type === 'json') {
+        const raw = typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2);
+        return (
+          <div key={field.key} className="space-y-1 md:col-span-2">
+            <LabelWithTooltip />
+            <textarea
+              id={inputId}
+              className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-xs text-slate-100"
+              rows={4}
+              value={raw}
+              onChange={(e) => {
+                const text = e.target.value;
+                try {
+                  updateContenidoField(field.key, JSON.parse(text));
+                } catch {
+                  updateContenidoField(field.key, text);
+                }
+              }}
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div key={field.key} className="space-y-1">
+          <LabelWithTooltip />
+          <input
+            id={inputId}
+            type={field.type === 'url' ? 'url' : 'text'}
+            className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
+            value={String(value ?? '')}
+            placeholder={field.placeholder}
+            onChange={(e) => updateContenidoField(field.key, e.target.value)}
+          />
+        </div>
+      );
+    },
+    [formValues.contenido, updateContenidoField],
+  );
+
   /* ───────────── Normalizar valores antes de enviar ───────────── */
 
   function normalizeValue(field: FieldMeta, raw: any) {
@@ -488,6 +815,7 @@ export function AdminResourceForm({
         return d.toISOString();
       }
       case 'Json':
+        if (raw && typeof raw === 'object') return raw;
         try {
           return JSON.parse(String(raw));
         } catch {
@@ -587,6 +915,9 @@ export function AdminResourceForm({
         // 3) Subir imágenes y archivos genéricos (si los hay)
         for (const field of formFields) {
           if (!field.isImage && !field.isFile) continue;
+
+          // Si debemos ocultar uploads (ej. lección texto/quiz), saltamos
+          if (shouldHideUploads && field.isFile && !field.isImage) continue;
 
           const file = field.isImage
             ? imageFiles[field.name]
@@ -855,6 +1186,8 @@ export function AdminResourceForm({
       schema,
       clientId,
       videoStatusMessage,
+      shouldHideUploads,
+      videoStatus,
     ],
   );
 
@@ -893,8 +1226,30 @@ export function AdminResourceForm({
             {/* Campos */}
             <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
               <div className="grid gap-4 md:grid-cols-2">
-                {formFields.map((field) =>
-                  renderAdminField({
+                {formFields.map((field) => {
+                  // Ocultar si shouldHideUploads está activo y NO es imagen (o sea, es video/doc)
+                  if (shouldHideUploads && field.isFile && !field.isImage) {
+                    return null;
+                  }
+
+                  if (
+                    isLessonResource &&
+                    field.name === 'contenido' &&
+                    lessonFormSchema?.fields?.length
+                  ) {
+                    return (
+                      <div key={field.name} className="md:col-span-2 space-y-3">
+                        {lessonFormLoading ? (
+                          <div className="text-xs text-slate-400">Cargando formulario…</div>
+                        ) : null}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {lessonFormSchema.fields.map((f) => renderLessonField(f))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return renderAdminField({
                     field,
                     meta,
                     value: formValues[field.name],
@@ -907,8 +1262,8 @@ export function AdminResourceForm({
                     fkOptions,
                     fkLoading,
                     onChangeField: handleChangeField,
-                  }),
-                )}
+                  });
+                })}
               </div>
             </div>
 
