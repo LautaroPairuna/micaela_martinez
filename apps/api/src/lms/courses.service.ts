@@ -139,11 +139,11 @@ export class CoursesService {
         : {}),
     };
 
-    const byLevel = await this.prisma.curso.groupBy({
+    const byLevel = (await this.prisma.curso.groupBy({
       by: ['nivel'],
       where: baseWhere,
       _count: { _all: true },
-    });
+    })) as unknown as Array<{ nivel: NivelCurso; _count: { _all: number } }>;
 
     const niveles = [
       NivelCurso.BASICO,
