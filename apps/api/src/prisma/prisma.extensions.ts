@@ -1,5 +1,5 @@
 // apps/api/src/prisma/prisma.extensions.ts
-import { Prisma, PrismaClient, EstadoOrden } from '../generated/prisma/client';
+import { Prisma, PrismaClient, EstadoOrden } from '@prisma/client';
 
 export const modelExtension = Prisma.defineExtension({
   name: 'modelExtension',

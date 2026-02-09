@@ -1,5 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 generator jsonSchema {
@@ -23,17 +24,17 @@ model Usuario {
   actualizadoEn     DateTime  @updatedAt @map("actualizado_en")
   emailVerificadoEn DateTime? @map("email_verificado_en")
 
-  roles             UsuarioRol[]
-  cursosImpartidos  Curso[]     @relation("CursoInstructor")
-  inscripciones     Inscripcion[]
-  resenas           Resena[]
-  resenaRespuestas  ResenaRespuesta[]
-  favoritos         Favorito[]
-  resenaLikes       ResenaLike[]
-  ordenes           Orden[]
-  auditLogs         AuditLog[]
-  carrito           Carrito?
-  notificaciones    Notificacion[]
+  roles            UsuarioRol[]
+  cursosImpartidos Curso[]           @relation("CursoInstructor")
+  inscripciones    Inscripcion[]
+  resenas          Resena[]
+  resenaRespuestas ResenaRespuesta[]
+  favoritos        Favorito[]
+  resenaLikes      ResenaLike[]
+  ordenes          Orden[]
+  auditLogs        AuditLog[]
+  carrito          Carrito?
+  notificaciones   Notificacion[]
 
   @@map("usuario")
 }
@@ -44,7 +45,7 @@ model Role {
   name      String   @db.VarChar(128)
   createdAt DateTime @default(now()) @map("created_at")
 
-  usuarios  UsuarioRol[]
+  usuarios UsuarioRol[]
 
   @@map("role")
 }
@@ -53,8 +54,8 @@ model UsuarioRol {
   usuarioId Int @map("usuario_id")
   roleId    Int @map("role_id")
 
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-  role      Role    @relation(fields: [roleId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  role    Role    @relation(fields: [roleId], references: [id])
 
   @@id([usuarioId, roleId])
   @@index([roleId])
@@ -67,8 +68,8 @@ model Favorito {
   productoId Int      @map("producto_id")
   creadoEn   DateTime @default(now()) @map("creado_en")
 
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
-  producto   Producto @relation(fields: [productoId], references: [id])
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id])
+  producto Producto @relation(fields: [productoId], references: [id])
 
   @@unique([usuarioId, productoId])
   @@index([usuarioId])
@@ -94,7 +95,7 @@ model Curso {
   creadoEn      DateTime   @default(now()) @map("creado_en")
   instructorId  Int?       @map("instructor_id")
 
-  instructor    Usuario?   @relation("CursoInstructor", fields: [instructorId], references: [id])
+  instructor    Usuario?      @relation("CursoInstructor", fields: [instructorId], references: [id])
   modulos       Modulo[]
   resenas       Resena[]
   inscripciones Inscripcion[]
@@ -115,8 +116,8 @@ model Inscripcion {
   creadoEn      DateTime          @default(now()) @map("creado_en")
   actualizadoEn DateTime          @updatedAt @map("actualizado_en")
 
-  usuario       Usuario           @relation(fields: [usuarioId], references: [id])
-  curso         Curso             @relation(fields: [cursoId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  curso   Curso   @relation(fields: [cursoId], references: [id])
 
   @@unique([usuarioId, cursoId])
   @@index([cursoId], map: "inscripcion_curso_id_fkey")
@@ -130,7 +131,7 @@ model Modulo {
   orden    Int
   parentId Int?   @map("parent_id")
 
-  curso    Curso  @relation(fields: [cursoId], references: [id])
+  curso     Curso     @relation(fields: [cursoId], references: [id])
   lecciones Leccion[]
 
   @@index([cursoId, orden])
@@ -150,7 +151,7 @@ model Leccion {
   previewUrl  String?     @map("preview_url") @db.VarChar(255)
   duracion    Float       @default(0) @map("duracion")
 
-  modulo      Modulo      @relation(fields: [moduloId], references: [id])
+  modulo Modulo @relation(fields: [moduloId], references: [id])
 
   @@index([moduloId, orden])
   @@map("leccion")
@@ -185,12 +186,12 @@ model Producto {
   marcaId       Int?     @map("marca_id")
   categoriaId   Int?     @map("categoria_id")
 
-  marca         Marca?   @relation(fields: [marcaId], references: [id])
-  categoria     Categoria? @relation(fields: [categoriaId], references: [id])
-  imagenes      ProductoImagen[]
-  resenas       Resena[]
-  favoritos     Favorito[]
-  itemsCarrito  ItemCarrito[]
+  marca        Marca?           @relation(fields: [marcaId], references: [id])
+  categoria    Categoria?       @relation(fields: [categoriaId], references: [id])
+  imagenes     ProductoImagen[]
+  resenas      Resena[]
+  favoritos    Favorito[]
+  itemsCarrito ItemCarrito[]
 
   @@index([publicado, destacado, creadoEn])
   @@index([publicado, precio])
@@ -212,7 +213,7 @@ model ProductoImagen {
   alt        String? @db.VarChar(255)
   orden      Int     @default(0)
 
-  producto  Producto @relation(fields: [productoId], references: [id])
+  producto Producto @relation(fields: [productoId], references: [id])
 
   @@index([productoId, orden])
   @@map("producto_imagen")
@@ -244,9 +245,9 @@ model Categoria {
   creadoEn    DateTime @default(now()) @map("creado_en")
   parentId    Int?     @map("parent_id")
 
-  parent      Categoria?  @relation("CategoriaPadre", fields: [parentId], references: [id])
-  hijos       Categoria[] @relation("CategoriaPadre")
-  productos   Producto[]
+  parent    Categoria?  @relation("CategoriaPadre", fields: [parentId], references: [id])
+  hijos     Categoria[] @relation("CategoriaPadre")
+  productos Producto[]
 
   @@index([parentId, orden])
   @@map("categoria")
@@ -270,10 +271,10 @@ model Orden {
   direccionEnvioId          Int?        @map("direccion_envio_id")
   direccionFacturacionId    Int?        @map("direccion_facturacion_id")
 
-  usuario                   Usuario     @relation(fields: [usuarioId], references: [id])
-  direccionEnvio            Direccion?  @relation("OrdenDireccionEnvio", fields: [direccionEnvioId], references: [id])
-  direccionFacturacion      Direccion?  @relation("OrdenDireccionFacturacion", fields: [direccionFacturacionId], references: [id])
-  items                     ItemOrden[]
+  usuario              Usuario     @relation(fields: [usuarioId], references: [id])
+  direccionEnvio       Direccion?  @relation("OrdenDireccionEnvio", fields: [direccionEnvioId], references: [id])
+  direccionFacturacion Direccion?  @relation("OrdenDireccionFacturacion", fields: [direccionFacturacionId], references: [id])
+  items                ItemOrden[]
 
   @@index([usuarioId, estado, creadoEn])
   @@index([esSuscripcion])
@@ -294,7 +295,7 @@ model ItemOrden {
   cantidad       Int           @default(1)
   precioUnitario Int           @map("precio_unitario")
 
-  orden          Orden         @relation(fields: [ordenId], references: [id])
+  orden Orden @relation(fields: [ordenId], references: [id])
 
   @@index([ordenId])
   @@index([tipo, refId])
@@ -375,9 +376,9 @@ model Resena {
   comentario String?
   creadoEn   DateTime @default(now()) @map("creado_en")
 
-  curso     Curso?    @relation(fields: [cursoId], references: [id])
-  producto  Producto? @relation(fields: [productoId], references: [id])
-  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  curso      Curso?            @relation(fields: [cursoId], references: [id])
+  producto   Producto?         @relation(fields: [productoId], references: [id])
+  usuario    Usuario           @relation(fields: [usuarioId], references: [id])
   respuestas ResenaRespuesta[]
   likes      ResenaLike[]
 
@@ -396,8 +397,8 @@ model ResenaLike {
   tipo      TipoLike
   creadoEn  DateTime @default(now()) @map("creado_en")
 
-  resena    Resena   @relation(fields: [resenaId], references: [id])
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  resena  Resena  @relation(fields: [resenaId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
 
   @@unique([resenaId, usuarioId])
   @@index([resenaId])
@@ -415,10 +416,10 @@ model ResenaRespuesta {
   creadoEn      DateTime @default(now()) @map("creado_en")
   actualizadoEn DateTime @updatedAt @map("actualizado_en")
 
-  resena    Resena          @relation(fields: [resenaId], references: [id])
-  usuario   Usuario         @relation(fields: [usuarioId], references: [id])
-  parent    ResenaRespuesta? @relation("ResenaRespuestaParent", fields: [parentId], references: [id])
-  hijos     ResenaRespuesta[] @relation("ResenaRespuestaParent")
+  resena  Resena            @relation(fields: [resenaId], references: [id])
+  usuario Usuario           @relation(fields: [usuarioId], references: [id])
+  parent  ResenaRespuesta?  @relation("ResenaRespuestaParent", fields: [parentId], references: [id])
+  hijos   ResenaRespuesta[] @relation("ResenaRespuestaParent")
 
   @@index([resenaId])
   @@index([usuarioId])
@@ -437,7 +438,7 @@ model Notificacion {
   metadata  Json?
   creadoEn  DateTime         @default(now()) @map("creado_en")
 
-  usuario   Usuario          @relation(fields: [usuarioId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
 
   @@index([usuarioId, leida, creadoEn], map: "idx_usuario_leida_fecha")
   @@index([usuarioId, tipo, leida], map: "idx_usuario_tipo_leida")
@@ -494,7 +495,7 @@ model AuditLog {
   endpoint  String?  @map("endpoint") @db.VarChar(255)
   timestamp DateTime @default(now())
 
-  user      Usuario  @relation(fields: [userId], references: [id])
+  user Usuario @relation(fields: [userId], references: [id])
 
   @@index([userId, timestamp], map: "idx_user_timestamp")
   @@index([tableName, action, timestamp], map: "idx_table_action_timestamp")
@@ -509,8 +510,8 @@ model Carrito {
   creadoEn      DateTime @default(now()) @map("creado_en")
   actualizadoEn DateTime @updatedAt @map("actualizado_en")
 
-  usuario       Usuario       @relation(fields: [usuarioId], references: [id])
-  items         ItemCarrito[]
+  usuario Usuario       @relation(fields: [usuarioId], references: [id])
+  items   ItemCarrito[]
 
   @@map("carrito")
 }
@@ -524,9 +525,9 @@ model ItemCarrito {
   cantidad   Int           @default(1)
   creadoEn   DateTime      @default(now()) @map("creado_en")
 
-  carrito    Carrito       @relation(fields: [carritoId], references: [id])
-  producto   Producto?     @relation(fields: [productoId], references: [id])
-  curso      Curso?        @relation(fields: [cursoId], references: [id])
+  carrito  Carrito   @relation(fields: [carritoId], references: [id])
+  producto Producto? @relation(fields: [productoId], references: [id])
+  curso    Curso?    @relation(fields: [cursoId], references: [id])
 
   @@unique([carritoId, tipo, productoId, cursoId], map: "unique_item_carrito")
   @@index([carritoId])
