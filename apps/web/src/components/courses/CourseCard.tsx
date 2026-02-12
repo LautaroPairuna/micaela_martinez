@@ -144,20 +144,30 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
               )}
 
               <div className="mt-auto pt-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Price value={c.precio} tone="pink" />
-                    <span className="text-xs text-[var(--muted)]">Suscripción mensual</span>
+                {!isEnrolled && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <Price value={c.precio} tone="pink" />
+                      <span className="text-xs text-[var(--muted)]">Suscripción mensual</span>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {isEnrolled ? (
-                  <Link
-                    href={`/cursos/player/${c.slug}`}
-                    className="block w-full rounded-xl bg-[var(--pink)] px-4 py-2 text-center shadow-lg transition-all duration-300 hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40"
-                  >
-                    <span className="text-sm font-bold text-black">{ctaLabel}</span>
-                  </Link>
+                  <div className="space-y-2">
+                    <Link
+                      href={`/cursos/player/${c.slug}`}
+                      className="block w-full rounded-xl bg-[var(--pink)] px-4 py-2 text-center shadow-lg transition-all duration-300 hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40"
+                    >
+                      <span className="text-sm font-bold text-black">{ctaLabel}</span>
+                    </Link>
+                    <Link
+                      href={`/cursos/detalle/${c.slug}`}
+                      className="block w-full rounded-xl border border-[var(--gold)] px-4 py-2 text-center transition-all duration-300 text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black hover:shadow-md"
+                    >
+                      <span className="text-sm font-semibold">Ver curso</span>
+                    </Link>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     <AddCourseButton 

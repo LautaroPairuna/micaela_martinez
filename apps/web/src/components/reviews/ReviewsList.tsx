@@ -16,9 +16,6 @@ import { ReviewResponses } from './ReviewResponses';
 import { ReviewLikeButtons } from './ReviewLikeButtons';
 import { ResponsesButton } from './ResponsesButton';
 import { useScrollToComment } from '@/hooks/useScrollToComment';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
 
 /* ─────────────────────────────────────────
    Utils
@@ -272,13 +269,8 @@ export function ReviewsList({
               {/* Comment */}
               {review.comentario && (
                 <div className="space-y-2">
-                  <div className="text-[var(--fg)] leading-relaxed prose prose-sm max-w-none prose-headings:text-[var(--fg)] prose-p:text-[var(--fg)] prose-strong:text-[var(--fg)] prose-em:text-[var(--fg)] prose-code:text-[var(--fg)] prose-code:bg-[var(--bg-secondary)] prose-pre:bg-[var(--bg-secondary)] prose-blockquote:text-[var(--muted)] prose-blockquote:border-[var(--border)] prose-a:text-[var(--gold)] hover:prose-a:text-[var(--gold)]/80">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeHighlight]}
-                    >
-                      {displayText}
-                    </ReactMarkdown>
+                  <div className="text-[var(--fg)] leading-relaxed text-sm">
+                    <p className="whitespace-pre-line">{displayText}</p>
                   </div>
                   
                   {shouldTruncate && (

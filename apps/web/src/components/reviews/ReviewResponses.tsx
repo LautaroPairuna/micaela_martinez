@@ -16,10 +16,6 @@ import { useSession } from '@/hooks/useSession';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { useReviewResponses } from '@/hooks/useReviewResponses';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import { MarkdownEditor } from './MarkdownEditor';
 
 /* ===================== Tipos ===================== */
 interface UserLite {
@@ -191,13 +187,13 @@ function ResponseItem({
           {/* Contenido de la respuesta */}
           {isEditing ? (
             <div className="space-y-2">
-              <MarkdownEditor
+              <textarea
                 value={editContent}
-                onChange={setEditContent}
-                placeholder="Editar respuesta..."
-                minHeight="80px"
+                onChange={(e) => setEditContent(e.target.value)}
+                placeholder="Edita tu respuesta..."
+                className="w-full min-h-[100px] p-3 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] placeholder-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--gold)] resize-y text-sm"
               />
-              <div className="flex gap-2">
+              <div className="flex justify-end gap-2 mt-2">
                 <Button
                   size="sm"
                   onClick={handleEdit}
@@ -223,10 +219,8 @@ function ResponseItem({
             </div>
           ) : (
             <div>
-              <div className="text-sm text-[var(--fg)] mb-3 prose prose-sm max-w-none prose-headings:text-[var(--fg)] prose-p:text-[var(--fg)] prose-strong:text-[var(--fg)] prose-em:text-[var(--fg)] prose-code:text-[var(--fg)] prose-code:bg-[var(--bg-secondary)] prose-pre:bg-[var(--bg-secondary)] prose-blockquote:text-[var(--muted)] prose-blockquote:border-[var(--border)] prose-a:text-[var(--gold)] hover:prose-a:text-[var(--gold)]/80">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                  {response.contenido}
-                </ReactMarkdown>
+              <div className="text-sm text-[var(--fg)] mb-3 leading-relaxed">
+                <p className="whitespace-pre-line">{response.contenido}</p>
               </div>
 
               {/* Acción responder */}
@@ -352,39 +346,29 @@ export function ReviewResponses({ resenaId }: ReviewResponsesProps) {
 
       {/* Formulario de respuesta */}
       {showResponseForm && session && (
-        <Card>
-          <CardBody className="p-4">
-            <div className="space-y-3">
-              {replyingTo && (
-                <div className="text-sm text-[var(--muted)]">Respondiendo a un comentario...</div>
-              )}
-              <MarkdownEditor
-                value={responseContent}
-                onChange={setResponseContent}
-                placeholder="Escribe tu respuesta..."
-                minHeight="80px"
-              />
-              <div className="flex gap-2">
-                <Button onClick={handleSubmitResponse} disabled={isSubmitting || !responseContent.trim()} size="sm">
-                  <Send className="h-4 w-4 mr-2" />
-                  {isSubmitting ? 'Enviando...' : 'Enviar respuesta'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowResponseForm(false);
-                    setReplyingTo(null);
-                    setResponseContent('');
-                  }}
-                  size="sm"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+        <div className="bg-[var(--bg-secondary)] p-4 rounded-lg space-y-3 border border-[var(--border)]">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-sm font-medium text-[var(--fg)]">Nueva respuesta</h4>
+            <button onClick={() => setShowResponseForm(false)} className="text-[var(--muted)] hover:text-[var(--fg)]">
+              <X className="size-4" />
+            </button>
+          </div>
+          {replyingTo && (
+            <div className="text-sm text-[var(--muted)]">Respondiendo a un comentario...</div>
+          )}
+          <textarea
+            value={responseContent}
+            onChange={(e) => setResponseContent(e.target.value)}
+            placeholder="Escribe tu respuesta..."
+            className="w-full min-h-[100px] p-3 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] placeholder-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--gold)] resize-y text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <Button onClick={handleSubmitResponse} disabled={isSubmitting || !responseContent.trim()} size="sm">
+              <Send className="h-4 w-4 mr-2" />
+              Enviar respuesta
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Error */}

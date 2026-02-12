@@ -1,5 +1,6 @@
 // apps/web/src/lib/api.ts
 import { apiProxy } from '../api-proxy';
+import type { SliderItem } from '../hero-types';
 
 /* ───────────────── Tipos compartidos ───────────────── */
 export type ProductSort = 'relevancia' | 'novedades' | 'precio_asc' | 'precio_desc' | 'rating_desc';
@@ -57,6 +58,8 @@ export type CourseDetail = CourseListItem & {
   requisitos?: string | null; duracionTotalS?: number | null;
   estudiantesCount?: number;
   creadoEn?: string;
+  videoPreview?: string | null;
+  queAprenderas?: string[] | null;
   tags?: Record<string, unknown>;
   modulos?: Array<{ 
     id: string;
@@ -184,6 +187,11 @@ export async function getCourseContentBySlug(slug: string) {
   });
 }
 
+/* ───────────────── Hero ───────────────── */
+export async function getHeroImages() {
+  return apiProxy<SliderItem[]>('/hero/images', { next: { revalidate: 60 } });
+}
+
 /* ───────────────── Safe variants ───────────────── */
 export async function safeGetCourses(params: Partial<CourseQuery> = {}) {
   try { return await getCourses(params); }
@@ -192,6 +200,10 @@ export async function safeGetCourses(params: Partial<CourseQuery> = {}) {
 export async function safeGetProducts(params: Partial<ProductQuery> = {}) {
   try { return await getProducts(params); }
   catch (e) { console.error('getProducts failed:', e); return { items: [], meta: { page: 1, pages: 1 } } as ListResp<ProductListItem>; }
+}
+export async function safeGetHeroImages() {
+  try { return await getHeroImages(); }
+  catch (e) { console.error('getHeroImages failed:', e); return []; }
 }
 /**
  * Estrategia robusta para productos: intenta con params y relaja filtros

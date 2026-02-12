@@ -4,6 +4,7 @@ export type FieldDefinition = {
   placeholder?: string;
   showInList?: boolean;
   showInForm?: boolean;
+  widget?: 'markdown' | 'video' | 'list' | 'json-list' | 'image' | 'date'; 
 };
 
 export type ResourceDefinitions = Record<
@@ -56,13 +57,32 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     titulo: { label: 'Título del Curso' },
     resumen: { label: 'Resumen Corto', showInList: false },
     descripcionMD: {
-      label: 'Descripción Completa (Markdown)',
+      label: 'Descripción Completa',
       showInList: false,
+      widget: 'markdown',
+    },
+    requisitos: {
+      label: 'Requisitos',
+      help: 'Lista de requisitos (uno por línea o bullets).',
+      showInList: false,
+      widget: 'markdown',
+    },
+    queAprenderas: {
+      label: 'Lo que aprenderás',
+      help: 'Lista de puntos clave.',
+      showInList: false,
+      widget: 'json-list',
+    },
+    videoPreview: {
+      label: 'Vista Previa (Video)',
+      help: 'Video promocional del curso.',
+      showInList: false,
+      widget: 'video',
     },
     precio: { label: 'Precio', help: 'Precio actual del curso.' },
     publicado: { label: '¿Publicado?', help: 'Visible para los usuarios.' },
     nivel: { label: 'Nivel', help: 'Básico, Intermedio o Avanzado.' },
-    portada: { label: 'Imagen de Portada' },
+    portada: { label: 'Imagen de Portada', widget: 'image' },
     destacado: {
       label: '¿Destacado?',
       help: 'Aparece en secciones principales.',
@@ -91,6 +111,11 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     imagen: { label: 'Imagen Principal' },
     marcaId: { label: 'Marca' },
     categoriaId: { label: 'Categoría' },
+    descripcionMD: {
+      label: 'Descripción Completa (MD)',
+      widget: 'markdown',
+      showInList: false,
+    },
     precioLista: {
       label: 'Precio de Lista (Tachado)',
       help: 'Precio original antes de descuento.',

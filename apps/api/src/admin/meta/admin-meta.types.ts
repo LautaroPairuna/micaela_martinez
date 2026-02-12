@@ -98,6 +98,9 @@ export interface FieldMeta {
 
   // Heurísticas de UI (SIEMPRE boolean)
   isImage: boolean; // campos de imagen (portada, imagen_archivo, etc.)
+
+  // ✅ Widget específico solicitado por config
+  widget?: string; // 'video', 'markdown', 'list', 'rich-text', etc.
   isParentChildCount: boolean; // relaciones list para mostrar _count
   isForeignKey: boolean; // ej: marcaId, categoriaId, cursoId
   fkResource?: string; // modelo Prisma de la FK: 'Marca', 'Categoria', etc.

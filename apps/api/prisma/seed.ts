@@ -162,6 +162,9 @@ const upsertCursoGetId = async (c: {
   destacado?: boolean;
   tags?: string[];
   instructorId: number;
+  queAprenderas?: string[];
+  videoPreview?: string;
+  requisitos?: string;
 }) => {
   const nivelKey = E.nivelCurso(c.nivel); // <- CLAVE: manda "BASICO"/"INTERMEDIO"/"AVANZADO"
 
@@ -178,6 +181,9 @@ const upsertCursoGetId = async (c: {
       destacado: c.destacado ?? false,
       tags: json(c.tags ?? []),
       instructorId: c.instructorId,
+      queAprenderas: c.queAprenderas ? json(c.queAprenderas) : undefined,
+      videoPreview: c.videoPreview ?? null,
+      requisitos: c.requisitos ?? null,
     } as any,
     create: {
       slug: c.idSlug,
@@ -192,6 +198,9 @@ const upsertCursoGetId = async (c: {
       tags: json(c.tags ?? []),
       creadoEn: new Date(),
       instructorId: c.instructorId,
+      queAprenderas: json(c.queAprenderas ?? []),
+      videoPreview: c.videoPreview ?? null,
+      requisitos: c.requisitos ?? null,
     } as any,
   });
 
@@ -516,6 +525,9 @@ async function main() {
     destacado: true,
     tags: ['prueba', 'testing', 'suscripcion'],
     instructorId: instrId,
+    queAprenderas: ['Cómo realizar pagos', 'Cómo cancelar suscripciones', 'Acceso al contenido'],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-makeup-to-a-woman-5264/1080p.mp4',
+    requisitos: 'Ninguno.\nAcceso a internet.',
   });
 
   const cursoMaquId = await upsertCursoGetId({
@@ -529,6 +541,15 @@ async function main() {
     destacado: true,
     tags: ['maquillaje', 'ojos', 'mate'],
     instructorId: instrId,
+    queAprenderas: [
+      'Diagnóstico de piel y preparación',
+      'Colorimetría y correcciones',
+      'Técnicas de ojos: Smokey, Cut Crease, Delineados',
+      'Piel blindada y larga duración',
+      'Maquillaje para fotografía y eventos',
+    ],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-makeup-artist-applying-eyeshadow-5263/1080p.mp4',
+    requisitos: 'Kit básico de maquillaje.\nBrochas y esponjas limpias.\nModelo para practicar (opcional).',
   });
 
   const cursoSkinId = await upsertCursoGetId({
@@ -542,6 +563,14 @@ async function main() {
     destacado: false,
     tags: ['skincare', 'hidratacion', 'rutinas'],
     instructorId: instrId,
+    queAprenderas: [
+      'Identificar tu biotipo cutáneo',
+      'Pasos esenciales: Limpieza, Hidratación, Protección',
+      'Cómo leer etiquetas de ingredientes básicos',
+      'Errores comunes en el cuidado de la piel',
+    ],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-cream-to-face-5268/1080p.mp4',
+    requisitos: 'Espejo con buena iluminación.\nVincha para retirar el cabello.\nDisposición para crear nuevos hábitos.',
   });
 
   const cursoOjosId = await upsertCursoGetId({
@@ -555,6 +584,14 @@ async function main() {
     destacado: true,
     tags: ['ojos', 'smokey', 'cut-crease'],
     instructorId: instrId,
+    queAprenderas: [
+      'Difuminados perfectos y transiciones',
+      'Cut Crease abierto y cerrado',
+      'Delineados gráficos y foxy eyes',
+      'Aplicación de glitter y pigmentos',
+    ],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-eyeliner-5265/1080p.mp4',
+    requisitos: 'Conocimientos básicos de maquillaje.\nVariedad de pinceles de ojos (difuminar, precisión).\nPrebase de sombras y pigmentos.',
   });
 
   const cursoCejasId = await upsertCursoGetId({
@@ -568,6 +605,14 @@ async function main() {
     destacado: false,
     tags: ['cejas', 'diseño', 'perfilado'],
     instructorId: instrId,
+    queAprenderas: [
+      'Visagismo y diseño de cejas según el rostro',
+      'Técnicas de depilación con pinza y cera',
+      'Laminado de cejas (Brow Lamination)',
+      'Henna y tinte híbrido',
+    ],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-shaping-eyebrows-5266/1080p.mp4',
+    requisitos: 'Pinza de depilar y tijera pequeña.\nHilo para diseño (mapping).\nCepillo de cejas (goubillon).',
   });
 
   const cursoDermoId = await upsertCursoGetId({
@@ -581,6 +626,14 @@ async function main() {
     destacado: true,
     tags: ['dermocosmetica', 'rutinas', 'activos'],
     instructorId: instrId,
+    queAprenderas: [
+      'Química cosmética avanzada',
+      'Combinación de ácidos y activos potentes',
+      'Tratamiento de hiperpigmentación y acné',
+      'Rutinas anti-age con evidencia científica',
+    ],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-woman-applying-serum-5267/1080p.mp4',
+    requisitos: 'Conocimientos de biología de la piel (recomendado).\nInterés en química cosmética.\nNotebook para tomar apuntes.',
   });
 
   const cursoSkinSensId = await upsertCursoGetId({
@@ -594,6 +647,14 @@ async function main() {
     destacado: false,
     tags: ['piel sensible', 'rutinas', 'tolerancia'],
     instructorId: instrId,
+    queAprenderas: [
+      'Recuperación de la barrera cutánea',
+      'Ingredientes calmantes y antiinflamatorios',
+      'Cómo introducir nuevos productos sin reacción',
+      'Maquillaje apto para pieles reactivas',
+    ],
+    videoPreview: 'https://cdn.coverr.co/videos/coverr-woman-washing-face-5269/1080p.mp4',
+    requisitos: 'Piel sensible o reactiva (propia o de clientes).\nPaciencia para probar productos.\nEvitar exfoliantes fuertes durante el curso.',
   });
 
   // ───────────────── Módulos + Lecciones

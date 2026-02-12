@@ -11,6 +11,8 @@ import { ChevronDown } from 'lucide-react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 import { THUMBNAIL_PUBLIC_URL } from '@/lib/adminConstants';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { AdminRichTextEditor } from './AdminRichTextEditor';
+import { JsonListEditor } from './JsonListEditor';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
@@ -524,6 +526,41 @@ export function renderAdminField({
     </div>
   );
 
+  /* ───────────── Widget: JSON List ───────────── */
+  if (field.widget === 'json-list') {
+    return (
+      <div key={field.name} className="md:col-span-2 space-y-1">
+        <LabelWithTooltip />
+        <JsonListEditor
+          label={label}
+          help={field.help}
+          value={value}
+          onChange={(newVal) =>
+            setFormValues((prev) => ({ ...prev, [field.name]: newVal }))
+          }
+        />
+      </div>
+    );
+  }
+
+  /* ───────────── Widget: Markdown / RichText ───────────── */
+  if (field.widget === 'markdown' || field.widget === 'rich-text') {
+    return (
+      <div key={field.name} className="md:col-span-2 space-y-1">
+        <LabelWithTooltip />
+        <div className="rounded-md border border-slate-800 bg-[#0a0a0a] overflow-hidden">
+          <AdminRichTextEditor
+            value={typeof value === 'string' ? value : ''}
+            onChange={(val) =>
+              setFormValues((prev) => ({ ...prev, [field.name]: val }))
+            }
+            placeholder={`Escribe aquí ${label}...`}
+          />
+        </div>
+      </div>
+    );
+  }
+
   /* FK select */
   if (field.isForeignKey && field.fkResource) {
     const options = fkOptions[field.name] ?? [];
@@ -600,37 +637,28 @@ export function renderAdminField({
     );
   }
 
-  /* Archivo genérico (video / doc) */
-  if (field.isFile) {
-    const stored = formValues[field.name] as string | null | undefined;
+  /* Archivos (Video, Doc, Generic) */
+  if (field.isFile && !field.isImage) {
+    const fileKind =
+      field.widget === 'video'
+        ? 'video'
+        : field.widget === 'document' || field.name.endsWith('Pdf')
+        ? 'document'
+        : 'generic';
 
     return (
-      <MediaDropzone
-        key={field.name}
-        label={label}
-        help={field.help}
-        fileKind={field.fileKind as any}
-        storedValue={stored}
-        onFileSelected={(file) => {
-          setFileFiles((prev) => ({
-            ...prev,
-            [field.name]: file,
-          }));
-
-          if (file) {
-            const objectUrl = URL.createObjectURL(file);
-            setFormValues((prev) => ({
-              ...prev,
-              [field.name]: objectUrl,
-            }));
-          } else {
-            setFormValues((prev) => ({
-              ...prev,
-              [field.name]: '',
-            }));
+      <div key={field.name} className="md:col-span-2 space-y-1">
+        <LabelWithTooltip />
+        <MediaDropzone
+          label={label}
+          help={field.help}
+          fileKind={fileKind}
+          storedValue={value}
+          onFileSelected={(file) =>
+            setFileFiles((prev) => ({ ...prev, [field.name]: file }))
           }
-        }}
-      />
+        />
+      </div>
     );
   }
 

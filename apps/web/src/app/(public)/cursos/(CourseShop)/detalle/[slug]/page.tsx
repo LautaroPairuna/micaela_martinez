@@ -8,12 +8,23 @@ import { Price } from '@/components/ui/Price';
 import { courseJsonLd } from '@/lib/seo';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { RatingStars } from '@/components/ui/RatingStars';
-import { Clock, UserRound, PlayCircle, Award, Check, ChevronRight } from 'lucide-react';
+import {
+  Clock,
+  UserRound,
+  PlayCircle,
+  Award,
+  Check,
+  ChevronRight,
+  Globe,
+  AlertCircle,
+} from 'lucide-react';
 import { formatDuration } from '@/lib/utils';
 import type { Nivel } from '@/lib/routes';
 import { BuyCourseButton } from '@/components/cart/BuyCourseButton';
 import { CourseDetailClient } from '@/components/courses/CourseDetailClient';
 
+// ✅ Wrapper client que limita el sticky hasta el final de la sección
+import { CourseDetailStickyShell } from '@/components/courses/CourseDetailStickyShell';
 
 export const revalidate = 120;
 
@@ -48,7 +59,8 @@ type CurriculumLesson = { titulo: string; duracion?: number };
 type CurriculumModule = { titulo: string; lecciones: CurriculumLesson[] };
 
 export async function generateMetadata({
-  params, searchParams,
+  params,
+  searchParams,
 }: {
   params: Promise<Params>;
   searchParams?: Promise<Record<string, string | undefined>>;
@@ -84,7 +96,8 @@ export async function generateMetadata({
 }
 
 export default async function CursoPage({
-  params, searchParams,
+  params,
+  searchParams,
 }: {
   params: Promise<Params>;
   searchParams: Promise<Record<string, string | undefined>>;
@@ -120,16 +133,20 @@ export default async function CursoPage({
 
   const modules: ModuleMini[] = Array.isArray(c.modulos) ? (c.modulos as ModuleMini[]) : [];
   const modCount =
-    typeof c._count?.modulos === 'number'
-      ? c._count.modulos
-      : modules.length;
+    typeof c._count?.modulos === 'number' ? c._count.modulos : modules.length;
 
   const lessonCount = modules.reduce<number>((acc, m) => {
     const ls = Array.isArray(m.lecciones) ? m.lecciones : [];
     return acc + ls.length;
   }, 0);
 
+  // 1. Prioridad: 'queAprenderas' desde DB
+  // 2. Fallback: Calculado desde lecciones
   const learningPoints: string[] = (() => {
+    if (Array.isArray(c.queAprenderas) && c.queAprenderas.length > 0) {
+      return c.queAprenderas as string[];
+    }
+
     const fromLessons = modules
       .flatMap((m) => (Array.isArray(m.lecciones) ? m.lecciones : []))
       .map((l) => l.titulo ?? '')
@@ -158,7 +175,11 @@ export default async function CursoPage({
   });
 
   const nivelLabel = nivel
-    ? nivel === 'BASICO' ? 'Básico' : nivel === 'INTERMEDIO' ? 'Intermedio' : 'Avanzado'
+    ? nivel === 'BASICO'
+      ? 'Básico'
+      : nivel === 'INTERMEDIO'
+        ? 'Intermedio'
+        : 'Avanzado'
     : null;
 
   const jsonLd = courseJsonLd({
@@ -168,22 +189,29 @@ export default async function CursoPage({
     image: c.portadaUrl ? abs(c.portadaUrl) : undefined,
   });
 
+  const ratingValue = Number(c.ratingProm) || 0;
+  const ratingCount = c.ratingConteo || 0;
+
   return (
     <article className="min-h-screen bg-[var(--bg)]">
-      {/* Hero Section - Estilo Udemy */}
-      <section className="bg-gradient-to-br from-[var(--bg)] to-black/20 text-[var(--fg)] py-16">
-        <div className="container mx-auto px-4 max-w-7xl">
+      {/* Hero Section - Estilo Udemy Mejorado */}
+      <section className="bg-[var(--bg)] text-[var(--fg)] pt-8 pb-12 border-b border-default relative overflow-hidden">
+        {/* Fondo decorativo sutil */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--pink)]/10 to-transparent pointer-events-none" />
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-[var(--pink)]/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto px-4 max-w-7xl relative z-10">
           {/* Breadcrumb */}
-          <nav className="mb-8">
-            <ol className="flex items-center space-x-2 text-sm">
+          <nav className="mb-6 text-sm">
+            <ol className="flex items-center space-x-2 flex-wrap">
               <li>
-                <Link href="/" className="text-muted hover:text-[var(--fg)] transition-colors">
+                <Link href="/" className="text-[var(--gold)] hover:underline font-medium">
                   Inicio
                 </Link>
               </li>
               <li className="text-muted">›</li>
               <li>
-                <Link href="/cursos" className="text-muted hover:text-[var(--fg)] transition-colors">
+                <Link href="/cursos" className="text-[var(--gold)] hover:underline font-medium">
                   Cursos
                 </Link>
               </li>
@@ -191,349 +219,297 @@ export default async function CursoPage({
                 <>
                   <li className="text-muted">›</li>
                   <li>
-                    <Link 
-                      href={`/cursos?nivel=${c.nivel}`} 
-                      className="text-muted hover:text-[var(--fg)] transition-colors"
+                    <Link
+                      href={`/cursos?nivel=${c.nivel}`}
+                      className="text-[var(--gold)] hover:underline font-medium"
                     >
                       {nivelLabel}
                     </Link>
                   </li>
                 </>
               )}
-              {c.tags && Array.isArray(c.tags) && c.tags.length > 0 && (
-                <>
-                  <li className="text-muted">›</li>
-                  <li>
-                    <Link 
-                      href={`/cursos?tag=${encodeURIComponent(c.tags[0])}`} 
-                      className="text-muted hover:text-[var(--fg)] transition-colors"
-                    >
-                      {c.tags[0]}
-                    </Link>
-                  </li>
-                </>
-              )}
               <li className="text-muted">›</li>
-              <li className="text-[var(--fg)] font-medium">{c.titulo}</li>
+              <li className="text-muted truncate max-w-[200px]">{c.titulo}</li>
             </ol>
           </nav>
 
-          <div className="grid lg:grid-cols-[2fr_1fr] gap-8 items-start">
-            {/* Contenido principal */}
-            <div className="space-y-8">
-              {/* Título principal */}
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight max-w-4xl">
+          <div className="grid lg:grid-cols-[2fr_1fr] gap-12 items-start">
+            {/* Contenido principal Hero */}
+            <div className="space-y-6">
+              <h1 className="text-4xl lg:text-5xl font-bold leading-tight font-display text-[var(--fg)] drop-shadow-[0_2px_4px_rgba(255,192,203,0.1)]">
                 {c.titulo}
               </h1>
-              
 
-
-              {/* Metadatos */}
-              <div className="flex flex-wrap items-center gap-6 text-base">
-                {typeof c.ratingProm === 'number' && (
-                  <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full">
-                    <span className="text-[var(--gold)] font-bold text-lg">{c.ratingProm.toFixed(1)}</span>
-                    <RatingStars value={Number(c.ratingProm)} count={c.ratingConteo || 0} size="sm" />
-                    <span className="text-muted">({c.ratingConteo || 0})</span>
+              {/* Badges en una sola fila */}
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                {/* Rating */}
+                {ratingCount > 0 ? (
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-[var(--pink)]">{ratingValue.toFixed(1)}</span>
+                    <RatingStars value={ratingValue} count={ratingCount} size="sm" />
+                    <span className="text-[var(--pink)] underline cursor-pointer hover:text-[var(--pink-light)]">
+                      ({ratingCount} valoraciones)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-muted">
+                    <RatingStars value={0} count={0} size="sm" />
+                    <span>(Sin valoraciones)</span>
                   </div>
                 )}
-                <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full">
-                  <UserRound className="size-5 text-[var(--gold)]" />
-                  <span className="text-muted font-medium">{c.ratingConteo || 199} estudiantes</span>
+
+                <span className="text-muted">•</span>
+
+                {/* Estudiantes */}
+                <div className="flex items-center gap-1 text-[var(--fg)]">
+                  <UserRound className="size-4" />
+                  <span>{c.estudiantesCount || 0} estudiantes</span>
+                </div>
+
+                <span className="text-muted">•</span>
+
+                {/* Duración */}
+                <div className="flex items-center gap-1 text-[var(--fg)]">
+                  <Clock className="size-4" />
+                  <span>
+                    {Math.floor(durMin / 60)}h {durMin % 60}m total
+                  </span>
+                </div>
+
+                <span className="text-muted">•</span>
+
+                {/* Última actualización */}
+                <div className="flex items-center gap-1 text-[var(--fg)]">
+                  <AlertCircle className="size-4" />
+                  <span>
+                    Act.{' '}
+                    {c.creadoEn
+                      ? new Date(c.creadoEn).toLocaleDateString('es-ES', {
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : 'Reciente'}
+                  </span>
+                </div>
+
+                <span className="text-muted">•</span>
+
+                {/* Idioma */}
+                <div className="flex items-center gap-1 text-[var(--fg)]">
+                  <Globe className="size-4" />
+                  <span>Español</span>
                 </div>
               </div>
 
-              {/* Instructor y metadatos adicionales */}
-              <div className="flex flex-wrap items-center gap-6 text-base text-muted">
-
-                <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full">
-                  <Clock className="size-5 text-[var(--gold)]" />
-                  <span className="font-medium">{Math.floor(durMin/60)}h {durMin%60}m</span>
-                </div>
-                <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full">
-                  <span>🌐</span>
-                  <span className="font-medium">Español</span>
-                </div>
-              </div>
+              {/* Resumen / Descripción corta */}
+              {c.resumen && (
+                <p className="text-lg text-[var(--fg-muted)] leading-relaxed max-w-3xl">
+                  {c.resumen}
+                </p>
+              )}
             </div>
 
-            {/* Vista previa del curso - Solo desktop */}
-            <div className="hidden lg:block">
-              <div className="relative bg-white/5 rounded-lg overflow-hidden">
-                <SafeImage
-                  src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
-                  alt={c.titulo}
-                  className="w-full aspect-video object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <div className="text-center">
-                    <PlayCircle className="size-16 text-[var(--fg)] mb-2 mx-auto" />
-                    <p className="text-[var(--fg)] font-medium">Vista previa de este curso</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Espacio reservado para el sidebar en desktop */}
+            <div className="hidden lg:block" />
           </div>
         </div>
       </section>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <section className="py-8">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="grid lg:grid-cols-[2fr_1fr] gap-8">
-            {/* Columna principal */}
-             <div className="space-y-12">
-               {/* Lo que aprenderás */}
-               <div className="bg-white/5 backdrop-blur-sm border border-default p-8 rounded-2xl">
-                 <h2 className="text-3xl font-bold text-[var(--fg)] mb-6">Lo que aprenderás</h2>
-                 <div className="grid md:grid-cols-2 gap-4">
-                   {learningPoints.slice(0, 8).map((point, i) => (
-                     <div key={i} className="flex items-start gap-4">
-                       <div className="w-6 h-6 bg-[var(--gold)]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                         <Check className="size-4 text-[var(--gold)]" />
-                       </div>
-                       <span className="text-[var(--fg)] leading-relaxed">{point}</span>
-                     </div>
-                   ))}
-                 </div>
-               </div>
-
-               {/* Contenido del curso */}
-               <div className="bg-white/5 backdrop-blur-sm border border-default p-8 rounded-2xl">
-                 <h2 className="text-3xl font-bold text-[var(--fg)] mb-6">Contenido del curso</h2>
-                 <div className="mb-6 text-base text-muted">
-                   {modCount} secciones • {lessonCount} clases • {formatDuration(c.duracionTotalS || 0)} de duración total
-                 </div>
-                 
-                 <div className="border border-default rounded-xl overflow-hidden">
-                   {curriculumModules.map((mod, modIndex) => (
-                     <details key={modIndex} className="border-b border-default last:border-b-0">
-                       <summary className="p-4 cursor-pointer hover:bg-white/5 flex items-center justify-between">
-                         <div className="flex items-center gap-3">
-                           <ChevronRight className="size-4 text-muted" />
-                           <div>
-                             <h3 className="font-medium text-[var(--fg)]">
-                               {mod.titulo || `Módulo ${modIndex + 1}`}
-                             </h3>
-                             <p className="text-sm text-muted">
-                               {mod.lecciones?.length || 0} clases • {formatDuration(mod.lecciones?.reduce((acc, l) => acc + ((l.duracion || 0) * 60), 0) || 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </summary>
-                      <div className="px-4 pb-4">
-                        {mod.lecciones?.map((leccion, lecIndex) => (
-                          <div key={lecIndex} className="flex items-center gap-3 py-2 text-sm">
-                            <PlayCircle className="size-4 text-muted" />
-                            <span className="text-[var(--fg)]">{leccion.titulo}</span>
-                            <span className="text-muted ml-auto">{formatDuration((leccion.duracion || 0) * 60)}</span>
-                          </div>
-                        ))}
-                       </div>
-                     </details>
-                   ))}
-                 </div>
-               </div>
-
-               {/* Requisitos */}
-               {c.requisitos && (
-                 <div className="bg-white/5 backdrop-blur-sm border border-default p-8 rounded-2xl">
-                   <h2 className="text-3xl font-bold text-[var(--fg)] mb-6">Requisitos</h2>
-                   <div className="prose max-w-none text-[var(--fg)] leading-relaxed">
-                     <div dangerouslySetInnerHTML={{ __html: c.requisitos.split('\n').map(req => req.trim()).filter(req => req).map(req => `<div class="flex items-start gap-4 mb-4"><div class="w-2 h-2 bg-[var(--gold)] rounded-full mt-3 flex-shrink-0"></div><span class="text-[var(--fg)] leading-relaxed">${req}</span></div>`).join('') }} />
-                   </div>
-                 </div>
-               )}
-
-               {/* Descripción */}
-               <div className="bg-white/5 backdrop-blur-sm border border-default p-8 rounded-2xl">
-                 <h2 className="text-3xl font-bold text-[var(--fg)] mb-6">Descripción</h2>
-                 <div className="prose max-w-none text-[var(--fg)] leading-relaxed">
-                   {(c.resumen || c.descripcionMD) ? (
-                     <div dangerouslySetInnerHTML={{ __html: c.resumen || c.descripcionMD || '' }} />
-                   ) : (
-                     <p className="text-lg">Este curso te proporcionará todas las habilidades necesarias para dominar {c.titulo.toLowerCase()}. Aprenderás desde los conceptos básicos hasta técnicas avanzadas, con ejercicios prácticos y proyectos reales.</p>
-                   )}
-                 </div>
-               </div>
-             </div>
-
-            {/* Sidebar de compra - Estilo Udemy */}
-            <aside className="hidden lg:block">
-              <div className="sticky top-6">
-                <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-default rounded-3xl shadow-2xl p-8">
-                  {/* Precio */}
-                  <div className="mb-8 text-center">
-                    <div className="mb-2">
-                      <Price value={c.precio} className="text-4xl font-bold text-[var(--fg)]" />
-                    </div>
-                    <p className="text-muted text-sm">Pago único • Acceso de por vida</p>
+      {/* ✅ Sección principal con sticky limitado */}
+      <CourseDetailStickyShell
+        childrenLeft={
+          <>
+            {/* Lo que aprenderás */}
+            <div className="border border-[var(--pink)]/20 p-6 rounded-xl bg-[var(--pink)]/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--pink)]/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+              <h2 className="text-2xl font-bold text-[var(--fg)] mb-6 font-display flex items-center gap-2">
+                <span className="text-[var(--pink)]">✦</span> Lo que aprenderás
+              </h2>
+              <div className="grid md:grid-cols-2 gap-y-3 gap-x-6 relative z-10">
+                {learningPoints.map((point, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <Check className="size-5 text-[var(--pink)] mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-[var(--fg-muted)]">{point}</span>
                   </div>
+                ))}
+              </div>
+            </div>
 
-                  {/* CTA dinámica según acceso */}
+            {/* Contenido del curso */}
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--fg)] mb-4 font-display">
+                Contenido del curso
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-[var(--fg-muted)] mb-4">
+                <span>{modCount} secciones</span> • <span>{lessonCount} clases</span> •{' '}
+                <span>{formatDuration(c.duracionTotalS || 0)} de duración total</span>
+              </div>
+
+              <div className="border border-default rounded-lg overflow-hidden bg-[var(--bg)]">
+                {curriculumModules.map((mod, modIndex) => (
+                  <details key={modIndex} className="group border-b border-default last:border-b-0">
+                    <summary className="p-4 cursor-pointer hover:bg-white/5 flex items-center justify-between bg-white/[0.02]">
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className="size-4 text-[var(--fg-muted)] group-open:rotate-90 transition-transform" />
+                        <h3 className="font-bold text-[var(--fg)]">{mod.titulo}</h3>
+                      </div>
+                      <span className="text-xs text-[var(--fg-muted)]">
+                        {mod.lecciones?.length || 0} clases
+                      </span>
+                    </summary>
+                    <div className="px-4 pb-4 pt-2 space-y-2">
+                      {mod.lecciones?.map((leccion, lecIndex) => (
+                        <div key={lecIndex} className="flex items-center justify-between text-sm pl-7">
+                          <div className="flex items-center gap-2 text-[var(--fg-muted)]">
+                            <PlayCircle className="size-3.5" />
+                            <span className="hover:underline cursor-pointer">{leccion.titulo}</span>
+                          </div>
+                          <span className="text-xs text-[var(--fg-muted)] opacity-70">
+                            {formatDuration((leccion.duracion || 0) * 60)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+
+            {/* Requisitos */}
+            {c.requisitos && (
+              <div>
+                <h2 className="text-2xl font-bold text-[var(--fg)] mb-4 font-display">Requisitos</h2>
+                <div className="prose prose-invert max-w-none text-[var(--fg-muted)]">
+                  <ul className="space-y-2">
+                    {c.requisitos.split('\n').map((req, i) => {
+                      const text = req.trim().replace(/^[-•*]\s*/, '');
+                      return text ? (
+                        <li key={i} className="flex items-start gap-3">
+                          <span className="mt-1.5 size-1.5 rounded-full bg-[var(--pink)] flex-shrink-0 shadow-[0_0_8px_var(--pink)]" />
+                          <span>{text}</span>
+                        </li>
+                      ) : null;
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Descripción */}
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--fg)] mb-4 font-display">Descripción</h2>
+              <div className="prose prose-invert max-w-none text-[var(--fg-muted)] leading-relaxed text-sm">
+                {c.descripcionMD ? (
+                  <div dangerouslySetInnerHTML={{ __html: c.descripcionMD }} />
+                ) : (
+                  <p>{c.resumen || 'Sin descripción detallada.'}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Reseñas */}
+            <div>
+              <CourseDetailClient cursoId={c.id} title="Valoraciones de los estudiantes" className="" />
+            </div>
+          </>
+        }
+        childrenRight={
+          <div>
+            {/* Video Preview */}
+            <div className="relative z-10 -mb-2">
+              <div className="bg-black aspect-video rounded-t-lg overflow-hidden border border-default border-b-0 shadow-2xl">
+                {c.videoPreview ? (
+                  <video
+                    src={c.videoPreview}
+                    poster={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
+                    controls={false}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="relative w-full h-full group cursor-pointer">
+                    <SafeImage
+                      src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
+                      alt={c.titulo}
+                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                      <div className="bg-white/90 rounded-full p-4 shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
+                        <PlayCircle className="size-8 text-black fill-current" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-4 left-0 right-0 text-center font-bold text-white drop-shadow-md">
+                      Vista previa del curso
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="bg-[var(--bg)] border border-default shadow-2xl rounded-b-lg lg:rounded-lg overflow-hidden relative backdrop-blur-sm">
+              <div className="p-6 space-y-6">
+                <div className="flex items-baseline gap-2">
+                  <Price value={c.precio} className="text-3xl font-bold text-[var(--fg)]" />
+                </div>
+
+                <div className="space-y-3">
                   {hasAccess ? (
                     <Link
                       href={`/cursos/player/${c.slug}/modulo-1/leccion-1`}
-                      className="w-full mb-4 py-6 font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black text-lg rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200 text-center block"
+                      className="flex items-center justify-center w-full py-3 bg-[var(--pink)] text-white font-bold text-base hover:bg-[var(--pink-dark)] transition-all shadow-[0_0_20px_rgba(255,192,203,0.3)] hover:shadow-[0_0_30px_rgba(255,192,203,0.5)] rounded-lg"
                     >
-                      Continuar viendo
+                      Ir al curso
                     </Link>
                   ) : (
                     <>
-                      <BuyCourseButton c={c} className="w-full mb-4 py-6 font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black text-lg rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200" />
-                      <button className="w-full py-4 border border-default text-[var(--fg)] font-bold rounded-xl hover:bg-white/5 transition-colors mb-6">
+                      <BuyCourseButton
+                        c={c}
+                        className="w-full py-3 bg-[var(--pink)] text-white font-bold text-base hover:bg-[var(--pink-dark)] transition-all shadow-[0_0_20px_rgba(255,192,203,0.3)] hover:shadow-[0_0_30px_rgba(255,192,203,0.5)] rounded-lg"
+                      />
+                      <button className="w-full py-3 border border-[var(--pink)]/30 text-[var(--pink)] font-bold text-base hover:bg-[var(--pink)]/10 transition-colors rounded-lg">
                         Añadir al carrito
                       </button>
                     </>
                   )}
-
-                  <div className="text-center mb-6">
-                    <p className="text-xs text-muted flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 bg-green-500/20 rounded-full flex items-center justify-center">
-                        <Check className="size-2.5 text-green-500" />
-                      </span>
-                      Garantía de devolución de dinero de 30 días
-                    </p>
-                  </div>
-
-                  {/* Este curso incluye */}
-                  <div className="border-t border-default pt-6">
-                    <h3 className="font-bold text-[var(--fg)] mb-4 text-lg">Este curso incluye:</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className="w-8 h-8 bg-[var(--gold)]/20 rounded-lg flex items-center justify-center">
-                          <PlayCircle className="size-4 text-[var(--gold)]" />
-                        </div>
-                        <span className="text-[var(--fg)] font-medium">{durMin < 60 ? `${durMin} minutos` : `${Math.floor(durMin/60)} horas`} de vídeo bajo demanda</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                          <UserRound className="size-4 text-blue-500" />
-                        </div>
-                        <span className="text-[var(--fg)] font-medium">{lessonCount} artículos</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                          <Clock className="size-4 text-green-500" />
-                        </div>
-                        <span className="text-[var(--fg)] font-medium">Recursos descargables</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                          <Award className="size-4 text-purple-500" />
-                        </div>
-                        <span className="text-[var(--fg)] font-medium">Acceso completo de por vida</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                          <PlayCircle className="size-4 text-orange-500" />
-                        </div>
-                        <span className="text-[var(--fg)] font-medium">Acceso en dispositivos móviles y TV</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className="w-8 h-8 bg-[var(--gold)]/20 rounded-lg flex items-center justify-center">
-                          <Check className="size-4 text-[var(--gold)]" />
-                        </div>
-                        <span className="text-[var(--fg)] font-medium">Certificado de finalización</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Compartir curso */}
-                  <div className="border-t border-default pt-4 mt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[var(--fg)]">Compartir este curso</span>
-                      <div className="flex gap-2">
-                        <button className="p-2 hover:bg-white/5 rounded">
-                          <Check className="size-4 text-muted" />
-                        </button>
-                        <button className="p-2 hover:bg-white/5 rounded">
-                          <Award className="size-4 text-muted" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            </aside>
-          </div>
-        </div>
-      </section>
 
-      {/* CONTENIDO PRINCIPAL - Diseño mejorado */}
-      <section className="bg-gradient-to-b from-transparent to-[var(--gold)]/5">
-        <div className="container-fluid container-xl">
-          <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-            <div className="space-y-8">
-              {/* Sistema de Reseñas */}
-              <div className="bg-gradient-to-br from-[var(--gold)]/8 to-[var(--gold)]/4 p-6 rounded-xl border border-[var(--gold)]/20">
-                <CourseDetailClient
-                  cursoId={c.id}
-                  title="Reseñas del curso"
-                  className=""
-                />
+                <p className="text-center text-xs text-[var(--fg-muted)]">
+                  Garantía de reembolso de 30 días
+                </p>
+
+                <div className="space-y-3 text-sm text-[var(--fg)] pt-2">
+                  <p className="font-bold text-[var(--fg)]">Este curso incluye:</p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-3">
+                      <PlayCircle className="size-4 text-[var(--fg-muted)]" />
+                      <span>
+                        {Math.floor(durMin / 60) > 0 ? `${Math.floor(durMin / 60)} horas` : `${durMin} minutos`} de
+                        vídeo
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <Award className="size-4 text-[var(--fg-muted)]" />
+                      <span>Certificado de finalización</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <Globe className="size-4 text-[var(--fg-muted)]" />
+                      <span>Acceso de por vida</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <UserRound className="size-4 text-[var(--fg-muted)]" />
+                      <span>Acceso en dispositivos móviles</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
-
-            {/* Sidebar complementario - Solo en desktop */}
-            <aside className="hidden lg:block space-y-6">
-              {/* CTA de soporte */}
-              <div className="bg-gradient-to-br from-[var(--gold)]/8 to-[var(--gold)]/4 p-5 rounded-xl border border-[var(--gold)]/20">
-                <h3 className="font-bold text-[var(--fg)] mb-3 text-sm">¿Tienes dudas?</h3>
-                <p className="text-xs text-muted mb-3">
-                  Nuestro equipo está aquí para ayudarte con cualquier pregunta sobre el curso.
-                </p>
-                <Link 
-                  href="/contacto" 
-                  className="inline-flex items-center gap-2 px-3 py-2 bg-[var(--gold)] text-black font-medium rounded-lg hover:bg-[var(--gold-dark)] transition-colors text-xs"
-                >
-                  Contactar soporte
-                </Link>
-              </div>
-
-              {/* Estadísticas del curso */}
-              <div className="bg-white/5 backdrop-blur-sm p-5 rounded-xl border border-default">
-                <h3 className="font-bold text-[var(--fg)] mb-4">Estadísticas</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">Estudiantes</span>
-                    <span className="font-bold text-[var(--fg)]">
-                       {c.estudiantesCount ? 
-                         (c.estudiantesCount >= 1000 ? 
-                           `${Math.floor(c.estudiantesCount / 1000)}k+` : 
-                           c.estudiantesCount.toLocaleString()
-                         ) : 
-                         '0'
-                       }
-                     </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">Calificación</span>
-                    <span className="font-bold text-[var(--gold)]">
-                       {c.ratingProm && c.ratingConteo ? 
-                         `${Number(c.ratingProm) % 1 === 0 ? Number(c.ratingProm).toFixed(0) : Number(c.ratingProm).toFixed(1)}/5 ⭐` : 
-                         'Sin calificaciones'
-                       }
-                     </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">Última actualización</span>
-                    <span className="font-bold text-[var(--fg)]">
-                       {c.creadoEn ? 
-                         new Date(c.creadoEn).toLocaleDateString('es-ES', {
-                           year: 'numeric',
-                           month: 'short'
-                         }) : 
-                         'No disponible'
-                       }
-                     </span>
-                  </div>
-                </div>
-              </div>
-            </aside>
           </div>
-        </div>
-      </section>
+        }
+      />
 
       <script
         type="application/ld+json"

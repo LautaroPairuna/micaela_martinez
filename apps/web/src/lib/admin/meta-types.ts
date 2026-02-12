@@ -66,6 +66,7 @@ export interface FieldMeta {
   label?: string;
   help?: string;
   placeholder?: string;
+  widget?: string;
 }
 
 export interface ResourceMeta {

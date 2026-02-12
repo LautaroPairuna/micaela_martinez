@@ -179,6 +179,8 @@ export class CoursesService {
         creadoEn: true,
         instructorId: true,
         tags: true,
+        videoPreview: true,
+        queAprenderas: true,
       },
     });
 

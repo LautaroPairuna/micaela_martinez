@@ -40,6 +40,9 @@ export type HeroCarouselProps = {
 
   /** ✅ Logo como slot (para Next/Image u otro) */
   logoSlot?: React.ReactNode;
+
+  /** Items del slider (si se pasan, no se hace fetch) */
+  items?: SliderItem[];
 };
 
 type SlideVM = SliderItem & {
@@ -133,6 +136,7 @@ export function HeroCarousel({
   logoMode = 'none',
   logoSrc = '/images/mica_pestanas_logo_blanco.svg',
   logoSlot,
+  items: propsItems,
 }: HeroCarouselProps) {
   const autoplay = useRef(
     Autoplay({
@@ -142,10 +146,16 @@ export function HeroCarousel({
     }),
   );
 
-  const [items, setItems] = useState<SliderItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<SliderItem[]>(propsItems || []);
+  const [loading, setLoading] = useState(!propsItems);
 
   useEffect(() => {
+    if (propsItems) {
+      setItems(propsItems);
+      setLoading(false);
+      return;
+    }
+
     let ok = true;
 
     (async () => {
@@ -174,7 +184,7 @@ export function HeroCarousel({
     return () => {
       ok = false;
     };
-  }, []);
+  }, [propsItems]);
 
   const slides: SlideVM[] = useMemo(() => {
     return items.map((it) => {
@@ -304,7 +314,7 @@ export function HeroCarousel({
                           className="
                             mt-6 font-serif font-bold text-white uppercase
                             leading-[1.40] tracking-[0.02em]
-                            text-2xl sm:text-3xl md:text-4xl xl:text-5xl
+                            text-2xl sm:text-3xl xl:text-[40px] 2xl:text-5xl
                           "
                         >
                           {titleBase}

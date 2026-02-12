@@ -24,7 +24,7 @@ type ReviewItem = {
   puntaje: number;
   comentario?: string | null;
   usuario?: { id?: string; nombre?: string | null } | null;
-  creadoEn?: string;
+  creadoEn: string;
   editado?: boolean;
 };
 
@@ -215,21 +215,19 @@ export function ReviewsSection({
         sessionLoading={sessionLoading}
       >
         {showForm && me && (
-          <Card>
-            <CardBody>
-              <h3 className="text-lg font-semibold text-[var(--fg)] mb-4">
-                {editingReview ? 'Editar reseña' : 'Escribir reseña'}
-              </h3>
-              <ReviewForm
-                cursoId={cursoId}
-                productoId={productoId}
-                existingReview={editingReview || undefined}
-                onSubmit={handleSubmitReview}
-                onCancel={handleCancelForm}
-                isLoading={isSubmitting}
-              />
-            </CardBody>
-          </Card>
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-[var(--fg)] mb-4">
+              {editingReview ? 'Editar reseña' : 'Escribir reseña'}
+            </h3>
+            <ReviewForm
+              cursoId={cursoId}
+              productoId={productoId}
+              existingReview={editingReview || undefined}
+              onSubmit={handleSubmitReview}
+              onCancel={handleCancelForm}
+              isLoading={isSubmitting}
+            />
+          </div>
         )}
       </ReviewPermissionGuard>
 

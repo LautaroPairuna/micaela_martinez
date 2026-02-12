@@ -1,8 +1,9 @@
 // apps/web/src/components/home/HeroSection.tsx
 
 import HeroCarousel from './HeroCarousel';
+import type { SliderItem } from '@/lib/hero-types';
 
-export default function HeroSection({ logo }: { logo?: React.ReactNode }) {
+export default function HeroSection({ logo, items }: { logo?: React.ReactNode; items?: SliderItem[] }) {
   return (
     <section className="relative w-full bg-[#111] overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0">
@@ -13,6 +14,7 @@ export default function HeroSection({ logo }: { logo?: React.ReactNode }) {
 
       <div className="relative">
         <HeroCarousel
+          items={items}
           autoPlay
           autoPlayInterval={6000}
           withBackground={false}

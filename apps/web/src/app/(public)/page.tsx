@@ -6,7 +6,7 @@ import type { ComponentProps } from "react";
 import { Section } from "@/components/layout/Section";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { CourseCard } from "@/components/courses/CourseCard";
-import { safeGetCourses, safeGetProducts } from "@/lib/sdk/catalogApi";
+import { safeGetCourses, safeGetProducts, safeGetHeroImages } from "@/lib/sdk/catalogApi";
 import { getMe, listEnrollments } from "@/lib/sdk/userApi";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { CoursesGridClient } from "@/components/courses/CoursesGridClient";
@@ -102,9 +102,10 @@ const productKey = (p: ProductMinimal, i: number) => {
 
 export default async function HomePage() {
   // Usar funciones seguras que no fallan en build estático
-  const [cursos, productos] = await Promise.all([
+  const [cursos, productos, heroImages] = await Promise.all([
     safeGetCourses({ sort: "relevancia", page: 1, perPage: 8 }),
     safeGetProducts({ sort: "relevancia", page: 1, perPage: 12 }),
+    safeGetHeroImages(),
   ]);
 
   const courses: CourseMinimal[] = Array.isArray(cursos?.items)
@@ -146,20 +147,23 @@ export default async function HomePage() {
   return (
     <>
       {/* ───────── HERO ───────── */}
-      <section className="w-full">
-        <HeroSection
-          logo={
-            <Image
-              src="/images/mica_pestanas_logo_blanco.svg"
-              alt="Micaela Pestañas"
-              width={520}
-              height={220}
-              className="h-auto w-[260px] sm:w-[320px] md:w-[380px]"
-              priority
-            />
-          }
-        />
-      </section>
+      {heroImages.length > 0 && (
+        <section className="w-full">
+          <HeroSection
+            logo={
+              <Image
+                src="/images/mica_pestanas_logo_blanco.svg"
+                alt="Micaela Pestañas"
+                width={520}
+                height={220}
+                className="h-auto w-[260px] sm:w-[320px] md:w-[380px]"
+                priority
+              />
+            }
+            items={heroImages}
+          />
+        </section>
+      )}
 
       {/* ───────── CURSOS: divisor full-width + sección en #111 ───────── */}
       <TitleBand

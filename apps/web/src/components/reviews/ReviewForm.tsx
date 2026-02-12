@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { Star, Send, Edit3, Save, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
-import { MarkdownEditor } from './MarkdownEditor';
 import { useReviewDraft } from '@/hooks/useReviewDraft';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,6 +25,7 @@ interface ReviewFormProps {
     id: string;
     puntaje: number;
     comentario?: string | null;
+    creadoEn: string | Date;
   } | null;
   onSubmit: (data: ReviewFormData) => Promise<void>;
   onCancel?: () => void;
@@ -42,7 +42,7 @@ export function ReviewForm({
 }: ReviewFormProps) {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [showDraftNotice, setShowDraftNotice] = useState(false);
-  const isEditing = !!existingReview;
+  const [isEditing, setIsEditing] = useState(false);
 
   // Hook para manejo de borradores (solo para nuevas reseñas)
   const {
@@ -59,10 +59,12 @@ export function ReviewForm({
   });
 
   const {
+    register,
     handleSubmit,
     watch,
     setValue,
     getValues,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ReviewFormData>({
     resolver: zodResolver(reviewSchema),
@@ -157,76 +159,66 @@ export function ReviewForm({
     }
   };
 
-  return (
-    <Card className="w-full">
-      <CardBody className="space-y-6">
-        {/* Notificación de borrador disponible */}
-        {showDraftNotice && hasDraft && !isEditing && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <Save className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div className="flex-1">
-                <h4 className="text-sm font-medium text-blue-900 mb-1">
-                  Borrador disponible
-                </h4>
-                <p className="text-sm text-blue-700 mb-3">
-                  Tienes un borrador guardado {lastSaved && formatDistanceToNow(lastSaved, { addSuffix: true, locale: es })}.
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleLoadDraft}
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Cargar borrador
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleDiscardDraft}
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                  >
-                    Descartar
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {isEditing ? (
-              <Edit3 className="h-5 w-5 text-[var(--gold)]" />
-            ) : (
-              <Star className="h-5 w-5 text-[var(--gold)]" />
-            )}
-            <h3 className="text-lg font-semibold">
-              {isEditing ? 'Editar reseña' : 'Escribir reseña'}
-            </h3>
-          </div>
-          
-          {/* Indicador de autoguardado */}
-          {!isEditing && (
+  if (existingReview && !isEditing) {
+    return (
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-6 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <h3 className="text-lg font-medium text-[var(--fg)]">Tu reseña</h3>
             <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
-              {isAutoSaving ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-[var(--gold)] border-t-transparent" />
-                  <span>Guardando...</span>
-                </>
-              ) : lastSaved ? (
-                <>
-                  <Clock className="h-3 w-3" />
-                  <span>Guardado {formatDistanceToNow(lastSaved, { addSuffix: true, locale: es })}</span>
-                </>
-              ) : null}
+              <Clock className="w-4 h-4" />
+              <span>
+                Publicada {formatDistanceToNow(new Date(existingReview.creadoEn), { addSuffix: true, locale: es })}
+              </span>
             </div>
-          )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2"
+            >
+              <Edit3 className="w-4 h-4" />
+              Editar
+            </Button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        <div className="flex items-center gap-2">
+          <div className="flex">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-5 h-5 ${
+                  star <= existingReview.puntaje ? 'text-[var(--gold)] fill-current' : 'text-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+          <span className="font-medium text-[var(--fg)]">{existingReview.puntaje}/5</span>
+        </div>
+
+        {existingReview.comentario && (
+          <div className="prose prose-sm max-w-none text-[var(--fg)]">
+            <p className="whitespace-pre-line">{existingReview.comentario}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium text-[var(--fg)]">
+            {isEditing ? 'Editar tu reseña' : 'Escribe una reseña'}
+          </h3>
+          <p className="text-sm text-[var(--muted)]">
+            Tu opinión ayuda a otros estudiantes a elegir el mejor curso.
+          </p>
+        </div>
           {/* Rating Stars */}
           <div className="space-y-3">
             <label className="block text-sm font-medium text-[var(--fg)]">
@@ -270,61 +262,51 @@ export function ReviewForm({
             <label className="block text-sm font-medium text-[var(--fg)]">
               Comentario (opcional)
             </label>
-            <MarkdownEditor
-              value={watch('comentario') || ''}
-              onChange={(value) => setValue('comentario', value)}
+            <textarea
+              {...register('comentario')}
               placeholder="Comparte tu experiencia con otros usuarios..."
-              disabled={isSubmitting || isLoading}
-              minHeight="120px"
+              className="w-full min-h-[120px] p-4 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] placeholder-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--gold)] resize-y"
             />
+            {errors.comentario && (
+              <p className="text-sm text-red-500">{errors.comentario.message}</p>
+            )}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-3">
-              <Button
-                type="submit"
-                disabled={isSubmitting || isLoading || watchedRating === 0}
-                className="bg-[var(--gold)] text-black font-semibold px-6 py-2 hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-              >
-                {isSubmitting || isLoading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                {isEditing ? 'Actualizar reseña' : 'Publicar reseña'}
-              </Button>
-
-              {onCancel && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={isSubmitting || isLoading}
-                  className="px-6 py-2"
-                >
-                  Cancelar
-                </Button>
+          <div className="flex items-center gap-4 pt-4 border-t border-[var(--border)]">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-[var(--gold)] text-black hover:bg-[var(--gold-dark)] font-semibold px-8"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  <span>Publicando...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Send className="w-4 h-4" />
+                  <span>Publicar reseña</span>
+                </div>
               )}
-            </div>
+            </Button>
 
-            {/* Botón de guardado manual para borradores */}
-            {!isEditing && (watchedRating > 0 || (watchedComment && watchedComment.trim().length > 0)) && (
+            {isEditing && (
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                onClick={() => saveDraft({ puntaje: watchedRating, comentario: watchedComment || '' })}
-                disabled={isAutoSaving}
-                className="text-[var(--muted)] hover:text-[var(--fg)] flex items-center gap-2"
+                onClick={() => {
+                  setIsEditing(false);
+                  reset();
+                }}
+                disabled={isSubmitting}
               >
-                <Save className="h-3 w-3" />
-                Guardar borrador
+                Cancelar
               </Button>
             )}
           </div>
-        </form>
-      </CardBody>
-    </Card>
+      </form>
+    </div>
   );
 }

@@ -40,10 +40,10 @@
             "$ref": "#/definitions/UsuarioRol"
           }
         },
-        "cursosImpartidos": {
+        "favoritos": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Curso"
+            "$ref": "#/definitions/Favorito"
           }
         },
         "inscripciones": {
@@ -52,34 +52,56 @@
             "$ref": "#/definitions/Inscripcion"
           }
         },
+        "ordenes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Orden"
+          }
+        },
+        "direcciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Direccion"
+          }
+        },
         "resenas": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Resena"
           }
         },
-        "resenaRespuestas": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ResenaRespuesta"
-          }
-        },
-        "favoritos": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Favorito"
-          }
-        },
-        "resenaLikes": {
+        "resenasLike": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ResenaLike"
           }
         },
-        "ordenes": {
+        "resenasRespuesta": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Orden"
+            "$ref": "#/definitions/ResenaRespuesta"
+          }
+        },
+        "notificaciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notificacion"
+          }
+        },
+        "preferencias": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PreferenciasNotificacion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "borradores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResenaBorrador"
           }
         },
         "auditLogs": {
@@ -98,10 +120,16 @@
             }
           ]
         },
-        "notificaciones": {
+        "pagosSuscripciones": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Notificacion"
+            "$ref": "#/definitions/PagoSuscripcion"
+          }
+        },
+        "cursosInstructor": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Curso"
           }
         }
       },
@@ -240,9 +268,25 @@
             "null"
           ]
         },
+        "videoPreview": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "destacado": {
           "type": "boolean",
           "default": false
+        },
+        "queAprenderas": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
         },
         "tags": {
           "type": [
@@ -290,16 +334,22 @@
             "$ref": "#/definitions/Modulo"
           }
         },
+        "inscripciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Inscripcion"
+          }
+        },
         "resenas": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Resena"
           }
         },
-        "inscripciones": {
+        "borradores": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Inscripcion"
+            "$ref": "#/definitions/ResenaBorrador"
           }
         },
         "itemsCarrito": {
@@ -396,6 +446,22 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Leccion"
+          }
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Modulo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hijos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Modulo"
           }
         }
       },
@@ -623,16 +689,22 @@
             "$ref": "#/definitions/ProductoImagen"
           }
         },
+        "favoritos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Favorito"
+          }
+        },
         "resenas": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Resena"
           }
         },
-        "favoritos": {
+        "borradores": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Favorito"
+            "$ref": "#/definitions/ResenaBorrador"
           }
         },
         "itemsCarrito": {
@@ -763,6 +835,12 @@
             "null"
           ]
         },
+        "productos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Producto"
+          }
+        },
         "parent": {
           "anyOf": [
             {
@@ -777,12 +855,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Categoria"
-          }
-        },
-        "productos": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Producto"
           }
         }
       },
@@ -885,6 +957,18 @@
         "usuario": {
           "$ref": "#/definitions/Usuario"
         },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemOrden"
+          }
+        },
+        "pagos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagoSuscripcion"
+          }
+        },
         "direccionEnvio": {
           "anyOf": [
             {
@@ -904,12 +988,6 @@
               "type": "null"
             }
           ]
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ItemOrden"
-          }
         }
       },
       "required": [
@@ -997,6 +1075,12 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
+        },
+        "orden": {
+          "$ref": "#/definitions/Orden"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
         }
       },
       "required": [
@@ -1071,6 +1155,9 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
         },
         "ordenesEnvio": {
           "type": "array",
@@ -1457,6 +1544,9 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
         }
       },
       "required": [
@@ -1504,6 +1594,29 @@
         "actualizadoEn": {
           "type": "string",
           "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "curso": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Curso"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "producto": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Producto"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
