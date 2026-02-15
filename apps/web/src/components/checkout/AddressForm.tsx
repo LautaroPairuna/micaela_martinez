@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { addAddress, type Direccion, type DireccionInput } from '@/lib/sdk/userApi';
-import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { MapPin, Save, X } from 'lucide-react';
@@ -80,18 +79,18 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
   };
 
   return (
-    <Card>
-      <CardBody className="p-6">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+      <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-transparent border border-[var(--pink)]/40 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center">
               <MapPin className="h-5 w-5 text-[var(--pink)]" />
             </div>
             <div>
-              <h3 className="font-medium text-[var(--fg)]">
+              <h3 className="font-medium text-white">
                 Nueva dirección
               </h3>
-              <p className="text-sm text-[var(--muted)]">
+              <p className="text-sm text-zinc-400">
                 Agregá una nueva dirección de facturación
               </p>
             </div>
@@ -100,6 +99,7 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
             variant="outline"
             size="sm"
             onClick={onCancel}
+            className="text-zinc-400 border-zinc-700 hover:bg-zinc-800 hover:text-white"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -109,116 +109,125 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
           {/* Información del destinatario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Nombre completo *
               </label>
               <Input
                 {...register('nombre')}
                 placeholder="Ej: Juan Pérez"
                 error={errors.nombre?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Teléfono
               </label>
               <Input
                 {...register('telefono')}
                 placeholder="Ej: +54 11 1234-5678"
                 error={errors.telefono?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
           </div>
 
           {/* Etiqueta */}
           <div>
-            <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Etiqueta (opcional)
             </label>
             <Input
               {...register('etiqueta')}
               placeholder="Ej: Casa, Trabajo, etc."
               error={errors.etiqueta?.message}
+              className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
             />
           </div>
 
           {/* Dirección */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Calle *
               </label>
               <Input
                 {...register('calle')}
                 placeholder="Ej: Av. Corrientes"
                 error={errors.calle?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Número
               </label>
               <Input
                 {...register('numero')}
                 placeholder="Ej: 1234"
                 error={errors.numero?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Piso/Depto (opcional)
             </label>
             <Input
               {...register('pisoDepto')}
               placeholder="Ej: 5° A"
               error={errors.pisoDepto?.message}
+              className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
             />
           </div>
 
           {/* Ubicación */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Ciudad *
               </label>
               <Input
                 {...register('ciudad')}
                 placeholder="Ej: Buenos Aires"
                 error={errors.ciudad?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Provincia *
               </label>
               <Input
                 {...register('provincia')}
                 placeholder="Ej: CABA"
                 error={errors.provincia?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Código Postal *
               </label>
               <Input
                 {...register('cp')}
                 placeholder="Ej: 1001"
                 error={errors.cp?.message}
+                className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-[var(--pink)]"
               />
             </div>
           </div>
 
           {/* País */}
           <div>
-            <label className="block text-sm font-medium text-[var(--fg)] mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               País
             </label>
             <select
               {...register('pais')}
-              className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-[var(--fg)] focus:ring-2 focus:ring-[var(--pink)]/20 focus:border-[var(--pink)]"
+              className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-950 text-white focus:ring-2 focus:ring-[var(--pink)]/20 focus:border-[var(--pink)]"
             >
               <option value="AR">Argentina</option>
             </select>
@@ -230,9 +239,9 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
               <input
                 type="checkbox"
                 {...register('predeterminada')}
-                className="w-4 h-4 text-[var(--pink)] border-[var(--border)] rounded focus:ring-[var(--pink)] focus:ring-2"
+                className="w-4 h-4 text-[var(--pink)] border-zinc-700 rounded focus:ring-[var(--pink)] focus:ring-2 bg-zinc-950"
               />
-              <span className="text-[var(--fg)]">
+              <span className="text-white">
                 Establecer como dirección predeterminada
               </span>
             </label>
@@ -240,8 +249,8 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
 
           {/* Error general */}
           {errors.root && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">
+            <div className="p-3 bg-red-950/20 border border-red-900/50 rounded-lg">
+              <p className="text-sm text-red-400">
                 {errors.root.message}
               </p>
             </div>
@@ -254,6 +263,7 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
               variant="outline"
               onClick={onCancel}
               disabled={saving}
+              className="text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white"
             >
               Cancelar
             </Button>
@@ -276,7 +286,7 @@ export function AddressForm({ onSave, onCancel }: AddressFormProps) {
             </Button>
           </div>
         </form>
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -7,11 +7,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  EstadoInscripcion,
-  EstadoOrden,
-  TipoItemOrden,
-} from '../../generated/prisma/client';
+import { EstadoInscripcion, EstadoOrden, TipoItemOrden } from '@prisma/client';
 
 @Injectable()
 export class ReviewPermissionGuard implements CanActivate {
@@ -64,7 +60,10 @@ export class ReviewPermissionGuard implements CanActivate {
     }
   }
 
-  private async validateProductPurchase(userId: number | string, productoId: string) {
+  private async validateProductPurchase(
+    userId: number | string,
+    productoId: string,
+  ) {
     // Verificar que el usuario haya comprado el producto
     const purchase = await this.prisma.itemOrden.findFirst({
       where: {

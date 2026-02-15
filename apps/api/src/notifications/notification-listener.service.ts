@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { TipoNotificacion } from '../generated/prisma/client';
+import { TipoNotificacion } from '@prisma/client';
 
 import {
   EventTypes,
@@ -169,7 +169,13 @@ export class NotificationListenerService {
           ? { id: { not: Number(data.excludeUserId) } }
           : {}),
       },
-      select: { id: true },
+      select: {
+        id: true,
+        email: true,
+        preferencias: {
+          select: { actualizacionesSistema: true },
+        },
+      },
     });
 
     if (admins.length === 0) {
@@ -181,6 +187,13 @@ export class NotificationListenerService {
       a === 'created' ? 'creó' : a === 'updated' ? 'actualizó' : 'eliminó';
 
     for (const admin of admins) {
+      const quiereNotificaciones =
+        admin.preferencias?.actualizacionesSistema ?? true;
+
+      if (!quiereNotificaciones) {
+        continue;
+      }
+
       const isActor = data.actorId ? admin.id === Number(data.actorId) : false;
       const displayActor = isActor ? 'Tú' : data.actorName || 'Administrador';
       const resourceLabel =

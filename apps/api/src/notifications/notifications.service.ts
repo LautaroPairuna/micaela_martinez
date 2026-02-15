@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { TipoNotificacion } from '../../src/generated/prisma/client';
+import { TipoNotificacion } from '@prisma/client';
 import { UpdateNotificationPreferencesDto } from './dto/user-preferences.dto';
 
 export interface CreateNotificationDto {
@@ -33,13 +33,13 @@ export class NotificationsService {
       const preferences = await (
         this.prisma as any
       ).preferenciasNotificacion.upsert({
-        where: { usuarioId },
+        where: { usuarioId: Number(usuarioId) },
         update: {
           ...updateDto,
           actualizadoEn: new Date(),
         },
         create: {
-          usuarioId,
+          usuarioId: Number(usuarioId),
           ...updateDto,
           creadoEn: new Date(),
           actualizadoEn: new Date(),
@@ -81,6 +81,39 @@ export class NotificationsService {
     } catch (error) {
       console.error('Error getting notification stats:', error);
       throw new Error('Failed to get notification statistics');
+    }
+  }
+
+  async notifyProductDiscount(
+    productId: string,
+    productName: string,
+    newPrice: number,
+    discount: number,
+  ) {
+    try {
+      const favorites = await this.prisma.favorito.findMany({
+        where: { productoId: Number(productId) },
+        select: { usuarioId: true },
+      });
+
+      for (const fav of favorites) {
+        const prefs = await this.getUserPreferences(String(fav.usuarioId));
+        if (prefs?.descuentosFavoritos === false) continue;
+
+        await this.createNotification({
+          usuarioId: String(fav.usuarioId),
+          tipo: TipoNotificacion.PROMOCION,
+          titulo: '¡Descuento en tu Favorito!',
+          mensaje: `El producto ${productName} está con un ${discount}% de descuento. Precio actual: $${newPrice}`,
+          url: `/productos/${productId}`,
+          metadata: {
+            productoId: productId,
+            isFavoriteDiscount: true,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error notifying product discount:', error);
     }
   }
 
@@ -145,6 +178,7 @@ export class NotificationsService {
 
       if (!respondedByUser || !response) return;
 
+      // Notify Original Author
       await this.createNotification({
         usuarioId: originalReviewAuthorId,
         tipo: TipoNotificacion.RESPUESTA_RESENA,
@@ -284,27 +318,23 @@ export class NotificationsService {
       let preferences = await (
         this.prisma as any
       ).preferenciasNotificacion.findUnique({
-        where: { usuarioId },
+        where: { usuarioId: Number(usuarioId) },
       });
       if (!preferences) {
         preferences = await (
           this.prisma as any
         ).preferenciasNotificacion.create({
-          data: { usuarioId },
+          data: { usuarioId: Number(usuarioId) },
         });
       }
       return preferences;
     } catch {
       return {
         usuarioId,
-        nuevaResena: true,
         respuestaResena: true,
-        likeResena: true,
-        nuevoCurso: true,
-        actualizacionCurso: true,
-        recordatorioClase: true,
-        resumenDiario: false,
-        notificacionesInstantaneas: true,
+        likesResena: true,
+        descuentosFavoritos: true,
+        actualizacionesSistema: true,
         creadoEn: new Date(),
         actualizadoEn: new Date(),
       };
@@ -317,11 +347,13 @@ export class NotificationsService {
   ): boolean {
     switch (tipo) {
       case TipoNotificacion.RESPUESTA_RESENA:
-        return preferences.respuestaResena;
+        return preferences.respuestaResena ?? true;
       case TipoNotificacion.LIKE_RESENA:
-        return preferences.nuevaResena;
-      case TipoNotificacion.MENCION:
-        return preferences.nuevaResena;
+        return preferences.likesResena ?? true;
+      case TipoNotificacion.PROMOCION:
+        return preferences.descuentosFavoritos ?? true;
+      case TipoNotificacion.SISTEMA:
+        return preferences.actualizacionesSistema ?? true;
       default:
         return true;
     }

@@ -3,16 +3,21 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getProductBySlug } from '@/lib/sdk/catalogApi';
 import { ProductGallery } from '@/components/catalog/ProductGallery';
-import { Price } from '@/components/ui/Price';
 import { productJsonLd } from '@/lib/seo';
 import { RatingStars } from '@/components/ui/RatingStars';
-import { Pill as Badge } from '@/components/ui/Pill';
-import { ShieldCheck, RefreshCcw, Check, AlertCircle } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  RefreshCcw, 
+  Check, 
+  Truck, 
+  ArrowLeft,
+  ShoppingCart
+} from 'lucide-react';
 import { RelatedProducts } from '@/components/catalog/RelatedProducts';
-
-// 🛒 botón cliente para carrito (asegurate de tenerlo creado)
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
+import { formatCurrency } from '@/lib/format';
+import { FadeIn } from '@/components/ui/Motion';
 
 export const revalidate = 120;
 
@@ -27,7 +32,7 @@ type Product = {
   titulo: string;
   descripcionMD?: string | null;
   imagen?: string | null;
-  imagenUrl?: string | null; // ✅ nuevo
+  imagenUrl?: string | null;
   imagenes?: ProductImage[] | null;
   precio: number;
   precioLista?: number | null;
@@ -47,9 +52,9 @@ const canonicalFrom = (slugish?: string | null) => {
   if (!slugish) return '/tienda';
   const s = String(slugish).trim();
   if (s.startsWith('http')) return s;
-  if (s.startsWith('/')) return s;             // ya viene '/tienda/...'
-  if (s.startsWith('tienda')) return `/${s}`;  // viene 'tienda/...'
-  return `/tienda/producto/${s}`;               // slug corto
+  if (s.startsWith('/')) return s;             
+  if (s.startsWith('tienda')) return `/${s}`;  
+  return `/tienda/producto/${s}`;               
 };
 
 function looksLikeTiendaFilterSlug(slug: string) {
@@ -69,7 +74,14 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     };
   }
 
-  const p = (await getProductBySlug(slug)) as Product;
+  const p = (await getProductBySlug(slug).catch(() => null)) as Product | null;
+  
+  if (!p) {
+    return {
+      title: 'Producto no encontrado',
+    };
+  }
+
   const desc = (p.descripcionMD || p.titulo || '').toString().slice(0, 160);
   const url = canonicalFrom(p.slug);
 
@@ -90,296 +102,231 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
-export default async function ProductoPage({ params }: { params: Promise<Params> }) {
+export default async function ProductPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
 
   if (looksLikeTiendaFilterSlug(slug)) {
     redirect(`/tienda/${slug}`);
   }
 
-  const p = (await getProductBySlug(slug)) as Product;
+  const product = (await getProductBySlug(slug).catch(() => null)) as Product | null;
 
-  // Construir array de imágenes priorizando la imagen principal
-  const buildImages = (mainImageUrl: string | null | undefined, galleryImages: ProductImage[] | null | undefined): ProductImage[] => {
-    const main = mainImageUrl ? { url: mainImageUrl } : null;
-    const gallery = galleryImages || [];
-    
-    if (!main && gallery.length === 0) {
-      return [];
-    }
-    
-    if (!main) {
-      return gallery;
-    }
-    
-    if (gallery.length === 0) {
-      return [main];
-    }
-    
-    // Si hay imagen principal y galería, asegurar que la principal esté primera
-    // Filtrar la imagen principal de la galería para evitar duplicados
-    const filteredGallery = gallery.filter(img => img.url !== main.url);
-    return [main, ...filteredGallery];
-  };
+  if (!product) {
+    redirect('/tienda');
+  }
 
-  const images: ProductImage[] = buildImages(p.imagenUrl ?? p.imagen ?? null, p.imagenes);
+  // Unificar imagen principal + galería
+  const galleryImages = [];
+  if (product.imagenUrl) {
+    galleryImages.push({ url: product.imagenUrl, alt: product.titulo });
+  }
+  if (product.imagenes && product.imagenes.length > 0) {
+    product.imagenes.forEach((img: any) => {
+      if (img.url && img.url !== product.imagenUrl) {
+        galleryImages.push({ url: img.url, alt: product.titulo });
+      }
+    });
+  }
 
-  const compareAt = p.precioLista ?? undefined;
-  const hasDiscount = !!(compareAt && compareAt > p.precio);
-  const offPct = hasDiscount ? Math.round(((Number(compareAt) - p.precio) / Number(compareAt)) * 100) : 0;
-  const outOfStock = typeof p.stock === 'number' && p.stock <= 0;
-
-  // Highlights: primeras líneas de la descripción (opcional)
-  const highlights: string[] = String(p.descripcionMD ?? '')
-    .split(/\r?\n/)
-    .map((s) => s.trim())
-    .filter((s): s is string => s.length > 0)
-    .slice(0, 6);
-
-  // 🔧 FIX: asegurar string en `slug` para productJsonLd
+  // Calcular descuento
+  const compareAt = product.precioLista ?? undefined;
+  const hasDiscount = !!(compareAt && compareAt > product.precio);
+  const discount = hasDiscount ? Math.round(((Number(compareAt) - product.precio) / Number(compareAt)) * 100) : 0;
+  
+  // JSON-LD
   const jsonLd = productJsonLd({
-    name: p.titulo,
-    slug: p.slug ?? slug, // <= aquí el fallback elimina el error 2322
-    price: p.precio, // precio directo
-    images: images
-      .map((i) => abs(i.url))
-      .filter((s): s is string => Boolean(s)),
-    brand: p.marca?.nombre ?? undefined,
-    category: p.categoria?.nombre ?? undefined,
+    name: product.titulo,
+    slug: product.slug ?? slug,
+    price: product.precio,
+    images: galleryImages.map(i => abs(i.url)).filter(Boolean) as string[],
+    brand: product.marca?.nombre ?? undefined,
+    category: product.categoria?.nombre ?? undefined,
   });
 
   return (
-    <article className="space-y-12 max-w-[1400px] mx-auto py-12">
-      {/* Encabezado principal con galería y panel de compra */}
-      <section className="grid gap-10 lg:gap-12 xl:grid-cols-12 items-start">
-        {/* Galería de imágenes */}
-        <div className="xl:col-span-7">
-          <div className="relative rounded-2xl border border-default overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-            {/* Badges superpuestos */}
-            <div className="absolute top-4 left-4 z-10 flex gap-2">
-              {p.destacado && <Badge tone="gold">Destacado</Badge>}
-              {hasDiscount && <Badge tone="danger">-{offPct}%</Badge>}
-            </div>
-            <ProductGallery images={images} />
+    <div className="bg-[#0a0a0a] min-h-screen text-zinc-200 font-sans selection:bg-pink-500/30">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      <div className="container mx-auto px-4 py-8 lg:py-12">
+        <FadeIn>
+          {/* Breadcrumb / Volver */}
+          <div className="mb-8">
+            <Link 
+              href="/tienda" 
+              className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-pink-400 transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Volver a productos
+            </Link>
           </div>
-        </div>
 
-        {/* Panel de información y compra */}
-        <aside className="xl:col-span-5 space-y-8">
-          {/* Información principal del producto */}
-          <div className="rounded-2xl border border-default p-8 bg-[var(--bg)] shadow-sm">
-            {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="text-sm text-muted mb-6">
-              <ol className="flex items-center gap-2">
-                <li><Link href="/tienda" className="hover:text-[var(--pink)] transition-colors">Tienda</Link></li>
-                {p.categoria?.nombre && (
-                  <>
-                    <li className="text-muted/60">›</li>
-                    <li>
-                      <Link
-                        href={`/tienda/categoria-${p.categoria.slug ?? p.categoria.id ?? ''}`}
-                        className="hover:text-[var(--pink)] transition-colors"
-                      >
-                        {p.categoria.nombre}
-                      </Link>
-                    </li>
-                  </>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-16">
+            {/* Columna Izquierda: Galería */}
+            <div className="space-y-6">
+              <div className="relative">
+                {hasDiscount && (
+                  <span className="absolute top-4 left-4 z-10 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-pink-500/20">
+                    OFERTA
+                  </span>
                 )}
-              </ol>
-            </nav>
-
-            {/* Título y metadatos */}
-            <div className="space-y-4">
-              <h1 className="text-3xl font-bold leading-tight text-[var(--fg)]">{p.titulo}</h1>
-              
-              {/* Pills de marca, categoría y rating */}
-              <div className="flex flex-wrap items-center gap-3">
-                {p.marca?.nombre && <Badge tone="default">{p.marca.nombre}</Badge>}
-                {p.categoria?.nombre && <Badge tone="muted">{p.categoria.nombre}</Badge>}
-                {p.ratingProm && p.ratingConteo && p.ratingConteo > 0 && (
-                  <div className="inline-flex items-center gap-2">
-                    <RatingStars value={Number(p.ratingProm)} count={p.ratingConteo} size="sm" />
-                    <span className="text-sm text-muted">({p.ratingConteo})</span>
-                  </div>
-                )}
+                {/* Contenedor de galería con estilo flotante (sin bordes/fondo) y tamaño reducido */}
+                <div className="rounded-2xl overflow-hidden max-w-[90%] mx-auto">
+                  <ProductGallery images={galleryImages} />
+                </div>
               </div>
             </div>
 
-            {/* Precio */}
-            <div className="mt-6 pt-6 border-t border-default">
-              <Price value={p.precio} compareAt={compareAt ? compareAt : undefined} className="text-2xl" />
-              {hasDiscount && (
-                <p className="mt-2 text-sm text-emerald-600 font-medium">
-                  Ahorrás ${(compareAt! - p.precio).toFixed(2)} ({offPct}% de descuento)
-                </p>
-              )}
-            </div>
-
-            {/* Estado de stock */}
-            <div className="mt-4">
-              {outOfStock ? (
-                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
-                  <AlertCircle className="size-4" />
-                  <span className="font-medium">Sin stock disponible</span>
-                </div>
-              ) : (
-                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <Check className="size-4" />
-                  <span className="font-medium">
-                    {typeof p.stock === 'number' && p.stock <= 10 && p.stock > 0
-                      ? `Últimas ${p.stock} unidades`
-                      : 'Disponible'
-                    }
+            {/* Columna Derecha: Información */}
+            <div className="flex flex-col">
+              {/* Categoría Badge */}
+              {product.categoria?.nombre && (
+                <div className="mb-4">
+                  <span className="inline-block px-3 py-1 rounded-full border border-zinc-700 bg-zinc-800/50 text-xs font-medium text-zinc-300 backdrop-blur-sm">
+                    {product.categoria.nombre}
                   </span>
                 </div>
               )}
-            </div>
 
-            {/* Botones de acción */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <AddProductButton
-                p={{
-                  id: p.slug ?? slug,
-                  slug: p.slug ?? slug,
-                  titulo: p.titulo,
-                  precio: p.precio,
-                  stock: typeof p.stock === 'number' ? p.stock : null,
-                  imagen: p.imagen ?? null,
-                  imagenes: p.imagenes ?? null,
-                }}
-                className="flex-1"
-              />
-              <Link 
-                href="/tienda" 
-                className="rounded-xl border border-default px-6 py-3 text-center hover:bg-subtle transition-colors font-medium"
-              >
-                Seguir comprando
-              </Link>
-            </div>
-          </div>
+              {/* Título */}
+              <h1 className="text-3xl lg:text-4xl font-serif text-white mb-4 leading-tight">
+                {product.titulo}
+              </h1>
 
-          {/* Beneficios y garantías */}
-          <div className="rounded-2xl border border-default p-6 bg-[var(--bg)] shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-[var(--fg)]">Beneficios</h3>
-            <ul className="space-y-3">
+              {/* Rating */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex text-[var(--gold)]">
+                  <RatingStars value={product.ratingProm || 0} size="md" />
+                </div>
+                {product.ratingConteo && product.ratingConteo > 0 && (
+                  <span className="text-sm text-zinc-500 font-medium">
+                    ({product.ratingConteo} {product.ratingConteo === 1 ? 'reseña' : 'reseñas'})
+                  </span>
+                )}
+              </div>
 
-              <li className="flex items-center gap-3 text-sm">
-                <div className="p-2 rounded-lg bg-green-50 text-green-600">
-                  <ShieldCheck className="size-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-[var(--fg)]">Compra segura</p>
-                  <p className="text-muted">Protección total de datos</p>
-                </div>
-              </li>
-              <li className="flex items-center gap-3 text-sm">
-                <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
-                  <RefreshCcw className="size-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-[var(--fg)]">Devolución fácil</p>
-                  <p className="text-muted">7 días para cambios</p>
-                </div>
-              </li>
-            </ul>
-          </div>
+              {/* Precios */}
+              <div className="flex items-end gap-4 mb-8 pb-8 border-b border-zinc-800">
+                <span className="text-4xl font-bold text-pink-500 tracking-tight">
+                  {formatCurrency(product.precio)}
+                </span>
+                {hasDiscount && (
+                  <>
+                    <span className="text-lg text-zinc-500 line-through mb-1">
+                      {formatCurrency(compareAt!)}
+                    </span>
+                    <span className="mb-2 px-2 py-0.5 bg-pink-500/10 text-pink-500 text-xs font-bold rounded border border-pink-500/20">
+                      {discount}% OFF
+                    </span>
+                  </>
+                )}
+              </div>
 
-          {/* Ficha técnica mejorada */}
-          <div className="rounded-2xl border border-default p-6 bg-[var(--bg)] shadow-sm">
-            <h3 className="text-lg font-semibold mb-4 text-[var(--fg)]">Información del producto</h3>
-            <dl className="space-y-3">
-              {p.marca?.nombre && (
-                <div className="flex justify-between items-center py-2 border-b border-default/50">
-                  <dt className="text-sm font-medium text-muted">Marca</dt>
-                  <dd className="text-sm font-semibold text-[var(--fg)]">{p.marca.nombre}</dd>
-                </div>
-              )}
-              {p.categoria?.nombre && (
-                <div className="flex justify-between items-center py-2 border-b border-default/50">
-                  <dt className="text-sm font-medium text-muted">Categoría</dt>
-                  <dd className="text-sm font-semibold text-[var(--fg)]">{p.categoria.nombre}</dd>
-                </div>
-              )}
-              {typeof p.stock === 'number' && (
-                <div className="flex justify-between items-center py-2">
-                  <dt className="text-sm font-medium text-muted">Stock disponible</dt>
-                  <dd className="text-sm font-semibold text-[var(--fg)]">{p.stock} unidades</dd>
-                </div>
-              )}
-            </dl>
-          </div>
-        </aside>
-      </section>
+              {/* Descripción Corta */}
+              <div className="prose prose-invert prose-p:text-zinc-400 prose-sm mb-8 max-w-none">
+                {product.descripcionMD ? (
+                  <p>{product.descripcionMD.slice(0, 300)}{product.descripcionMD.length > 300 ? '...' : ''}</p>
+                ) : (
+                  <p className="text-zinc-500 italic">Sin descripción disponible.</p>
+                )}
+              </div>
 
-      {/* Sección de contenido detallado */}
-      {(highlights.length > 0 || p.descripcionMD) && (
-        <section className="space-y-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-[var(--fg)] mb-2">Detalles del producto</h2>
-            <p className="text-muted max-w-2xl mx-auto">
-              Conocé todas las características y beneficios de este producto
-            </p>
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Características destacadas */}
-            {highlights.length > 0 && (
-              <div className="rounded-2xl border border-default p-8 bg-gradient-to-br from-[var(--gold)]/5 to-[var(--gold)]/10 shadow-sm">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-[var(--gold)]/20">
-                    <Check className="size-5 text-[var(--gold)]" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-[var(--fg)]">Características destacadas</h3>
-                </div>
-                <ul className="space-y-4">
-                  {highlights.map((highlight, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <Check className="size-4 mt-1 text-[var(--gold)] flex-shrink-0" />
-                      <span className="text-[var(--fg)] leading-relaxed">{highlight}</span>
+              {/* Características (Simuladas visualmente como en el diseño) */}
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 font-serif">
+                  Características:
+                </h3>
+                <ul className="space-y-3">
+                  {[
+                    'Alta calidad profesional',
+                    'Garantía de satisfacción',
+                    'Envío seguro y rápido',
+                    'Soporte post-venta incluido',
+                    'Devolución fácil y rápida'
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-            )}
 
-            {/* Descripción completa */}
-            {p.descripcionMD && (
-              <div className="rounded-2xl border border-default p-8 bg-[var(--bg)] shadow-sm">
-                <h3 className="text-xl font-semibold text-[var(--fg)] mb-6">Descripción completa</h3>
-                <div className="prose prose-sm max-w-none">
-                  <div className="text-[var(--fg)] leading-relaxed whitespace-pre-line">
-                    {p.descripcionMD}
+              {/* Acciones de Compra */}
+              <div className="mt-auto space-y-6">
+                <div className="w-full">
+                  <AddProductButton 
+                    p={{
+                      id: product.id || product.slug || slug,
+                      slug: product.slug || slug,
+                      titulo: product.titulo,
+                      precio: product.precio,
+                      stock: product.stock,
+                      imagen: product.imagen,
+                      imagenes: product.imagenes,
+                    }}
+                    className="w-full !bg-pink-500 hover:!bg-pink-600 text-white h-14 rounded-lg font-bold text-lg shadow-lg shadow-pink-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    Agregar al carrito
+                  </AddProductButton>
+                </div>
+
+                {/* Beneficios Footer */}
+                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-zinc-800">
+                  <div className="text-center px-2">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3 text-pink-400">
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-medium text-zinc-300">Envío gratis +$50</p>
+                  </div>
+                  <div className="text-center px-2 border-l border-zinc-800">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3 text-pink-400">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-medium text-zinc-300">Garantía 30 días</p>
+                  </div>
+                  <div className="text-center px-2 border-l border-zinc-800">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3 text-pink-400">
+                      <RefreshCcw className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-medium text-zinc-300">Devolución fácil</p>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </section>
-      )}
+        </FadeIn>
 
-      {/* Sección de reseñas */}
-      <section className="mt-16">
-        <ReviewsSection 
-          productoId={p.id || p.slug || slug}
-          title="Reseñas del producto"
-        />
-      </section>
+        {/* Productos Relacionados */}
+        <FadeIn delay={0.2}>
+          <div className="mt-24 border-t border-zinc-800 pt-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl lg:text-3xl font-serif text-white">
+                Productos relacionados
+              </h2>
+              <Link href="/tienda" className="text-sm text-pink-500 hover:text-pink-400 font-medium">
+                Ver todos
+              </Link>
+            </div>
+            <RelatedProducts 
+               categoriaSlug={product.categoria?.slug}
+               currentProductSlug={product.slug || ''}
+               title="" // Ya puse el título arriba manualmente para control de estilo
+            />
+          </div>
 
-      {/* Productos relacionados */}
-      <section className="mt-16">
-        <RelatedProducts 
-          categoriaSlug={p.categoria?.slug}
-          currentProductSlug={p.slug || ''}
-          title="Productos relacionados"
-        />
-      </section>
-
-      {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-    </article>
+          {/* Reseñas */}
+          <div className="mt-24 border-t border-zinc-800 pt-16">
+            <ReviewsSection 
+               productoId={product.id}
+               title="Opiniones de clientes"
+            />
+          </div>
+        </FadeIn>
+      </div>
+    </div>
   );
 }

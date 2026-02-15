@@ -29,25 +29,25 @@ export default function NotificationsAccountPage() {
               label: 'Sin leer',
               value: unreadCount.toString(),
               icon: Bell,
-              color: unreadCount > 0 ? 'text-[var(--gold)]' : 'text-[var(--muted)]',
-              bgColor: unreadCount > 0 ? 'bg-[var(--gold)]/10' : 'bg-[var(--subtle)]',
-              borderColor: unreadCount > 0 ? 'border-[var(--gold)]/30' : 'border-[var(--border)]'
+              color: unreadCount > 0 ? 'text-[var(--gold)]' : 'text-zinc-400',
+              bgColor: unreadCount > 0 ? 'bg-[var(--gold)]/10' : 'bg-zinc-800',
+              borderColor: unreadCount > 0 ? 'border-[var(--gold)]/30' : 'border-zinc-700'
             },
             {
               label: 'Leídas',
               value: readCount.toString(),
               icon: CheckCircle,
-              color: 'text-[var(--muted)]',
-              bgColor: 'bg-[var(--subtle)]',
-              borderColor: 'border-[var(--border)]'
+              color: 'text-zinc-400',
+              bgColor: 'bg-zinc-800',
+              borderColor: 'border-zinc-700'
             },
             {
               label: 'Total',
               value: totalCount.toString(),
               icon: Clock,
-              color: 'text-[var(--muted)]',
-              bgColor: 'bg-[var(--subtle)]',
-              borderColor: 'border-[var(--border)]'
+              color: 'text-zinc-400',
+              bgColor: 'bg-zinc-800',
+              borderColor: 'border-zinc-700'
             }
           ]}
         />
@@ -64,40 +64,38 @@ export default function NotificationsAccountPage() {
       </div>
 
       {/* Información sobre notificaciones */}
-      <Card>
-        <CardBody className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200">
-              <Info className="h-6 w-6 text-blue-600" />
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/50 p-6">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <Info className="h-6 w-6 text-blue-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-white mb-3">
+              Sobre las notificaciones
+            </h3>
+            <div className="space-y-3 text-sm text-zinc-400">
+              <div className="flex items-start gap-2">
+                <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                <p><strong className="text-zinc-200">Respuestas:</strong> Recibirás una notificación cuando alguien responda a tus reseñas.</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                <p><strong className="text-zinc-200">Likes:</strong> Te notificaremos cuando alguien le dé like a tus reseñas.</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
+                <p><strong className="text-zinc-200">Menciones:</strong> Si alguien te menciona en una reseña o respuesta, lo sabrás al instante.</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-[var(--fg)] mb-3">
-                Sobre las notificaciones
-              </h3>
-              <div className="space-y-3 text-sm text-[var(--muted)]">
-                <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
-                  <p><strong className="text-[var(--fg)]">Respuestas:</strong> Recibirás una notificación cuando alguien responda a tus reseñas.</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
-                  <p><strong className="text-[var(--fg)]">Likes:</strong> Te notificaremos cuando alguien le dé like a tus reseñas.</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
-                  <p><strong className="text-[var(--fg)]">Menciones:</strong> Si alguien te menciona en una reseña o respuesta, lo sabrás al instante.</p>
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                <p className="text-xs text-[var(--muted)] flex items-center gap-2">
-                  <span className="text-lg">💡</span>
-                  <strong className="text-[var(--fg)]">Tip:</strong> Haz clic en cualquier notificación para ir directamente al contenido relacionado.
-                </p>
-              </div>
+            <div className="mt-4 pt-4 border-t border-zinc-800">
+              <p className="text-xs text-zinc-500 flex items-center gap-2">
+                <span className="text-lg">💡</span>
+                <strong className="text-zinc-300">Tip:</strong> Haz clic en cualquier notificación para ir directamente al contenido relacionado.
+              </p>
             </div>
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {/* Lista de notificaciones */}
       <NotificationsList />

@@ -4,7 +4,7 @@ export type FieldDefinition = {
   placeholder?: string;
   showInList?: boolean;
   showInForm?: boolean;
-  widget?: 'markdown' | 'video' | 'list' | 'json-list' | 'image' | 'date'; 
+  widget?: 'markdown' | 'video' | 'list' | 'json-list' | 'image' | 'date';
 };
 
 export type ResourceDefinitions = Record<
@@ -53,43 +53,48 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     },
   },
   Curso: {
-    slug: { label: 'Slug (URL)', help: 'Identificador único para la URL.' },
+    portada: { label: 'Imagen de Portada', widget: 'image' },
     titulo: { label: 'Título del Curso' },
-    resumen: { label: 'Resumen Corto', showInList: false },
-    descripcionMD: {
-      label: 'Descripción Completa',
-      showInList: false,
-      widget: 'markdown',
+    slug: { label: 'Slug (URL)', help: 'Identificador único para la URL.' },
+    nivel: { label: 'Nivel', help: 'Básico, Intermedio o Avanzado.' },
+    precio: { label: 'Precio', help: 'Precio actual del curso.' },
+    publicado: { label: '¿Publicado?', help: 'Visible para los usuarios.' },
+    destacado: {
+      label: '¿Destacado?',
+      help: 'Aparece en secciones principales.',
     },
-    requisitos: {
-      label: 'Requisitos',
-      help: 'Lista de requisitos (uno por línea o bullets).',
-      showInList: false,
-      widget: 'markdown',
+    ratingProm: { label: 'Rating Promedio' },
+    tags: {
+      label: 'Tags',
+      help: 'Etiquetas para búsqueda (Enter para agregar).',
+      showInList: true,
+      widget: 'json-list',
     },
+    resumen: { label: 'Resumen Corto', showInList: true },
     queAprenderas: {
       label: 'Lo que aprenderás',
       help: 'Lista de puntos clave.',
-      showInList: false,
+      showInList: true,
       widget: 'json-list',
     },
     videoPreview: {
       label: 'Vista Previa (Video)',
       help: 'Video promocional del curso.',
-      showInList: false,
+      showInList: true,
       widget: 'video',
     },
-    precio: { label: 'Precio', help: 'Precio actual del curso.' },
-    publicado: { label: '¿Publicado?', help: 'Visible para los usuarios.' },
-    nivel: { label: 'Nivel', help: 'Básico, Intermedio o Avanzado.' },
-    portada: { label: 'Imagen de Portada', widget: 'image' },
-    destacado: {
-      label: '¿Destacado?',
-      help: 'Aparece en secciones principales.',
+    requisitos: {
+      label: 'Requisitos',
+      help: 'Lista de requisitos (uno por línea o bullets).',
+      widget: 'markdown',
+      showInList: true,
     },
-    instructorId: { label: 'Instructor' },
-    ratingProm: { label: 'Rating Promedio' },
-    ratingConteo: { label: 'Total Reseñas' },
+    descripcionMD: {
+      label: 'Descripción Completa',
+      showInList: true,
+      widget: 'markdown',
+    },
+    ratingConteo: { label: 'Total Reseñas', showInList: false },
   },
   Inscripcion: {
     usuarioId: { label: 'Usuario' },
@@ -102,23 +107,23 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
   // 🛍️ Tienda y Productos
   // ─────────────────────────────────────────────────────────────
   Producto: {
-    slug: { label: 'Slug (URL)' },
+    imagen: { label: 'Imagen Principal' },
     titulo: { label: 'Nombre del Producto' },
+    slug: { label: 'Slug (URL)' },
     precio: { label: 'Precio' },
     stock: { label: 'Stock Disponible' },
-    publicado: { label: '¿Publicado?' },
-    destacado: { label: '¿Destacado?' },
-    imagen: { label: 'Imagen Principal' },
     marcaId: { label: 'Marca' },
     categoriaId: { label: 'Categoría' },
+    publicado: { label: '¿Publicado?' },
+    destacado: { label: '¿Destacado?' },
+    precioLista: {
+      label: 'Precio de Lista (Tachado)',
+      help: 'Precio original antes de descuento.',
+    },
     descripcionMD: {
       label: 'Descripción Completa (MD)',
       widget: 'markdown',
       showInList: false,
-    },
-    precioLista: {
-      label: 'Precio de Lista (Tachado)',
-      help: 'Precio original antes de descuento.',
     },
   },
   Marca: {
@@ -172,12 +177,18 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     predeterminada: { label: '¿Predeterminada?' },
   },
   Slider: {
+    archivo: { label: 'Imagen Banner', widget: 'image' },
     titulo: { label: 'Título Principal' },
-    archivo: { label: 'Imagen Banner' },
+    subtitulo: { label: 'Subtítulo', showInList: true },
+    etiqueta: { label: 'Etiqueta (Badge)', showInList: true },
+    descripcion: { label: 'Descripción', widget: 'markdown', showInList: true },
     activa: { label: '¿Visible?' },
-    orden: { label: 'Orden Visualización' },
-    ctaPrimarioTexto: { label: 'Texto Botón 1' },
-    ctaPrimarioHref: { label: 'Enlace Botón 1' },
+    orden: { label: 'Orden' },
+    ctaPrimarioTexto: { label: 'Botón 1: Texto', showInList: true },
+    ctaPrimarioHref: { label: 'Botón 1: Enlace', showInList: true },
+    ctaSecundarioTexto: { label: 'Botón 2: Texto', showInList: true },
+    ctaSecundarioHref: { label: 'Botón 2: Enlace', showInList: true },
+    alt: { label: 'Texto Alt (SEO)', showInList: true },
   },
   Notificacion: {
     usuarioId: { label: 'Destinatario' },

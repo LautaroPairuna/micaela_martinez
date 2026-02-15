@@ -76,7 +76,11 @@ export function useReviewResponses(resenaId: string): UseReviewResponsesReturn {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as any).error || 'Error al crear respuesta');
+        const errorMessage =
+          (errorData as any).message ||
+          (errorData as any).error ||
+          `Error ${response.status}: No se pudo crear la respuesta`;
+        throw new Error(errorMessage);
       }
       return response;
     },
@@ -94,7 +98,11 @@ export function useReviewResponses(resenaId: string): UseReviewResponsesReturn {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as any).error || 'Error al actualizar respuesta');
+        const errorMessage =
+          (errorData as any).message ||
+          (errorData as any).error ||
+          `Error ${response.status}: No se pudo actualizar la respuesta`;
+        throw new Error(errorMessage);
       }
       return response;
     },
@@ -110,7 +118,11 @@ export function useReviewResponses(resenaId: string): UseReviewResponsesReturn {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as any).error || 'Error al eliminar respuesta');
+        const errorMessage =
+          (errorData as any).message ||
+          (errorData as any).error ||
+          `Error ${response.status}: No se pudo eliminar la respuesta`;
+        throw new Error(errorMessage);
       }
       return response;
     },

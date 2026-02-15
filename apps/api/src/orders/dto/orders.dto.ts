@@ -10,7 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EstadoOrden, TipoItemOrden } from '../../generated/prisma/client';
+import { EstadoOrden, TipoItemOrden } from '@prisma/client';
 
 export class CreateOrderItemDto {
   @IsEnum(TipoItemOrden)

@@ -91,31 +91,20 @@ export function ReviewsSection({
   };
 
   const handleDeleteReview = async (reviewId: string) => {
-    showWarning(
-      'Confirmar eliminación',
-      '¿Estás seguro de que quieres eliminar esta reseña? Esta acción no se puede deshacer.',
-      10000
-    );
-
-    // Por ahora mantenemos la funcionalidad básica
-    // TODO: Implementar modal de confirmación personalizado
-    setTimeout(() => {
-      if (window.confirm('¿Estás seguro de que quieres eliminar esta reseña?')) {
-        deleteReview(reviewId)
-          .then((success) => {
-            if (success) {
-              fetchReviews(); // Refrescar la lista
-              showSuccess('Reseña eliminada', 'La reseña se ha eliminado correctamente');
-            } else {
-              showError('Error', 'No se pudo eliminar la reseña');
-            }
-          })
-          .catch((err: unknown) => {
-            console.error('Error deleting review:', err);
-            showError('Error', 'Ocurrió un error al eliminar la reseña');
-          });
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta reseña? Esta acción no se puede deshacer.')) {
+      try {
+        const success = await deleteReview(reviewId);
+        if (success) {
+          await fetchReviews(); // Refrescar la lista
+          showSuccess('Reseña eliminada', 'La reseña se ha eliminado correctamente');
+        } else {
+          showError('Error', 'No se pudo eliminar la reseña');
+        }
+      } catch (err) {
+        console.error('Error deleting review:', err);
+        showError('Error', 'Ocurrió un error al eliminar la reseña');
       }
-    }, 100);
+    }
   };
 
   const handleCancelForm = () => {
@@ -141,11 +130,11 @@ export function ReviewsSection({
   const ratingDistribution = getRatingDistribution();
 
   return (
-    <section className={`space-y-6 ${className}`}>
+    <section className={`space-y-8 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-[var(--fg)] flex items-center gap-2">
-          <MessageSquare className="h-6 w-6 text-[var(--gold)]" />
+      <div className="flex items-center justify-between border-b border-zinc-800 pb-6">
+        <h2 className="text-3xl font-serif text-white flex items-center gap-3">
+          <MessageSquare className="h-6 w-6 text-pink-500" />
           {title || 'Reseñas y valoraciones'}
         </h2>
 
@@ -252,6 +241,7 @@ export function ReviewsSection({
         <ReviewsList
           reviews={reviews}
           currentUserId={me?.id}
+          isAdmin={me?.rol === 'ADMIN'}
           isLoading={isLoading}
           onEdit={handleEditReview}
           onDelete={handleDeleteReview}

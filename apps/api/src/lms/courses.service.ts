@@ -3,11 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import {
-  Prisma,
-  EstadoInscripcion,
-  NivelCurso,
-} from '../generated/prisma/client';
+import { Prisma, EstadoInscripcion, NivelCurso } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryCourseDto } from './dto/query-course.dto';
 import { getSkipTake } from '../common/utils/pagination';
@@ -79,7 +75,6 @@ export class CoursesService {
           destacado: true,
           ratingProm: true,
           ratingConteo: true,
-          instructor: { select: { id: true, nombre: true } },
           _count: { select: { modulos: true, resenas: true } },
           modulos: {
             select: {
@@ -177,7 +172,6 @@ export class CoursesService {
         ratingConteo: true,
         publicado: true,
         creadoEn: true,
-        instructorId: true,
         tags: true,
         videoPreview: true,
         queAprenderas: true,
@@ -187,13 +181,7 @@ export class CoursesService {
     if (!cursoBase) throw new NotFoundException('Curso no encontrado');
 
     // Carga paralela de datos relacionados
-    const [instructor, resenas, modulos, estudiantesCount] = await Promise.all([
-      // Instructor
-      this.prisma.usuario.findUnique({
-        where: { id: Number(cursoBase.instructorId || '0') },
-        select: { id: true, nombre: true },
-      }),
-
+    const [resenas, modulos, estudiantesCount] = await Promise.all([
       // Reseñas recientes
       this.prisma.resena.findMany({
         where: { cursoId: cursoBase.id },
@@ -285,7 +273,6 @@ export class CoursesService {
     const curso = {
       ...cursoBase,
       portadaUrl: ImageUrlUtil.getCourseImageUrl(cursoBase.portada),
-      instructor,
       resenas,
       modulos,
       estudiantesCount,

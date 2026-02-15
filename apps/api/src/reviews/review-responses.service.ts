@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewResponseDto } from './dto/create-review-response.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import { Prisma } from '../generated/prisma/client';
+import { Prisma } from '@prisma/client';
 
 const toInt = (v: unknown, label = 'id'): number => {
   if (v === null || v === undefined || v === '') {
@@ -104,9 +104,9 @@ export class ReviewResponsesService {
     // Crear notificación (la API espera strings)
     try {
       await this.notificationsService.notifyReviewResponse(
-        String(resenaIdNum),
         String(respuesta.id),
         String(usuarioIdNum),
+        String(resena.usuarioId),
       );
     } catch (error) {
       console.error('Error al crear notificación de respuesta:', error);
@@ -184,6 +184,7 @@ export class ReviewResponsesService {
     responseId: string,
     usuarioId: string,
     contenido: string,
+    isAdmin = false,
   ) {
     const responseIdNum = toInt(responseId, 'responseId');
     const usuarioIdNum = toInt(usuarioId, 'usuarioId');
@@ -193,7 +194,7 @@ export class ReviewResponsesService {
     });
     if (!respuesta) throw new NotFoundException('Respuesta no encontrada');
 
-    if (respuesta.usuarioId !== usuarioIdNum) {
+    if (respuesta.usuarioId !== usuarioIdNum && !isAdmin) {
       throw new ForbiddenException(
         'No tienes permisos para editar esta respuesta',
       );
@@ -216,7 +217,7 @@ export class ReviewResponsesService {
     });
   }
 
-  async deleteResponse(responseId: string, usuarioId: string) {
+  async deleteResponse(responseId: string, usuarioId: string, isAdmin = false) {
     const responseIdNum = toInt(responseId, 'responseId');
     const usuarioIdNum = toInt(usuarioId, 'usuarioId');
 
@@ -226,7 +227,7 @@ export class ReviewResponsesService {
     });
     if (!respuesta) throw new NotFoundException('Respuesta no encontrada');
 
-    if (respuesta.usuarioId !== usuarioIdNum) {
+    if (respuesta.usuarioId !== usuarioIdNum && !isAdmin) {
       throw new ForbiddenException(
         'No tienes permisos para eliminar esta respuesta',
       );

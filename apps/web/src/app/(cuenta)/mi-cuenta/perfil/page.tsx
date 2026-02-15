@@ -102,7 +102,7 @@ export default function PerfilPage() {
             <Card>
               <CardBody className="space-y-6">
                 <div className="text-center">
-                  <div className="grid place-items-center w-20 h-20 mx-auto mb-4 rounded-full bg-[radial-gradient(75%_120%_at_30%_20%,_rgba(255,255,255,.35),_transparent_60%)] bg-[var(--pink)]/10 text-[var(--pink)] ring-1 ring-[var(--pink)]/40 shadow-[inset_0_1px_0_rgba(255,255,255,.2)]">
+                  <div className="grid place-items-center w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--pink)]/10 text-[var(--pink)] ring-1 ring-[var(--pink)]/40">
                     <span className="text-2xl font-bold tracking-wide">{initials}</span>
                   </div>
                   <h3 className="text-lg font-semibold">

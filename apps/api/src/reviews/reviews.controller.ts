@@ -124,10 +124,12 @@ export class ReviewsController {
     @Param('id') reviewId: string,
     @Body() updateReviewDto: UpdateReviewDto,
   ) {
+    const isAdmin = user.roles?.includes('ADMIN') ?? false;
     return this.reviewsService.updateReview(
       user.sub.toString(),
       reviewId,
       updateReviewDto,
+      isAdmin,
     );
   }
 
@@ -138,10 +140,12 @@ export class ReviewsController {
     @Param('id') reviewId: string,
     @Body() updateReviewDto: UpdateReviewDto,
   ) {
+    const isAdmin = user.roles?.includes('ADMIN') ?? false;
     return this.reviewsService.updateReview(
       user.sub.toString(),
       reviewId,
       updateReviewDto,
+      isAdmin,
     );
   }
 
@@ -151,7 +155,12 @@ export class ReviewsController {
     @CurrentUser() user: JwtUser,
     @Param('id') reviewId: string,
   ) {
-    return this.reviewsService.deleteReview(user.sub.toString(), reviewId);
+    const isAdmin = user.roles?.includes('ADMIN') ?? false;
+    return this.reviewsService.deleteReview(
+      user.sub.toString(),
+      reviewId,
+      isAdmin,
+    );
   }
 
   @Get('product/:productId')

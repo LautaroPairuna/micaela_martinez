@@ -1,24 +1,37 @@
 // src/app/checkout/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
 import { CheckoutWizard } from '@/components/checkout/CheckoutWizard';
 import { Card, CardBody } from '@/components/ui/Card';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items } = useCart();
+  const { items, _hasHydrated } = useCart();
+  const [isClient, setIsClient] = useState(false);
 
-  // Redirigir si el carrito está vacío
   useEffect(() => {
-    if (items.length === 0) {
+    setIsClient(true);
+  }, []);
+
+  // Redirigir si el carrito está vacío, pero solo después de la hidratación
+  useEffect(() => {
+    if (isClient && _hasHydrated && items.length === 0) {
       router.push('/tienda');
     }
-  }, [items.length, router]);
+  }, [items.length, router, isClient, _hasHydrated]);
+
+  if (!isClient || !_hasHydrated) {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

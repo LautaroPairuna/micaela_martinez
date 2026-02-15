@@ -34,7 +34,6 @@ type CourseDetail = {
       contenido?: unknown;
     }> | null;
   }> | null;
-  instructor?: { nombre?: string | null } | null;
 };
 
 type ServerSession = {
@@ -123,12 +122,6 @@ export function CourseConsumptionPage({
       titulo: course.titulo,
       descripcion: course.descripcionMD ?? null,
       imagenUrl: course.portadaUrl ?? null,
-      instructor: course.instructor
-        ? {
-            id: course.instructor.nombre || 'unknown',
-            nombre: course.instructor.nombre || 'Instructor',
-          }
-        : null,
       modulos: course.modulos
         ? course.modulos.map((modulo, index) => ({
             id: modulo.id, // Usar ID real del backend

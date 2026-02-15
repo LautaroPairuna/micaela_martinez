@@ -47,11 +47,11 @@ export function RelatedProducts({
   if (loading) {
     return (
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+        {title && <h2 className="text-2xl font-bold text-foreground">{title}</h2>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-muted rounded-xl2 aspect-square mb-4" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse space-y-4">
+              <div className="aspect-square bg-muted rounded-xl" />
               <div className="space-y-2">
                 <div className="h-4 bg-muted rounded w-3/4" />
                 <div className="h-4 bg-muted rounded w-1/2" />
@@ -63,30 +63,16 @@ export function RelatedProducts({
     );
   }
 
-  if (error || !products.length) {
+  if (error || products.length === 0) {
     return null;
   }
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        {categoriaSlug && (
-          <Link 
-            href={`/tienda/categoria/${categoriaSlug}`}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Ver todos →
-          </Link>
-        )}
-      </div>
-      
+      {title && <h2 className="text-2xl font-bold text-foreground">{title}</h2>}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <ProductCard key={product.id} p={{
-            ...product,
-            imagenes: product.imagenes || undefined
-          }} />
+          <ProductCard key={product.id} p={product} />
         ))}
       </div>
     </section>

@@ -58,7 +58,6 @@ export interface Course {
   titulo: string;
   descripcion?: string | null;
   imagenUrl?: string | null;
-  instructor?: { id: string; nombre: string } | null;
   modulos?: Module[] | null;
 }
 

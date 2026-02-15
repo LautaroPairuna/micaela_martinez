@@ -1,38 +1,32 @@
+import { IsBoolean, IsOptional } from 'class-validator';
+
 export class UpdateNotificationPreferencesDto {
-  // Notificaciones de reseñas
-  nuevaResena?: boolean;
+  @IsOptional()
+  @IsBoolean()
   respuestaResena?: boolean;
 
-  // Notificaciones del sistema
+  @IsOptional()
+  @IsBoolean()
+  likesResena?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  descuentosFavoritos?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   actualizacionesSistema?: boolean;
-  mantenimiento?: boolean;
-
-  // Notificaciones de moderación (solo para moderadores)
-  reporteContenido?: boolean;
-  contenidoPendiente?: boolean;
-
-  // Configuración de frecuencia
-  resumenDiario?: boolean; // Agrupar notificaciones en resumen diario
-  notificacionesInstantaneas?: boolean; // Recibir notificaciones inmediatas
 }
 
 export class NotificationPreferencesResponseDto {
   id?: string;
   usuarioId?: string;
 
-  // Tipos de notificaciones
-  nuevaResena?: boolean;
   respuestaResena?: boolean;
+  likesResena?: boolean;
+  descuentosFavoritos?: boolean;
   actualizacionesSistema?: boolean;
-  mantenimiento?: boolean;
-  reporteContenido?: boolean;
-  contenidoPendiente?: boolean;
 
-  // Configuración de frecuencia
-  resumenDiario?: boolean;
-  notificacionesInstantaneas?: boolean;
-
-  // Metadatos
   creadoEn?: Date;
   actualizadoEn?: Date;
 }

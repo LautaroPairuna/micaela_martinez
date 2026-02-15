@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { GraduationCap, BookOpen } from 'lucide-react';
 import { EnrollmentProgressProvider, useEnrollmentProgress } from '@/components/courses/EnrollmentProgressProvider';
 import { EnrollmentCard } from '@/components/courses/EnrollmentCard';
+import { motion } from 'framer-motion';
 
 type CursoLight = {
   slug?: string | null;
@@ -51,6 +52,21 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
 
   // Obtener el ID de la orden asociada a la suscripción (desde el backend)
   const orderId = subscriptionInfo.orderId || null;
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
 
   return (
     <div className="space-y-8">
@@ -108,7 +124,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
         <Card className="border-[var(--border)] bg-[var(--bg)]">
           <CardBody className="text-center py-16">
             <div className="max-w-md mx-auto space-y-6">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[var(--gold)]/20 to-[var(--gold)]/10 flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[var(--gold)]/20 to-[var(--gold)]/10 flex items-center justify-center ring-1 ring-[var(--gold)]/40 shadow-[0_0_15px_rgba(var(--gold-rgb),0.1)]">
                 <GraduationCap className="h-10 w-10 text-[var(--gold)]" />
               </div>
               <div className="space-y-3">
@@ -120,12 +136,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
               </div>
               <Link
                 href="/cursos"
-                className="inline-flex items-center justify-center rounded-xl px-8 py-3 text-black font-semibold shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/60"
-                style={{
-                  background:
-                    'linear-gradient(135deg, var(--gold) 0%, var(--gold-200) 50%, var(--gold) 100%)',
-                  backgroundSize: '200% 200%',
-                }}
+                className="inline-flex items-center justify-center rounded-xl px-8 py-3 text-black font-bold shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[var(--gold)]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/60 bg-[var(--gold)] hover:bg-[var(--gold-dark)]"
               >
                 <GraduationCap className="h-5 w-5 mr-2" />
                 Explorar Cursos
@@ -134,22 +145,28 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
           </CardBody>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+        >
           {initialRows.map((enrollment) => {
             const courseId = String(enrollment.cursoId || '');
             const modules = courseModules[courseId] || [];
             
             return (
-              <EnrollmentCard
-                key={enrollment.id}
-                enrollment={enrollment}
-                lessonProgress={lessonProgress}
-                getLessonProgressKey={getLessonProgressKey}
-                courseModules={modules}
-              />
+              <motion.div key={enrollment.id} variants={item} className="h-full transform transition-all duration-200 hover:-translate-y-1">
+                <EnrollmentCard
+                  enrollment={enrollment}
+                  lessonProgress={lessonProgress}
+                  getLessonProgressKey={getLessonProgressKey}
+                  courseModules={modules}
+                />
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -4,7 +4,6 @@
 import { useRouter } from 'next/navigation';
 import { useCheckout } from '@/store/checkout';
 import { useCart } from '@/store/cart';
-import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
@@ -38,51 +37,51 @@ export function ConfirmationStep() {
     <div className="text-center space-y-6">
       <div
         className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${
-          isTransferPayment ? 'bg-[var(--gold)]/10' : 'bg-green-100'
+          isTransferPayment ? 'bg-[var(--gold)]/10' : 'bg-green-900/20'
         }`}
       >
         {isTransferPayment ? (
           <Clock className="h-10 w-10 text-[var(--gold)]" />
         ) : (
-          <CheckCircle className="h-10 w-10 text-green-600" />
+          <CheckCircle className="h-10 w-10 text-green-400" />
         )}
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-[var(--fg)] mb-2">
+        <h2 className="text-2xl font-bold text-white mb-2">
           {isTransferPayment ? '¡Orden creada!' : '¡Pedido confirmado!'}
         </h2>
-        <p className="text-[var(--muted)] mb-4">
+        <p className="text-zinc-400 mb-4">
           {isTransferPayment
             ? 'Tu orden ha sido creada y está pendiente de pago'
             : 'Tu pedido ha sido procesado y pagado exitosamente'}
         </p>
         {orderId && (
-          <p className="text-sm text-[var(--muted)]">
-            Número de orden: <span className="font-medium text-[var(--fg)]">{orderId}</span>
+          <p className="text-sm text-zinc-500">
+            Número de orden: <span className="font-medium text-white">{orderId}</span>
           </p>
         )}
       </div>
 
-      <Card className="border border-[var(--pink)]/30">
-        <CardBody className="p-6">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden text-left">
+        <div className="p-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-              <Clock className="h-5 w-5 text-blue-600" />
+            <div className="flex items-center gap-3 p-4 bg-blue-950/20 border border-blue-900/30 rounded-lg">
+              <Clock className="h-5 w-5 text-blue-400" />
               <div className="text-left">
-                <p className="font-medium text-blue-800">¿Qué sigue?</p>
-                <p className="text-sm text-blue-600">
+                <p className="font-medium text-blue-300">¿Qué sigue?</p>
+                <p className="text-sm text-blue-400/80">
                   Te enviaremos un email con los detalles de tu pedido.
                 </p>
               </div>
             </div>
 
             {isTransferPayment && (
-              <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <div className="flex items-center gap-3 p-4 bg-yellow-950/20 border border-yellow-900/30 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-yellow-500" />
                 <div className="text-left">
-                  <p className="font-medium text-yellow-800">Transferencia pendiente</p>
-                  <p className="text-sm text-yellow-600">
+                  <p className="font-medium text-yellow-300">Transferencia pendiente</p>
+                  <p className="text-sm text-yellow-500/80">
                     Recordá enviar el comprobante de transferencia por WhatsApp para confirmar tu
                     pago.
                   </p>
@@ -90,8 +89,8 @@ export function ConfirmationStep() {
               </div>
             )}
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button

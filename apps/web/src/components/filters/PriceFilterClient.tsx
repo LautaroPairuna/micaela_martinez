@@ -35,7 +35,7 @@ export function PriceFilterClient({
       {categoria && <input type="hidden" name="categoria" value={categoria} />}
       {marca && <input type="hidden" name="marca" value={marca} />}
 
-      <label className="text-xs font-medium text-[color:var(--fg)]">Mín. precio (ARS)</label>
+      <label className="text-xs font-medium text-zinc-400">Mín. precio (ARS)</label>
       <input
         name="minPrice"
         type="number"
@@ -46,10 +46,10 @@ export function PriceFilterClient({
         value={minV}
         placeholder={placeholderMin != null ? String(placeholderMin) : undefined}
         onChange={(e) => setMinV(e.target.value)}
-        className="w-full rounded-xl2 border border-default bg-[var(--bg)] text-[var(--fg)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pink)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full rounded-xl border border-zinc-700 bg-zinc-900/50 text-white px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)] placeholder:text-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
 
-      <label className="text-xs font-medium text-[color:var(--fg)]">Máx. precio (ARS)</label>
+      <label className="text-xs font-medium text-zinc-400">Máx. precio (ARS)</label>
       <input
         name="maxPrice"
         type="number"
@@ -60,7 +60,7 @@ export function PriceFilterClient({
         value={maxV}
         placeholder={placeholderMax != null ? String(placeholderMax) : undefined}
         onChange={(e) => setMaxV(e.target.value)}
-        className="w-full rounded-xl2 border border-default bg-[var(--bg)] text-[var(--fg)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pink)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full rounded-xl border border-zinc-700 bg-zinc-900/50 text-white px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)] placeholder:text-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
 
       <button

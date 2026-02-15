@@ -16,7 +16,7 @@ import {
   EstadoOrden,
   TipoItemOrden,
   EstadoInscripcion,
-} from '../generated/prisma/client';
+} from '@prisma/client';
 
 type SubscriptionStatus =
   | 'active'

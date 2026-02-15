@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewLikeDto } from './dto/create-review-like.dto';
-import { TipoLike } from '../generated/prisma/client';
+import { TipoLike } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const toInt = (v: unknown, label = 'id'): number => {
@@ -79,7 +79,7 @@ export class ReviewLikesService {
         await this.notificationsService.notifyReviewLike(
           String(resenaIdNum),
           String(usuarioIdNum),
-          'like',
+          String(resena.usuarioId),
         );
       } catch (error) {
         // Log del error pero no fallar la creación del like

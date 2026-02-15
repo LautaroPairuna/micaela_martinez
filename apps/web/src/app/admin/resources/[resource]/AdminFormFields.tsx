@@ -530,7 +530,6 @@ export function renderAdminField({
   if (field.widget === 'json-list') {
     return (
       <div key={field.name} className="md:col-span-2 space-y-1">
-        <LabelWithTooltip />
         <JsonListEditor
           label={label}
           help={field.help}
@@ -648,7 +647,6 @@ export function renderAdminField({
 
     return (
       <div key={field.name} className="md:col-span-2 space-y-1">
-        <LabelWithTooltip />
         <MediaDropzone
           label={label}
           help={field.help}

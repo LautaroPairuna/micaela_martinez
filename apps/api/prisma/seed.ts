@@ -7,7 +7,7 @@ import {
   NivelCurso,
   TipoItemOrden,
   TipoLeccion,
-} from '../src/generated/prisma/client';
+} from '@prisma/client';
 import { createExtendedClient } from '../src/prisma/prisma.extensions';
 
 const prisma = createExtendedClient();
@@ -161,7 +161,6 @@ const upsertCursoGetId = async (c: {
   portada: string;
   destacado?: boolean;
   tags?: string[];
-  instructorId: number;
   queAprenderas?: string[];
   videoPreview?: string;
   requisitos?: string;
@@ -180,7 +179,6 @@ const upsertCursoGetId = async (c: {
       portada: c.portada,
       destacado: c.destacado ?? false,
       tags: json(c.tags ?? []),
-      instructorId: c.instructorId,
       queAprenderas: c.queAprenderas ? json(c.queAprenderas) : undefined,
       videoPreview: c.videoPreview ?? null,
       requisitos: c.requisitos ?? null,
@@ -197,7 +195,6 @@ const upsertCursoGetId = async (c: {
       destacado: c.destacado ?? false,
       tags: json(c.tags ?? []),
       creadoEn: new Date(),
-      instructorId: c.instructorId,
       queAprenderas: json(c.queAprenderas ?? []),
       videoPreview: c.videoPreview ?? null,
       requisitos: c.requisitos ?? null,
@@ -220,9 +217,8 @@ async function main() {
   console.log('Normalize NivelCurso.BASICO ->', enumKey(NivelCurso as any, (NivelCurso as any).BASICO));
 
   // ───────────────── Roles
-  const [rAdmin, rInstr, rCust, rStaff] = await Promise.all([
+  const [rAdmin, rCust, rStaff] = await Promise.all([
     upsertRoleBySlug('ADMIN', 'Administrador'),
-    upsertRoleBySlug('INSTRUCTOR', 'Instructor'),
     upsertRoleBySlug('CUSTOMER', 'Cliente'),
     upsertRoleBySlug('STAFF', 'Staff'),
   ]);
@@ -231,12 +227,6 @@ async function main() {
   const adminId = await upsertUserByEmail('admin@demo.com', {
     nombre: 'Admin Demo',
     passwordHash: '$2b$10$oc6bQbe6F67xUabv2r1.mecBi8Emco5qNTH3NUBFzUyJQRIyJDXym',
-    emailVerificadoEn: new Date(),
-  } as any);
-
-  const instrId = await upsertUserByEmail('instructor@demo.com', {
-    nombre: 'Instructora Demo',
-    passwordHash: '$2b$10$ck3bjxlcYx/ir8YYe6rv2OrF4LVVcFI/iQI4s0FyTSkzSMBqEh/oC',
     emailVerificadoEn: new Date(),
   } as any);
 
@@ -255,11 +245,6 @@ async function main() {
     where: { usuarioId_roleId: { usuarioId: adminId, roleId: rStaff.id } },
     update: {},
     create: { usuarioId: adminId, roleId: rStaff.id },
-  });
-  await prisma.usuarioRol.upsert({
-    where: { usuarioId_roleId: { usuarioId: instrId, roleId: rInstr.id } },
-    update: {},
-    create: { usuarioId: instrId, roleId: rInstr.id },
   });
   await prisma.usuarioRol.upsert({
     where: { usuarioId_roleId: { usuarioId: clienteId, roleId: rCust.id } },
@@ -524,7 +509,6 @@ async function main() {
     portada: 'curso-prueba.jpg',
     destacado: true,
     tags: ['prueba', 'testing', 'suscripcion'],
-    instructorId: instrId,
     queAprenderas: ['Cómo realizar pagos', 'Cómo cancelar suscripciones', 'Acceso al contenido'],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-makeup-to-a-woman-5264/1080p.mp4',
     requisitos: 'Ninguno.\nAcceso a internet.',
@@ -540,7 +524,6 @@ async function main() {
     portada: 'curso-maqu.jpg',
     destacado: true,
     tags: ['maquillaje', 'ojos', 'mate'],
-    instructorId: instrId,
     queAprenderas: [
       'Diagnóstico de piel y preparación',
       'Colorimetría y correcciones',
@@ -562,7 +545,6 @@ async function main() {
     portada: 'curso-skin.jpg',
     destacado: false,
     tags: ['skincare', 'hidratacion', 'rutinas'],
-    instructorId: instrId,
     queAprenderas: [
       'Identificar tu biotipo cutáneo',
       'Pasos esenciales: Limpieza, Hidratación, Protección',
@@ -583,7 +565,6 @@ async function main() {
     portada: 'curso-ojos.jpg',
     destacado: true,
     tags: ['ojos', 'smokey', 'cut-crease'],
-    instructorId: instrId,
     queAprenderas: [
       'Difuminados perfectos y transiciones',
       'Cut Crease abierto y cerrado',
@@ -604,7 +585,6 @@ async function main() {
     portada: 'curso-cejas.jpg',
     destacado: false,
     tags: ['cejas', 'diseño', 'perfilado'],
-    instructorId: instrId,
     queAprenderas: [
       'Visagismo y diseño de cejas según el rostro',
       'Técnicas de depilación con pinza y cera',
@@ -625,7 +605,6 @@ async function main() {
     portada: 'curso-dermo.jpg',
     destacado: true,
     tags: ['dermocosmetica', 'rutinas', 'activos'],
-    instructorId: instrId,
     queAprenderas: [
       'Química cosmética avanzada',
       'Combinación de ácidos y activos potentes',
@@ -646,7 +625,6 @@ async function main() {
     portada: 'curso-skin-sensible.jpg',
     destacado: false,
     tags: ['piel sensible', 'rutinas', 'tolerancia'],
-    instructorId: instrId,
     queAprenderas: [
       'Recuperación de la barrera cutánea',
       'Ingredientes calmantes y antiinflamatorios',

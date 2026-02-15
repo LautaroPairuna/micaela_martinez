@@ -21,6 +21,7 @@ import { SortOptionsList } from '@/components/filters/SortOptionsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FiltersDrawer } from '@/components/filters/FiltersDrawer';
 import { Pagination } from '@/components/ui/Pagination';
+import { FadeIn, StaggerContainer } from '@/components/ui/Motion';
 
 export const revalidate = 60;
 
@@ -447,11 +448,13 @@ export default async function TiendaPage({
                   secondary={{ href: '/tienda', label: 'Ir a la tienda' }}
                 />
               ) : (
-                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                  {items.map((p: Product, i) => (
-                    <ProductCard key={String(p.id ?? i)} p={p} />
-                  ))}
-                </div>
+                <FadeIn>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                    {items.map((p: Product, i) => (
+                      <ProductCard key={String(p.id ?? i)} p={p} />
+                    ))}
+                  </div>
+                </FadeIn>
               )}
 
               {/* Paginación */}

@@ -33,6 +33,7 @@ export type CartState = {
   items: CartLine[];
   isOpen: boolean;
   hydrated: boolean;
+  _hasHydrated: boolean;
 
   // Acciones UI
   open: () => void;
@@ -49,6 +50,7 @@ export type CartState = {
   addCourse: (line: Omit<CartLineCourse, 'type' | 'quantity'>) => Promise<void>;
   syncWithBackend: () => Promise<void>;
   reset: () => void;
+  setHasHydrated: (val: boolean) => void;
 };
 
 export const useCart = create<CartState>()(
@@ -57,6 +59,9 @@ export const useCart = create<CartState>()(
       items: [],
       isOpen: false,
       hydrated: false,
+      _hasHydrated: false,
+
+      setHasHydrated: (val) => set({ _hasHydrated: val }),
 
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
@@ -98,158 +103,56 @@ export const useCart = create<CartState>()(
         set({ items: nextItems });
 
         // Sincronizar el item modificado
-        const updatedItem = nextItems.find(i => i.id === id && i.type === 'product');
-        if (updatedItem) {
-          cartApi.syncCart([updatedItem]).catch(() => {});
-        }
       },
+
       increase: (id) => {
-        const it = get().items.find(i => i.id === id && i.type === 'product') as CartLineProduct | undefined;
-        if (!it) return;
-        const next = Math.min((it.quantity ?? 1) + 1, it.maxQty ?? 99);
-        get().setQty(id, next);
+        get().setQty(id, (get().items.find(i => i.id === id && i.type === 'product')?.quantity || 0) + 1);
       },
+
       decrease: (id) => {
-        const it = get().items.find(i => i.id === id && i.type === 'product') as CartLineProduct | undefined;
-        if (!it) return;
-        const next = Math.max((it.quantity ?? 1) - 1, 1);
-        get().setQty(id, next);
+        get().setQty(id, (get().items.find(i => i.id === id && i.type === 'product')?.quantity || 0) - 1);
       },
 
       addProduct: async (line) => {
-        const qty = Math.max(1, Math.min(line.quantity ?? 1, line.maxQty ?? 99));
-        const cur = get().items;
-        const idx = cur.findIndex(i => i.type === 'product' && i.id === line.id);
+        const { items } = get();
+        const existing = items.find(i => i.type === 'product' && i.id === line.id);
         
-        if (idx >= 0) {
-          const it = cur[idx] as CartLineProduct;
-          const mergedQty = Math.min(it.quantity + qty, it.maxQty ?? line.maxQty ?? 99);
-          const next = [...cur];
-          next[idx] = { ...it, quantity: mergedQty };
-          set({ items: next });
-          
-          // Toast para producto actualizado
-          try {
-            const { toast } = await import('react-toastify');
-            toast.success(`${line.title} actualizado en el carrito (${mergedQty})`, {
-              // position: 'bottom-right', (heredado del container)
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
-          } catch (error) {
-            console.error('Error al mostrar toast:', error);
-          }
+        if (existing) {
+          get().setQty(line.id, existing.quantity + (line.quantity || 1));
         } else {
           set({
-            items: [
-              ...cur,
-              {
-                type: 'product',
-                id: line.id,
-                slug: line.slug,
-                title: line.title,
-                price: line.price,
-                image: line.image ?? null,
-                quantity: qty,
-                maxQty: line.maxQty ?? null,
-              },
-            ],
+            items: [...items, { ...line, type: 'product', quantity: line.quantity || 1 }]
           });
-          
-          // Toast para producto agregado
-          try {
-            const { toast } = await import('react-toastify');
-            toast.success(`${line.title} agregado al carrito`, {
-              position: 'bottom-right',
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
-          } catch (error) {
-            console.error('Error al mostrar toast:', error);
-          }
         }
-
-        // Sincronizar con backend
-        const finalItem = get().items.find(i => i.type === 'product' && i.id === line.id);
-        if (finalItem) {
-          cartApi.syncCart([finalItem]).catch(() => {});
-        }
+        
+        // get().open(); // Eliminado para evitar apertura automática
+        
+        const newItem: CartLineProduct = { ...line, type: 'product', quantity: line.quantity || 1, id: line.id, slug: line.slug, title: line.title, price: line.price }; 
+        cartApi.syncCart([newItem]).catch(() => {});
       },
 
       addCourse: async (line) => {
-        const cur = get().items;
-        const exists = cur.some(i => i.type === 'course' && i.id === line.id);
-        
-        if (!exists) {
-          set({
-            items: [
-              ...cur,
-              {
-                type: 'course',
-                id: line.id,
-                slug: line.slug,
-                title: line.title,
-                price: line.price,
-                image: line.image ?? null,
-                quantity: 1,
-              },
-            ],
-          });
-          
-          // Toast para curso agregado
-          try {
-            const { toast } = await import('react-toastify');
-            toast.success(`${line.title} agregado al carrito`, {
-              // position: 'bottom-right', (heredado del container)
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
-          } catch (error) {
-            console.error('Error al mostrar toast:', error);
-          }
-        } else {
-          // Ya existe, solo mostramos toast
-          
-          // Toast para curso ya existente
-          try {
-            const { toast } = await import('react-toastify');
-            toast.info(`${line.title} ya está en tu carrito`, {
-              // position: 'bottom-right', (heredado del container)
-              autoClose: 2000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
-          } catch (error) {
-            console.error('Error al mostrar toast:', error);
-          }
+        const { items } = get();
+        if (items.some(i => i.type === 'course' && i.id === line.id)) {
+          // get().open(); // Eliminado
+          return;
         }
 
-        // Sincronizar con backend
-        const finalItem = get().items.find(i => i.type === 'course' && i.id === line.id);
-        if (finalItem) {
-             cartApi.syncCart([finalItem]).catch(() => {});
-        }
+        const newCourse: CartLineCourse = { ...line, type: 'course', quantity: 1, id: line.id, slug: line.slug, title: line.title, price: line.price };
+        set({
+          items: [...items, newCourse]
+        });
+        
+        // get().open(); // Eliminado
+        cartApi.syncCart([newCourse]).catch(() => {});
       },
     }),
     {
-      name: 'mp:cart:v1',
+      name: 'cart-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ items: s.items }), // solo persistimos items
-      onRehydrateStorage: () => (state, error) => {
-        // Se ejecuta post-hidratación
-        if (error) console.error('[cart] persist error:', error);
-      },
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      }
     }
   )
 );

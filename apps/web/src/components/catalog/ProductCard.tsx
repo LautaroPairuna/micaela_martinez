@@ -11,8 +11,8 @@ import { useFavoritesClient } from '@/hooks/useFavoritesData';
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { Heart, Star, ShoppingCart, Eye } from 'lucide-react';
 
-type ProductMinimal = {
-  id?: string;
+export type ProductCardProps = {
+  id?: string | number;
   slug: string;
   titulo: string;
   precio: number;
@@ -76,7 +76,7 @@ export function resolveProductOriginal(src?: string | null): string | undefined 
   return `/images/producto/${src}`;
 }
 
-export function ProductCard({ p }: { p: ProductMinimal }) {
+export function ProductCard({ p }: { p: ProductCardProps }) {
   const [mounted, setMounted] = useState(false);
 
   const slugify = (s?: string | null) =>
@@ -105,7 +105,9 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
   const outOfStock = typeof p.stock === 'number' && p.stock <= 0;
 
   const { isFavorite, toggleFavorite, isLoading } = useFavoritesClient();
-  const numericId = p.id && /^\d+$/.test(p.id) ? Number(p.id) : undefined;
+  const numericId = p.id 
+    ? (typeof p.id === 'number' ? p.id : (/^\d+$/.test(p.id) ? Number(p.id) : undefined))
+    : undefined;
   const isFav = mounted && numericId ? isFavorite(numericId) : false;
 
   useEffect(() => setMounted(true), []);
@@ -258,7 +260,7 @@ export function ProductCard({ p }: { p: ProductMinimal }) {
             </AddProductButton>
             <Link
               href={`/tienda/producto/${p.slug}`}
-              className="flex items-center justify-center px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-slate-200 hover:bg-[#252525] transition-colors"
+              className="flex items-center justify-center px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-zinc-200 hover:bg-[#252525] transition-colors"
               aria-label="Ver detalles"
             >
               <Eye className="h-4 w-4" />

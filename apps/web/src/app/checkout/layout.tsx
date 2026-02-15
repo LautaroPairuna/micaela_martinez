@@ -13,7 +13,7 @@ export default function CheckoutLayout({
       <div className="sticky top-0 z-50 surface-light text-[var(--fg)]">
         <Header />
       </div>
-      <main className="min-h-screen pt-12 pb-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {children}
         </div>

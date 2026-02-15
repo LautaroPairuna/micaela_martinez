@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { Prisma, TipoItemOrden, EstadoOrden } from '../generated/prisma/client';
+import { Prisma, TipoItemOrden, EstadoOrden } from '@prisma/client';
 
 const toInt = (v: unknown, label = 'id'): number => {
   if (v === null || v === undefined || v === '') {
@@ -137,15 +137,22 @@ export class ReviewsService {
     userId: string | number,
     reviewId: string | number,
     dto: UpdateReviewDto,
+    isAdmin = false,
   ) {
     const userIdNum = toInt(userId, 'userId');
     const reviewIdNum = toInt(reviewId, 'reviewId');
 
-    // Verificar que la reseña existe y pertenece al usuario
-    const existingReview = await this.prisma.resena.findFirst({
-      where: { id: reviewIdNum, usuarioId: userIdNum },
+    // Verificar que la reseña existe
+    const existingReview = await this.prisma.resena.findUnique({
+      where: { id: reviewIdNum },
     });
     if (!existingReview) throw new NotFoundException('Reseña no encontrada');
+
+    if (existingReview.usuarioId !== userIdNum && !isAdmin) {
+      throw new ForbiddenException(
+        'No tienes permisos para editar esta reseña',
+      );
+    }
 
     const updatedReview = await this.prisma.resena.update({
       where: { id: reviewIdNum },
@@ -164,14 +171,24 @@ export class ReviewsService {
     return updatedReview;
   }
 
-  async deleteReview(userId: string | number, reviewId: string | number) {
+  async deleteReview(
+    userId: string | number,
+    reviewId: string | number,
+    isAdmin = false,
+  ) {
     const userIdNum = toInt(userId, 'userId');
     const reviewIdNum = toInt(reviewId, 'reviewId');
 
-    const existingReview = await this.prisma.resena.findFirst({
-      where: { id: reviewIdNum, usuarioId: userIdNum },
+    const existingReview = await this.prisma.resena.findUnique({
+      where: { id: reviewIdNum },
     });
     if (!existingReview) throw new NotFoundException('Reseña no encontrada');
+
+    if (existingReview.usuarioId !== userIdNum && !isAdmin) {
+      throw new ForbiddenException(
+        'No tienes permisos para eliminar esta reseña',
+      );
+    }
 
     await this.prisma.resena.delete({ where: { id: reviewIdNum } });
 

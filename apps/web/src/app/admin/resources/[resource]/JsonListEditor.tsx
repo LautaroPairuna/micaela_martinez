@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Plus, X, GripVertical } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/lib/utils';
@@ -19,18 +19,16 @@ export function JsonListEditor({
   help,
 }: JsonListEditorProps) {
   // Normalizar valor inicial
-  const items: string[] = Array.isArray(value)
-    ? value
-    : typeof value === 'string'
-    ? (() => {
-        try {
-          const parsed = JSON.parse(value);
-          return Array.isArray(parsed) ? parsed : [];
-        } catch {
-          return [];
-        }
-      })()
-    : [];
+  const items = useMemo<string[]>(() => {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [value]);
 
   const [newItem, setNewItem] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);

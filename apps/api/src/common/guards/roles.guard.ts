@@ -84,10 +84,5 @@ export const isStaff = (userRoles: string[]): boolean => {
   return userRoles.includes('STAFF') || userRoles.includes('ADMIN');
 };
 
-// Helper function para verificar si es instructor
-export const isInstructor = (userRoles: string[]): boolean => {
-  return userRoles.includes('INSTRUCTOR') || userRoles.includes('ADMIN');
-};
-
 // Exportar el tipo para uso en otros archivos
 export type AuthenticatedUser = JwtUser;

@@ -97,7 +97,7 @@ export function CartPanel() {
       <aside
         ref={panelRef}
         className={[
-          'absolute right-0 top-0 h-dvh w-full max-w-md bg-[var(--bg)] border-l border-[var(--border)] shadow-2xl',
+          'absolute right-0 top-0 h-dvh w-full max-w-md bg-zinc-950 border-l border-zinc-800 shadow-2xl',
           'grid grid-rows-[auto_1fr_auto]',
           'transform-gpu transition-transform duration-300',
           show ? 'translate-x-0' : 'translate-x-full',
@@ -105,20 +105,20 @@ export function CartPanel() {
         ].join(' ')}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 h-20 flex items-center justify-between px-6 border-b border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
+        <div className="sticky top-0 z-10 h-20 flex items-center justify-between px-6 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-r from-[var(--gold)]/25 via-[var(--pink)]/20 to-[var(--gold-dark)]/25 border border-[var(--pink)]/40">
+            <div className="p-2 rounded-xl bg-gradient-to-r from-[var(--gold)]/10 via-[var(--pink)]/10 to-[var(--gold-dark)]/10 border border-[var(--pink)]/20">
               <ShoppingCart className="size-5 text-[var(--pink)]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[var(--fg)]">Tu carrito</h2>
-              <span className="text-sm text-[var(--muted)]">{count} {count === 1 ? 'artículo' : 'artículos'}</span>
+              <h2 className="text-lg font-semibold text-white">Tu carrito</h2>
+              <span className="text-sm text-zinc-400">{count} {count === 1 ? 'artículo' : 'artículos'}</span>
             </div>
           </div>
           <button
             ref={closeBtnRef}
             onClick={close}
-            className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
+            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
             aria-label="Cerrar carrito"
           >
             <X className="size-5" />
@@ -129,47 +129,30 @@ export function CartPanel() {
         <div className="overflow-y-auto p-6 space-y-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-[var(--bg-subtle)] to-[var(--bg-hover)] border border-[var(--border)] mb-6">
+              <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 mb-6">
                 <ShoppingCart className="size-12 text-[var(--pink)] mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-[var(--fg)] mb-2">Tu carrito está vacío</h3>
-              <p className="text-sm text-[var(--muted)] mb-6 max-w-[20rem]">Descubre nuestros productos y cursos para comenzar tu compra</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Tu carrito está vacío</h3>
+              <p className="text-sm text-zinc-400 mb-6 max-w-[20rem]">Descubre nuestros productos y cursos para comenzar tu compra</p>
               <div className="flex flex-col gap-3 w-full max-w-[16rem]">
                 <Link 
                   href="/tienda" 
                   onClick={close} 
-                  className="w-full rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] text-black font-semibold px-4 py-3 hover:shadow-lg transition-all duration-200 text-center"
+                  className="w-full rounded-xl border border-[var(--gold)] bg-transparent text-[var(--gold)] font-bold px-4 py-3 hover:bg-[var(--gold)]/10 hover:shadow-[0_0_20px_-5px_var(--gold)] transition-all duration-300 transform hover:scale-[1.02] text-center"
                 >
                   Explorar tienda
-                </Link>
-                <Link 
-                  href="/cursos" 
-                  onClick={close} 
-                  className="w-full rounded-xl border border-[var(--pink)] bg-transparent text-[var(--pink)] font-semibold px-4 py-3 hover:bg-[var(--pink)] hover:text-black transition-colors text-center"
-                >
-                  Ver cursos
                 </Link>
               </div>
             </div>
           ) : (
             items.map((it) => {
-              const href = it.type === 'product' ? `/tienda/producto/${it.slug}` : `/cursos/detalle/${it.slug}`;
-              const qty = isCartLineProduct(it) ? it.quantity : 1;
-
-              // Usamos maxQty del store si está presente (evitamos `any`)
-              const maxQty =
-                isCartLineProduct(it) && (it as { maxQty?: number | null }).maxQty != null
-                  ? (it as { maxQty?: number | null }).maxQty!
-                  : undefined;
-
-              const canDec = isCartLineProduct(it) ? qty > 1 : false;
-              const canInc = isCartLineProduct(it)
-                ? typeof maxQty === 'number'
-                  ? qty < maxQty
-                  : true
-                : false;
-
-              const lineTotal = isCartLineProduct(it) ? it.price * qty : it.price;
+              const href = it.type === 'product' ? `/tienda/producto/${it.slug}` : `/cursos/${it.slug}`;
+              const qty = it.quantity;
+              const lineTotal = it.price * qty;
+              
+              const canDec = qty > 1;
+              const maxQty = isCartLineProduct(it) ? it.maxQty : undefined;
+              const canInc = typeof maxQty === 'number' ? qty < maxQty : true;
 
               const onIncSafe = () => {
                 if (!isCartLineProduct(it)) return;
@@ -180,12 +163,12 @@ export function CartPanel() {
               return (
                 <div
                    key={`${it.type}-${it.id}`}
-                   className="bg-[var(--bg)] rounded-xl border border-[var(--border)] p-3 hover:shadow-sm transition-shadow duration-200"
+                   className="bg-zinc-900/30 rounded-xl border border-zinc-800/60 p-3 hover:border-zinc-700/80 hover:bg-zinc-900/50 transition-all duration-200 group"
                  >
                    <div className="flex gap-3">
                      {/* Miniatura */}
                      <Link href={href} onClick={close} className="block focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 rounded-lg flex-shrink-0">
-                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-[var(--bg-subtle)] border border-[var(--border)]">
+                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800">
                          <SafeImage src={it.image || '/images/placeholder.jpg'} alt={it.title} ratio="1/1" className="object-cover" />
                        </div>
                      </Link>
@@ -193,67 +176,67 @@ export function CartPanel() {
                     {/* Info principal */}
                      <div className="flex-1 min-w-0">
                       <Link href={href} onClick={close} className="block">
-                        <h4 className="text-sm font-semibold text-[var(--fg)] hover:text-[var(--pink)] line-clamp-2 transition-colors">
+                        <h4 className="text-sm font-semibold text-zinc-100 group-hover:text-[var(--pink)] line-clamp-2 transition-colors">
                           {it.title}
                         </h4>
                       </Link>
                        
                        <div className="mt-1 flex items-center gap-2">
-                         <span className="text-xs text-[var(--muted)]">Precio:</span>
-                         <span className="text-sm font-medium text-[var(--fg)]">{formatCurrency(it.price)}</span>
+                         <span className="text-xs text-zinc-500">Precio:</span>
+                         <span className="text-sm font-medium text-zinc-300">{formatCurrency(it.price)}</span>
                        </div>
 
                       {/* Controles de cantidad y acciones */}
                        <div className="mt-2 flex items-center justify-between">
                          {isCartLineProduct(it) ? (
                            <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 rounded-md border border-[var(--pink)]/40 bg-[var(--bg)] px-2 py-1">
+                          <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950/50 px-2 py-1">
                               <button
                                  onClick={() => dec(it.id)}
-                                 className="p-1.5 rounded-md text-[var(--fg)] hover:bg-[var(--bg-hover)] disabled:opacity-40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
+                                 className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors focus:outline-none"
                                  aria-label="Disminuir cantidad"
                                  disabled={!canDec}
                                >
-                                 <Minus className="h-3.5 w-3.5" />
+                                 <Minus className="h-3 w-3" />
                                </button>
-                               <span className="min-w-[1.75rem] text-center text-sm font-bold text-[var(--fg)] tabular-nums px-1.5">{qty}</span>
+                               <span className="min-w-[1.5rem] text-center text-sm font-bold text-zinc-200 tabular-nums px-1">{qty}</span>
                                <button
                                  onClick={onIncSafe}
-                                 className="p-1.5 rounded-md text-[var(--fg)] hover:bg-[var(--bg-hover)] disabled:opacity-40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
+                                 className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors focus:outline-none"
                                  aria-label="Aumentar cantidad"
                                  disabled={!canInc}
                                  title={canInc ? '' : 'Sin stock disponible'}
                                >
-                                 <Plus className="h-3.5 w-3.5" />
+                                 <Plus className="h-3 w-3" />
                                </button>
                           </div>
                           {typeof maxQty === 'number' && (
-                             <span className="text-xs text-[var(--muted)]">Stock: {maxQty}</span>
+                             <span className="text-xs text-zinc-500">Stock: {maxQty}</span>
                           )}
                            </div>
                          ) : (
-                          <div className="text-xs text-[var(--muted)]">Curso</div>
+                          <div className="text-xs text-zinc-500">Curso</div>
                          )}
                          
                          <button
                            onClick={() => remove(it.id, it.type)}
-                           className="p-1.5 rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                           className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                            aria-label="Eliminar"
                            title="Eliminar del carrito"
                          >
-                           <Trash2 className="size-3" />
+                           <Trash2 className="size-3.5" />
                          </button>
                        </div>
                       
                       {/* Precio total */}
-                       <div className="mt-2 pt-2 border-t border-[var(--border)] flex justify-between items-center">
-                         <span className="text-xs text-[var(--muted)]">Total:</span>
+                       <div className="mt-2 pt-2 border-t border-zinc-800/50 flex justify-between items-center">
+                         <span className="text-xs text-zinc-500">Total:</span>
                          <div className="text-right">
-                           <div className="text-sm font-bold text-[var(--fg)] tabular-nums" aria-live="polite" aria-atomic="true">
+                           <div className="text-sm font-bold text-[var(--gold)] tabular-nums" aria-live="polite" aria-atomic="true">
                              {formatCurrency(lineTotal)}
                            </div>
                            {isCartLineProduct(it) && qty > 1 && (
-                             <div className="text-xs text-[var(--muted)] tabular-nums">({formatCurrency(it.price)} c/u)</div>
+                             <div className="text-xs text-zinc-500 tabular-nums">({formatCurrency(it.price)} c/u)</div>
                            )}
                          </div>
                        </div>
@@ -266,15 +249,15 @@ export function CartPanel() {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 z-10 border-t border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur p-6">
+        <div className="sticky bottom-0 z-10 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur p-6">
           <div className="space-y-4">
             {/* Resumen de totales */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-[var(--muted)]">
+              <div className="flex items-center justify-between text-sm text-zinc-400">
                 <span>Subtotal ({count} {count === 1 ? 'artículo' : 'artículos'}):</span>
-                <span className="tabular-nums font-medium">{formatCurrency(subtotal)}</span>
+                <span className="tabular-nums font-medium text-zinc-300">{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex items-center justify-between text-lg font-bold text-[var(--fg)] pt-2 border-t border-[var(--border)]">
+              <div className="flex items-center justify-between text-lg font-bold text-white pt-2 border-t border-zinc-800">
                 <span>Total:</span>
                 <span className="tabular-nums text-xl" aria-live="polite" aria-atomic="true">
                   {formatCurrency(subtotal)}
@@ -286,11 +269,13 @@ export function CartPanel() {
             <div className="space-y-3">
               {!loading && !me ? (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                  <div className="flex items-center gap-3 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl backdrop-blur-sm">
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-[var(--pink)]/10 ring-1 ring-[var(--pink)]/20 flex-shrink-0">
+                      <ShoppingCart className="h-5 w-5 text-[var(--pink)]" />
+                    </div>
                     <div className="text-sm">
-                      <p className="font-medium text-yellow-800">Inicia sesión para continuar</p>
-                      <p className="text-yellow-600">Necesitas una cuenta para proceder al pago</p>
+                      <p className="font-bold text-white">Inicia sesión para continuar</p>
+                      <p className="text-zinc-400 text-xs">Necesitas una cuenta para proceder al pago</p>
                     </div>
                   </div>
                   <button
@@ -298,7 +283,7 @@ export function CartPanel() {
                       close();
                       router.push('/auth?redirect=/checkout');
                     }}
-                    className="block w-full rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] px-6 py-4 text-center font-bold text-black hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                    className="block w-full rounded-xl border border-[var(--gold)] bg-transparent px-6 py-4 text-center font-bold text-[var(--gold)] hover:bg-[var(--gold)]/10 hover:shadow-[0_0_20px_-5px_var(--gold)] transition-all duration-300 transform hover:scale-[1.02]"
                   >
                     Iniciar sesión y continuar
                   </button>
@@ -307,7 +292,7 @@ export function CartPanel() {
                 <Link
                   href="/checkout"
                   onClick={close}
-                  className="block w-full rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] px-6 py-4 text-center font-bold text-black hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
+                  className="block w-full rounded-xl border border-[var(--gold)] bg-transparent px-6 py-4 text-center font-bold text-[var(--gold)] hover:bg-[var(--gold)]/10 hover:shadow-[0_0_20px_-5px_var(--gold)] transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/40"
                 >
                   Proceder al pago
                 </Link>
@@ -316,7 +301,7 @@ export function CartPanel() {
                 <Link
                   href="/tienda"
                   onClick={close}
-                  className="flex-1 rounded-xl border border-[var(--pink)] bg-transparent px-4 py-3 text-center font-semibold text-[var(--pink)] hover:bg-[var(--pink)] hover:text-black transition-colors"
+                  className="flex-1 rounded-xl border border-[var(--pink)] bg-transparent px-4 py-3 text-center font-bold text-[var(--pink)] hover:bg-[var(--pink)]/10 hover:shadow-[0_0_15px_-5px_var(--pink)] hover:scale-[1.02] transition-all duration-300"
                 >
                   Seguir comprando
                 </Link>
@@ -328,8 +313,6 @@ export function CartPanel() {
                         '¿Estás seguro de que quieres vaciar el carrito? Esta acción no se puede deshacer.',
                         10000
                       );
-                      // Por ahora mantenemos la funcionalidad básica
-                      // TODO: Implementar modal de confirmación personalizado
                       setTimeout(() => {
                         if (window.confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
                           clear();
@@ -337,7 +320,7 @@ export function CartPanel() {
                         }
                       }, 100);
                     }}
-                    className="px-4 py-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                    className="px-4 py-3 rounded-xl border border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
                     title="Vaciar carrito"
                   >
                     <Trash2 className="size-5" />

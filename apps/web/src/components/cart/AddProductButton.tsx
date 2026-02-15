@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useCart } from '@/store/cart';
+import { toast } from '@/hooks/use-toast';
 import { ShoppingCart } from 'lucide-react';
 
 type ProductForCartButton = {
@@ -43,6 +44,7 @@ export function AddProductButton({
         maxQty,
         quantity: 1,
       });
+      toast.success('Producto agregado al carrito');
     } catch (error) {
       console.error('Error al agregar al carrito:', error);
     }

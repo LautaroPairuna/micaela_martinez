@@ -10,23 +10,32 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   const me = await getMe();
   
   return (
-    <div className="w-full min-h-screen relative lg:flex">
-      {/* Sidebar - Se maneja internamente en AccountSidebar */}
+    // Layout tipo Dashboard: Ocupa toda la pantalla disponible (viewport height)
+    <div className="w-full h-screen lg:flex lg:overflow-hidden bg-black">
+      {/* Sidebar - Fijo a la izquierda con fondo distinto al negro puro */}
       <aside className="
-        lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-0
-        lg:h-screen lg:overflow-y-auto lg:border-r lg:border-gray-200
+        hidden lg:block lg:w-80 lg:flex-shrink-0 
+        lg:h-full lg:overflow-y-auto lg:border-r lg:border-zinc-800 bg-zinc-950
       ">
         <AccountSidebar me={me} />
       </aside>
 
-      {/* Main Content */}
+      {/* Sidebar Mobile - Se mantiene flotante/drawer controlado por AccountSidebar */}
+      <div className="lg:hidden">
+        <AccountSidebar me={me} />
+      </div>
+
+      {/* Main Content - Scroll independiente */}
       <main className="
         flex-1 min-w-0 isolate relative z-0 
-        space-y-6 py-4 lg:py-6 xl:py-10 
-        px-4 lg:px-6 xl:px-10
-        pt-20 lg:pt-6 xl:pt-10
+        h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent
+        py-6 px-4 lg:px-8 xl:px-12
+        pt-24 lg:pt-10
+        bg-zinc-900
       ">
-        {children}
+        <div className="max-w-7xl mx-auto space-y-8 pb-20">
+          {children}
+        </div>
       </main>
     </div>
   );

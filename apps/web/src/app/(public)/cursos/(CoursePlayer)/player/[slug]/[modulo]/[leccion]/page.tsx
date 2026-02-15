@@ -104,12 +104,6 @@ export default async function LessonPage({
       titulo: fullCourse.titulo,
       descripcion: fullCourse.descripcionMD ?? null,
       imagenUrl: fullCourse.portadaUrl ?? null,
-      instructor: fullCourse.instructor
-        ? {
-            id: fullCourse.instructor.nombre || 'unknown',
-            nombre: fullCourse.instructor.nombre || 'Instructor',
-          }
-        : null,
       modulos: fullCourse.modulos
         ? fullCourse.modulos.map((moduloItem: NonNullable<CourseDetail['modulos']>[number], index: number) => ({
             id: moduloItem.id,

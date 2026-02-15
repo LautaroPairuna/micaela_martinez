@@ -262,8 +262,8 @@ export function HeroCarousel({
               const isSkeleton = loading;
 
               const badgeText = isSkeleton ? 'SOPORTE INCLUIDO' : (s as SlideVM).badgeText.toUpperCase();
-              const titleBase = isSkeleton ? 'INSTRUCTORES EXPERTOS ' : (s as SlideVM).titleBase.toUpperCase() + ' ';
-              const titleHighlight = isSkeleton ? 'APRENDÉ DE VERDAD' : (s as SlideVM).titleHighlight.toUpperCase();
+              const titleBase = isSkeleton ? 'PROFESIONALES EXPERTOS ' : (s as SlideVM).titleBase.toUpperCase() + ' ';
+              const titleHighlight = isSkeleton ? 'EN TU ÁREA' : (s as SlideVM).titleHighlight.toUpperCase();
 
               const description = isSkeleton
                 ? 'CARGANDO…'
@@ -274,7 +274,7 @@ export function HeroCarousel({
               const src = isSkeleton ? '' : (s as SlideVM).src;
               const alt = isSkeleton ? 'Hero' : (s as SlideVM).alt || (s as SlideVM).overlayTitle;
 
-              const overlayTitle = isSkeleton ? 'INSTRUCTORES EXPERTOS' : (s as SlideVM).overlayTitle.toUpperCase();
+              const overlayTitle = isSkeleton ? 'PROFESIONALES EXPERTOS' : (s as SlideVM).overlayTitle.toUpperCase();
               const overlaySubtitle = isSkeleton ? 'PASO A PASO' : (s as SlideVM).overlaySubtitle.toUpperCase();
 
               const floatingTop = isSkeleton ? 'SOPORTE INCLUIDO' : (s as SlideVM).floatingTop.toUpperCase();

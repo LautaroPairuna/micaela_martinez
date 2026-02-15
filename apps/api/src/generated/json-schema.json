@@ -125,12 +125,6 @@
           "items": {
             "$ref": "#/definitions/PagoSuscripcion"
           }
-        },
-        "cursosInstructor": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Curso"
-          }
         }
       },
       "required": [
@@ -311,22 +305,6 @@
         "creadoEn": {
           "type": "string",
           "format": "date-time"
-        },
-        "instructorId": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "instructor": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Usuario"
-            },
-            {
-              "type": "null"
-            }
-          ]
         },
         "modulos": {
           "type": "array",
@@ -1452,7 +1430,9 @@
             "RESPUESTA_RESENA",
             "LIKE_RESENA",
             "MENCION",
-            "SISTEMA"
+            "SISTEMA",
+            "PROMOCION",
+            "RECORDATORIO"
           ]
         },
         "titulo": {
@@ -1505,35 +1485,19 @@
         "usuarioId": {
           "type": "integer"
         },
-        "nuevaResena": {
-          "type": "boolean",
-          "default": true
-        },
         "respuestaResena": {
           "type": "boolean",
           "default": true
         },
+        "likesResena": {
+          "type": "boolean",
+          "default": true
+        },
+        "descuentosFavoritos": {
+          "type": "boolean",
+          "default": true
+        },
         "actualizacionesSistema": {
-          "type": "boolean",
-          "default": true
-        },
-        "mantenimiento": {
-          "type": "boolean",
-          "default": true
-        },
-        "reporteContenido": {
-          "type": "boolean",
-          "default": true
-        },
-        "contenidoPendiente": {
-          "type": "boolean",
-          "default": true
-        },
-        "resumenDiario": {
-          "type": "boolean",
-          "default": false
-        },
-        "notificacionesInstantaneas": {
           "type": "boolean",
           "default": true
         },

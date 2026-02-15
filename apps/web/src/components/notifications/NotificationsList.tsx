@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Bell, MessageCircle, Heart, AtSign, Trash2, Check, CheckCheck, Loader2 } from 'lucide-react';
+import { Bell, MessageCircle, Heart, AtSign, Trash2, Check, CheckCheck, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { useNotifications, type AppNotification } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NotificationsListProps {
   className?: string;
@@ -75,20 +76,20 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
   return (
     <div
       className={cn(
-        'group relative p-4 border rounded-lg transition-all duration-200 hover:shadow-lg cursor-pointer',
+        'group relative p-4 border rounded-xl transition-all duration-300 hover:shadow-lg cursor-pointer',
         notification.leida 
-          ? 'bg-[var(--card)] border-[var(--border)] hover:bg-[var(--subtle)]' 
-          : 'bg-gradient-to-r from-[var(--gold)]/5 to-[var(--gold)]/10 border-[var(--gold)]/20 shadow-sm hover:shadow-[var(--gold)]/20',
-        isSelected && 'ring-2 ring-[var(--gold)] bg-[var(--gold)]/5'
+          ? 'bg-transparent border-zinc-800 hover:bg-zinc-900/50' 
+          : 'bg-[var(--gold)]/5 border-[var(--gold)]/30 shadow-[0_0_15px_-5px_rgba(212,175,55,0.1)]',
+        isSelected && 'ring-1 ring-[var(--gold)] bg-[var(--gold)]/10'
       )}
       onClick={handleClick}
     >
       {/* Indicador de no leída */}
       {!notification.leida && (
-        <div className="absolute top-3 right-3 w-3 h-3 bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)] rounded-full shadow-lg ring-2 ring-[var(--gold)]/30 animate-pulse" />
+        <div className="absolute top-3 right-3 w-2 h-2 bg-[var(--gold)] rounded-full shadow-[0_0_10px_var(--gold)] animate-pulse" />
       )}
       
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4">
         {/* Checkbox para selección múltiple */}
         <div className="flex items-center pt-1">
           <input
@@ -101,21 +102,17 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
               e.stopPropagation();
               onToggleSelect(notification.id);
             }}
-            className="w-4 h-4 text-[var(--gold)] bg-[var(--card)] border-[var(--border)] rounded focus:ring-[var(--gold)] focus:ring-2"
+            className="w-4 h-4 text-[var(--gold)] bg-zinc-900 border-zinc-700 rounded focus:ring-[var(--gold)] focus:ring-offset-0"
           />
         </div>
         {/* Icono */}
         <div className={cn(
-          'flex-shrink-0 p-3 rounded-xl shadow-sm',
+          'flex-shrink-0 p-3 rounded-xl transition-colors duration-300',
           notification.leida 
-            ? 'bg-[var(--subtle)] border border-[var(--border)]' 
-            : 'bg-gradient-to-br from-[var(--gold)]/10 to-[var(--gold)]/20 border border-[var(--gold)]/30'
+            ? 'bg-zinc-900/50 border border-zinc-800 text-zinc-500' 
+            : 'bg-[var(--gold)]/10 border border-[var(--gold)]/30 text-[var(--gold)]'
         )}>
-          <div className={cn(
-            notification.leida ? 'text-[var(--muted)]' : 'text-[var(--gold)]'
-          )}>
-            {getNotificationIcon(notification.tipo)}
-          </div>
+          {getNotificationIcon(notification.tipo)}
         </div>
         
         {/* Contenido */}
@@ -123,12 +120,12 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <h4 className={cn(
-                'text-sm font-medium leading-5',
-                notification.leida ? 'text-[var(--fg)]' : 'text-[var(--fg)] font-semibold'
+                'text-sm font-medium leading-5 mb-1',
+                notification.leida ? 'text-zinc-300' : 'text-white font-semibold'
               )}>
                 {notification.titulo}
               </h4>
-              <p className="text-sm text-[var(--muted)] mt-1 leading-5">
+              <p className="text-sm text-zinc-400 leading-relaxed">
                 {getEnhancedMessage(notification)}
               </p>
             </div>
@@ -143,10 +140,10 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
                     e.stopPropagation();
                     onMarkAsRead(notification.id);
                   }}
-                  className="h-7 w-7 p-0 hover:bg-[var(--gold)]/10 text-[var(--gold)] hover:text-[var(--gold-dark)] rounded-md"
+                  className="h-8 w-8 p-0 hover:bg-[var(--gold)]/10 text-[var(--gold)] border border-transparent hover:border-[var(--gold)]/30 rounded-lg"
                   title="Marcar como leída"
                 >
-                  <Check className="h-3 w-3" />
+                  <Check className="h-4 w-4" />
                 </Button>
               )}
               <Button
@@ -156,7 +153,7 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
                   e.stopPropagation();
                   onDelete(notification.id);
                 }}
-                className="h-7 w-7 p-0 hover:bg-red-500/20 text-red-500 hover:text-red-600 border border-red-400 hover:border-red-500 rounded-md transition-all"
+                className="h-8 w-8 p-0 hover:bg-red-500/10 text-zinc-500 hover:text-red-400 border border-transparent hover:border-red-500/30 rounded-lg transition-all"
                 title="Eliminar notificación"
               >
                 <Trash2 className="h-4 w-4" />
@@ -166,7 +163,8 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
           
           {/* Timestamp */}
           <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-[var(--muted)]">
+            <span className="text-xs text-zinc-500 flex items-center gap-1">
+              <Clock className="h-3 w-3" />
               {formatDistanceToNow(new Date(notification.creadoEn), {
                 addSuffix: true,
                 locale: es,
@@ -229,62 +227,88 @@ export function NotificationsList({ className }: NotificationsListProps) {
     setFilter(newFilter);
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 20, transition: { duration: 0.2 } }
+  };
+
   if (loading && notifications.length === 0) {
     return (
-      <Card className={className}>
-        <CardBody className="p-6">
+      <div className={cn("rounded-2xl border border-zinc-800 bg-zinc-950/50", className)}>
+        <div className="p-12">
           <div className="flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card className={className}>
-        <CardBody className="p-6">
+      <div className={cn("rounded-2xl border border-red-900/30 bg-red-950/10", className)}>
+        <div className="p-6">
           <div className="text-center">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={() => setFilter(currentFilter)} variant="outline">
+            <p className="text-red-400 mb-4">{error}</p>
+            <Button onClick={() => setFilter(currentFilter)} variant="outline" className="border-red-800 text-red-400 hover:bg-red-950/30">
               Reintentar
             </Button>
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardBody>
-        <div className="flex items-center justify-between mb-4">
+    <div className={cn("rounded-2xl border border-zinc-800 bg-zinc-950/50", className)}>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-[var(--fg)]">Notificaciones</h3>
+            <h3 className="text-lg font-semibold text-white">Notificaciones</h3>
             {unreadCount > 0 && (
-              <Pill tone="warning" className="px-2 py-1 text-xs font-medium">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20">
                 {unreadCount} sin leer
-              </Pill>
+              </span>
             )}
           </div>
           
           <Tabs value={currentFilter} onValueChange={handleFilterChange}>
-            <TabsList>
-              <TabsTrigger value="all">Todas</TabsTrigger>
-              <TabsTrigger value="unread">Sin leer</TabsTrigger>
+            <TabsList className="bg-zinc-900 border border-zinc-800">
+              <TabsTrigger 
+                value="all" 
+                className="data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400"
+              >
+                Todas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="unread"
+                className="data-[state=active]:bg-zinc-800 data-[state=active]:text-[var(--gold)] text-zinc-400"
+              >
+                Sin leer
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           {selectedNotifications.size > 0 ? (
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSelectAll}
-                className="text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--subtle)]"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
               >
                 {selectedNotifications.size === notifications.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
               </Button>
@@ -292,7 +316,7 @@ export function NotificationsList({ className }: NotificationsListProps) {
                 variant="ghost"
                 size="sm"
                 onClick={handleDeleteSelected}
-                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border border-red-200 hover:border-red-300"
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/30"
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Eliminar ({selectedNotifications.size})
@@ -305,7 +329,7 @@ export function NotificationsList({ className }: NotificationsListProps) {
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="text-[var(--gold)] hover:text-[var(--gold-dark)] hover:bg-[var(--gold)]/10"
+                  className="text-[var(--gold)] hover:text-[var(--gold)] hover:bg-[var(--gold)]/10 border border-transparent hover:border-[var(--gold)]/30"
                 >
                   <CheckCheck className="h-4 w-4 mr-1" />
                   Marcar todas como leídas
@@ -316,39 +340,47 @@ export function NotificationsList({ className }: NotificationsListProps) {
         </div>
 
         {!Array.isArray(notifications) || notifications.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--gold)]/10 flex items-center justify-center">
-              <Bell className="h-8 w-8 text-[var(--gold)]" />
+          <div className="p-12 text-center border-t border-zinc-800/50 mt-4">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+              <Bell className="h-8 w-8 text-zinc-600" />
             </div>
-            <h3 className="text-lg font-medium text-[var(--fg)] mb-2">
+            <h3 className="text-lg font-medium text-zinc-300 mb-2">
               No tienes notificaciones
             </h3>
-            <p className="text-[var(--muted)]">
+            <p className="text-zinc-500 max-w-sm mx-auto">
               Cuando recibas notificaciones de respuestas, likes o menciones, aparecerán aquí.
             </p>
           </div>
         ) : (
-          <div className="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            {Array.isArray(notifications) && notifications.map((notification) => (
-              <NotificationItem
-                 key={notification.id}
-                 notification={notification}
-                 onMarkAsRead={markAsRead}
-                 onDelete={deleteNotification}
-                 isSelected={selectedNotifications.has(notification.id)}
-                 onToggleSelect={handleToggleSelect}
-               />
-            ))}
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent"
+          >
+            <AnimatePresence mode="popLayout">
+              {Array.isArray(notifications) && notifications.map((notification) => (
+                <motion.div key={notification.id} variants={item} layout>
+                  <NotificationItem
+                    notification={notification}
+                    onMarkAsRead={markAsRead}
+                    onDelete={deleteNotification}
+                    isSelected={selectedNotifications.has(notification.id)}
+                    onToggleSelect={handleToggleSelect}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
             {pagination.page < pagination.totalPages && (
-              <div className="flex justify-center mt-4">
-                <Button onClick={loadMore} disabled={loading} variant="outline">
+              <div className="flex justify-center mt-6">
+                <Button onClick={loadMore} disabled={loading} variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}Cargar más
                 </Button>
               </div>
             )}
-          </div>
+          </motion.div>
         )}
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }

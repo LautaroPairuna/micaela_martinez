@@ -1,5 +1,5 @@
 // apps/api/src/admin/dashboard/admin-dashboard.dto.ts
-import { EstadoOrden } from '../../../src/generated/prisma/client';
+import { EstadoOrden } from '@prisma/client';
 
 export interface OrdersByStatusDto {
   [status: string]: number;

@@ -67,7 +67,7 @@ export function ProductGallery({
   return (
     <div className="w-full" aria-label="Galería de producto" aria-roledescription="carousel">
       {/* Imagen principal */}
-      <div className="relative aspect-square sm:aspect-[1/1] rounded-xl2 overflow-hidden border border-default bg-neutral-900/40 select-none">
+      <div className="relative aspect-square sm:aspect-[1/1] rounded-xl2 overflow-hidden select-none">
         <button
           type="button"
           onClick={() => lightboxEnabled && setOpen(true)}
@@ -128,7 +128,7 @@ export function ProductGallery({
       </div>
 
       {/* Thumbnails */}
-      {imgs.length > 0 && (
+      {imgs.length > 1 && (
         <div className="mt-3 grid grid-flow-col auto-cols-[64px] md:auto-cols-[80px] gap-2 overflow-x-auto md:grid-cols-7 md:overflow-visible" role="listbox" aria-label="Miniaturas">
           {imgs.map((im, i) => {
             const selected = i === idx;

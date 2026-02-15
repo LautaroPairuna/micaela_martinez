@@ -59,7 +59,7 @@ type Me = {
   id: string;
   email: string;
   nombre?: string | null;
-  rol?: 'ADMIN' | 'STAFF' | 'INSTRUCTOR' | 'CUSTOMER' | string | undefined;
+  rol?: 'ADMIN' | 'STAFF' | 'CUSTOMER' | string | undefined;
   roles?: string[];
 } | null;
 
@@ -277,7 +277,7 @@ function UserMenu({ me, onLogout }:{ me: NonNullable<Me>, onLogout: ()=>void }) 
 
   const initials = useMemo(() => getInitials(me?.nombre, me?.email, 2), [me]);
   // Verificar roles con acceso a administración (incluyendo INSTRUCTOR)
-  const hasAdminAccess = me?.roles?.includes('ADMIN') || me?.roles?.includes('STAFF') || me?.roles?.includes('INSTRUCTOR');
+  const hasAdminAccess = me?.roles?.includes('ADMIN') || me?.roles?.includes('STAFF');
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {

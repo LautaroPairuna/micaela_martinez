@@ -224,163 +224,114 @@ export function EnrollmentCard({
   return (
     <Card
       key={enrollment.id}
-      className="group relative hover:shadow-xl transition-all duration-300 border-[var(--border)] bg-[var(--bg)] overflow-hidden hover:border-[var(--gold)]/30"
+      className="group relative h-full flex flex-col overflow-hidden border border-white/10 bg-[#09090b] hover:border-[var(--gold)] hover:shadow-[0_0_30px_-5px_rgba(197,164,109,0.15)] transition-all duration-300 ease-out rounded-xl"
     >
-      <CardBody className="p-0">
-        {/* Botón de cancelación de suscripción */}
-        {hasSubscription ? (
-          <div className="absolute top-4 right-4 z-10">
-            <SubscriptionCancelButton orderId={String(enrollment.id)} />
+      {/* Botón de cancelación (flotante sobre la imagen) */}
+      {hasSubscription ? (
+        <div className="absolute top-3 right-3 z-20">
+          <SubscriptionCancelButton orderId={String(enrollment.id)} />
+        </div>
+      ) : null}
+
+      {/* Imagen de Portada (Cabeza) */}
+      <div className="relative w-full aspect-video overflow-hidden bg-zinc-900">
+        {course?.portadaUrl ? (
+          <SafeImage
+            src={course.portadaUrl}
+            alt={course?.titulo || 'Curso'}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+            <BookOpen className="h-12 w-12 text-[var(--gold)]/20" strokeWidth={1.5} />
           </div>
-        ) : null}
+        )}
+        
+        {/* Overlay degradado para legibilidad si fuera necesario */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent opacity-60" />
 
-        <div className="flex flex-col lg:flex-row">
-          {/* Imagen del curso */}
-          <div className="lg:w-80 h-48 lg:h-auto relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-            {course?.portadaUrl ? (
-              <SafeImage
-                src={course.portadaUrl}
-                alt={course?.titulo || 'Curso'}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--gold)]/10 to-[var(--gold)]/20">
-                <BookOpen className="h-12 w-12 text-[var(--gold)]" />
+        {/* Badge de estado (Superpuesto en la imagen) */}
+        <div className="absolute bottom-3 left-3 z-10">
+           {isCompleted ? (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/90 text-white text-[10px] font-bold backdrop-blur-md shadow-lg border border-green-400/20">
+              <Award className="h-3 w-3" />
+              COMPLETADO
+            </div>
+           ) : (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--gold)] text-black text-[10px] font-bold backdrop-blur-md shadow-lg border border-white/10">
+              <PlayCircle className="h-3 w-3 fill-black/10" />
+              EN PROGRESO
+            </div>
+           )}
+        </div>
+      </div>
+
+      {/* Contenido Principal */}
+      <CardBody className="flex-1 p-5 flex flex-col justify-between bg-transparent relative">
+        <div className="space-y-4">
+          {/* Título e Info */}
+          <div>
+            <h3 className="text-xl font-bold text-white group-hover:text-[var(--gold)] transition-colors line-clamp-2 font-serif tracking-tight leading-snug min-h-[3.5rem]">
+              {course?.titulo || 'Curso sin título'}
+            </h3>
+            
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 font-medium">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-[var(--gold)]" />
+                <span>{course?._count?.modulos || 0} módulos</span>
               </div>
-            )}
-
-            {/* Badge de estado */}
-            <div className="absolute top-4 left-4">
-              {isCompleted ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/95 text-white text-xs font-medium backdrop-blur-sm shadow-lg">
-                  <Award className="h-3 w-3" />
-                  Completado
-                </div>
-              ) : (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--gold)]/95 text-black text-xs font-medium backdrop-blur-sm shadow-lg">
-                  <PlayCircle className="h-3 w-3" />
-                  En progreso
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-[var(--gold)]" />
+                <span>Intermedio</span>
+              </div>
+              {hasSubscription && (
+                <div className="flex items-center gap-1.5 text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/20">
+                  <Clock className="h-3 w-3" />
+                  <span>{diasTotales} días</span>
                 </div>
               )}
             </div>
-
-            {/* Progreso visual */}
-            {!isCompleted && progressPct > 0 ? (
-              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-700">
-                <div
-                  className="h-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold-200)] transition-all duration-700 ease-out"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-            ) : null}
           </div>
 
-          {/* Contenido del curso */}
-          <div className="flex-1 p-6 lg:p-8">
-            <div className="space-y-5">
-              {/* Header del curso */}
-              <div>
-                <h3 className="text-xl lg:text-2xl font-bold text-[var(--fg)] group-hover:text-[var(--gold)] transition-colors line-clamp-2 leading-tight">
-                  {course?.titulo || 'Curso sin título'}
-                </h3>
-                <p className="text-[var(--muted)] mt-3 line-clamp-2 text-sm lg:text-base leading-relaxed">
-                  Curso • {course?._count?.modulos || 0} módulos
-                </p>
-              </div>
+          {/* Progreso */}
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wider font-bold text-zinc-500">
+              <span>Avance</span>
+              <span className={isCompleted ? "text-green-400" : "text-white"}>
+                {isCompleted ? '100%' : `${Math.round(progressPct)}%`}
+              </span>
+            </div>
 
-              {/* Métricas del curso */}
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 text-[var(--muted)]">
-                  <Clock className="h-4 w-4" />
-                  <span>{course?._count?.modulos || 0} módulos</span>
-                </div>
-                <div className="flex items-center gap-2 text-[var(--muted)]">
-                  <BookOpen className="h-4 w-4" />
-                  <span>Nivel intermedio</span>
-                </div>
-                {enrollment.creadoEn && (
-                  <div className="flex items-center gap-2 text-[var(--muted)]">
-                    <GraduationCap className="h-4 w-4" />
-                    <span>
-                      Inscrito{' '}
-                      {new Date(enrollment.creadoEn).toLocaleDateString('es-AR', {
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </span>
-
-                    {/* Información de suscripción junto a la fecha */}
-                    {hasSubscription && (
-                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/30 text-[var(--gold)] text-xs">
-                        <Clock className="h-3 w-3" />
-                        {`${diasTotales} días`}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Progreso detallado */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--muted)] font-medium">
-                    {isCompleted ? 'Curso completado' : 'Progreso del curso'}
-                  </span>
-                  <span className="font-bold text-[var(--fg)] text-base">
-                    {isCompleted ? '100%' : `${Math.round(progressPct)}%`}
-                  </span>
-                </div>
-
-                {!isCompleted && (
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden shadow-inner">
-                    <div
-                      className="h-full bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] transition-all duration-700 ease-out shadow-sm"
-                      style={{ width: `${progressPct}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Acciones */}
-              <div className="flex items-center gap-3 pt-4">
-                <Link
-                  href={ctaHref}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-bold rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 transform shadow-lg ring-1 ring-[var(--gold)]/20"
-                >
-                  {isCompleted ? (
-                    <>
-                      <Award className="h-4 w-4" />
-                      Revisar curso
-                    </>
-                  ) : (
-                    <>
-                      <PlayCircle className="h-4 w-4" />
-                      Continuar aprendiendo
-                    </>
-                  )}
-                </Link>
-
-                {isCompleted && (
-                  <button className="inline-flex items-center gap-2 px-6 py-3 border-2 border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/10 text-[var(--fg)] rounded-xl transition-all duration-300 font-semibold hover:shadow-lg hover:scale-105 transform">
-                    <TrendingUp className="h-4 w-4" />
-                    Ver certificado
-                  </button>
-                )}
-
-                {/* Botón de favoritos */}
-                <button className="inline-flex items-center justify-center w-12 h-12 border-2 border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/5 text-[var(--muted)] hover:text-[var(--gold)] rounded-xl transition-all duration-300 hover:scale-105 transform">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                </button>
-              </div>
+            <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+              <div
+                className={`h-full shadow-[0_0_10px_rgba(var(--gold-rgb),0.3)] transition-all duration-700 ease-out ${isCompleted ? 'bg-green-500 shadow-green-500/30' : 'bg-gradient-to-r from-[var(--gold)] to-[#b88a44]'}`}
+                style={{ width: `${isCompleted ? 100 : progressPct}%` }}
+              />
             </div>
           </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="mt-6">
+          <Link
+            href={ctaHref}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-bold text-sm shadow-lg shadow-[var(--gold)]/10 hover:shadow-[var(--gold)]/30 hover:-translate-y-0.5 transition-all duration-300 group/btn"
+          >
+            {isCompleted ? (
+              <>
+                <Award className="h-4 w-4" />
+                Ver Certificado
+              </>
+            ) : (
+              <>
+                <span className="relative flex h-2 w-2 mr-1">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-30"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-black/80"></span>
+                </span>
+                Continuar aprendiendo
+              </>
+            )}
+          </Link>
         </div>
       </CardBody>
     </Card>

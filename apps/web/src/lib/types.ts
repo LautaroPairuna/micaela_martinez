@@ -11,7 +11,6 @@ export type Curso = {
   id:string; slug:string; titulo:string; precio:number; portadaUrl?:string|null;
   nivel:'BASICO'|'INTERMEDIO'|'AVANZADO';
   resumen?:string|null; descripcionMD?:string|null;
-  instructor?:{ id:string; nombre:string }|null;
   _count?:{ modulos:number; resenas:number };
   modulos?:{ id:string; titulo:string; lecciones:{ id:string; titulo:string; duracion?:number; rutaSrc?:string|null; tipo?:'VIDEO'|'TEXTO'|'DOCUMENTO'|'QUIZ' }[] }[];
   duracionTotalS?: number;

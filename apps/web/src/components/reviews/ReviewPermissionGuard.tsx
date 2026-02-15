@@ -44,24 +44,32 @@ export function ReviewPermissionGuard({
   // Si no hay usuario, mostrar mensaje de login
   if (!me) {
     return (
-      <Card className="border-amber-200 bg-amber-50">
-        <CardBody className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Lock className="h-5 w-5 text-amber-600" />
-            <h3 className="font-semibold text-amber-800">
-              Inicia sesión para reseñar
-            </h3>
+      <Card className="border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
+        <CardBody className="p-8 text-center">
+          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--pink)]/10 ring-1 ring-[var(--pink)]/20">
+            <Lock className="h-6 w-6 text-[var(--pink)]" />
           </div>
-          <p className="text-amber-700 mb-4">
-            Debes iniciar sesión para poder escribir una reseña de este {type === 'curso' ? 'curso' : 'producto'}.
+          <h3 className="mb-2 text-xl font-bold text-white">
+            Inicia sesión para reseñar
+          </h3>
+          <p className="mx-auto mb-6 max-w-md text-zinc-400">
+            Debes iniciar sesión para poder escribir una reseña de este {type === 'curso' ? 'curso' : 'producto'} y compartir tu experiencia.
           </p>
-          <div className="flex gap-2">
-            <Button asChild variant="solid" size="sm">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button 
+              asChild 
+              variant="ghost" 
+              className="w-full sm:w-auto min-w-[140px] border !border-[var(--pink)] !text-[var(--pink)] font-bold text-base px-6 py-2.5 rounded-xl hover:!bg-[var(--pink)]/10 hover:!border-[var(--pink)] hover:!text-[var(--pink)] hover:shadow-[0_0_20px_-5px_var(--pink)] hover:scale-[1.02] transition-all duration-300 !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus-visible:!ring-0"
+            >
               <Link href="/auth/login">
                 Iniciar Sesión
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button 
+              asChild 
+              variant="ghost" 
+              className="w-full sm:w-auto min-w-[140px] border border-zinc-700 text-zinc-300 font-bold text-base px-6 py-2.5 rounded-xl hover:bg-zinc-800 hover:border-zinc-500 hover:text-white hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.1)] hover:scale-[1.02] transition-all duration-300 !ring-0 !ring-offset-0 !outline-none"
+            >
               <Link href="/auth/register">
                 Registrarse
               </Link>
@@ -94,27 +102,33 @@ export function ReviewPermissionGuard({
     const ActionIcon = actionIcon;
 
     return (
-      <Card className="border-blue-200 bg-blue-50">
-        <CardBody className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <ActionIcon className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-blue-800">
-              {isCourse ? 'Inscríbete para reseñar' : 'Compra para reseñar'}
-            </h3>
+      <Card className="border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
+        <CardBody className="p-8 text-center">
+          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--gold)]/10 ring-1 ring-[var(--gold)]/20">
+            <ActionIcon className="h-6 w-6 text-[var(--gold)]" />
           </div>
-          <p className="text-blue-700 mb-4">
+          <h3 className="mb-2 text-xl font-bold text-white">
+            {isCourse ? 'Inscríbete para reseñar' : 'Compra para reseñar'}
+          </h3>
+          <p className="mx-auto mb-2 max-w-md text-zinc-400">
             Para escribir una reseña de {itemTitle ? `"${itemTitle}"` : `este ${type}`}, 
             primero debes {actionText}.
           </p>
-          <p className="text-sm text-blue-600 mb-4">
+          <p className="mx-auto mb-6 max-w-md text-sm text-zinc-500">
             Solo los {isCourse ? 'estudiantes inscritos' : 'compradores verificados'} pueden 
             escribir reseñas para garantizar la autenticidad de las opiniones.
           </p>
-          <Button asChild variant="solid" size="sm">
-            <Link href={isCourse ? `/cursos/detalle/${itemId}` : `/tienda/producto/${itemId}`}>
-              {isCourse ? 'Ver Curso' : 'Ver Producto'}
-            </Link>
-          </Button>
+          <div className="flex justify-center">
+            <Button 
+              asChild 
+              variant="ghost" 
+              className="w-full sm:w-auto min-w-[140px] border !border-[var(--gold)] !text-[var(--gold)] font-bold text-base px-6 py-2.5 rounded-xl hover:!bg-[var(--gold)]/10 hover:!border-[var(--gold)] hover:!text-[var(--gold)] hover:shadow-[0_0_20px_-5px_var(--gold)] hover:scale-[1.02] transition-all duration-300 !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus-visible:!ring-0"
+            >
+              <Link href={isCourse ? `/cursos/detalle/${itemId}` : `/tienda/producto/${itemId}`}>
+                {isCourse ? 'Ver Curso' : 'Ver Producto'}
+              </Link>
+            </Button>
+          </div>
         </CardBody>
       </Card>
     );

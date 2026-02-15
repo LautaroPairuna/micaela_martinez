@@ -192,7 +192,7 @@ export function MercadoPagoBricks({
           initialization: init,
           customization: {
             paymentMethods: paymentMethodsCfg,
-            visual: { style: { theme: 'default' } }
+            visual: { style: { theme: 'dark' } }
           },
           callbacks: {
             onReady: () => {},

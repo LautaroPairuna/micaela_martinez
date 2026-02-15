@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { AuthView } from '@/components/auth/AuthView';
+import { FadeIn } from '@/components/ui/Motion';
 
 export const metadata: Metadata = {
   title: 'Acceso',
@@ -23,10 +24,12 @@ function AuthFallback() {
 export default function AuthPage() {
   return (
     <section className="max-w-md mx-auto py-8">
-      <h1 className="font-display text-2xl mb-4">Tu cuenta</h1>
-      <Suspense fallback={<AuthFallback />}>
-        <AuthView />
-      </Suspense>
+      <FadeIn>
+        <h1 className="font-display text-2xl mb-4">Tu cuenta</h1>
+        <Suspense fallback={<AuthFallback />}>
+          <AuthView />
+        </Suspense>
+      </FadeIn>
     </section>
   );
 }

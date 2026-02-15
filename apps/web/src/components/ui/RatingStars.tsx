@@ -26,7 +26,8 @@ export function RatingStars({
   ...rest
 }: RatingStarsProps) {
   // clamp estable para SSR
-  const v = Number.isFinite(value) ? Math.min(5, Math.max(0, value)) : 0;
+  const parsedValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+  const v = Number.isFinite(parsedValue) ? Math.min(5, Math.max(0, parsedValue)) : 0;
 
   // formateo de conteo estable para SSR
   const countLabel = count > 0 ? `(${count})` : '(0)';
@@ -65,23 +66,27 @@ export function RatingStars({
 
 /** Estrella con relleno fraccional usando un overlay recortado */
 function StarFraction({ fill, sizeCls }: { fill: number; sizeCls: string }) {
+  const percent = Math.round(fill * 100);
+  
   return (
-    <span className="relative inline-block" aria-hidden="true">
-      {/* base: contorno sutil */}
-      <Star className={[sizeCls, 'stroke-current opacity-30'].join(' ')} />
-      {/* overlay: relleno recortado al % */}
-      <span
-        className="absolute inset-0 overflow-hidden"
-        style={{ width: `${Math.round(fill * 100)}%` }}
+    <div className={`relative inline-block ${sizeCls}`}>
+      {/* Base: estrella vacía (outline) */}
+      <Star 
+        className={`absolute inset-0 w-full h-full text-zinc-600`} 
+        strokeWidth={1.5}
+      />
+      
+      {/* Overlay: estrella llena recortada */}
+      <div 
+        className="absolute inset-0 overflow-hidden" 
+        style={{ width: `${percent}%` }}
       >
-        <Star
-          className={[
-            sizeCls,
-            'fill-current',          // usa currentColor (heredado del contenedor)
-            'stroke-[color:transparent]', // evita remarcar bordes (si tu Tailwind no soporta, podés quitarla)
-          ].join(' ')}
+        <Star 
+          className={`w-full h-full fill-current text-current`} 
+          strokeWidth={0}
+          fill="currentColor"
         />
-      </span>
-    </span>
+      </div>
+    </div>
   );
 }

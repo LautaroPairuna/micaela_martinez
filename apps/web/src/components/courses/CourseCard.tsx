@@ -31,7 +31,6 @@ type CourseMinimal = {
   ratingProm?: number | string | null;
   ratingConteo?: number | null;
   _count?: { modulos?: number };
-  instructor?: { nombre?: string | null } | null;
   totalLessons?: number;
   totalDuration?: number;
 };

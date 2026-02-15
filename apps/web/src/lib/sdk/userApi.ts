@@ -9,8 +9,8 @@ export type NextOpts = RequestInit & {
 
 /* ───────────────────────────
    Tipos (compatibles con tu UI)
-──────────────────────────── */
-export type Rol = 'ADMIN' | 'INSTRUCTOR' | 'ESTUDIANTE' | 'CUSTOMER' | 'STAFF';
+12→──────────────────────────── */
+export type Rol = 'ADMIN' | 'ESTUDIANTE' | 'CUSTOMER' | 'STAFF';
 
 type BackendMe = {
   id: string;
@@ -104,7 +104,11 @@ export type EstadoOrden =
   | 'PAGADO'
   | 'CUMPLIDO'
   | 'CANCELADO'
-  | 'REEMBOLSADO';
+  | 'REEMBOLSADO'
+  | 'PROCESANDO'
+  | 'ENVIADO'
+  | 'ENTREGADO'
+  | 'RECHAZADO';
 export type TipoItemOrden = 'CURSO' | 'PRODUCTO';
 
 export type OrdenItem = {
@@ -143,7 +147,7 @@ export type Inscripcion = {
     slug?: string; 
     titulo?: string; 
     portadaUrl?: string | null;
-    instructor?: { nombre: string } | null;
+    totalLessons?: number;
     _count?: { modulos: number };
     modulos?: {
       id: number;
@@ -161,7 +165,7 @@ export type Inscripcion = {
 /* ───────────────────────────
    Adapters
 ──────────────────────────── */
-const preferenciaRoles = ['ADMIN', 'STAFF', 'INSTRUCTOR', 'CUSTOMER'] as const;
+const preferenciaRoles = ['ADMIN', 'STAFF', 'CUSTOMER'] as const;
 function pickRolUI(roles?: string[]): Rol | undefined {
   if (!roles?.length) return undefined;
   const primary = preferenciaRoles.find((r) => roles.includes(r)) ?? roles[0];
@@ -258,7 +262,11 @@ export async function updateMe(payload: Partial<Pick<UsuarioMe, 'nombre'>>, opts
 export async function listAddresses(opts?: NextOpts) {
   // Usar el catchAll existente para evitar problemas de contenido mixto
   return fetch('/api/users/me/addresses', { ...opts, cache: 'no-store' })
-    .then(res => res.json()) as Promise<Direccion[]>;
+    .then(async res => {
+      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }) as Promise<Direccion[]>;
 }
 
 export async function addAddress(input: DireccionInput, opts?: NextOpts) {
@@ -626,7 +634,6 @@ export async function listEnrollments(opts?: NextOpts) {
         slug: c.slug, 
         titulo: c.titulo, 
         portadaUrl: c.portadaUrl,
-        instructor: c.instructor,
         _count: c._count,
         // Incluimos los módulos y lecciones si vienen desde el backend
         modulos: c.modulos?.map((m) => ({

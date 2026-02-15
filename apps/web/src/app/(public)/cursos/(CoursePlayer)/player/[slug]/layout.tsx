@@ -19,7 +19,6 @@ type BackendCourseDetail = {
   titulo: string;
   resumen?: string | null;
   portadaUrl?: string | null;
-  instructor?: { id?: string; nombre?: string } | null;
   modulos?: Array<{ id: string; titulo?: string; lecciones?: unknown[] | null }> | null;
 };
 

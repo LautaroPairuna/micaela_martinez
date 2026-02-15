@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, Bell, Mail, Save, RotateCcw } from 'lucide-react';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Card, CardBody } from '@/components/ui/Card';
+import Link from 'next/link';
+import { Settings, Save, RotateCcw, ArrowLeft, Shield, MessageSquare, Heart, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import useAuth from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 interface PreferenceToggleProps {
@@ -20,17 +20,17 @@ interface PreferenceToggleProps {
 
 function PreferenceToggle({ id, label, description, icon: Icon, checked, onChange, disabled }: PreferenceToggleProps) {
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg border border-[var(--border)] hover:bg-[var(--subtle)] transition-colors">
-      <div className="flex-shrink-0 p-2 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/20">
-        <Icon className="h-5 w-5 text-[var(--gold)]" />
+    <div className="flex items-start gap-5 p-5 rounded-xl border border-zinc-800 bg-zinc-900/20 hover:bg-zinc-900/40 transition-all duration-300 group">
+      <div className="flex-shrink-0 p-3 rounded-lg bg-zinc-900 border border-zinc-800 group-hover:border-[var(--gold)]/30 transition-colors">
+        <Icon className="h-6 w-6 text-zinc-400 group-hover:text-[var(--gold)] transition-colors" />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-sm font-medium text-[var(--fg)]">{label}</h4>
-            <p className="text-sm text-[var(--muted)] mt-1">{description}</p>
+      <div className="flex-1 min-w-0 pt-1.5">
+        <div className="flex items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h4 className="text-base font-medium text-zinc-200 group-hover:text-white transition-colors">{label}</h4>
+            <p className="text-sm text-zinc-500 leading-relaxed">{description}</p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
             <input
               type="checkbox"
               id={id}
@@ -40,17 +40,16 @@ function PreferenceToggle({ id, label, description, icon: Icon, checked, onChang
               className="sr-only peer"
             />
             <div className={cn(
-              "relative w-11 h-6 rounded-full peer transition-colors duration-200 ease-in-out",
-              "peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--pink)]/20",
+              "relative w-11 h-6 rounded-full peer transition-all duration-300 ease-in-out",
+              "peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gold)]/20",
               checked 
-                ? "bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)]" 
-                : "bg-[var(--border)]",
+                ? "bg-[var(--gold)]" 
+                : "bg-zinc-700 hover:bg-zinc-600",
               disabled && "opacity-50 cursor-not-allowed"
             )}>
               <div className={cn(
-                "absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform duration-200 ease-in-out",
-                checked ? "transform translate-x-5" : "",
-                "shadow-sm"
+                "absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5 transition-transform duration-300 ease-out shadow-sm",
+                checked ? "transform translate-x-5" : ""
               )} />
             </div>
           </label>
@@ -70,7 +69,10 @@ export default function NotificationSettingsPage() {
     savePreferences,
     resetToDefaults,
   } = useNotificationPreferences();
-  
+
+  const { isAdmin, isStaff } = useAuth();
+  const isModerator = isAdmin() || isStaff();
+
   const [success, setSuccess] = useState(false);
 
   const handleSave = async () => {
@@ -90,140 +92,160 @@ export default function NotificationSettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <PageHeader
-          icon={Settings}
-          iconBg="bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)]"
-          iconColor="text-black"
-          title="Configuración de Notificaciones"
-          description="Personaliza qué notificaciones quieres recibir y cómo"
-        />
-        <Card>
-          <CardBody className="p-6">
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--gold)]" />
-            </div>
-          </CardBody>
-        </Card>
+      <div className="max-w-4xl mx-auto space-y-8 animate-pulse">
+        <div className="h-20 bg-zinc-900/50 rounded-2xl border border-zinc-800" />
+        <div className="h-96 bg-zinc-900/50 rounded-2xl border border-zinc-800" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        icon={Settings}
-        iconBg="bg-transparent border border-[var(--pink)]/40"
-        iconColor="text-[var(--pink)]"
-        title="Configuración de Notificaciones"
-        description="Personaliza qué notificaciones quieres recibir y cómo"
-      />
+    <div className="max-w-6xl mx-auto space-y-10 pb-12">
+      <div className="flex flex-col gap-8">
+        <Link 
+          href="/mi-cuenta/notificaciones"
+          className="inline-flex items-center gap-2 text-zinc-400 hover:text-[var(--gold)] transition-colors w-fit px-2 py-1 -ml-2 rounded-lg hover:bg-zinc-900/50"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Volver a notificaciones</span>
+        </Link>
+        
+        <div className="flex items-center gap-6">
+          <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-xl shadow-black/20">
+            <Settings className="h-10 w-10 text-[var(--gold)]" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-serif text-white tracking-tight">Configuración</h1>
+            <p className="text-lg text-zinc-400">Personaliza tu experiencia y alertas según tus preferencias</p>
+          </div>
+        </div>
+      </div>
 
       {error && (
-        <Card>
-          <CardBody className="p-4">
-            <div className="flex items-center gap-3 text-red-600">
-              <div className="p-2 rounded-full bg-red-100">
-                <Bell className="h-4 w-4" />
-              </div>
-              <p className="text-sm font-medium">{error}</p>
-            </div>
-          </CardBody>
-        </Card>
+        <div className="p-4 rounded-xl border border-red-900/50 bg-red-900/10 text-red-400 flex items-center gap-3">
+          <Shield className="h-5 w-5" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
       )}
 
       {success && (
-        <Card>
-          <CardBody className="p-4">
-            <div className="flex items-center gap-3 text-green-600">
-              <div className="p-2 rounded-full bg-green-100">
-                <Save className="h-4 w-4" />
-              </div>
-              <p className="text-sm font-medium">Preferencias guardadas correctamente</p>
-            </div>
-          </CardBody>
-        </Card>
+        <div className="p-4 rounded-xl border border-green-900/50 bg-green-900/10 text-green-400 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <Save className="h-5 w-5" />
+          <p className="text-sm font-medium">Preferencias guardadas correctamente</p>
+        </div>
       )}
 
-      {/* Notificaciones Esenciales */}
-      <Card>
-        <CardBody>
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 rounded-xl bg-blue-50 border border-blue-200">
-                <Bell className="h-6 w-6 text-blue-600" />
+      <div className="space-y-10">
+        <div className="bg-zinc-950/50 border border-zinc-800 rounded-3xl p-8 md:p-10 space-y-8 shadow-sm">
+          <div className="flex items-center gap-4 pb-6 border-b border-zinc-800/50">
+            <div className="p-2 rounded-lg bg-zinc-900/50 border border-zinc-800">
+              <MessageSquare className="h-6 w-6 text-zinc-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-white">Reseñas y comentarios</h3>
+              <p className="text-sm text-zinc-500 mt-1">Actividad sobre tus reseñas y respuestas</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
+            <PreferenceToggle
+              id="likesResena"
+              label="Likes en tus reseñas"
+              description="Avisos cuando alguien le da me gusta a tu reseña."
+              icon={Heart}
+              checked={preferences.likesResena || false}
+              onChange={(checked) => updatePreference('likesResena', checked)}
+            />
+
+            <PreferenceToggle
+              id="respuestaResena"
+              label="Comentarios y respuestas"
+              description="Cuando alguien comenta tu reseña o responde a tu comentario."
+              icon={MessageSquare}
+              checked={preferences.respuestaResena || false}
+              onChange={(checked) => updatePreference('respuestaResena', checked)}
+            />
+          </div>
+        </div>
+
+        <div className="bg-zinc-950/50 border border-zinc-800 rounded-3xl p-8 md:p-10 space-y-8 shadow-sm">
+          <div className="flex items-center gap-4 pb-6 border-b border-zinc-800/50">
+            <div className="p-2 rounded-lg bg-zinc-900/50 border border-zinc-800">
+              <Percent className="h-6 w-6 text-zinc-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-white">Favoritos</h3>
+              <p className="text-sm text-zinc-500 mt-1">Avisos cuando hay descuentos en tus favoritos</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
+            <PreferenceToggle
+              id="descuentosFavoritos"
+              label="Descuentos en favoritos"
+              description="Cuando un producto favorito baja de precio."
+              icon={Percent}
+              checked={preferences.descuentosFavoritos || false}
+              onChange={(checked) => updatePreference('descuentosFavoritos', checked)}
+            />
+          </div>
+        </div>
+
+        {isModerator && (
+           <div className="bg-zinc-950/50 border border-zinc-800 rounded-3xl p-8 md:p-10 space-y-8 border-l-4 border-l-red-500 shadow-sm">
+            <div className="flex items-center gap-4 pb-6 border-b border-zinc-800/50">
+              <div className="p-2 rounded-lg bg-red-900/10 border border-red-900/30">
+                <Shield className="h-6 w-6 text-red-500" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[var(--fg)]">Notificaciones Esenciales</h3>
-                <p className="text-sm text-[var(--muted)]">Configuraciones básicas de notificaciones</p>
+                <h3 className="text-xl font-medium text-white">Administración</h3>
+                <p className="text-sm text-zinc-500 mt-1">Notificaciones del sistema de administración</p>
               </div>
             </div>
             
-            <div className="space-y-4">
-              <PreferenceToggle
-                id="nuevaResena"
-                label="Nuevas reseñas"
-                description="Recibir notificaciones cuando alguien deje una nueva reseña"
-                icon={Bell}
-                checked={preferences.nuevaResena || false}
-                onChange={(checked) => updatePreference('nuevaResena', checked)}
-              />
-              
-              <PreferenceToggle
-                id="respuestaResena"
-                label="Respuestas a reseñas"
-                description="Recibir notificaciones cuando alguien responda a tus reseñas"
-                icon={Mail}
-                checked={preferences.respuestaResena || false}
-                onChange={(checked) => updatePreference('respuestaResena', checked)}
-              />
-              
+            <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
               <PreferenceToggle
                 id="actualizacionesSistema"
                 label="Actualizaciones del sistema"
-                description="Recibir avisos sobre nuevos módulos y contenido actualizado"
-                icon={Settings}
+                description="Eventos y cambios registrados en el panel de administración."
+                icon={Shield}
                 checked={preferences.actualizacionesSistema || false}
                 onChange={(checked) => updatePreference('actualizacionesSistema', checked)}
               />
             </div>
           </div>
-        </CardBody>
-      </Card>
+        )}
 
-      {/* Botones de acción */}
-      <Card>
-        <CardBody className="p-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              className="flex items-center gap-2 border-[var(--pink)] text-[var(--pink)] hover:bg-[var(--pink)]/10 hover:border-[var(--pink)] hover:text-[var(--pink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Restaurar valores por defecto
-            </Button>
-            
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] hover:from-[var(--gold-dark)] hover:to-[var(--gold)] text-black font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40 disabled:opacity-50"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Guardar preferencias
-                </>
-              )}
-            </Button>
-          </div>
-        </CardBody>
-      </Card>
+      </div>
+
+      <div className="bg-zinc-950/80 border border-zinc-800 rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 sticky bottom-6 shadow-2xl backdrop-blur-xl">
+          <Button
+            variant="ghost"
+            onClick={handleReset}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-900 w-full sm:w-auto"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Restaurar valores
+          </Button>
+          
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full sm:w-auto bg-[var(--gold)] text-black hover:bg-[var(--gold)]/90 font-medium px-8"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Guardar cambios
+              </>
+            )}
+          </Button>
+        </div>
     </div>
   );
 }

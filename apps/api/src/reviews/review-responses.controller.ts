@@ -61,10 +61,12 @@ export class ReviewResponsesController {
     @Body('contenido') contenido: string,
     @CurrentUser() user: JwtUser,
   ) {
+    const isAdmin = user.roles?.includes('ADMIN') ?? false;
     return this.reviewResponsesService.updateResponse(
       responseId,
       String(user.sub),
       contenido,
+      isAdmin,
     );
   }
 
@@ -74,9 +76,11 @@ export class ReviewResponsesController {
     @Param('responseId') responseId: string,
     @CurrentUser() user: JwtUser,
   ) {
+    const isAdmin = (user.roles || []).includes('ADMIN');
     return this.reviewResponsesService.deleteResponse(
       responseId,
       String(user.sub),
+      isAdmin,
     );
   }
 }

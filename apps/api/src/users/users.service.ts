@@ -1,13 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PRISMA } from '../../src/prisma/prisma.token';
 import { ExtendedPrismaClient } from '../../src/prisma/prisma.extensions';
-import { Prisma, EstadoOrden } from '../generated/prisma/client';
+import { Prisma, EstadoOrden } from '@prisma/client';
 
 export type UserForAuth = {
   id: number;
   email: string;
   nombre: string | null;
-  roles: string[]; // slugs: ['CUSTOMER', 'INSTRUCTOR', ...]
+  roles: string[]; // slugs: ['CUSTOMER', 'ADMIN', ...]
 };
 
 @Injectable()
@@ -104,7 +104,6 @@ export class UsersService {
             titulo: true,
             slug: true,
             portada: true,
-            instructor: true,
             _count: {
               select: {
                 modulos: true,

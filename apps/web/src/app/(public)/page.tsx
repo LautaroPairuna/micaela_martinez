@@ -11,6 +11,7 @@ import { getMe, listEnrollments } from "@/lib/sdk/userApi";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { CoursesGridClient } from "@/components/courses/CoursesGridClient";
 import HeroSection from "@/components/home/HeroSection";
+import { FadeIn, StaggerContainer } from "@/components/ui/Motion";
 
 // Forzar renderizado dinámico para evitar errores con headers()
 export const dynamic = "force-dynamic";
@@ -166,12 +167,14 @@ export default async function HomePage() {
       )}
 
       {/* ───────── CURSOS: divisor full-width + sección en #111 ───────── */}
-      <TitleBand
-        subtitle="ACADEMIA"
-        title="CURSOS"
-        highlight="PROFESIONALES"
-        glowClassName="h-40 w-40 rounded-full bg-[#F5C451]/25 blur-[72px]"
-      />
+      <FadeIn>
+        <TitleBand
+          subtitle="ACADEMIA"
+          title="CURSOS"
+          highlight="PROFESIONALES"
+          glowClassName="h-40 w-40 rounded-full bg-[#F5C451]/25 blur-[72px]"
+        />
+      </FadeIn>
       <Section
         id="cursos"
         width="xl"
@@ -179,30 +182,34 @@ export default async function HomePage() {
         bleedBackground={<div className="absolute inset-0 bg-[#0d0d0d]" />}
         innerClassName={compactPadY(courseCount)}
       >
-        {courseCount > 0 ? (
-          <HydrationBoundary state={dehydrate(qc)}>
-            <div className={`${compactWrap(courseCount, "max-w-3xl")} grid gap-5 grid-cols-1`}>
-              <CoursesGridClient courses={courses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
+        <FadeIn delay={0.2}>
+          {courseCount > 0 ? (
+            <HydrationBoundary state={dehydrate(qc)}>
+              <div className={`${compactWrap(courseCount, "max-w-3xl")} grid gap-5 grid-cols-1`}>
+                <CoursesGridClient courses={courses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
+              </div>
+            </HydrationBoundary>
+          ) : (
+            <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
+              Sin cursos por ahora. Estamos preparando novedades.
             </div>
-          </HydrationBoundary>
-        ) : (
-          <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
-            Sin cursos por ahora. Estamos preparando novedades.
-          </div>
-        )}
+          )}
 
-        <div className="flex justify-center">
-          <SeeAllButton href="/cursos">Ver todos</SeeAllButton>
-        </div>
+          <div className="flex justify-center">
+            <SeeAllButton href="/cursos">Ver todos</SeeAllButton>
+          </div>
+        </FadeIn>
       </Section>
 
       {/* ───────── PRODUCTOS: divisor full-width + sección negra ───────── */}
-      <TitleBand
-        subtitle="TIENDA"
-        title="PRODUCTOS"
-        highlight="DESTACADOS"
-        glowClassName="h-36 w-36 rounded-full bg-[#ff4fb2]/30 blur-[72px]"
-      />
+      <FadeIn>
+        <TitleBand
+          subtitle="TIENDA"
+          title="PRODUCTOS"
+          highlight="DESTACADOS"
+          glowClassName="h-36 w-36 rounded-full bg-[#ff4fb2]/30 blur-[72px]"
+        />
+      </FadeIn>
       <Section
         id="productos"
         width="xl"
@@ -210,21 +217,23 @@ export default async function HomePage() {
         bleedBackground={<div className="absolute inset-0 bg-[var(--bg,#0d0d0d)]" />}
         innerClassName={compactPadY(productCount)}
       >
-        {productCount > 0 ? (
-          <div className={`${compactWrap(productCount, "max-w-6xl")} grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4`}>
-            {products.slice(0, productCount).map((p, i) => (
-              <ProductCard key={productKey(p, i)} p={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
-            No hay productos destacados por el momento.
-          </div>
-        )}
+        <FadeIn delay={0.2}>
+          {productCount > 0 ? (
+            <div className={`${compactWrap(productCount, "max-w-6xl")} grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4`}>
+              {products.slice(0, productCount).map((p, i) => (
+                <ProductCard key={productKey(p, i)} p={p} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
+              No hay productos destacados por el momento.
+            </div>
+          )}
 
-        <div className="flex justify-center">
-          <SeeAllButton href="/tienda">Ver todos</SeeAllButton>
-        </div>
+          <div className="flex justify-center">
+            <SeeAllButton href="/tienda">Ver todos</SeeAllButton>
+          </div>
+        </FadeIn>
       </Section>
 
       {/* ───────── JSON-LD ───────── */}

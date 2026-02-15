@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, TipoLeccion } from '../../generated/prisma/client';
+import { Prisma, TipoLeccion } from '@prisma/client';
 
 type LessonFieldType =
   | 'text'

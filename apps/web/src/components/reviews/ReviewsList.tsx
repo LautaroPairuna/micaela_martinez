@@ -45,6 +45,7 @@ interface Review {
 interface ReviewsListProps {
   reviews: Review[];
   currentUserId?: string;
+  isAdmin?: boolean;
   isLoading?: boolean;
   onEdit?: (review: Review) => void;
   onDelete?: (reviewId: string) => void;
@@ -55,6 +56,7 @@ interface ReviewsListProps {
 export function ReviewsList({
   reviews,
   currentUserId,
+  isAdmin = false,
   isLoading = false,
   onEdit,
   onDelete,
@@ -175,39 +177,37 @@ export function ReviewsList({
     <div className="space-y-4">
       {reviews.map((review) => {
         const isExpanded = expandedReviews.has(review.id);
-        const isOwnReview = currentUserId === review.usuario.id;
+        const isOwnReview = (currentUserId != null && review.usuario?.id != null && String(currentUserId) === String(review.usuario.id)) || isAdmin;
         const shouldTruncate = review.comentario && review.comentario.length > 200;
         const displayText = isExpanded || !shouldTruncate 
           ? review.comentario 
           : truncateText(review.comentario || '', 200);
 
         return (
-          <Card 
+          <div 
             key={review.id} 
             id={`resena-${review.id}`}
             data-review-id={review.id}
-            className="scroll-mt-4"
+            className="scroll-mt-4 rounded-2xl bg-[#111] border border-zinc-800 p-6"
           >
-            <CardBody className="space-y-4">
+            <div className="space-y-4">
               {/* Header */}
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span
                     className={[
-                    'grid size-10 place-items-center rounded-full',
-                    'bg-[radial-gradient(75%_120%_at_30%_20%,_rgba(255,255,255,.35),_transparent_60%)]',
-                    'bg-[#f9f6ef] text-[#7a5c16] ring-1 ring-[#7a5c16]',
-                    'shadow-[inset_0_1px_0_rgba(255,255,255,.2)] font-semibold text-[14px] tracking-wide',
-                  ].join(' ')}
-                    title={review.usuario.nombre || 'Usuario anónimo'}
+                    'grid size-12 place-items-center rounded-full',
+                    'bg-zinc-800 text-pink-500 ring-1 ring-zinc-700',
+                    'font-serif font-bold text-lg',
+                    ].join(' ')}
                   >
                     {getInitials(review.usuario.nombre)}
                   </span>
                   <div>
-                    <h4 className="font-medium text-[var(--fg)]">
+                    <h4 className="font-medium text-zinc-200 text-base">
                       {review.usuario.nombre || 'Usuario anónimo'}
                     </h4>
-                    <p className="text-sm text-[var(--muted)]">
+                    <p className="text-xs text-zinc-500 mt-0.5">
                       {formatDate(review.creadoEn)}
                     </p>
                   </div>
@@ -220,21 +220,22 @@ export function ReviewsList({
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleActions(review.id)}
-                      className="p-2"
+                      className="h-8 w-8 p-0 text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-full"
                       data-dropdown-trigger
+                      title="Opciones"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
 
                     {showingActions === review.id && (
-                      <div className="absolute right-0 top-full mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg shadow-lg py-1 z-10 min-w-[120px]" data-dropdown-menu>
+                      <div className="absolute right-0 top-full mt-1 bg-[#161616] border border-zinc-800 rounded-lg shadow-xl py-1 z-50 min-w-[140px]" data-dropdown-menu>
                         {onEdit && (
                           <button
                             onClick={() => {
                               onEdit(review);
                               setShowingActions(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--bg-secondary)] flex items-center gap-2"
+                            className="w-full px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center gap-2"
                           >
                             <Edit3 className="h-3 w-3" />
                             Editar
@@ -246,7 +247,7 @@ export function ReviewsList({
                               onDelete(review.id);
                               setShowingActions(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-red-900/20 text-red-500 flex items-center gap-2"
                           >
                             <Trash2 className="h-3 w-3" />
                             Eliminar
@@ -258,52 +259,48 @@ export function ReviewsList({
                 )}
               </div>
 
-              {/* Rating */}
-              <div className="flex items-center gap-2">
-                <RatingStars value={review.puntaje} size="sm" showValue={false} />
-                <span className="text-sm font-medium text-[var(--fg)]">
-                  {review.puntaje}/5
-                </span>
-              </div>
-
-              {/* Comment */}
-              {review.comentario && (
-                <div className="space-y-2">
-                  <div className="text-[var(--fg)] leading-relaxed text-sm">
-                    <p className="whitespace-pre-line">{displayText}</p>
-                  </div>
-                  
-                  {shouldTruncate && (
-                    <button
-                      onClick={() => toggleExpanded(review.id)}
-                      className="text-sm text-[var(--gold)] hover:underline font-medium"
-                    >
-                      {isExpanded ? 'Ver menos' : 'Ver más'}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Actions Bar: Like/Dislike + Responses */}
-              <div className="pt-2 border-t border-[var(--border)]">
-                <div className="flex items-center justify-between">
-                  <ReviewLikeButtons resenaId={review.id} />
-                  
-                  <ResponsesButton
-                    resenaId={review.id}
-                    isExpanded={expandedResponses.has(review.id)}
-                    onClick={() => toggleResponses(review.id)}
-                  />
+              {/* Rating y Contenido */}
+              <div className="space-y-3 pl-[60px]">
+                <div className="flex text-yellow-400">
+                  <RatingStars value={review.puntaje} size="sm" />
                 </div>
                 
+                {review.comentario && (
+                  <div className="text-zinc-300 leading-relaxed text-sm">
+                    {displayText}
+                    {shouldTruncate && (
+                      <button 
+                        onClick={() => toggleExpanded(review.id)}
+                        className="ml-2 text-pink-500 hover:text-pink-400 text-sm font-medium hover:underline"
+                      >
+                        {isExpanded ? 'Ver menos' : 'Ver más'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer / Respuestas */}
+              <div className="pl-[60px] pt-2">
+                <div className="flex items-center gap-4">
+                  <ReviewLikeButtons resenaId={review.id} />
+                  
+                  <ResponsesButton 
+                    resenaId={review.id}
+                    onClick={() => toggleResponses(review.id)}
+                    isExpanded={expandedResponses.has(review.id)}
+                    className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  />
+                </div>
+
                 {expandedResponses.has(review.id) && (
-                  <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                  <div className="mt-6 pt-6 border-t border-zinc-800">
                     <ReviewResponses resenaId={review.id} />
                   </div>
                 )}
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         );
       })}
     </div>

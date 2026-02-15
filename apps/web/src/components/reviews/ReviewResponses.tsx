@@ -49,6 +49,7 @@ interface ResponseItemProps {
   onDelete: (responseId: string) => void;
   currentUserId?: string | number;
   isSubmitting: boolean;
+  isAdmin?: boolean;
 }
 
 /* ===================== Utils ===================== */
@@ -73,6 +74,7 @@ function ResponseItem({
   onDelete,
   currentUserId,
   isSubmitting,
+  isAdmin = false,
 }: ResponseItemProps) {
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -80,9 +82,10 @@ function ResponseItem({
 
   // Comparación robusta para distintos tipos de ID
   const isOwnResponse =
-    currentUserId != null &&
-    response.usuario?.id != null &&
-    String(currentUserId) === String(response.usuario.id);
+    (currentUserId != null &&
+      response.usuario?.id != null &&
+      String(currentUserId) === String(response.usuario.id)) ||
+    isAdmin;
 
   const shouldShowActions = !!isOwnResponse && !response.eliminado;
   const maxLevel = 3; // Máximo nivel de anidación
@@ -109,27 +112,26 @@ function ResponseItem({
     <div
       id={`response-${response.id}`}
       data-response-id={response.id}
-      className={`scroll-mt-4 ${level > 0 ? 'ml-6 pl-4 border-l-2 border-[var(--border)]' : ''}`}
+      className={`scroll-mt-4 ${level > 0 ? 'ml-6 pl-4 border-l border-zinc-800' : ''}`}
     >
-      <Card className="mb-3">
-        <CardBody className="p-4">
+      <div className="mb-4">
+        <div className="p-4 bg-[#161616] rounded-xl border border-zinc-800/50">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
               <span
                 className={[
-                  'flex items-center justify-center w-8 h-8 rounded-full text-white text-sm',
-                  'bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)]',
-                  'shadow-[inset_0_1px_0_rgba(255,255,255,.2)] font-semibold text-[14px] tracking-wide',
+                  'flex items-center justify-center w-8 h-8 rounded-full text-white text-xs',
+                  'bg-zinc-800 text-pink-500 ring-1 ring-zinc-700 font-serif font-bold',
                 ].join(' ')}
                 title={response.usuario.nombre || 'Usuario anónimo'}
               >
                 {getInitials(response.usuario.nombre)}
               </span>
               <div>
-                <h5 className="font-medium text-[var(--fg)] text-sm">
+                <h5 className="font-medium text-zinc-200 text-sm">
                   {response.usuario.nombre || 'Usuario anónimo'}
                 </h5>
-                <p className="text-xs text-[var(--muted)]">
+                <p className="text-xs text-zinc-500">
                   {formatDate(response.creadoEn)}
                   {response.editado && <span className="ml-1">(editado)</span>}
                 </p>
@@ -142,26 +144,27 @@ function ResponseItem({
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowActions(!showActions)}
-                  className="p-1 h-6 w-6"
+                  className="h-8 w-8 p-0 text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-full"
+                  title="Opciones"
                 >
-                  <MoreVertical className="h-3 w-3" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
 
                 {showActions && (
-                  <div className="absolute right-0 top-full mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
+                  <div className="absolute right-0 top-full mt-1 bg-[#161616] border border-zinc-800 rounded-lg shadow-xl py-1 z-50 min-w-[140px]">
                     <button
                       onClick={() => {
                         setIsEditing(true);
                         setShowActions(false);
                       }}
-                      className="w-full px-3 py-1 text-left text-xs hover:bg-[var(--bg-secondary)] flex items-center gap-2"
+                      className="w-full px-3 py-1 text-left text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center gap-2"
                     >
                       <Edit3 className="h-3 w-3" />
                       Editar
                     </button>
                     <button
                       onClick={handleDelete}
-                      className="w-full px-3 py-1 text-left text-xs hover:bg-red-50 text-red-600 flex items-center gap-2"
+                      className="w-full px-3 py-1 text-left text-xs hover:bg-red-900/20 text-red-500 flex items-center gap-2"
                     >
                       <Trash2 className="h-3 w-3" />
                       Eliminar
@@ -174,11 +177,11 @@ function ResponseItem({
 
           {/* Respuesta padre si existe */}
           {response.respuestaAPadre && (
-            <div className="mb-3 p-2 bg-[var(--bg-secondary)] rounded border-l-2 border-[var(--gold)]">
-              <p className="text-xs text-[var(--muted)] mb-1">
+            <div className="mb-3 p-3 bg-zinc-900/50 rounded-lg border-l-2 border-pink-500">
+              <p className="text-xs text-zinc-400 mb-1">
                 Respondiendo a {response.respuestaAPadre.usuario.nombre ?? 'usuario'}
               </p>
-              <p className="text-sm text-[var(--fg)] opacity-75 line-clamp-2">
+              <p className="text-sm text-zinc-300 opacity-75 line-clamp-2 italic">
                 {response.respuestaAPadre.contenido}
               </p>
             </div>
@@ -191,14 +194,14 @@ function ResponseItem({
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 placeholder="Edita tu respuesta..."
-                className="w-full min-h-[100px] p-3 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] placeholder-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--gold)] resize-y text-sm"
+                className="w-full min-h-[100px] p-3 rounded-lg bg-[#0a0a0a] border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-pink-500 resize-y text-sm"
               />
               <div className="flex justify-end gap-2 mt-2">
                 <Button
                   size="sm"
                   onClick={handleEdit}
                   disabled={isSubmitting || !editContent.trim()}
-                  className="text-xs"
+                  className="text-xs bg-pink-500 hover:bg-pink-600 text-white"
                 >
                   <Send className="h-3 w-3 mr-1" />
                   Guardar
@@ -210,7 +213,7 @@ function ResponseItem({
                     setIsEditing(false);
                     setEditContent(response.contenido);
                   }}
-                  className="text-xs"
+                  className="text-xs border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800"
                 >
                   <X className="h-3 w-3 mr-1" />
                   Cancelar
@@ -219,7 +222,7 @@ function ResponseItem({
             </div>
           ) : (
             <div>
-              <div className="text-sm text-[var(--fg)] mb-3 leading-relaxed">
+              <div className="text-sm text-zinc-300 mb-3 leading-relaxed">
                 <p className="whitespace-pre-line">{response.contenido}</p>
               </div>
 
@@ -230,7 +233,7 @@ function ResponseItem({
                     variant="ghost"
                     size="sm"
                     onClick={() => onReply(response.id)}
-                    className="text-xs p-1 h-6"
+                    className="text-xs p-1 h-6 text-pink-500 hover:text-pink-400 hover:bg-transparent pl-0"
                   >
                     <Reply className="h-3 w-3 mr-1" />
                     Responder
@@ -239,8 +242,8 @@ function ResponseItem({
               </div>
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {/* Respuestas hijas */}
       {response.respuestasHijas && response.respuestasHijas.length > 0 && (
@@ -255,6 +258,7 @@ function ResponseItem({
               onDelete={onDelete}
               currentUserId={currentUserId}
               isSubmitting={isSubmitting}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -323,10 +327,10 @@ export function ReviewResponses({ resenaId }: ReviewResponsesProps) {
   return (
     <div className="space-y-4">
       {/* Header con contador */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-[var(--muted)]" />
-          <span className="text-sm font-medium text-[var(--fg)]">
+          <MessageCircle className="h-5 w-5 text-zinc-500" />
+          <span className="text-sm font-medium text-zinc-300">
             {responsesCount} {responsesCount === 1 ? 'respuesta' : 'respuestas'}
           </span>
         </div>
@@ -336,7 +340,7 @@ export function ReviewResponses({ resenaId }: ReviewResponsesProps) {
             variant="outline"
             size="sm"
             onClick={() => setShowResponseForm(true)}
-            className="text-sm"
+            className="text-sm border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800"
           >
             <Reply className="h-4 w-4 mr-2" />
             Responder
@@ -346,24 +350,29 @@ export function ReviewResponses({ resenaId }: ReviewResponsesProps) {
 
       {/* Formulario de respuesta */}
       {showResponseForm && session && (
-        <div className="bg-[var(--bg-secondary)] p-4 rounded-lg space-y-3 border border-[var(--border)]">
+        <div className="bg-[#161616] p-4 rounded-xl space-y-3 border border-zinc-800/50 mb-6">
           <div className="flex justify-between items-center mb-2">
-            <h4 className="text-sm font-medium text-[var(--fg)]">Nueva respuesta</h4>
-            <button onClick={() => setShowResponseForm(false)} className="text-[var(--muted)] hover:text-[var(--fg)]">
+            <h4 className="text-sm font-medium text-zinc-200">Nueva respuesta</h4>
+            <button onClick={() => setShowResponseForm(false)} className="text-zinc-500 hover:text-zinc-300">
               <X className="size-4" />
             </button>
           </div>
           {replyingTo && (
-            <div className="text-sm text-[var(--muted)]">Respondiendo a un comentario...</div>
+            <div className="text-sm text-pink-500 mb-2">Respondiendo a un comentario...</div>
           )}
           <textarea
             value={responseContent}
             onChange={(e) => setResponseContent(e.target.value)}
             placeholder="Escribe tu respuesta..."
-            className="w-full min-h-[100px] p-3 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] placeholder-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--gold)] resize-y text-sm"
+            className="w-full min-h-[100px] p-3 rounded-lg bg-[#0a0a0a] border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-pink-500 resize-y text-sm"
           />
           <div className="flex justify-end gap-2">
-            <Button onClick={handleSubmitResponse} disabled={isSubmitting || !responseContent.trim()} size="sm">
+            <Button 
+              onClick={handleSubmitResponse} 
+              disabled={isSubmitting || !responseContent.trim()} 
+              size="sm"
+              className="bg-pink-500 hover:bg-pink-600 text-white"
+            >
               <Send className="h-4 w-4 mr-2" />
               Enviar respuesta
             </Button>
@@ -389,6 +398,7 @@ export function ReviewResponses({ resenaId }: ReviewResponsesProps) {
               onDelete={handleDelete}
               currentUserId={session?.id}
               isSubmitting={isSubmitting}
+              isAdmin={session?.rol === 'ADMIN'}
             />
           ))}
         </div>

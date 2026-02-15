@@ -1,6 +1,7 @@
 'use client';
 
 import { useCart } from '@/store/cart';
+import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 type CourseForCartButton = {
@@ -28,6 +29,7 @@ export function AddCourseButton({ c, className }: { c: CourseForCartButton; clas
         price: c.precio,
         image,
       });
+      toast.success('Curso agregado al carrito');
     } catch (error) {
       console.error('Error al agregar curso al carrito:', error);
     }

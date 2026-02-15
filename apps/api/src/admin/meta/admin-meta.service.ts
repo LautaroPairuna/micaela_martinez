@@ -13,7 +13,7 @@ import {
 } from './admin-meta.types';
 import { RESOURCE_DEFINITIONS } from './resource-definitions';
 
-import { Prisma } from '../../../src/generated/prisma/client';
+import { Prisma } from '@prisma/client';
 
 const SYSTEM_DATE_FIELDS = [
   'creadoEn',
@@ -679,7 +679,7 @@ export class AdminMetaService {
           isImage,
           isFile,
           fileKind,
-          
+
           widget: fieldDef?.widget,
 
           isParentChildCount,

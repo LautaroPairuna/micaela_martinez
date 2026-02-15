@@ -522,13 +522,12 @@ export function AdminResourceClient({
   );
 
   return (
-    <div className="w-full px-4 space-y-4 overflow-x-hidden">
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2a2a2a] pb-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-widest text-slate-50 uppercase">
-            {meta.displayName}
-          </h1>
+    <>
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+          {meta.displayName}
+        </h1>
           <p className="text-xs text-slate-400">
             Recurso <code>{meta.name}</code> • tabla{' '}
             <code>{meta.tableName}</code>
@@ -970,6 +969,6 @@ export function AdminResourceClient({
         onClose={handleCloseForm}
         onSaved={handleSaved}
       />
-    </div>
+    </>
   );
 }

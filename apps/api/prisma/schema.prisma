@@ -39,7 +39,6 @@ model Usuario {
   auditLogs            AuditLog[]
   carrito              Carrito?
   pagosSuscripciones   PagoSuscripcion[]
-  cursosInstructor     Curso[]                   @relation("CursoInstructor")
 
   @@map("usuario")
 }
@@ -100,9 +99,7 @@ model Curso {
   ratingProm    Decimal?   @map("rating_prom") @db.Decimal(3, 2)
   ratingConteo  Int        @default(0) @map("rating_conteo")
   creadoEn      DateTime   @default(now()) @map("creado_en")
-  instructorId  Int?       @map("instructor_id")
 
-  instructor    Usuario?         @relation("CursoInstructor", fields: [instructorId], references: [id])
   modulos       Modulo[]
   inscripciones Inscripcion[]
   resenas       Resena[]
@@ -110,7 +107,6 @@ model Curso {
   itemsCarrito  ItemCarrito[]
 
   @@index([publicado, destacado, creadoEn])
-  @@index([instructorId], map: "curso_instructor_id_fkey")
   @@fulltext([titulo, resumen])
   @@map("curso")
 }
@@ -464,18 +460,14 @@ model Notificacion {
 }
 
 model PreferenciasNotificacion {
-  id                         Int      @id @default(autoincrement())
-  usuarioId                  Int      @unique @map("usuario_id")
-  nuevaResena                Boolean  @default(true) @map("nueva_resena")
-  respuestaResena            Boolean  @default(true) @map("respuesta_resena")
-  actualizacionesSistema     Boolean  @default(true) @map("actualizaciones_sistema")
-  mantenimiento              Boolean  @default(true)
-  reporteContenido           Boolean  @default(true) @map("reporte_contenido")
-  contenidoPendiente         Boolean  @default(true) @map("contenido_pendiente")
-  resumenDiario              Boolean  @default(false) @map("resumen_diario")
-  notificacionesInstantaneas Boolean  @default(true) @map("notificaciones_instantaneas")
-  creadoEn                   DateTime @default(now()) @map("creado_en")
-  actualizadoEn              DateTime @updatedAt @map("actualizado_en")
+  id                     Int      @id @default(autoincrement())
+  usuarioId              Int      @unique @map("usuario_id")
+  respuestaResena        Boolean  @default(true) @map("respuesta_resena")
+  likesResena            Boolean  @default(true) @map("likes_resena")
+  descuentosFavoritos    Boolean  @default(true) @map("descuentos_favoritos")
+  actualizacionesSistema Boolean  @default(true) @map("actualizaciones_sistema")
+  creadoEn               DateTime @default(now()) @map("creado_en")
+  actualizadoEn          DateTime @updatedAt @map("actualizado_en")
 
   usuario Usuario @relation(fields: [usuarioId], references: [id])
 
@@ -600,4 +592,6 @@ enum TipoNotificacion {
   LIKE_RESENA      @map("like_resena")
   MENCION          @map("mencion")
   SISTEMA          @map("sistema")
+  PROMOCION        @map("promocion")
+  RECORDATORIO     @map("recordatorio")
 }

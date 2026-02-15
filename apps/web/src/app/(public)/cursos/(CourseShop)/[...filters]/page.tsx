@@ -26,6 +26,7 @@ import { SortBar } from '@/components/filters/SortBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FiltersDrawer } from '@/components/filters/FiltersDrawer';
 import { Pagination } from '@/components/ui/Pagination';
+import { FadeIn } from '@/components/ui/Motion';
 
 // Derivamos los tipos desde CourseCard para no desincronizarnos
 type CourseMinimal = ComponentProps<typeof CourseCard>['c'];
@@ -288,9 +289,11 @@ export default async function CursosBuscarPage({
 
             {/* Grid de cursos */}
             {courses.length > 0 ? (
-              <HydrationBoundary state={dehydrate(qc)}>
-                <CoursesGridClient courses={courses} isLoggedIn={isLoggedIn} />
-              </HydrationBoundary>
+              <FadeIn>
+                <HydrationBoundary state={dehydrate(qc)}>
+                  <CoursesGridClient courses={courses} isLoggedIn={isLoggedIn} />
+                </HydrationBoundary>
+              </FadeIn>
             ) : (
               <EmptyState
                 title="No se encontraron cursos"

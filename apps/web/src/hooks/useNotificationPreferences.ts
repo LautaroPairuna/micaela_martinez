@@ -6,8 +6,9 @@ import { useSession } from '@/hooks/useSession';
 import { apiProxy } from '@/lib/api-proxy';
 
 export interface NotificationPreferences {
-  nuevaResena?: boolean;
   respuestaResena?: boolean;
+  likesResena?: boolean;
+  descuentosFavoritos?: boolean;
   actualizacionesSistema?: boolean;
 }
 
@@ -23,8 +24,9 @@ export interface UseNotificationPreferencesReturn {
 }
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
-  nuevaResena: true,
   respuestaResena: true,
+  likesResena: true,
+  descuentosFavoritos: true,
   actualizacionesSistema: true,
 };
 
@@ -83,7 +85,22 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
     }
     setError(null);
     try {
-      await mutation.mutateAsync(preferences);
+      // Filtrar solo las claves permitidas para evitar errores 400 por campos extra
+      const allowedKeys: (keyof NotificationPreferences)[] = [
+        'respuestaResena',
+        'likesResena',
+        'descuentosFavoritos',
+        'actualizacionesSistema',
+      ];
+
+      const cleanPreferences = allowedKeys.reduce((acc, key) => {
+        if (preferences[key] !== undefined) {
+          acc[key] = preferences[key];
+        }
+        return acc;
+      }, {} as NotificationPreferences);
+
+      await mutation.mutateAsync(cleanPreferences);
     } catch (err) {
       throw err as unknown as Error;
     }

@@ -7,8 +7,8 @@ import { CartStep } from './CartStep';
 import { AddressStep } from './AddressStep';
 import { PaymentStep } from './PaymentStep';
 import { ConfirmationStep } from './ConfirmationStep';
-import { Card, CardBody } from '@/components/ui/Card';
 import { OrderSummary } from './OrderSummary';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export function CheckoutWizard() {
   const { currentStep } = useCheckout();
@@ -32,33 +32,46 @@ export function CheckoutWizard() {
   return (
     <div className="space-y-8">
       {/* Indicador de pasos */}
-      <Card>
-        <CardBody className="p-6">
-          <StepIndicator />
-        </CardBody>
-      </Card>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden p-6">
+        <StepIndicator />
+      </div>
 
       {/* Contenido del paso actual */}
       <div className={`grid grid-cols-1 gap-8 ${!isCartStep ? 'lg:grid-cols-3' : ''}`}>
         {/* Contenido principal */}
         <div className={!isCartStep ? 'lg:col-span-2' : ''}>
-          {renderStep()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Resumen lateral (oculto en carrito y confirmación) */}
         {!isCartStep && (
-          <div className="lg:col-span-1">
+          <motion.div 
+            className="lg:col-span-1"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <div className="sticky top-24">
-              <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-                <CardBody className="p-6">
-                  <h3 className="text-lg font-semibold text-slate-100 mb-4">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">
                     Resumen del pedido
                   </h3>
                   <OrderSummary />
-                </CardBody>
-              </Card>
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

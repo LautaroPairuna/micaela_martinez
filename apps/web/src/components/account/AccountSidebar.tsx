@@ -84,26 +84,27 @@ export default function AccountSidebar({ me }: { me: Me }) {
   }, [isMobileMenuOpen]);
 
   const SidebarContent = () => (
-    <div className="w-full h-full bg-white overflow-hidden grid grid-rows-[auto_minmax(0,1fr)_auto]">
+    <div className="w-full h-full bg-zinc-950 overflow-hidden grid grid-rows-[auto_minmax(0,1fr)_auto]">
       {/* Profile Header */}
-      <div className="p-4 lg:p-6 xl:p-8 border-b border-gray-200">
+      <div 
+        className="p-4 lg:p-6 xl:p-8 border-b border-zinc-800"
+      >
         <div className="flex items-center gap-3 lg:gap-4 mb-4 lg:mb-6">
           <div className="relative">
             <span
               aria-hidden
               className="
                 grid h-12 w-12 lg:h-16 lg:w-16 place-items-center rounded-full
-                bg-[radial-gradient(75%_120%_at_30%_20%,_rgba(255,255,255,.35),_transparent_60%)]
                 bg-[var(--pink)]/10 text-[var(--pink)] ring-1 ring-[var(--pink)]/40
-                shadow-[inset_0_1px_0_rgba(255,255,255,.2)] font-bold text-sm lg:text-lg tracking-wide
+                font-bold text-sm lg:text-lg tracking-wide
               "
             >
               {initials}
             </span>
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 truncate">{displayName}</h2>
-            <p className="text-gray-600 text-xs lg:text-sm truncate">{email}</p>
+            <h2 className="text-lg lg:text-xl font-semibold text-gray-200 truncate">{displayName}</h2>
+            <p className="text-gray-400 text-xs lg:text-sm truncate">{email}</p>
             <div className="mt-1">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--pink)]/10 text-[var(--pink)] text-xs font-medium">
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--pink)]"></div>
@@ -116,9 +117,10 @@ export default function AccountSidebar({ me }: { me: Me }) {
           href="/mi-cuenta/perfil"
           className="
             inline-flex items-center justify-center gap-2 w-full
-            px-4 py-2.5 font-medium text-sm lg:text-base rounded-lg
-            bg-gradient-to-r from-[var(--pink)] to-[var(--pink-strong)] hover:from-[var(--pink-strong)] hover:to-[var(--pink)]
-            text-black transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40
+            px-4 py-2.5 font-medium text-sm lg:text-base rounded-xl
+            border border-[var(--pink)] bg-transparent text-[var(--pink)]
+            hover:bg-[var(--pink)]/10 hover:shadow-[0_0_20px_-5px_var(--pink)]
+            transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40
           "
         >
           <Edit3 className="h-4 w-4" />
@@ -136,13 +138,13 @@ export default function AccountSidebar({ me }: { me: Me }) {
               group relative flex items-center gap-3 px-4 py-3.5 rounded-xl
               transition-all duration-300 ease-out text-sm lg:text-base font-medium
               hover:scale-[1.02] active:scale-[0.98]
-              text-[var(--pink)] hover:text-[var(--pink)] hover:bg-[var(--bg-hover)]
-              border border-[var(--pink)]/30 hover:border-[var(--pink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40
+              text-zinc-400 hover:text-[var(--pink)] hover:bg-zinc-900
+              border border-zinc-800 hover:border-[var(--pink)]/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pink)]/40
             "
           >
             <div className="
               relative p-2 rounded-lg transition-all duration-300
-              bg-transparent border border-[var(--pink)]/40 text-[var(--pink)]
+              bg-transparent border border-zinc-800 text-zinc-400 group-hover:border-[var(--pink)]/40 group-hover:text-[var(--pink)]
             ">
               <Home className="h-4 w-4 flex-shrink-0" />
             </div>
@@ -158,16 +160,17 @@ export default function AccountSidebar({ me }: { me: Me }) {
             {/* Efecto de brillo en hover */}
             <div className="
               absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100
-              bg-gradient-to-r from-transparent via-white/10 to-transparent
               transition-opacity duration-300
             " />
           </Link>
         </div>
 
         {/* Separador visual */}
-        <div className="border-t border-gray-200 mb-4"></div>
+        <div className="border-t border-zinc-800 mb-4"></div>
 
-        <ul className="space-y-2">
+        <ul 
+          className="space-y-2"
+        >
           {items.map(({ id, href, label, icon: Icon }) => {
             const active = activeId === id;
             return (
@@ -185,8 +188,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
                           'border border-[var(--pink)]/40 shadow-lg shadow-[var(--pink)]/10'
                         ].join(' ')
                       : [
-                          'text-[var(--pink)] hover:text-[var(--pink)] hover:bg-[var(--bg-hover)]',
-                          'border border-[var(--pink)]/30 hover:border-[var(--pink)]'
+                          'text-zinc-400 hover:text-[var(--pink)] hover:bg-zinc-900',
+                          'border border-zinc-800 hover:border-[var(--pink)]/40'
                         ].join(' ')
                   ].join(' ')}
                   
@@ -196,7 +199,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
                     'relative p-2 rounded-lg transition-all duration-300',
                     active 
                       ? 'bg-transparent border border-[var(--pink)]/40 text-[var(--pink)]'
-                      : 'bg-transparent border border-[var(--pink)]/30 text-[var(--pink)] group-hover:border-[var(--pink)]'
+                      : 'bg-transparent border border-zinc-800 text-zinc-400 group-hover:border-[var(--pink)]/40 group-hover:text-[var(--pink)]'
                   ].join(' ')}>
                     <Icon className="h-4 w-4 flex-shrink-0" />
                   </div>
@@ -219,7 +222,6 @@ export default function AccountSidebar({ me }: { me: Me }) {
                   {/* Efecto de brillo en hover */}
                   <div className={[
                     'absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100',
-                    'bg-gradient-to-r from-transparent via-white/10 to-transparent',
                     'transition-opacity duration-300'
                   ].join(' ')} />
                 </Link>
@@ -230,10 +232,10 @@ export default function AccountSidebar({ me }: { me: Me }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-3 lg:p-4 xl:p-6 border-t border-[var(--border)]">
+      <div className="p-3 lg:p-4 xl:p-6 border-t border-zinc-800">
         <button
           type="button"
-          className="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700 transition-colors duration-200"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/50 transition-all duration-200"
           onClick={async () => {
             await logout();
             window.location.href = '/auth';
@@ -295,7 +297,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
       </div>
 
       {/* Desktop Sidebar - Siempre visible en desktop */}
-      <div className="hidden lg:block w-full h-full border-r border-[var(--border)]">
+      <div className="hidden lg:block w-full h-full border-r border-zinc-800 bg-zinc-950">
         <SidebarContent />
       </div>
 
@@ -317,8 +319,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
         className={[
           'lg:hidden fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw]',
           'transform transition-all duration-500 ease-out',
-          'border-r border-[var(--border)] shadow-2xl',
-          'bg-white/95 backdrop-blur-xl',
+          'border-r border-zinc-800 shadow-2xl',
+          'bg-zinc-950/95 backdrop-blur-xl',
           isMobileMenuOpen 
             ? 'translate-x-0 opacity-100 scale-100' 
             : '-translate-x-full opacity-0 scale-95'
@@ -337,7 +339,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
 
       {/* Mobile Header - Muestra info del usuario cuando el menú está cerrado */}
       <div className={[
-        'lg:hidden bg-white/95 backdrop-blur-xl border-b border-[var(--border)]',
+        'lg:hidden bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800',
         'px-4 py-4 transition-all duration-300',
         isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
       ].join(' ')}>
@@ -354,11 +356,11 @@ export default function AccountSidebar({ me }: { me: Me }) {
               >
                 {initials}
               </span>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-zinc-950 rounded-full" />
             </div>
             <div className="text-center">
-              <h2 className="font-semibold text-gray-900 text-sm">{displayName}</h2>
-              <p className="text-gray-600 text-xs">{email}</p>
+              <h2 className="font-semibold text-zinc-100 text-sm">{displayName}</h2>
+              <p className="text-zinc-500 text-xs">{email}</p>
             </div>
           </div>
         </div>

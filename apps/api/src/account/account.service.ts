@@ -293,7 +293,6 @@ export class AccountService {
             titulo: true,
             portada: true,
             nivel: true,
-            instructor: { select: { nombre: true } },
             _count: { select: { modulos: true } },
             modulos: {
               select: {

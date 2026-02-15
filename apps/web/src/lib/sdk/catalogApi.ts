@@ -74,7 +74,6 @@ export type CourseDetail = CourseListItem & {
     }>|null 
   }>|null;
   _count?: { modulos?: number } | null;
-  instructor?: { nombre?: string | null } | null;
 };
 export type NivelFacet = { nivel: CourseLevel; count: number; label?: string };
 export type TagFacet   = { tag: string;        count: number; label?: string };
