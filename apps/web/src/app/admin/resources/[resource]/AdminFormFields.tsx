@@ -4,6 +4,7 @@
 import React, {
   useCallback,
   useRef,
+  useEffect,
   DragEvent,
   useState,
 } from 'react';
@@ -274,6 +275,7 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
+  const lastObjectUrlRef = useRef<string | null>(null);
 
   const handleClickBrowse = useCallback(() => {
     inputRef.current?.click();
@@ -410,6 +412,27 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
       }
     }
   }
+
+  useEffect(() => {
+    const current = typeof storedValue === 'string' ? storedValue : null;
+    if (current?.startsWith('blob:')) {
+      if (lastObjectUrlRef.current && lastObjectUrlRef.current !== current) {
+        URL.revokeObjectURL(lastObjectUrlRef.current);
+      }
+      lastObjectUrlRef.current = current;
+      return () => {
+        if (lastObjectUrlRef.current === current) {
+          URL.revokeObjectURL(current);
+          lastObjectUrlRef.current = null;
+        }
+      };
+    }
+    if (lastObjectUrlRef.current) {
+      URL.revokeObjectURL(lastObjectUrlRef.current);
+      lastObjectUrlRef.current = null;
+    }
+    return undefined;
+  }, [storedValue]);
 
   return (
     <div className="space-y-2 md:col-span-2">
@@ -670,9 +693,21 @@ export function renderAdminField({
           help={field.help}
           fileKind={fileKind}
           storedValue={value}
-          onFileSelected={(file) =>
-            setFileFiles((prev) => ({ ...prev, [field.name]: file }))
-          }
+          onFileSelected={(file) => {
+            setFileFiles((prev) => ({ ...prev, [field.name]: file }));
+            if (file) {
+              const objectUrl = URL.createObjectURL(file);
+              setFormValues((prev) => ({
+                ...prev,
+                [field.name]: objectUrl,
+              }));
+            } else {
+              setFormValues((prev) => ({
+                ...prev,
+                [field.name]: '',
+              }));
+            }
+          }}
         />
       </div>
     );
