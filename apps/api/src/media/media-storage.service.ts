@@ -7,6 +7,7 @@ const sharp = require('sharp');
 const ffmpeg = require('fluent-ffmpeg');
 
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import * as ffprobeInstaller from '@ffprobe-installer/ffprobe';
 import { VideoProgressGateway } from './video-progress.gateway';
 
 type TranscodeMode = 'auto' | 'off';
@@ -45,6 +46,18 @@ export class MediaStorageService {
     } else {
       this.logger.warn(
         'No se encontró path en @ffmpeg-installer/ffmpeg; ffmpeg intentará usar el PATH del sistema.',
+      );
+    }
+
+    const ffprobePath = (ffprobeInstaller as any).path as string | undefined;
+    if (ffprobePath) {
+      ffmpeg.setFfprobePath(ffprobePath);
+      this.logger.log(
+        `ffprobe inicializado desde @ffprobe-installer/ffprobe: ${ffprobePath}`,
+      );
+    } else {
+      this.logger.warn(
+        'No se encontró path en @ffprobe-installer/ffprobe; ffprobe intentará usar el PATH del sistema.',
       );
     }
 

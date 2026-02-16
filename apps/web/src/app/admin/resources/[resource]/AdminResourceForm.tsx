@@ -460,6 +460,19 @@ export function AdminResourceForm({
       setVideoStatus('processing');
       setVideoStage(payload.stage);
       videoStageRef.current = payload.stage;
+      if (payload.stage === 'compressing') {
+        setVideoUploadStartedAtMs((prev) => {
+          if (prev) return prev;
+          if (typeof window !== 'undefined') {
+            const stored = sessionStorage.getItem('admin_upload_start_time');
+            if (stored) return Number(stored);
+            const now = Date.now();
+            sessionStorage.setItem('admin_upload_start_time', String(now));
+            return now;
+          }
+          return Date.now();
+        });
+      }
       lastProgressToastAtRef.current = 0;
       lastProgressPctRef.current = null;
       setVideoProgress(0);
@@ -1169,6 +1182,7 @@ export function AdminResourceForm({
             setVideoStatus('uploading');
             setVideoStatusMessage(`Subiendo video (${file.name})...`);
             setVideoProgress(0);
+            setVideoUploadStartedAtMs(null);
             uploadItemIdRef.current = saved.id;
             const toastId = `admin_upload_${clientId}`;
             uploadToastIdRef.current = toastId;
@@ -1176,7 +1190,7 @@ export function AdminResourceForm({
             // Persistir sesión de upload
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('admin_upload_client_id', clientId);
-              sessionStorage.setItem('admin_upload_start_time', Date.now().toString());
+              sessionStorage.removeItem('admin_upload_start_time');
               sessionStorage.setItem(
                 'admin_upload_context',
                 JSON.stringify({
