@@ -13,6 +13,7 @@ type TranscodeMode = 'auto' | 'off';
 
 type FfmpegProgress = {
   percent?: number;
+  timemark?: string;
 };
 
 @Injectable()
@@ -305,13 +306,29 @@ export class MediaStorageService {
       };
     }
 
+    let durationSeconds: number | null = null;
+    try {
+      durationSeconds = await this.getVideoDurationSeconds(file.path);
+    } catch (e) {
+      this.logger.warn(
+        `No se pudo obtener duración para progreso: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    }
+
     // Notificar etapa: Compresión
     this.videoGateway.emitStage(clientId, 'compressing');
     this.videoGateway.emitProgress(clientId, 0);
 
     // Intentar transcode desde disco
     try {
-      await this.runFfmpegFluent(file.path, finalMp4Path, clientId);
+      await this.runFfmpegFluent(
+        file.path,
+        finalMp4Path,
+        clientId,
+        durationSeconds,
+      );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Fallo la transcodificación (disk). Error: ${msg}`);
@@ -360,6 +377,7 @@ export class MediaStorageService {
     inputPath: string,
     outputPath: string,
     clientId?: string,
+    durationSeconds?: number | null,
   ): Promise<void> {
     // Threads: 0 = auto (usa todos los cores). Si el usuario define ENV, lo respetamos.
     // Antes limitábamos a 2, lo cual causa "bajo uso de CPU" y lentitud.
@@ -385,9 +403,18 @@ export class MediaStorageService {
           `-threads ${threads}`,
         ])
         .on('progress', (p: FfmpegProgress) => {
+          let rawPct: number | null = null;
           if (typeof p?.percent === 'number') {
-            const rawPct = Math.max(0, Math.min(100, p.percent));
-            this.videoGateway.emitProgress(clientId, rawPct);
+            rawPct = p.percent;
+          } else if (durationSeconds && p?.timemark) {
+            const seconds = this.parseTimemarkToSeconds(p.timemark);
+            if (seconds !== null && durationSeconds > 0) {
+              rawPct = (seconds / durationSeconds) * 100;
+            }
+          }
+          if (rawPct !== null) {
+            const pct = Math.max(0, Math.min(100, rawPct));
+            this.videoGateway.emitProgress(clientId, pct);
           }
         })
         .on('end', () => {
@@ -680,6 +707,17 @@ export class MediaStorageService {
         resolve(isNaN(duration) ? 0 : duration);
       });
     });
+  }
+
+  private parseTimemarkToSeconds(timemark: string): number | null {
+    const parts = timemark.split(':');
+    if (parts.length !== 3) return null;
+    const [h, m, s] = parts;
+    const seconds = Number(s);
+    const minutes = Number(m);
+    const hours = Number(h);
+    if ([seconds, minutes, hours].some((n) => Number.isNaN(n))) return null;
+    return hours * 3600 + minutes * 60 + seconds;
   }
 
   private formatVttTime(seconds: number): string {

@@ -179,6 +179,8 @@ export function AdminResourceClient({
   const [currentRow, setCurrentRow] = useState<any | null>(null);
   const [uploadSignal, setUploadSignal] = useState(0);
   const uploadStageRef = useRef<string | null>(null);
+  const lastProgressToastAtRef = useRef(0);
+  const lastProgressPctRef = useRef<number | null>(null);
   const lastOpenedIdRef = useRef<string | null>(null);
   const lastClosedIdRef = useRef<string | null>(null);
 
@@ -311,6 +313,8 @@ export function AdminResourceClient({
     progressSocket.on('video-stage', (payload: { clientId: string; stage: string }) => {
       if (payload.clientId !== storedClientId) return;
       uploadStageRef.current = payload.stage;
+      lastProgressToastAtRef.current = 0;
+      lastProgressPctRef.current = null;
       const stageLabel = getStageLabel(payload.stage);
       showToast({
         id: toastId,
@@ -334,6 +338,16 @@ export function AdminResourceClient({
       (payload: { clientId: string; percent: number }) => {
         if (payload.clientId !== storedClientId) return;
         const pct = Math.max(0, Math.min(100, Math.round(Number(payload.percent))));
+        const now = Date.now();
+        const lastAt = lastProgressToastAtRef.current;
+        const lastPct = lastProgressPctRef.current;
+        const shouldEmit =
+          pct === 100 ||
+          lastPct === null ||
+          (pct !== lastPct && now - lastAt >= 500);
+        if (!shouldEmit) return;
+        lastProgressToastAtRef.current = now;
+        lastProgressPctRef.current = pct;
         const stageLabel = getStageLabel(uploadStageRef.current ?? undefined);
         showToast({
           id: toastId,

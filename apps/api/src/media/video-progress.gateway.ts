@@ -33,6 +33,7 @@ export class VideoProgressGateway implements OnGatewayConnection {
   handleConnection(client: Socket) {
     const clientId = String(client.handshake?.query?.clientId ?? '');
     if (!clientId) return;
+    client.join(clientId);
     this.emitSnapshotToSocket(client, clientId);
   }
 

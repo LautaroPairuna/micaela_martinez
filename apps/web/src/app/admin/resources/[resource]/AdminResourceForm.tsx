@@ -173,6 +173,8 @@ export function AdminResourceForm({
   const videoStatusRef = useRef<VideoStatus>('idle');
   const videoProgressRef = useRef<number | null>(null);
   const videoStatusMessageRef = useRef<string | null>(null);
+  const lastProgressToastAtRef = useRef(0);
+  const lastProgressPctRef = useRef<number | null>(null);
 
   const [videoUploadStartedAtMs, setVideoUploadStartedAtMs] = useState<number | null>(() => {
     if (typeof window !== 'undefined') {
@@ -342,6 +344,12 @@ export function AdminResourceForm({
 
     uploadItemIdRef.current = progress?.itemId ?? context?.itemId ?? currentRow.id;
     if (progress?.status) setVideoStatus(progress.status);
+    else if (
+      typeof progress?.progress === 'number' ||
+      typeof progress?.stage === 'string'
+    ) {
+      setVideoStatus('processing');
+    }
     if (typeof progress?.progress === 'number') setVideoProgress(progress.progress);
     if (progress?.stage) {
       setVideoStage(progress.stage);
@@ -403,6 +411,16 @@ export function AdminResourceForm({
       (payload: { clientId: string; percent: number }) => {
         if (payload.clientId !== clientId) return;
         const pct = Math.max(0, Math.min(100, Math.round(Number(payload.percent))));
+        const now = Date.now();
+        const lastAt = lastProgressToastAtRef.current;
+        const lastPct = lastProgressPctRef.current;
+        const shouldEmit =
+          pct === 100 ||
+          lastPct === null ||
+          (pct !== lastPct && now - lastAt >= 500);
+        if (!shouldEmit) return;
+        lastProgressToastAtRef.current = now;
+        lastProgressPctRef.current = pct;
         const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
         const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
         setVideoStatus('processing');
@@ -442,6 +460,8 @@ export function AdminResourceForm({
       setVideoStatus('processing');
       setVideoStage(payload.stage);
       videoStageRef.current = payload.stage;
+      lastProgressToastAtRef.current = 0;
+      lastProgressPctRef.current = null;
       setVideoProgress(0);
       persistUploadProgress({
         status: 'processing',
@@ -609,13 +629,17 @@ export function AdminResourceForm({
     setImageFiles(initialImages);
     setFileFiles(initialFiles);
 
-    // reset estado de video al abrir
-    setVideoStatus('idle');
-    setVideoProgress(null);
-    setVideoStatusMessage(null);
-    uploadToastIdRef.current = null;
-    uploadToastTitleRef.current = null;
-  }, [open, mode, currentRow, formFields, hasEditor, isLessonResource]);
+    const hasActiveUpload = hasActiveUploadInSession();
+    if (!hasActiveUpload) {
+      // reset estado de video al abrir
+      setVideoStatus('idle');
+      setVideoProgress(null);
+      setVideoStatusMessage(null);
+      setVideoStage(null);
+      uploadToastIdRef.current = null;
+      uploadToastTitleRef.current = null;
+    }
+  }, [open, mode, currentRow, formFields, hasEditor, isLessonResource, hasActiveUploadInSession]);
 
   useEffect(() => {
     if (!open || !isLessonResource) return;
@@ -1587,6 +1611,8 @@ export function AdminResourceForm({
                             ? 'Generando assets (thumbnails, VTT)…'
                             : videoStage === 'compressing'
                             ? 'Comprimiendo video…'
+                            : videoStage === 'assembling'
+                            ? 'Ensamblando video…'
                             : 'Procesando video…'}
                         </span>
                         <div className="flex items-center gap-1">
