@@ -162,6 +162,21 @@ const formatRelationLabel = (name: string) => {
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 };
 
+const formatElapsedMs = (elapsedMs: number): string => {
+  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(
+      seconds,
+    ).padStart(2, '0')}`;
+  }
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
 export function AdminResourceClient({
   resource,
   meta,
@@ -282,7 +297,8 @@ export function AdminResourceClient({
       id: toastId,
       variant: 'info',
       title: toastTitle,
-      message: initialMessage,
+      description: 'Subiendo video…',
+      message: context?.fileName ?? initialMessage,
       progress: 0,
       autoClose: false,
       onClick: handleToastClick,
@@ -320,7 +336,7 @@ export function AdminResourceClient({
         id: toastId,
         variant: 'info',
         title: toastTitle,
-        message: stageLabel,
+        description: stageLabel,
         progress: 0,
         autoClose: false,
         onClick: handleToastClick,
@@ -349,11 +365,16 @@ export function AdminResourceClient({
         lastProgressToastAtRef.current = now;
         lastProgressPctRef.current = pct;
         const stageLabel = getStageLabel(uploadStageRef.current ?? undefined);
+        const storedStart = sessionStorage.getItem('admin_upload_start_time');
+        const startedAt = storedStart ? Number(storedStart) : null;
+        const elapsedLabel = startedAt ? formatElapsedMs(Date.now() - startedAt) : null;
+        const progressLabel = elapsedLabel ? `${pct}% · ${elapsedLabel}` : `${pct}%`;
         showToast({
           id: toastId,
           variant: 'info',
           title: toastTitle,
-          message: `${stageLabel} (${pct}%)`,
+          description: stageLabel,
+          message: progressLabel,
           progress: pct,
           autoClose: false,
           onClick: handleToastClick,
@@ -370,6 +391,9 @@ export function AdminResourceClient({
     progressSocket.on('video-done', (payload: { clientId: string }) => {
       if (payload.clientId !== storedClientId) return;
       uploadStageRef.current = null;
+      const storedStart = sessionStorage.getItem('admin_upload_start_time');
+      const startedAt = storedStart ? Number(storedStart) : null;
+      const elapsedLabel = startedAt ? formatElapsedMs(Date.now() - startedAt) : null;
       sessionStorage.removeItem('admin_upload_client_id');
       sessionStorage.removeItem('admin_upload_start_time');
       sessionStorage.removeItem('admin_upload_context');
@@ -378,7 +402,8 @@ export function AdminResourceClient({
         id: toastId,
         variant: 'success',
         title: toastTitle,
-        message: 'Video procesado correctamente',
+        description: 'Video procesado correctamente',
+        message: elapsedLabel ? `Tiempo total: ${elapsedLabel}` : undefined,
         progress: 100,
         autoClose: 4000,
         onClick: handleToastClick,
@@ -390,6 +415,9 @@ export function AdminResourceClient({
       (payload: { clientId: string; error?: string }) => {
         if (payload.clientId !== storedClientId) return;
         uploadStageRef.current = null;
+        const storedStart = sessionStorage.getItem('admin_upload_start_time');
+        const startedAt = storedStart ? Number(storedStart) : null;
+        const elapsedLabel = startedAt ? formatElapsedMs(Date.now() - startedAt) : null;
         sessionStorage.removeItem('admin_upload_client_id');
         sessionStorage.removeItem('admin_upload_start_time');
         sessionStorage.removeItem('admin_upload_context');
@@ -398,7 +426,8 @@ export function AdminResourceClient({
           id: toastId,
           variant: 'error',
           title: toastTitle,
-          message: payload.error || 'Error al procesar el video.',
+          description: payload.error || 'Error al procesar el video.',
+          message: elapsedLabel ? `Tiempo transcurrido: ${elapsedLabel}` : undefined,
           autoClose: 5000,
           onClick: handleToastClick,
         });

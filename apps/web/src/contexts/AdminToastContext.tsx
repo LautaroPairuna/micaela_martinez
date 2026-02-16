@@ -102,9 +102,14 @@ export function AdminToastProvider({ children }: PropsWithChildren) {
         ) : null}
         <div className="flex min-w-0 flex-col gap-1">
           <p className="truncate text-sm font-semibold text-white">{title}</p>
-          {(description || message) && (
+          {description && (
             <p className="text-xs text-slate-100/80">
-              {description ?? message}
+              {description}
+            </p>
+          )}
+          {message && (
+            <p className="text-[11px] text-slate-200/70 tabular-nums">
+              {message}
             </p>
           )}
         </div>

@@ -425,18 +425,27 @@ export function AdminResourceForm({
         const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
         setVideoStatus('processing');
         setVideoProgress(pct);
-        setVideoStatusMessage(`${getStageLabel(videoStageRef.current)} (${pct}%)`);
+        const stageLabel = getStageLabel(videoStageRef.current);
+        const storedStart =
+          typeof window !== 'undefined'
+            ? sessionStorage.getItem('admin_upload_start_time')
+            : null;
+        const startedAt = storedStart ? Number(storedStart) : null;
+        const elapsedLabel = startedAt ? formatElapsed(Date.now() - startedAt) : null;
+        const progressLabel = elapsedLabel ? `${pct}% · ${elapsedLabel}` : `${pct}%`;
+        setVideoStatusMessage(`${stageLabel} (${pct}%)`);
         persistUploadProgress({
           status: 'processing',
           progress: pct,
           stage: videoStageRef.current,
-          message: `${getStageLabel(videoStageRef.current)} (${pct}%)`,
+          message: `${stageLabel} (${pct}%)`,
         });
         showToast({
           id: toastId,
           variant: 'info',
           title: toastTitle,
-          message: `${getStageLabel(videoStageRef.current)} (${pct}%)`,
+          description: stageLabel,
+          message: progressLabel,
           progress: pct,
           autoClose: false,
           onClick: handleToastClick,
@@ -476,17 +485,18 @@ export function AdminResourceForm({
       lastProgressToastAtRef.current = 0;
       lastProgressPctRef.current = null;
       setVideoProgress(0);
+      const stageLabel = getStageLabel(payload.stage);
       persistUploadProgress({
         status: 'processing',
         progress: 0,
         stage: payload.stage,
-        message: getStageLabel(payload.stage),
+        message: stageLabel,
       });
       showToast({
         id: toastId,
         variant: 'info',
         title: toastTitle,
-        message: getStageLabel(payload.stage),
+        description: stageLabel,
         progress: 0,
         autoClose: false,
         onClick: handleToastClick,
@@ -497,6 +507,12 @@ export function AdminResourceForm({
       if (payload.clientId !== clientId) return;
       const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
       const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
+      const storedStart =
+        typeof window !== 'undefined'
+          ? sessionStorage.getItem('admin_upload_start_time')
+          : null;
+      const startedAt = storedStart ? Number(storedStart) : null;
+      const elapsedLabel = startedAt ? formatElapsed(Date.now() - startedAt) : null;
       setVideoStatus('done');
       setVideoProgress(100);
       sessionStorage.removeItem('admin_upload_client_id');
@@ -508,7 +524,8 @@ export function AdminResourceForm({
         id: toastId,
         variant: 'success',
         title: toastTitle,
-        message: 'Video procesado correctamente',
+        description: 'Video procesado correctamente',
+        message: elapsedLabel ? `Tiempo total: ${elapsedLabel}` : undefined,
         progress: 100,
         autoClose: 4000,
         onClick: handleToastClick,
@@ -525,6 +542,12 @@ export function AdminResourceForm({
         setVideoStatus('error');
         const errorMessage = payload.error || 'Error al procesar el video.';
         setVideoStatusMessage(errorMessage);
+        const storedStart =
+          typeof window !== 'undefined'
+            ? sessionStorage.getItem('admin_upload_start_time')
+            : null;
+        const startedAt = storedStart ? Number(storedStart) : null;
+        const elapsedLabel = startedAt ? formatElapsed(Date.now() - startedAt) : null;
         sessionStorage.removeItem('admin_upload_client_id');
         sessionStorage.removeItem('admin_upload_start_time');
         sessionStorage.removeItem('admin_upload_context');
@@ -534,7 +557,8 @@ export function AdminResourceForm({
           id: toastId,
           variant: 'error',
           title: toastTitle,
-          message: errorMessage,
+          description: errorMessage,
+          message: elapsedLabel ? `Tiempo transcurrido: ${elapsedLabel}` : undefined,
           autoClose: 5000,
           onClick: handleToastClick,
         });
@@ -548,7 +572,15 @@ export function AdminResourceForm({
     return () => {
       progressSocket.disconnect();
     };
-  }, [clientId, onClose, showToast, meta.displayName, handleToastClick, persistUploadProgress]);
+  }, [
+    clientId,
+    onClose,
+    showToast,
+    meta.displayName,
+    handleToastClick,
+    persistUploadProgress,
+    formatElapsed,
+  ]);
 
   // Campos de formulario alineados con el backend:
   const formFields: FieldMeta[] = useMemo(
@@ -1223,7 +1255,8 @@ export function AdminResourceForm({
               id: toastId,
               variant: 'info',
               title: toastTitle,
-              message: `Subiendo ${file.name}...`,
+              description: 'Subiendo video…',
+              message: file.name,
               progress: 0,
               autoClose: false,
               onClick: handleToastClick,
