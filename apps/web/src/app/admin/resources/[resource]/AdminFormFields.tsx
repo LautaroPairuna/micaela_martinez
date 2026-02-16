@@ -370,8 +370,6 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
   let previewKind: 'video' | 'document' | 'none' =
     fileKind === 'video' ? 'video' : fileKind === 'document' ? 'document' : 'none';
   let previewSrc: string | undefined;
-  const isVideoUrl = (url: string) =>
-    /\.(mp4|webm|mov|ogg|mkv|avi)(\?|#|$)/i.test(url);
   const extractFilename = (val: string) => {
     const clean = val.split('?')[0]?.split('#')[0] ?? val;
     const parts = clean.split('/');
@@ -461,21 +459,14 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
         <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-md border border-[#2a2a2a] bg-[#1a1a1a]">
           {previewSrc ? (
             previewKind === 'video' ? (
-              previewSrc.startsWith('blob:') || isVideoUrl(previewSrc) ? (
-                <video
-                  src={previewSrc}
-                  className="h-full w-full object-cover"
-                  muted
-                  controls
-                  preload="metadata"
-                />
-              ) : (
-                <img
-                  src={previewSrc}
-                  alt={label}
-                  className="h-full w-full object-cover"
-                />
-              )
+              <video
+                src={previewSrc}
+                className="h-full w-full object-cover"
+                muted
+                controls
+                preload="metadata"
+                playsInline
+              />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
                 <span className="text-[11px] text-slate-100">Documento</span>

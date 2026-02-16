@@ -105,6 +105,7 @@ export function CourseVideoPlayer({
   const [hoverPosition, setHoverPosition] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
   const [vttCues, setVttCues] = useState<VttCue[]>([]);
+  const [spriteSizes, setSpriteSizes] = useState<Record<string, { width: number; height: number }>>({});
   const progressBarRef = useRef<HTMLDivElement>(null);
 
   // Cargar y parsear VTT si existe
@@ -165,10 +166,32 @@ export function CourseVideoPlayer({
       });
   }, [previewUrl]);
 
+  const clampedHoverTime = useMemo(() => {
+    if (hoverTime === null) return null;
+    if (!duration || duration <= 0) return null;
+    return Math.min(hoverTime, Math.max(0, duration - 0.01));
+  }, [hoverTime, duration]);
+
   const currentThumbnail = useMemo(() => {
-    if (hoverTime === null || vttCues.length === 0) return null;
-    return vttCues.find((c) => hoverTime >= c.start && hoverTime < c.end);
-  }, [hoverTime, vttCues]);
+    if (clampedHoverTime === null || vttCues.length === 0) return null;
+    return vttCues.find((c) => clampedHoverTime >= c.start && clampedHoverTime < c.end);
+  }, [clampedHoverTime, vttCues]);
+
+  useEffect(() => {
+    if (!currentThumbnail?.imgUrl) return;
+    if (spriteSizes[currentThumbnail.imgUrl]) return;
+    const img = new Image();
+    img.onload = () => {
+      setSpriteSizes((prev) => ({
+        ...prev,
+        [currentThumbnail.imgUrl]: {
+          width: img.naturalWidth || img.width,
+          height: img.naturalHeight || img.height,
+        },
+      }));
+    };
+    img.src = currentThumbnail.imgUrl;
+  }, [currentThumbnail?.imgUrl, spriteSizes]);
 
   // Auto-hide controles logic (moved up to avoid "used before defined" error)
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -247,6 +270,7 @@ export function CourseVideoPlayer({
 
   const handleProgressMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) return; // Si arrastra, el efecto global se encarga
+    if (!duration || duration <= 0) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -617,15 +641,31 @@ export function CourseVideoPlayer({
                       transform: 'translateX(-50%)'
                     }}
                   >
-                    <div className="w-40 aspect-video bg-black relative overflow-hidden">
+                    <div className="bg-black relative overflow-hidden">
                       {currentThumbnail ? (
                         <div
+                          className="bg-black"
                           style={{
-                            width: '100%',
-                            height: '100%',
+                            width: 160,
+                            height: Math.round(
+                              (currentThumbnail.h / currentThumbnail.w) * 160
+                            ),
                             backgroundImage: `url(${currentThumbnail.imgUrl})`,
-                            backgroundPosition: `-${currentThumbnail.x}px -${currentThumbnail.y}px`,
                             backgroundRepeat: 'no-repeat',
+                            backgroundPosition: `-${Math.round(
+                              currentThumbnail.x * (160 / currentThumbnail.w)
+                            )}px -${Math.round(
+                              currentThumbnail.y * (160 / currentThumbnail.w)
+                            )}px`,
+                            backgroundSize: spriteSizes[currentThumbnail.imgUrl]
+                              ? `${Math.round(
+                                  spriteSizes[currentThumbnail.imgUrl].width *
+                                    (160 / currentThumbnail.w)
+                                )}px ${Math.round(
+                                  spriteSizes[currentThumbnail.imgUrl].height *
+                                    (160 / currentThumbnail.w)
+                                )}px`
+                              : undefined,
                           }}
                         />
                       ) : thumbnailUrl ? (
