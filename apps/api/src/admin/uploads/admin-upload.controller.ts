@@ -92,9 +92,36 @@ export class AdminUploadController {
         'chunks',
         safeUploadId,
       );
+      const normalizedClientId =
+        typeof clientId === 'string' ? clientId.trim() : '';
+      const clientIdPath = path.join(tmpDir, '.client');
+      let resolvedClientId: string | undefined =
+        normalizedClientId || undefined;
+      let storedClientId: string | null = null;
 
       try {
         await fsp.mkdir(tmpDir, { recursive: true });
+        try {
+          storedClientId = (await fsp.readFile(clientIdPath, 'utf8')).trim();
+        } catch {
+          storedClientId = null;
+        }
+        if (!resolvedClientId && storedClientId) {
+          resolvedClientId = storedClientId;
+        }
+        if (!resolvedClientId) {
+          throw new BadRequestException(
+            'clientId requerido para upload en chunks.',
+          );
+        }
+        if (storedClientId && storedClientId !== resolvedClientId) {
+          throw new BadRequestException(
+            'clientId no coincide con el upload en curso.',
+          );
+        }
+        if (!storedClientId) {
+          await fsp.writeFile(clientIdPath, resolvedClientId);
+        }
         const chunkPath = path.join(tmpDir, `chunk-${idx}`);
 
         // Mover (rename) puede fallar entre discos/particiones, copy+unlink es más seguro
@@ -134,7 +161,7 @@ export class AdminUploadController {
           resource,
           id,
           field,
-          clientId,
+          resolvedClientId,
         ).catch((err: unknown) => {
           console.error('[BackgroundUpload] Error crítico no manejado:', err);
         });
@@ -344,11 +371,8 @@ export class AdminUploadController {
     const assembleStart = Date.now();
 
     if (clientId) {
-      this.videoGateway.server.to(clientId).emit('video-stage', {
-        clientId,
-        stage: 'assembling',
-        progress: 0,
-      });
+      this.videoGateway.emitStage(clientId, 'assembling');
+      this.videoGateway.emitProgress(clientId, 0);
     }
 
     const finalName = `${uploadId}-${originalName}`;
@@ -375,11 +399,7 @@ export class AdminUploadController {
 
         if (clientId && i % 10 === 0) {
           const progress = Math.round((i / totalChunks) * 100);
-          this.videoGateway.server.to(clientId).emit('video-stage', {
-            clientId,
-            stage: 'assembling',
-            progress,
-          });
+          this.videoGateway.emitProgress(clientId, progress);
         }
       }
 
@@ -424,11 +444,8 @@ export class AdminUploadController {
       const folder = path.join('uploads', 'media');
 
       if (clientId) {
-        this.videoGateway.server.to(clientId).emit('video-stage', {
-          clientId,
-          stage: 'processing',
-          progress: 0,
-        });
+        this.videoGateway.emitStage(clientId, 'processing');
+        this.videoGateway.emitProgress(clientId, 0);
       }
 
       await this.processVideoBackground(
@@ -454,10 +471,10 @@ export class AdminUploadController {
       if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
 
       if (clientId) {
-        this.videoGateway.server.to(clientId).emit('video-error', {
+        this.videoGateway.emitError(
           clientId,
-          message: `Error procesando video: ${err instanceof Error ? err.message : err}`,
-        });
+          `Error procesando video: ${err instanceof Error ? err.message : err}`,
+        );
       }
     } finally {
       await fsp.unlink(lockPath).catch(() => {});

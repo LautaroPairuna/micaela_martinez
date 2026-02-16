@@ -196,6 +196,9 @@ export function AdminResourceClient({
   const uploadStageRef = useRef<string | null>(null);
   const lastProgressToastAtRef = useRef(0);
   const lastProgressPctRef = useRef<number | null>(null);
+  const lastVideoEventAtRef = useRef<number | null>(null);
+  const processingRef = useRef(false);
+  const stalledToastEmittedRef = useRef(false);
   const lastOpenedIdRef = useRef<string | null>(null);
   const lastClosedIdRef = useRef<string | null>(null);
 
@@ -329,6 +332,9 @@ export function AdminResourceClient({
     progressSocket.on('video-stage', (payload: { clientId: string; stage: string }) => {
       if (payload.clientId !== storedClientId) return;
       uploadStageRef.current = payload.stage;
+      processingRef.current = true;
+      lastVideoEventAtRef.current = Date.now();
+      stalledToastEmittedRef.current = false;
       lastProgressToastAtRef.current = 0;
       lastProgressPctRef.current = null;
       const stageLabel = getStageLabel(payload.stage);
@@ -353,6 +359,9 @@ export function AdminResourceClient({
       'video-progress',
       (payload: { clientId: string; percent: number }) => {
         if (payload.clientId !== storedClientId) return;
+        processingRef.current = true;
+        lastVideoEventAtRef.current = Date.now();
+        stalledToastEmittedRef.current = false;
         const pct = Math.max(0, Math.min(100, Math.round(Number(payload.percent))));
         const now = Date.now();
         const lastAt = lastProgressToastAtRef.current;
@@ -391,6 +400,9 @@ export function AdminResourceClient({
     progressSocket.on('video-done', (payload: { clientId: string }) => {
       if (payload.clientId !== storedClientId) return;
       uploadStageRef.current = null;
+      processingRef.current = false;
+      lastVideoEventAtRef.current = null;
+      stalledToastEmittedRef.current = false;
       const storedStart = sessionStorage.getItem('admin_upload_start_time');
       const startedAt = storedStart ? Number(storedStart) : null;
       const elapsedLabel = startedAt ? formatElapsedMs(Date.now() - startedAt) : null;
@@ -415,6 +427,9 @@ export function AdminResourceClient({
       (payload: { clientId: string; error?: string }) => {
         if (payload.clientId !== storedClientId) return;
         uploadStageRef.current = null;
+        processingRef.current = false;
+        lastVideoEventAtRef.current = null;
+        stalledToastEmittedRef.current = false;
         const storedStart = sessionStorage.getItem('admin_upload_start_time');
         const startedAt = storedStart ? Number(storedStart) : null;
         const elapsedLabel = startedAt ? formatElapsedMs(Date.now() - startedAt) : null;
@@ -434,7 +449,40 @@ export function AdminResourceClient({
       },
     );
 
+    const timeoutMs = 15 * 60 * 1000;
+    const interval = setInterval(() => {
+      if (!processingRef.current) return;
+      const lastAt = lastVideoEventAtRef.current;
+      if (!lastAt) return;
+      if (Date.now() - lastAt < timeoutMs) return;
+      if (stalledToastEmittedRef.current) return;
+      stalledToastEmittedRef.current = true;
+      const storedStart = sessionStorage.getItem('admin_upload_start_time');
+      const startedAt = storedStart ? Number(storedStart) : null;
+      const elapsedLabel = startedAt ? formatElapsedMs(Date.now() - startedAt) : null;
+      const errorMessage =
+        'El procesamiento no reporta progreso. Verificá el estado del video.';
+      sessionStorage.removeItem('admin_upload_client_id');
+      sessionStorage.removeItem('admin_upload_start_time');
+      sessionStorage.removeItem('admin_upload_context');
+      sessionStorage.removeItem('admin_upload_progress');
+      persistUploadProgress({
+        status: 'error',
+        message: errorMessage,
+      });
+      showToast({
+        id: toastId,
+        variant: 'error',
+        title: toastTitle,
+        description: errorMessage,
+        message: elapsedLabel ? `Tiempo transcurrido: ${elapsedLabel}` : undefined,
+        autoClose: 5000,
+        onClick: handleToastClick,
+      });
+    }, 30000);
+
     return () => {
+      clearInterval(interval);
       progressSocket.disconnect();
     };
   }, [showToast, uploadSignal, router, resource]);
