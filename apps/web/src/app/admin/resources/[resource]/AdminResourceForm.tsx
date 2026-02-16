@@ -170,6 +170,9 @@ export function AdminResourceForm({
   const uploadToastTitleRef = useRef<string | null>(null);
   const videoStageRef = useRef<string | null>(null);
   const uploadItemIdRef = useRef<string | number | null>(null);
+  const videoStatusRef = useRef<VideoStatus>('idle');
+  const videoProgressRef = useRef<number | null>(null);
+  const videoStatusMessageRef = useRef<string | null>(null);
 
   const [videoUploadStartedAtMs, setVideoUploadStartedAtMs] = useState<number | null>(() => {
     if (typeof window !== 'undefined') {
@@ -182,6 +185,18 @@ export function AdminResourceForm({
 
   // Nuevo estado para imágenes
   const [imageStatus, setImageStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    videoStatusRef.current = videoStatus;
+  }, [videoStatus]);
+
+  useEffect(() => {
+    videoProgressRef.current = videoProgress;
+  }, [videoProgress]);
+
+  useEffect(() => {
+    videoStatusMessageRef.current = videoStatusMessage;
+  }, [videoStatusMessage]);
 
   const formatElapsed = useCallback((elapsedMs: number): string => {
     const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
@@ -230,12 +245,31 @@ export function AdminResourceForm({
     setVideoStage(null);
   }, []);
 
+  const hasActiveUploadInSession = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+    const raw = sessionStorage.getItem('admin_upload_progress');
+    if (!raw) return false;
+    try {
+      const progress = JSON.parse(raw) as UploadProgressSnapshot;
+      const rowId = String(currentRow?.id ?? '');
+      const matchesResource = progress?.resource === resource;
+      const matchesItem = rowId && String(progress?.itemId ?? '') === rowId;
+      const activeStatus = progress?.status === 'uploading' || progress?.status === 'processing';
+      return Boolean(matchesResource && matchesItem && activeStatus);
+    } catch {
+      return false;
+    }
+  }, [currentRow?.id, resource]);
+
   const handleClose = useCallback(() => {
-    if (videoStatus !== 'uploading' && videoStatus !== 'processing') {
+    const activeInSession = hasActiveUploadInSession();
+    const activeInState =
+      videoStatusRef.current === 'uploading' || videoStatusRef.current === 'processing';
+    if (!activeInSession && !activeInState) {
       clearUploadSession();
     }
     onClose();
-  }, [onClose, videoStatus, clearUploadSession]);
+  }, [onClose, clearUploadSession, hasActiveUploadInSession]);
 
   const persistUploadProgress = useCallback(
     (partial: {
@@ -249,10 +283,10 @@ export function AdminResourceForm({
         clientId,
         resource,
         itemId: uploadItemIdRef.current,
-        status: partial.status ?? videoStatus,
-        progress: partial.progress ?? videoProgress ?? null,
-        stage: partial.stage ?? videoStageRef.current ?? videoStage ?? null,
-        message: partial.message ?? videoStatusMessage ?? null,
+        status: partial.status ?? videoStatusRef.current,
+        progress: partial.progress ?? videoProgressRef.current ?? null,
+        stage: partial.stage ?? videoStageRef.current ?? null,
+        message: partial.message ?? videoStatusMessageRef.current ?? null,
         updatedAt: Date.now(),
       };
       sessionStorage.setItem('admin_upload_progress', JSON.stringify(payload));
@@ -260,10 +294,6 @@ export function AdminResourceForm({
     [
       clientId,
       resource,
-      videoStatus,
-      videoProgress,
-      videoStage,
-      videoStatusMessage,
     ],
   );
 
@@ -1086,6 +1116,7 @@ export function AdminResourceForm({
         }
 
         let currentItem = saved;
+        let hasPendingVideoProcessing = false;
 
         // 3) Subir imágenes y archivos genéricos (si los hay)
         for (const field of formFields) {
@@ -1164,11 +1195,11 @@ export function AdminResourceForm({
           const uploadUrlBase = `${API_BASE}/admin/resources/${resource}/${saved.id}/upload/${field.name}`;
 
           const mb = 1024 * 1024;
-          const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '5');
+          const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '10');
           const safeChunkMb = Number.isFinite(rawChunkMb) ? rawChunkMb : 10;
           const boundedChunkMb = Math.min(10, Math.max(1, safeChunkMb));
-          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '1');
-          const safeMinChunkMb = Number.isFinite(rawMinChunkMb) ? rawMinChunkMb : 5;
+          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '7');
+          const safeMinChunkMb = Number.isFinite(rawMinChunkMb) ? rawMinChunkMb : 7;
           const boundedMinChunkMb = Math.min(boundedChunkMb, Math.max(1, safeMinChunkMb));
           const CHUNK_SIZE = Math.round(boundedChunkMb * mb);
           const MIN_CHUNK_SIZE = Math.round(boundedMinChunkMb * mb);
@@ -1361,6 +1392,7 @@ export function AdminResourceForm({
 
           // Si el backend responde "processing", es que es un video en background
           if (uploadJson?.status === 'processing') {
+            hasPendingVideoProcessing = true;
             setVideoStatus('processing');
             // NO cerramos el modal si está procesando
             // Solo actualizamos currentItem si trae algo útil
@@ -1376,7 +1408,7 @@ export function AdminResourceForm({
         }
 
         // Si hay video procesando, NO cerramos
-        if (videoStatus === 'processing' || videoStatus === 'uploading') {
+        if (hasPendingVideoProcessing || videoStatusRef.current === 'processing' || videoStatusRef.current === 'uploading') {
           const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
           const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
            showToast({
@@ -1437,7 +1469,6 @@ export function AdminResourceForm({
       videoStatusMessage,
       isLessonResource,
       shouldHideUploads,
-      videoStatus,
       onUploadStart,
       handleToastClick,
       persistUploadProgress,

@@ -114,10 +114,15 @@ export function CourseVideoPlayer({
       return;
     }
 
-    fetch(previewUrl)
-      .then((res) => res.text())
+    fetch(previewUrl, { credentials: 'include' })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`VTT ${res.status}`);
+        }
+        return res.text();
+      })
       .then((text) => {
-        const lines = text.split('\n');
+        const lines = text.split(/\r?\n/);
         const cues: VttCue[] = [];
         let currentStart = 0;
         let currentEnd = 0;
@@ -155,7 +160,9 @@ export function CourseVideoPlayer({
         }
         setVttCues(cues);
       })
-      .catch((err) => console.error('Error cargando VTT:', err));
+      .catch(() => {
+        setVttCues([]);
+      });
   }, [previewUrl]);
 
   const currentThumbnail = useMemo(() => {
