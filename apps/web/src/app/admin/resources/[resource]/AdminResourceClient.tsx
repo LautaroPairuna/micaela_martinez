@@ -180,6 +180,7 @@ export function AdminResourceClient({
   const [uploadSignal, setUploadSignal] = useState(0);
   const uploadStageRef = useRef<string | null>(null);
   const lastOpenedIdRef = useRef<string | null>(null);
+  const lastClosedIdRef = useRef<string | null>(null);
 
   const filtersMeta = useMemo(() => meta.filters ?? [], [meta.filters]);
   const filtersParam = searchParams.get('filters');
@@ -414,7 +415,10 @@ export function AdminResourceClient({
   }, []);
 
   useEffect(() => {
-    if (!editIdParam) return;
+    if (!editIdParam) {
+      lastClosedIdRef.current = null;
+      return;
+    }
     if (!hasEditor) {
       showToast({
         variant: 'info',
@@ -427,6 +431,10 @@ export function AdminResourceClient({
 
     const targetId = normalizeId(editIdParam);
     if (!targetId) return;
+
+    if (!formOpen && lastClosedIdRef.current === targetId) {
+      return;
+    }
 
     if (
       formOpen &&
@@ -533,11 +541,12 @@ export function AdminResourceClient({
     params.delete('editId');
     const query = params.toString();
     const href = query ? `/admin/resources/${resource}?${query}` : `/admin/resources/${resource}`;
+    lastClosedIdRef.current = currentRow ? normalizeId(currentRow.id) : null;
     router.replace(href);
     setFormOpen(false);
     setCurrentRow(null);
     lastOpenedIdRef.current = null;
-  }, [router, resource, searchParams]);
+  }, [router, resource, searchParams, currentRow, normalizeId]);
 
   const handleDelete = useCallback(
     async (row: any) => {

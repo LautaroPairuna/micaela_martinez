@@ -389,10 +389,13 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
   if (storedValue) {
     const v = String(storedValue);
     const lower = v.toLowerCase();
+    const isBlob = v.startsWith('blob:');
+    const hasVideoExt = /\.(mp4|webm|mov)(\?|#|$)/i.test(lower);
+    const hasDocExt = /\.(pdf|doc|docx)(\?|#|$)/i.test(lower);
 
-    if (lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.mov')) {
+    if (isBlob || hasVideoExt) {
       previewKind = 'video';
-    } else if (lower.endsWith('.pdf') || lower.endsWith('.doc') || lower.endsWith('.docx')) {
+    } else if (hasDocExt) {
       previewKind = 'document';
     }
 
