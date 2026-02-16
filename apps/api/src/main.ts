@@ -5,8 +5,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { json, urlencoded, raw } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import * as express from 'express';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
@@ -42,6 +44,36 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.use(cookieParser());
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const incoming = req.headers['x-request-id'];
+    const requestId =
+      typeof incoming === 'string' && incoming.trim() !== ''
+        ? incoming
+        : randomUUID();
+    (req as any).requestId = requestId;
+    res.setHeader('x-request-id', requestId);
+    const start = Date.now();
+    res.on('finish', () => {
+      const durationMs = Date.now() - start;
+      const user = (req as any).user as
+        | { id?: string; sub?: string }
+        | undefined;
+      const userId = user?.id ?? (req as any).userId ?? user?.sub;
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          msg: 'http_request',
+          requestId,
+          method: req.method,
+          path: req.originalUrl ?? req.url,
+          status: res.statusCode,
+          durationMs,
+          userId,
+        }),
+      );
+    });
+    next();
+  });
   // Aumentar límites de payload para uploads grandes
   app.use(json({ limit: '1000mb' }));
   app.use(urlencoded({ extended: true, limit: '1000mb' }));
@@ -88,7 +120,8 @@ async function bootstrap() {
     origin: true, // Permitir cualquier origen en dev/test (ajustar en prod si es necesario)
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+    allowedHeaders:
+      'Content-Type, Accept, Authorization, X-Requested-With, X-Request-Id',
   });
 
   app.useGlobalPipes(

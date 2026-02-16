@@ -388,7 +388,7 @@ export function AdminResourceForm({
     });
 
     progressSocket.on('connect', () => {
-      // console.log('WS video-progress conectado', clientId);
+      progressSocket.emit('progress-sync', { clientId });
     });
 
     const getStageLabel = (stage?: string | null) => {

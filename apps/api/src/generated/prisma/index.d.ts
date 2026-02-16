@@ -1176,10 +1176,11 @@ export namespace Prisma {
     db?: Datasource;
   };
 
-  interface TypeMapCb<ClientOptions = {}> extends $Utils.Fn<
-    { extArgs: $Extensions.InternalArgs },
-    $Utils.Record<string, any>
-  > {
+  interface TypeMapCb<ClientOptions = {}>
+    extends $Utils.Fn<
+      { extArgs: $Extensions.InternalArgs },
+      $Utils.Record<string, any>
+    > {
     returns: Prisma.TypeMap<
       this['params']['extArgs'],
       ClientOptions extends { omit: infer OmitOptions } ? OmitOptions : {}
