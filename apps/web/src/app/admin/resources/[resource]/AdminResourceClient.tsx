@@ -12,9 +12,10 @@ import type {
   FilterOperator,
 } from '@/lib/admin/meta-types';
 import type { AdminListResponse } from '@/lib/admin/fetch-admin-meta';
-import { AdminResourceForm } from './AdminResourceForm';
+import { AdminResourceForm, type AdminUploadContext } from './AdminResourceForm';
 import { renderCell } from './renderCell';
 import { Pencil, Trash2, Filter, ChevronDown, Search, Calendar, Hash, Check, X, Loader2 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import {
   Dialog,
   DialogContent,
@@ -176,10 +177,14 @@ export function AdminResourceClient({
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>('create');
   const [currentRow, setCurrentRow] = useState<any | null>(null);
+  const [uploadSignal, setUploadSignal] = useState(0);
+  const uploadStageRef = useRef<string | null>(null);
+  const lastOpenedIdRef = useRef<string | null>(null);
 
   const filtersMeta = useMemo(() => meta.filters ?? [], [meta.filters]);
   const filtersParam = searchParams.get('filters');
   const qParam = searchParams.get('q');
+  const editIdParam = searchParams.get('editId');
   
   const [searchTerm, setSearchTerm] = useState(qParam || '');
 
@@ -211,6 +216,185 @@ export function AdminResourceClient({
     setData(initialData);
   }, [initialData]);
 
+  const handleUploadStart = useCallback((context: AdminUploadContext) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('admin_upload_client_id', context.clientId);
+      sessionStorage.setItem('admin_upload_context', JSON.stringify(context));
+    }
+    setUploadSignal(Date.now());
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedClientId = sessionStorage.getItem('admin_upload_client_id');
+    if (!storedClientId) return;
+
+    let context: AdminUploadContext | null = null;
+    const contextRaw = sessionStorage.getItem('admin_upload_context');
+    if (contextRaw) {
+      try {
+        context = JSON.parse(contextRaw) as AdminUploadContext;
+      } catch {
+        context = null;
+      }
+    }
+
+    const toastId = `admin_upload_${storedClientId}`;
+    const toastTitle = context?.lessonTitle
+      ? `Lección: ${context.lessonTitle}`
+      : context?.resourceLabel ?? 'Video';
+    const initialMessage = context?.fileName
+      ? `Subiendo ${context.fileName}...`
+      : 'Subiendo video...';
+    const targetResource = context?.resource ?? resource;
+    const targetItemId = context?.itemId ? String(context.itemId) : '';
+    const handleToastClick = () => {
+      if (!targetItemId) return;
+      const params = new URLSearchParams();
+      params.set('editId', targetItemId);
+      router.push(`/admin/resources/${targetResource}?${params.toString()}`);
+    };
+
+    const persistUploadProgress = (partial: {
+      status?: string;
+      progress?: number | null;
+      stage?: string | null;
+      message?: string | null;
+    }) => {
+      if (typeof window === 'undefined') return;
+      const payload = {
+        clientId: storedClientId,
+        resource: context?.resource ?? targetResource,
+        itemId: context?.itemId,
+        status: partial.status,
+        progress: partial.progress ?? null,
+        stage: partial.stage ?? null,
+        message: partial.message ?? null,
+        updatedAt: Date.now(),
+      };
+      sessionStorage.setItem('admin_upload_progress', JSON.stringify(payload));
+    };
+
+    showToast({
+      id: toastId,
+      variant: 'info',
+      title: toastTitle,
+      message: initialMessage,
+      progress: 0,
+      autoClose: false,
+      onClick: handleToastClick,
+    });
+    persistUploadProgress({
+      status: 'uploading',
+      progress: 0,
+      stage: null,
+      message: initialMessage,
+    });
+
+    const getStageLabel = (stage?: string) => {
+      if (stage === 'generating_assets') return 'Generando assets (thumbnails, VTT)…';
+      if (stage === 'compressing') return 'Comprimiendo video…';
+      if (stage === 'assembling') return 'Ensamblando video…';
+      return 'Procesando video…';
+    };
+
+    const progressSocket = io('/video-progress', {
+      path: '/socket.io',
+      transports: ['polling'],
+      withCredentials: true,
+      query: { clientId: storedClientId },
+      reconnectionAttempts: 10,
+      upgrade: false,
+    });
+
+    progressSocket.on('video-stage', (payload: { clientId: string; stage: string }) => {
+      if (payload.clientId !== storedClientId) return;
+      uploadStageRef.current = payload.stage;
+      const stageLabel = getStageLabel(payload.stage);
+      showToast({
+        id: toastId,
+        variant: 'info',
+        title: toastTitle,
+        message: stageLabel,
+        progress: 0,
+        autoClose: false,
+        onClick: handleToastClick,
+      });
+      persistUploadProgress({
+        status: 'processing',
+        progress: 0,
+        stage: payload.stage,
+        message: stageLabel,
+      });
+    });
+
+    progressSocket.on(
+      'video-progress',
+      (payload: { clientId: string; percent: number }) => {
+        if (payload.clientId !== storedClientId) return;
+        const pct = Math.max(0, Math.min(100, Math.round(Number(payload.percent))));
+        const stageLabel = getStageLabel(uploadStageRef.current ?? undefined);
+        showToast({
+          id: toastId,
+          variant: 'info',
+          title: toastTitle,
+          message: `${stageLabel} (${pct}%)`,
+          progress: pct,
+          autoClose: false,
+          onClick: handleToastClick,
+        });
+        persistUploadProgress({
+          status: 'processing',
+          progress: pct,
+          stage: uploadStageRef.current,
+          message: `${stageLabel} (${pct}%)`,
+        });
+      },
+    );
+
+    progressSocket.on('video-done', (payload: { clientId: string }) => {
+      if (payload.clientId !== storedClientId) return;
+      uploadStageRef.current = null;
+      sessionStorage.removeItem('admin_upload_client_id');
+      sessionStorage.removeItem('admin_upload_start_time');
+      sessionStorage.removeItem('admin_upload_context');
+      sessionStorage.removeItem('admin_upload_progress');
+      showToast({
+        id: toastId,
+        variant: 'success',
+        title: toastTitle,
+        message: 'Video procesado correctamente',
+        progress: 100,
+        autoClose: 4000,
+        onClick: handleToastClick,
+      });
+    });
+
+    progressSocket.on(
+      'video-error',
+      (payload: { clientId: string; error?: string }) => {
+        if (payload.clientId !== storedClientId) return;
+        uploadStageRef.current = null;
+        sessionStorage.removeItem('admin_upload_client_id');
+        sessionStorage.removeItem('admin_upload_start_time');
+        sessionStorage.removeItem('admin_upload_context');
+        sessionStorage.removeItem('admin_upload_progress');
+        showToast({
+          id: toastId,
+          variant: 'error',
+          title: toastTitle,
+          message: payload.error || 'Error al procesar el video.',
+          autoClose: 5000,
+          onClick: handleToastClick,
+        });
+      },
+    );
+
+    return () => {
+      progressSocket.disconnect();
+    };
+  }, [showToast, uploadSignal, router, resource]);
+
   const listFields: FieldMeta[] = useMemo(
     () => meta.fields.filter((f) => f.showInList),
     [meta],
@@ -224,6 +408,82 @@ export function AdminResourceClient({
     [meta],
   );
 
+  const normalizeId = useCallback((value: unknown) => {
+    if (value === null || value === undefined) return '';
+    return String(value);
+  }, []);
+
+  useEffect(() => {
+    if (!editIdParam) return;
+    if (!hasEditor) {
+      showToast({
+        variant: 'info',
+        title: 'Editor no disponible',
+        description:
+          'Este recurso todavía no tiene campos configurados para edición.',
+      });
+      return;
+    }
+
+    const targetId = normalizeId(editIdParam);
+    if (!targetId) return;
+
+    if (
+      formOpen &&
+      currentRow &&
+      normalizeId(currentRow.id) === targetId &&
+      lastOpenedIdRef.current === targetId
+    ) {
+      return;
+    }
+
+    const existingRow = data.items.find(
+      (item: any) => normalizeId(item.id) === targetId,
+    );
+    if (existingRow) {
+      setFormMode('edit');
+      setCurrentRow(existingRow);
+      setFormOpen(true);
+      lastOpenedIdRef.current = targetId;
+      return;
+    }
+
+    const loadRow = async () => {
+      try {
+        const url = `/api/admin/resources/${resource}/${targetId}`;
+        const res = await fetch(url, {
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Error cargando registro: ${res.status} ${text}`);
+        }
+        const row = await res.json();
+        setFormMode('edit');
+        setCurrentRow(row);
+        setFormOpen(true);
+        lastOpenedIdRef.current = targetId;
+      } catch (err) {
+        showToast({
+          variant: 'error',
+          title: 'No se pudo abrir el registro',
+          description: err instanceof Error ? err.message : 'Error desconocido',
+        });
+      }
+    };
+
+    loadRow();
+  }, [
+    editIdParam,
+    hasEditor,
+    showToast,
+    normalizeId,
+    formOpen,
+    currentRow,
+    data.items,
+    resource,
+  ]);
+
   const handleOpenCreate = useCallback(() => {
     if (!hasEditor) {
       showToast({
@@ -235,10 +495,15 @@ export function AdminResourceClient({
       return;
     }
 
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('editId');
+    const query = params.toString();
+    const href = query ? `/admin/resources/${resource}?${query}` : `/admin/resources/${resource}`;
+    router.push(href);
     setFormMode('create');
     setCurrentRow(null);
     setFormOpen(true);
-  }, [hasEditor, showToast]);
+  }, [hasEditor, showToast, router, resource, searchParams]);
 
   const handleOpenEdit = useCallback(
     (row: any) => {
@@ -252,17 +517,27 @@ export function AdminResourceClient({
         return;
       }
 
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('editId', String(row.id));
+      const query = params.toString();
+      router.push(`/admin/resources/${resource}?${query}`);
       setFormMode('edit');
       setCurrentRow(row);
       setFormOpen(true);
     },
-    [hasEditor, showToast],
+    [hasEditor, showToast, router, resource, searchParams],
   );
 
   const handleCloseForm = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('editId');
+    const query = params.toString();
+    const href = query ? `/admin/resources/${resource}?${query}` : `/admin/resources/${resource}`;
+    router.replace(href);
     setFormOpen(false);
     setCurrentRow(null);
-  }, []);
+    lastOpenedIdRef.current = null;
+  }, [router, resource, searchParams]);
 
   const handleDelete = useCallback(
     async (row: any) => {
@@ -968,6 +1243,7 @@ export function AdminResourceClient({
         currentRow={currentRow}
         onClose={handleCloseForm}
         onSaved={handleSaved}
+        onUploadStart={handleUploadStart}
       />
     </>
   );

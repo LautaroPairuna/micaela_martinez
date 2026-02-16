@@ -6,8 +6,10 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
   FormEvent,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import { Timer, Loader2 } from 'lucide-react';
 import type { ResourceMeta, FieldMeta } from '@/lib/admin/meta-types';
 import {
@@ -57,6 +59,7 @@ export interface AdminResourceFormProps {
   onClose: () => void;
   onSaved: (row: any, mode: FormMode) => void;
   hideUploads?: boolean;
+  onUploadStart?: (context: AdminUploadContext) => void;
 }
 
 /* ───────────── Tipos auxiliares FK ───────────── */
@@ -96,6 +99,27 @@ type LessonFormSchema = {
   fields: LessonFieldSchema[];
 };
 
+export type AdminUploadContext = {
+  clientId: string;
+  resource: string;
+  resourceLabel: string;
+  itemId: string | number;
+  fieldName: string;
+  fileName: string;
+  lessonTitle?: string;
+};
+
+type UploadProgressSnapshot = {
+  clientId?: string;
+  resource?: string;
+  itemId?: string | number;
+  status?: VideoStatus;
+  progress?: number | null;
+  stage?: string | null;
+  message?: string | null;
+  updatedAt?: number;
+};
+
 /* ───────────── Componente principal ───────────── */
 
 export function AdminResourceForm({
@@ -107,8 +131,10 @@ export function AdminResourceForm({
   onClose,
   onSaved,
   hideUploads,
+  onUploadStart,
 }: AdminResourceFormProps) {
   const { showToast } = useAdminToast();
+  const router = useRouter();
 
   const [isSaving, setIsSaving] = useState(false);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
@@ -140,6 +166,10 @@ export function AdminResourceForm({
   const [videoStatusMessage, setVideoStatusMessage] = useState<string | null>(
     null,
   );
+  const uploadToastIdRef = useRef<string | null>(null);
+  const uploadToastTitleRef = useRef<string | null>(null);
+  const videoStageRef = useRef<string | null>(null);
+  const uploadItemIdRef = useRef<string | number | null>(null);
 
   const [videoUploadStartedAtMs, setVideoUploadStartedAtMs] = useState<number | null>(() => {
     if (typeof window !== 'undefined') {
@@ -191,6 +221,8 @@ export function AdminResourceForm({
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('admin_upload_client_id');
       sessionStorage.removeItem('admin_upload_start_time');
+      sessionStorage.removeItem('admin_upload_context');
+      sessionStorage.removeItem('admin_upload_progress');
     }
     setVideoUploadStartedAtMs(null);
     setVideoStatus('idle');
@@ -199,19 +231,99 @@ export function AdminResourceForm({
   }, []);
 
   const handleClose = useCallback(() => {
-    // Si cerramos el modal explícitamente, limpiamos la sesión de upload
-    // para que no aparezca en la próxima apertura.
-    // Nota: Si el usuario solo recarga la página, handleClose no se llama,
-    // preservando la sesión.
     if (videoStatus !== 'uploading' && videoStatus !== 'processing') {
-       clearUploadSession();
+      clearUploadSession();
     }
-    // Si está subiendo y cierra, decidimos si limpiar o dejar en background.
-    // Por UX simple, si cierra el modal, asumimos que "descarta" ver el progreso,
-    // aunque el server siga. Limpiamos para evitar estado corrupto al reabrir.
-    clearUploadSession();
     onClose();
   }, [onClose, videoStatus, clearUploadSession]);
+
+  const persistUploadProgress = useCallback(
+    (partial: {
+      status?: VideoStatus;
+      progress?: number | null;
+      stage?: string | null;
+      message?: string | null;
+    }) => {
+      if (typeof window === 'undefined') return;
+      const payload = {
+        clientId,
+        resource,
+        itemId: uploadItemIdRef.current,
+        status: partial.status ?? videoStatus,
+        progress: partial.progress ?? videoProgress ?? null,
+        stage: partial.stage ?? videoStageRef.current ?? videoStage ?? null,
+        message: partial.message ?? videoStatusMessage ?? null,
+        updatedAt: Date.now(),
+      };
+      sessionStorage.setItem('admin_upload_progress', JSON.stringify(payload));
+    },
+    [
+      clientId,
+      resource,
+      videoStatus,
+      videoProgress,
+      videoStage,
+      videoStatusMessage,
+    ],
+  );
+
+  const handleToastClick = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const itemId = uploadItemIdRef.current;
+    if (!itemId) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('editId', String(itemId));
+    const query = params.toString();
+    const href = query ? `/admin/resources/${resource}?${query}` : `/admin/resources/${resource}`;
+    router.push(href);
+  }, [router, resource]);
+
+  useEffect(() => {
+    if (!open || !currentRow) return;
+    if (typeof window === 'undefined') return;
+
+    let context: AdminUploadContext | null = null;
+    const contextRaw = sessionStorage.getItem('admin_upload_context');
+    if (contextRaw) {
+      try {
+        context = JSON.parse(contextRaw) as AdminUploadContext;
+      } catch {
+        context = null;
+      }
+    }
+
+    let progress: UploadProgressSnapshot | null = null;
+    const progressRaw = sessionStorage.getItem('admin_upload_progress');
+    if (progressRaw) {
+      try {
+        progress = JSON.parse(progressRaw) as UploadProgressSnapshot;
+      } catch {
+        progress = null;
+      }
+    }
+
+    const rowId = String(currentRow.id ?? '');
+    const contextMatches =
+      context?.resource === resource && String(context.itemId ?? '') === rowId;
+    const progressMatches =
+      progress?.resource === resource && String(progress.itemId ?? '') === rowId;
+
+    if (!contextMatches && !progressMatches) return;
+
+    uploadItemIdRef.current = progress?.itemId ?? context?.itemId ?? currentRow.id;
+    if (progress?.status) setVideoStatus(progress.status);
+    if (typeof progress?.progress === 'number') setVideoProgress(progress.progress);
+    if (progress?.stage) {
+      setVideoStage(progress.stage);
+      videoStageRef.current = progress.stage;
+    }
+    if (progress?.message) setVideoStatusMessage(progress.message);
+
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('admin_upload_start_time');
+      if (stored) setVideoUploadStartedAtMs(Number(stored));
+    }
+  }, [open, currentRow, resource]);
 
   useEffect(() => {
     // Si estamos en el servidor, no conectar sockets
@@ -249,18 +361,44 @@ export function AdminResourceForm({
       // console.log('WS video-progress conectado', clientId);
     });
 
+    const getStageLabel = (stage?: string | null) => {
+      if (stage === 'generating_assets') return 'Generando assets (thumbnails, VTT)…';
+      if (stage === 'compressing') return 'Comprimiendo video…';
+      if (stage === 'assembling') return 'Ensamblando video…';
+      return 'Procesando video…';
+    };
+
     progressSocket.on(
       'video-progress',
       (payload: { clientId: string; percent: number }) => {
         if (payload.clientId !== clientId) return;
+        const pct = Math.max(0, Math.min(100, Math.round(Number(payload.percent))));
+        const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+        const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
         setVideoStatus('processing');
-        setVideoProgress(Number(payload.percent));
-        
+        setVideoProgress(pct);
+        setVideoStatusMessage(`${getStageLabel(videoStageRef.current)} (${pct}%)`);
+        persistUploadProgress({
+          status: 'processing',
+          progress: pct,
+          stage: videoStageRef.current,
+          message: `${getStageLabel(videoStageRef.current)} (${pct}%)`,
+        });
+        showToast({
+          id: toastId,
+          variant: 'info',
+          title: toastTitle,
+          message: `${getStageLabel(videoStageRef.current)} (${pct}%)`,
+          progress: pct,
+          autoClose: false,
+          onClick: handleToastClick,
+        });
+
         setVideoUploadStartedAtMs((prev) => {
           if (prev) return prev;
           if (typeof window !== 'undefined') {
-             const stored = sessionStorage.getItem('admin_upload_start_time');
-             if (stored) return Number(stored);
+            const stored = sessionStorage.getItem('admin_upload_start_time');
+            if (stored) return Number(stored);
           }
           return Date.now();
         });
@@ -269,20 +407,48 @@ export function AdminResourceForm({
 
     progressSocket.on('video-stage', (payload: { clientId: string; stage: string }) => {
       if (payload.clientId !== clientId) return;
+      const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+      const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
+      setVideoStatus('processing');
       setVideoStage(payload.stage);
-      setVideoProgress(0); 
+      videoStageRef.current = payload.stage;
+      setVideoProgress(0);
+      persistUploadProgress({
+        status: 'processing',
+        progress: 0,
+        stage: payload.stage,
+        message: getStageLabel(payload.stage),
+      });
+      showToast({
+        id: toastId,
+        variant: 'info',
+        title: toastTitle,
+        message: getStageLabel(payload.stage),
+        progress: 0,
+        autoClose: false,
+        onClick: handleToastClick,
+      });
     });
 
     progressSocket.on('video-done', (payload: { clientId: string }) => {
       if (payload.clientId !== clientId) return;
+      const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+      const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
       setVideoStatus('done');
       setVideoProgress(100);
       sessionStorage.removeItem('admin_upload_client_id');
       sessionStorage.removeItem('admin_upload_start_time');
+      sessionStorage.removeItem('admin_upload_context');
+      sessionStorage.removeItem('admin_upload_progress');
       
       showToast({
+        id: toastId,
         variant: 'success',
-        title: 'Video procesado correctamente',
+        title: toastTitle,
+        message: 'Video procesado correctamente',
+        progress: 100,
+        autoClose: 4000,
+        onClick: handleToastClick,
       });
       onClose();
     });
@@ -291,16 +457,23 @@ export function AdminResourceForm({
       'video-error',
       (payload: { clientId: string; error?: string }) => {
         if (payload.clientId !== clientId) return;
+        const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+        const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
         setVideoStatus('error');
         const errorMessage = payload.error || 'Error al procesar el video.';
         setVideoStatusMessage(errorMessage);
         sessionStorage.removeItem('admin_upload_client_id');
         sessionStorage.removeItem('admin_upload_start_time');
+        sessionStorage.removeItem('admin_upload_context');
+        sessionStorage.removeItem('admin_upload_progress');
 
         showToast({ 
+          id: toastId,
           variant: 'error',
-          title: 'Error en procesamiento',
+          title: toastTitle,
           message: errorMessage,
+          autoClose: 5000,
+          onClick: handleToastClick,
         });
       },
     );
@@ -312,7 +485,7 @@ export function AdminResourceForm({
     return () => {
       progressSocket.disconnect();
     };
-  }, [clientId, onClose, showToast]);
+  }, [clientId, onClose, showToast, meta.displayName, handleToastClick, persistUploadProgress]);
 
   // Campos de formulario alineados con el backend:
   const formFields: FieldMeta[] = useMemo(
@@ -410,6 +583,8 @@ export function AdminResourceForm({
     setVideoStatus('idle');
     setVideoProgress(null);
     setVideoStatusMessage(null);
+    uploadToastIdRef.current = null;
+    uploadToastTitleRef.current = null;
   }, [open, mode, currentRow, formFields, hasEditor, isLessonResource]);
 
   useEffect(() => {
@@ -928,23 +1103,71 @@ export function AdminResourceForm({
           const isVideo = field.isFile && isVideoFile(field, file);
 
           if (isVideo) {
+            const lessonTitleRaw = isLessonResource
+              ? formValues.titulo ?? currentRow?.titulo
+              : undefined;
+            const lessonTitle =
+              typeof lessonTitleRaw === 'string' ? lessonTitleRaw.trim() : undefined;
+            const toastTitle = lessonTitle
+              ? `Lección: ${lessonTitle}`
+              : meta.displayName;
             setVideoStatus('uploading');
             setVideoStatusMessage(`Subiendo video (${file.name})...`);
             setVideoProgress(0);
+            uploadItemIdRef.current = saved.id;
+            const toastId = `admin_upload_${clientId}`;
+            uploadToastIdRef.current = toastId;
+            uploadToastTitleRef.current = toastTitle;
             // Persistir sesión de upload
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('admin_upload_client_id', clientId);
               sessionStorage.setItem('admin_upload_start_time', Date.now().toString());
+              sessionStorage.setItem(
+                'admin_upload_context',
+                JSON.stringify({
+                  clientId,
+                  resource,
+                  resourceLabel: meta.displayName,
+                  itemId: saved.id,
+                  fieldName: field.name,
+                  fileName: file.name,
+                  lessonTitle,
+                } satisfies AdminUploadContext),
+              );
             }
+            persistUploadProgress({
+              status: 'uploading',
+              progress: 0,
+              stage: null,
+              message: `Subiendo video (${file.name})...`,
+            });
+            onUploadStart?.({
+              clientId,
+              resource,
+              resourceLabel: meta.displayName,
+              itemId: saved.id,
+              fieldName: field.name,
+              fileName: file.name,
+              lessonTitle,
+            });
+            showToast({
+              id: toastId,
+              variant: 'info',
+              title: toastTitle,
+              message: `Subiendo ${file.name}...`,
+              progress: 0,
+              autoClose: false,
+              onClick: handleToastClick,
+            });
           }
 
           const uploadUrlBase = `${API_BASE}/admin/resources/${resource}/${saved.id}/upload/${field.name}`;
 
           const mb = 1024 * 1024;
-          const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '10');
+          const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '5');
           const safeChunkMb = Number.isFinite(rawChunkMb) ? rawChunkMb : 10;
           const boundedChunkMb = Math.min(10, Math.max(1, safeChunkMb));
-          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '5');
+          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '1');
           const safeMinChunkMb = Number.isFinite(rawMinChunkMb) ? rawMinChunkMb : 5;
           const boundedMinChunkMb = Math.min(boundedChunkMb, Math.max(1, safeMinChunkMb));
           const CHUNK_SIZE = Math.round(boundedChunkMb * mb);
@@ -1076,10 +1299,26 @@ export function AdminResourceForm({
                     success = true;
 
                     const pct = Math.round(((i + 1) / totalChunks) * 100);
+                    const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+                    const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
+                    const progressMessage = `Subiendo parte ${i + 1} de ${totalChunks} (${pct}%)`;
                     setVideoProgress(pct);
-                    setVideoStatusMessage(
-                      `Subiendo parte ${i + 1} de ${totalChunks}...`,
-                    );
+                    setVideoStatusMessage(progressMessage);
+                    persistUploadProgress({
+                      status: 'uploading',
+                      progress: pct,
+                      stage: null,
+                      message: progressMessage,
+                    });
+                    showToast({
+                      id: toastId,
+                      variant: 'info',
+                      title: toastTitle,
+                      message: progressMessage,
+                      progress: pct,
+                      autoClose: false,
+                      onClick: handleToastClick,
+                    });
                     saveState(i + 1, chunkSize, totalChunks);
                   } catch (e) {
                     lastError = e;
@@ -1105,6 +1344,12 @@ export function AdminResourceForm({
                 setVideoStatusMessage(
                   'Detectamos inestabilidad en el proxy. Reintentando con 5MB...'
                 );
+                persistUploadProgress({
+                  status: 'uploading',
+                  progress: 0,
+                  stage: null,
+                  message: 'Detectamos inestabilidad en el proxy. Reintentando con 5MB...',
+                });
                 if (typeof window !== 'undefined') sessionStorage.removeItem(stateKey);
                 uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
                 await chunkedUpload(MIN_CHUNK_SIZE, 0);
@@ -1132,10 +1377,14 @@ export function AdminResourceForm({
 
         // Si hay video procesando, NO cerramos
         if (videoStatus === 'processing' || videoStatus === 'uploading') {
+          const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+          const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
            showToast({
+            id: toastId,
             variant: 'info',
-            title: 'Procesando video',
-            message: 'El video se está procesando en segundo plano. No cierres esta ventana.',
+            title: toastTitle,
+            message: 'El progreso se mostrará en notificaciones.',
+            autoClose: false,
           });
           // Forzamos "onSaved" parcial para refrescar la grilla de fondo si se desea,
           // pero mantenemos el modal abierto.
@@ -1186,8 +1435,12 @@ export function AdminResourceForm({
       schema,
       clientId,
       videoStatusMessage,
+      isLessonResource,
       shouldHideUploads,
       videoStatus,
+      onUploadStart,
+      handleToastClick,
+      persistUploadProgress,
     ],
   );
 

@@ -105,7 +105,6 @@ export function CourseVideoPlayer({
   const [hoverPosition, setHoverPosition] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
   const [vttCues, setVttCues] = useState<VttCue[]>([]);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
   // Cargar y parsear VTT si existe
@@ -254,13 +253,6 @@ export function CourseVideoPlayer({
   const handleProgressMouseLeave = () => {
     setHoverTime(null);
   };
-
-  // Sincronizar tiempo del preview
-  useEffect(() => {
-    if (previewVideoRef.current && hoverTime !== null && !isNaN(hoverTime)) {
-      previewVideoRef.current.currentTime = hoverTime;
-    }
-  }, [hoverTime]);
 
   // Resolver URL segura
   useEffect(() => {
@@ -629,15 +621,16 @@ export function CourseVideoPlayer({
                             backgroundRepeat: 'no-repeat',
                           }}
                         />
-                      ) : (
-                        <video
-                          ref={previewVideoRef}
-                          src={resolvedVideoUrl}
-                          className="w-full h-full object-cover opacity-90"
-                          muted
-                          disablePictureInPicture
-                          preload="auto"
+                      ) : thumbnailUrl ? (
+                        <img
+                          src={thumbnailUrl}
+                          alt="Vista previa"
+                          className="w-full h-full object-cover opacity-95"
                         />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-white/70">
+                          Sin vista previa
+                        </div>
                       )}
                     </div>
                     <div className="w-full bg-neutral-900/90 py-1 text-center border-t border-white/10">

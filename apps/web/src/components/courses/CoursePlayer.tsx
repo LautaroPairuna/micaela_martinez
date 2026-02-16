@@ -540,8 +540,9 @@ export function CoursePlayer({
     }
   }, [currentLesson, showMiniPlayer, miniPlayerLesson]);
 
-  // Generar previewUrl (VTT) si el video es local
   const previewUrl = React.useMemo(() => {
+    const explicit = typeof currentLesson?.previewUrl === 'string' ? currentLesson.previewUrl.trim() : '';
+    if (explicit) return explicit;
     if (!resolvedVideoUrl) return undefined;
     try {
       // Usamos URL para parsear correctamente aunque tenga query params
@@ -560,7 +561,7 @@ export function CoursePlayer({
       // ignore
     }
     return undefined;
-  }, [resolvedVideoUrl]);
+  }, [currentLesson?.previewUrl, resolvedVideoUrl]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {

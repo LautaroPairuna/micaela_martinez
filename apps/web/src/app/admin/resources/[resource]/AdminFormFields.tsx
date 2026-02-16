@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
-import { THUMBNAIL_PUBLIC_URL } from '@/lib/adminConstants';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { AdminRichTextEditor } from './AdminRichTextEditor';
 import { JsonListEditor } from './JsonListEditor';
@@ -369,6 +368,21 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
   let previewKind: 'video' | 'document' | 'none' =
     fileKind === 'video' ? 'video' : fileKind === 'document' ? 'document' : 'none';
   let previewSrc: string | undefined;
+  const isVideoUrl = (url: string) =>
+    /\.(mp4|webm|mov|ogg|mkv|avi)(\?|#|$)/i.test(url);
+  const extractFilename = (val: string) => {
+    const clean = val.split('?')[0]?.split('#')[0] ?? val;
+    const parts = clean.split('/');
+    return parts[parts.length - 1] || clean;
+  };
+  const buildVideoSrc = (val: string) => {
+    if (val.startsWith('blob:') || val.startsWith('http://') || val.startsWith('https://')) {
+      return val;
+    }
+    if (val.startsWith('/api/media/videos/')) return val;
+    const filename = extractFilename(val);
+    return `/api/media/videos/${encodeURIComponent(filename)}`;
+  };
 
   if (storedValue) {
     const v = String(storedValue);
@@ -380,13 +394,17 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
       previewKind = 'document';
     }
 
-    if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
-      previewSrc = v;
-    } else {
-      if (previewKind === 'video') {
-        previewSrc = `${THUMBNAIL_PUBLIC_URL}/${v}`;
-      } else if (previewKind === 'document') {
+    if (previewKind === 'video') {
+      previewSrc = buildVideoSrc(v);
+    } else if (previewKind === 'document') {
+      if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
+        previewSrc = v;
+      } else {
         previewSrc = `${API_BASE}/media/documents/${v}`;
+      }
+    } else {
+      if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
+        previewSrc = v;
       } else {
         previewSrc = v;
       }
@@ -417,7 +435,7 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
         <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-md border border-[#2a2a2a] bg-[#1a1a1a]">
           {previewSrc ? (
             previewKind === 'video' ? (
-              previewSrc.startsWith('blob:') ? (
+              previewSrc.startsWith('blob:') || isVideoUrl(previewSrc) ? (
                 <video
                   src={previewSrc}
                   className="h-full w-full object-cover"
