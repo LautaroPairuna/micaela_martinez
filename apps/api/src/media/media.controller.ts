@@ -93,12 +93,20 @@ export class MediaController {
       clientId,
     );
 
+    // ✅ Generar Thumbnail estático (WebP) para admin/listados
+    const thumbWebp = await this.storage.generateVideoThumbnailWebp(
+      path.join(process.cwd(), 'public', result.path),
+      'uploads/thumbnails', // Carpeta específica para thumbs
+      path.basename(filename, path.extname(filename)),
+    );
+
     return {
       ...result,
       filename,
       streamUrl: `/api/media/videos/${filename}`,
       previewUrl: previews.vttUrl, // Front usará esto
       spriteUrl: previews.spriteUrl,
+      thumbnailUrl: thumbWebp.thumbUrl,
     };
   }
 

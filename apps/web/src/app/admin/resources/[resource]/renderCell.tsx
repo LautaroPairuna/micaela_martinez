@@ -131,15 +131,17 @@ export function renderCell({
       );
     }
 
-    const thumbSrc = `${THUMBNAIL_PUBLIC_URL}/${filename}`;
+    // Video Thumbnail (WebP generado en backend)
+    const baseName = filename.replace(/\.[^/.]+$/, "");
+    const thumbSrc = `${THUMBNAIL_PUBLIC_URL}/${baseName}-thumb.webp`;
+    
     return (
       <div className="flex items-center gap-2">
-        <img
+        <ThumbnailImage 
           src={thumbSrc}
           alt={field.name}
-          width={56}
-          height={42}
-          className="rounded border border-slate-800 object-cover"
+          // Fallback a JPG por si existen antiguos
+          fallbackSrc={`${THUMBNAIL_PUBLIC_URL}/${baseName}-thumb.jpg`}
         />
         <span className="max-w-[120px] truncate text-xs text-slate-300" title={filename}>
           {filename}
