@@ -382,28 +382,50 @@ export class AdminUploadController {
     try {
       if (fs.existsSync(finalPath)) await fsp.unlink(finalPath);
 
+      // Usar WriteStream para evitar abrir/cerrar el archivo en cada chunk
+      const writeStream = fs.createWriteStream(finalPath);
+
       for (let i = 0; i < totalChunks; i++) {
         const chunkPath = path.join(tmpDir, `chunk-${i}`);
 
         let retries = 0;
-        while (!fs.existsSync(chunkPath) && retries < 20) {
-          await new Promise((r) => setTimeout(r, 500));
+        // Esperar un poco más agresivamente al principio, luego espaciar
+        while (!fs.existsSync(chunkPath) && retries < 30) {
+          await new Promise((r) => setTimeout(r, 250));
           retries++;
         }
 
         if (!fs.existsSync(chunkPath)) {
+          writeStream.destroy(); // Cerrar stream ante error
           throw new Error(`Chunk ${i} perdido durante el ensamblaje.`);
         }
 
-        const data = await fsp.readFile(chunkPath);
-        await fsp.appendFile(finalPath, data);
+        // Pipe del chunk al archivo final
+        await new Promise<void>((resolve, reject) => {
+          const readStream = fs.createReadStream(chunkPath);
+          readStream.pipe(writeStream, { end: false });
+          readStream.on('end', () => resolve());
+          readStream.on('error', (err) => reject(err));
+        });
 
-        if (clientId && i % 10 === 0) {
-          const progress = Math.round((i / totalChunks) * 100);
+        // Borrar chunk procesado para liberar espacio
+        await fsp.unlink(chunkPath).catch(() => {});
+
+        if (clientId && i % 5 === 0) {
+          const progress = Math.round(((i + 1) / totalChunks) * 100);
           this.videoGateway.emitProgress(clientId, progress);
         }
       }
 
+      writeStream.end(); // Finalizar escritura
+
+      // Asegurar que se haya cerrado el stream correctamente
+      await new Promise<void>((resolve, reject) => {
+        writeStream.on('finish', resolve);
+        writeStream.on('error', reject);
+      });
+
+      // Limpiar directorio temporal del upload
       await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
       const stats = await fsp.stat(finalPath);

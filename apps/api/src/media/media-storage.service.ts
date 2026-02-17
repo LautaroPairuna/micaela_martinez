@@ -457,9 +457,9 @@ export class MediaStorageService {
         .outputOptions([
           // Scale con algoritmo rápido (bilinear) y mantén FPS nativo para evitar overhead de conversión
           '-vf scale=-2:720:flags=fast_bilinear',
-          '-preset ultrafast', // Prioridad absoluta a velocidad
-          '-crf 30', // Calidad aceptable para web, archivo más ligero
-          '-b:a 96k',
+          '-preset superfast', // Balance ideal entre velocidad y tamaño (ultrafast genera archivos muy grandes)
+          '-crf 26', // Calidad visualmente muy buena para web (antes 30 era un poco baja)
+          '-b:a 128k', // Audio un poco mejor (128k estándar)
           '-movflags +faststart',
           `-threads ${threads}`,
         ])
