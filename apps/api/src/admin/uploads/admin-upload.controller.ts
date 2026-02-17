@@ -152,7 +152,11 @@ export class AdminUploadController {
         throw new BadRequestException(`Error guardando chunk ${idx}: ${err}`);
       }
 
-      if (idx === total - 1) {
+      // Verificación robusta: Contar chunks reales en disco para soportar uploads paralelos/desordenados
+      const files = await fsp.readdir(tmpDir);
+      const chunkCount = files.filter((f) => f.startsWith('chunk-')).length;
+
+      if (chunkCount === total) {
         this.assembleAndProcessVideo(
           uploadId,
           originalName,
