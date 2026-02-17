@@ -12,10 +12,11 @@ import {
   MercadoPagoSubscriptionDto,
 } from './dto/orders.dto';
 import {
-  Prisma,
+ Prisma,
   EstadoOrden,
   TipoItemOrden,
   EstadoInscripcion,
+  ItemOrden,
 } from '@prisma/client';
 
 type SubscriptionStatus =
@@ -190,7 +191,7 @@ export class OrdersService {
   }
 
   async getUserOrders(userId: number) {
-    return this.prisma.orden.findMany({
+    const orders = await this.prisma.orden.findMany({
       where: { usuarioId: Number(userId) },
       include: {
         items: true,
@@ -199,36 +200,41 @@ export class OrdersService {
       },
       orderBy: { creadoEn: 'desc' },
     });
+    return this.enrichOrdersWithImages(orders);
   }
 
   async getOrderItems(orderId: number) {
     const order = await this.prisma.orden.findUnique({
       where: { id: Number(orderId) },
       include: {
-        items: true, // ← no incluye producto/curso (no hay relaciones en ItemOrden)
+        items: true,
       },
     });
-    return order?.items || [];
+    if (!order) return [];
+    const enriched = await this.enrichOrdersWithImages([order]);
+    return enriched[0].items;
   }
 
   async getOrdersByUser(userId: number) {
-    return this.prisma.orden.findMany({
+    const orders = await this.prisma.orden.findMany({
       where: { usuarioId: Number(userId) },
       orderBy: { creadoEn: 'desc' },
       include: {
         items: true,
       },
     });
+    return this.enrichOrdersWithImages(orders);
   }
 
   async findByUser(userId: number) {
-    return this.prisma.orden.findMany({
+    const orders = await this.prisma.orden.findMany({
       where: { usuarioId: Number(userId) },
       orderBy: { creadoEn: 'desc' },
       include: {
         items: true,
       },
     });
+    return this.enrichOrdersWithImages(orders);
   }
 
   async getOrderById(orderId: number, userId: number) {
@@ -245,20 +251,25 @@ export class OrdersService {
     });
     if (!order)
       throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
-    return order;
+    
+    const [enriched] = await this.enrichOrdersWithImages([order]);
+    return enriched;
   }
 
   async getOrderByReference(referencia: string) {
-    return this.prisma.orden.findFirst({
+    const order = await this.prisma.orden.findFirst({
       where: { referenciaPago: referencia },
       include: {
         items: true,
       },
     });
+    if (!order) return null;
+    const [enriched] = await this.enrichOrdersWithImages([order]);
+    return enriched;
   }
 
   async findById(id: number, userId: number) {
-    return this.prisma.orden.findFirst({
+    const order = await this.prisma.orden.findFirst({
       where: {
         id: Number(id),
         usuarioId: Number(userId),
@@ -267,7 +278,65 @@ export class OrdersService {
         items: true,
       },
     });
+    if (!order) return null;
+    const [enriched] = await this.enrichOrdersWithImages([order]);
+    return enriched;
   }
+
+  /**
+   * Enriquece los items de la orden con la imagen/portada actual del producto/curso.
+   */
+  private async enrichOrdersWithImages(orders: any[]) {
+    if (!orders.length) return orders;
+
+    // Recolectar IDs
+    const productIds = new Set<number>();
+    const courseIds = new Set<number>();
+
+    for (const order of orders) {
+      if (!order.items) continue;
+      for (const item of order.items) {
+        if (item.tipo === TipoItemOrden.PRODUCTO) productIds.add(item.refId);
+        if (item.tipo === TipoItemOrden.CURSO) courseIds.add(item.refId);
+      }
+    }
+
+    // Consultar DB
+    const [products, courses] = await Promise.all([
+      productIds.size > 0
+        ? this.prisma.producto.findMany({
+            where: { id: { in: Array.from(productIds) } },
+            select: { id: true, imagen: true },
+          })
+        : [],
+      courseIds.size > 0
+        ? this.prisma.curso.findMany({
+            where: { id: { in: Array.from(courseIds) } },
+            select: { id: true, portada: true },
+          })
+        : [],
+    ]);
+
+    // Crear mapas
+    const productMap = new Map(products.map((p) => [p.id, p.imagen]));
+    const courseMap = new Map(courses.map((c) => [c.id, c.portada]));
+
+    // Asignar imágenes
+    return orders.map((order) => {
+      if (!order.items) return order;
+      const enrichedItems = order.items.map((item: any) => {
+        let imagen: string | null | undefined = null;
+        if (item.tipo === TipoItemOrden.PRODUCTO) {
+          imagen = productMap.get(item.refId);
+        } else if (item.tipo === TipoItemOrden.CURSO) {
+          imagen = courseMap.get(item.refId);
+        }
+        return { ...item, imagen };
+      });
+      return { ...order, items: enrichedItems };
+    });
+  }
+
 
   async updateOrderStatus(
     orderId: number,
@@ -394,7 +463,7 @@ export class OrdersService {
       );
     }
 
-    const hasCourses = order.items?.some((i) => i.tipo === TipoItemOrden.CURSO);
+    const hasCourses = order.items?.some((i: ItemOrden) => i.tipo === TipoItemOrden.CURSO);
     if (!hasCourses) {
       throw new HttpException(
         'No hay cursos en la orden para crear una suscripción',

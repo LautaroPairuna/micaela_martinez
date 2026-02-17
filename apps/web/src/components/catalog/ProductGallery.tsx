@@ -5,6 +5,7 @@ import * as React from 'react';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import Lightbox, { type LightboxImage } from '@/components/ui/Lightbox';
+import { resolveProductThumb, PLACEHOLDER_IMAGE } from '@/lib/image-utils';
 
 type Fit = 'contain' | 'cover';
 
@@ -18,13 +19,13 @@ export function ProductGallery({
   const imgs: LightboxImage[] = React.useMemo(() => {
     const list = (images ?? [])
       .map((im): LightboxImage => ({
-        url: im?.url && String(im.url).trim() ? String(im.url) : '/images/placeholder.jpg',
+        url: resolveProductThumb(im?.url) || PLACEHOLDER_IMAGE,
         alt: im?.alt,
         width: 800, // Dimensiones por defecto para productos
         height: 800,
       }))
       .filter((im): im is LightboxImage => !!im.url);
-    return list.length ? list : [{ url: '/images/placeholder.jpg', alt: 'Imagen no disponible', width: 800, height: 800 }];
+    return list.length ? list : [{ url: PLACEHOLDER_IMAGE, alt: 'Imagen no disponible', width: 800, height: 800 }];
   }, [images]);
 
   // Determinar si el lightbox debe estar habilitado (solo si hay más de una imagen)

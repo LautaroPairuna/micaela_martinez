@@ -4,14 +4,14 @@
  */
 
 export class ImageUrlUtil {
-  private static readonly BASE_IMAGE_PATH = '/images';
+  private static readonly BASE_IMAGE_PATH = '/uploads';
 
   /**
    * Genera URL para imagen de curso (portada)
    */
   static getCourseImageUrl(filename: string | null): string | null {
     if (!filename) return null;
-    return `${this.BASE_IMAGE_PATH}/cursos/${filename}`;
+    return `${this.BASE_IMAGE_PATH}/curso/${filename}`;
   }
 
   /**
@@ -34,7 +34,7 @@ export class ImageUrlUtil {
    */
   static getBrandImageUrl(filename: string | null): string | null {
     if (!filename) return null;
-    return `${this.BASE_IMAGE_PATH}/marcas/${filename}`;
+    return `${this.BASE_IMAGE_PATH}/marca/${filename}`;
   }
 
   /**
@@ -42,7 +42,7 @@ export class ImageUrlUtil {
    */
   static getCategoryImageUrl(filename: string | null): string | null {
     if (!filename) return null;
-    return `${this.BASE_IMAGE_PATH}/categorias/${filename}`;
+    return `${this.BASE_IMAGE_PATH}/categoria/${filename}`;
   }
 
   /**

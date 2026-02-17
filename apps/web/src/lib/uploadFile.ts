@@ -18,7 +18,7 @@ export type UploadResponse = {
   };
   urls?: {
     // Solo si tu back las devuelve; si no, ignora
-    original?: string;       // p.ej. /images/producto/slug/archivo.jpg
+    original?: string;       // p.ej. /uploads/producto/archivo.jpg
     thumb?: string;          // si generas thumbs
   };
   error?: string;

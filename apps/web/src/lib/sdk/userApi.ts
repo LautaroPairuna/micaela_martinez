@@ -118,6 +118,7 @@ export type OrdenItem = {
   titulo: string;
   cantidad: number;
   precioUnitario: number;
+  imagen?: string | null;
 };
 
 export type Orden = {

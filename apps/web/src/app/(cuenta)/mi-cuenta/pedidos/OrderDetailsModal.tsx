@@ -6,6 +6,8 @@ import { Orden, OrdenItem } from "@/lib/sdk/userApi";
 import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 
+import { resolveProductThumb, resolveCourseThumb } from "@/lib/image-utils";
+
 const getStatusIcon = (estado: string) => {
   switch (estado?.toLowerCase()) {
     case 'pendiente':
@@ -83,17 +85,18 @@ const getStatusText = (estado: string) => {
 };
 
 // Función para resolver imágenes de productos
-function resolveProductImage(refId?: string): string | undefined {
-  if (!refId) return undefined;
-  // Asumimos que el refId es el slug del producto
-  return `/images/producto/thumbs/${refId}.webp`;
+function resolveProductImage(item: OrdenItem): string | undefined {
+  if (item.imagen) {
+    return resolveProductThumb(item.imagen);
+  }
+  // Fallback si no hay imagen (no debería ocurrir si el backend está actualizado)
+  return resolveProductThumb(item.refId);
 }
 
 // Función para resolver imágenes de cursos
 function resolveCourseImage(refId?: string): string | undefined {
   if (!refId) return undefined;
-  // Asumimos que el refId es el slug del curso
-  return `/images/curso/thumbs/${refId}.webp`;
+  return resolveCourseThumb(refId);
 }
 
 // Definición de tipos para el componente
@@ -172,7 +175,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                       <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--subtle)] transition-all duration-200 hover:border-[var(--gold)]/30 group">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-[var(--subtle)] border border-[var(--border)] flex-shrink-0 group-hover:border-[var(--gold)]/30 transition-colors">
                           <SafeImage
-                            src={resolveProductImage(item.refId)}
+                            src={resolveProductImage(item)}
                             alt={item.titulo || 'Producto'}
                             className="w-full h-full"
                             ratio="1/1"

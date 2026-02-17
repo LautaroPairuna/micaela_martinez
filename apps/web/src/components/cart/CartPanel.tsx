@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/format';
 import { useCart, cartSelectors, CartLineProduct } from '@/store/cart';
 import { useSession } from '@/hooks/useSession';
 import { useToast } from '@/contexts/ToastContext';
+import { PLACEHOLDER_IMAGE } from '@/lib/image-utils';
 
 // Type-guard sin `any`
 function isCartLineProduct(it: unknown): it is CartLineProduct {
@@ -168,10 +169,10 @@ export function CartPanel() {
                    <div className="flex gap-3">
                      {/* Miniatura */}
                      <Link href={href} onClick={close} className="block focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 rounded-lg flex-shrink-0">
-                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800">
-                         <SafeImage src={it.image || '/images/placeholder.jpg'} alt={it.title} ratio="1/1" className="object-cover" />
-                       </div>
-                     </Link>
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800">
+                        <SafeImage src={it.image || PLACEHOLDER_IMAGE} alt={it.title} ratio="1/1" className="object-cover" />
+                      </div>
+                    </Link>
 
                     {/* Info principal */}
                      <div className="flex-1 min-w-0">

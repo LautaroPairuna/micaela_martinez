@@ -11,6 +11,8 @@ import { useFavoritesClient } from '@/hooks/useFavoritesData';
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { Heart, Star, ShoppingCart, Eye } from 'lucide-react';
 
+import { resolveProductThumb } from '@/lib/image-utils';
+
 export type ProductCardProps = {
   id?: string | number;
   slug: string;
@@ -28,53 +30,6 @@ export type ProductCardProps = {
   /** opcional, si tu API ya manda la URL resuelta */
   imagenUrl?: string;
 };
-
-/** Normaliza una referencia de imagen para que funcione con el rewrite de Next y use el thumbnail cuando sea de productos. */
-function resolveProductThumb(src?: string | null): string | undefined {
-  if (!src) return undefined;
-
-  // Remota/CDN → dejar como está
-  if (src.startsWith('http://') || src.startsWith('https://')) return src;
-
-  // Ya viene con /images...
-  if (src.startsWith('/images/')) {
-    // Si no tiene /thumbs/ en el tramo de la carpeta, lo insertamos
-    // /images/<folder>/[thumbs/]filename
-    if (!/\/images\/[^/]+\//.test(src)) {
-      return src.replace(/^\/images\/([^/]+)\//, '/images/$1/thumbs/');
-    }
-    return src;
-  }
-
-  // Viene como 'producto/foo.webp' o 'producto/thumbs/foo.webp'
-  if (/^[^/]+\/[^/]+/.test(src)) {
-    // Si ya está el segmento thumbs, prefijamos /images/ y salimos
-    if (/^[^/]+\/thumbs\//.test(src)) {
-      return `/images/${src}`;
-    }
-    // Insertar thumbs entre la carpeta y el archivo
-    return `/images/${src.replace(/^([^/]+)\//, '$1/thumbs/')}`;
-  }
-
-  // Solo filename → asumir carpeta 'producto'
-  return `/images/producto/${src}`;
-}
-
-/** Para casos donde quieras el original (detalle de producto, zoom, etc.) */
-export function resolveProductOriginal(src?: string | null): string | undefined {
-  if (!src) return undefined;
-  if (src.startsWith('http://') || src.startsWith('https://')) return src;
-  if (src.startsWith('/images/')) {
-    return src.replace('/thumbs/', '/'); // si venía con thumbs, lo quitamos
-  }
-  if (/^[^/]+\/thumbs\//.test(src)) {
-    return `/images/${src.replace('/thumbs/', '/')}`;
-  }
-  if (/^[^/]+\/[^/]+/.test(src)) {
-    return `/images/${src}`;
-  }
-  return `/images/producto/${src}`;
-}
 
 export function ProductCard({ p }: { p: ProductCardProps }) {
   const [mounted, setMounted] = useState(false);

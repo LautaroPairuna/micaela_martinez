@@ -34,6 +34,7 @@ const DOC_PUBLIC_URL = '/uploads/docs'; // p.ej. /uploads/docs/archivo.pdf
 const IMAGE_PUBLIC_DIR = path.join(PUBLIC_ROOT, 'images');
 const MEDIA_UPLOAD_DIR = path.join(PUBLIC_ROOT, 'uploads', 'media');
 const DOC_UPLOAD_DIR = path.join(PUBLIC_ROOT, 'uploads', 'docs');
+const UPLOADS_ROOT_DIR = path.join(PUBLIC_ROOT, 'uploads'); // Nueva raíz de uploads
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -88,8 +89,18 @@ async function bootstrap() {
     }),
   );
 
+  // Servir TODO /uploads
   app.use(
-    MEDIA_PUBLIC_URL, // '/uploads/media'
+    '/uploads',
+    express.static(UPLOADS_ROOT_DIR, {
+      index: false,
+      maxAge: '30d',
+      etag: true,
+    }),
+  );
+
+  app.use(
+    MEDIA_PUBLIC_URL, // '/uploads/media' (si quieres reglas específicas para video, mantenlo, sino el de arriba ya lo cubre)
     express.static(MEDIA_UPLOAD_DIR, {
       index: false,
       maxAge: '30d',

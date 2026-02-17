@@ -4,6 +4,7 @@
 import Image from 'next/image';
 import { useMemo, useState, useEffect } from 'react';
 import { getPublicImageUrl } from '@/lib/media-utils';
+import { PLACEHOLDER_IMAGE } from '@/lib/image-utils';
 
 type Ratio = '4/3' | '1/1' | '16/9' | `${number}/${number}` | 'auto';
 
@@ -24,7 +25,6 @@ type Props = {
   useBackendProxy?: boolean;   // usar proxy de backend para imágenes
 };
 
-const PLACEHOLDER = '/images/placeholder.jpg';
 const PIXEL =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
@@ -63,7 +63,7 @@ export function SafeImage({
 
   const finalSrc = useMemo(() => {
     const s = (src ?? '').trim();
-    if (!s || err) return PLACEHOLDER;
+    if (!s || err) return PLACEHOLDER_IMAGE;
     
     // Si es una URL relativa sin '/' inicial, agregarla
     let processedSrc = s;

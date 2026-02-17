@@ -1,3 +1,4 @@
+// apps/api/src/media/media-storage.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -90,12 +91,22 @@ export class MediaStorageService {
     const hash = randomBytes(3).toString('hex');
     const filename = `${safeBase}-${hash}.webp`;
 
-    const folderPath = path.join(this.publicRoot, opts.folder);
+    // Asegurar que se guarde dentro de 'uploads'
+    const folderRelative = opts.folder.startsWith('uploads') 
+      ? opts.folder 
+      : path.join('uploads', opts.folder);
+
+    const folderPath = path.join(this.publicRoot, folderRelative);
     await fs.mkdir(folderPath, { recursive: true });
 
     const fullPath = path.join(folderPath, filename);
+    
+    // Crear carpeta thumbs
+    const thumbsFolder = path.join(folderPath, 'thumbs');
+    await fs.mkdir(thumbsFolder, { recursive: true });
+
     const thumbName = `${safeBase}-${hash}-thumb.webp`;
-    const thumbPath = path.join(folderPath, thumbName);
+    const thumbPath = path.join(thumbsFolder, thumbName);
 
     const webpBuffer = await sharp(file.buffer)
       .resize({ width, withoutEnlargement: true })
@@ -110,12 +121,17 @@ export class MediaStorageService {
       .toBuffer();
     await fs.writeFile(thumbPath, thumbBuffer);
 
-    const relativePath = path.join(opts.folder, filename).replace(/\\/g, '/');
-    const url = `/api/media/images/${relativePath}`;
+    // Normalizar ruta relativa para DB (siempre forward slashes)
+    // Guardamos relativo a 'uploads' si queremos consistencia, 
+    // O relativo a publicRoot (ej: uploads/producto/foto.webp)
+    const relativePath = path.join(folderRelative, filename).replace(/\\/g, '/');
+    
+    // La URL pública directa
+    const url = `/${relativePath}`; 
 
     return {
       path: relativePath,
-      url,
+      url, 
       originalName: file.originalname,
     };
   }
@@ -123,13 +139,29 @@ export class MediaStorageService {
   async delete(relativePath: string): Promise<void> {
     const fullPath = path.join(this.publicRoot, relativePath);
     await fs.rm(fullPath, { force: true });
+    
     if (
       relativePath.endsWith('.webp') &&
       !relativePath.endsWith('-thumb.webp')
     ) {
-      const thumbPath = relativePath.replace(/\.webp$/i, '-thumb.webp');
-      const fullThumbPath = path.join(this.publicRoot, thumbPath);
-      await fs.rm(fullThumbPath, { force: true });
+      // Borrar thumb en subcarpeta /thumbs/
+      const dir = path.dirname(relativePath);
+      const file = path.basename(relativePath);
+      const thumbName = file.replace(/\.webp$/i, '-thumb.webp');
+      
+      const thumbPath = path.join(this.publicRoot, dir, 'thumbs', thumbName);
+      await fs.rm(thumbPath, { force: true });
+      
+      // Intentar borrar carpeta thumbs si quedó vacía (opcional, pero limpio)
+      const thumbsDir = path.join(this.publicRoot, dir, 'thumbs');
+      try {
+        const files = await fs.readdir(thumbsDir);
+        if (files.length === 0) {
+          await fs.rmdir(thumbsDir);
+        }
+      } catch (e) {
+        // Ignorar si no existe o error
+      }
     }
   }
 

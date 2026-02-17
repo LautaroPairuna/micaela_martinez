@@ -110,8 +110,9 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
     if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
       previewSrc = v;
     } else {
-      const thumb = v.replace(/\.webp$/i, '-thumb.webp');
-      previewSrc = `${API_BASE}/media/images/uploads/${tableName}/${thumb}`;
+      const thumbName = v.replace(/\.webp$/i, '-thumb.webp');
+      // Nueva estructura: /uploads/{folder}/thumbs/{file}-thumb.webp
+      previewSrc = `/uploads/${tableName}/thumbs/${thumbName}`;
     }
   }
 
