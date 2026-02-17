@@ -3,7 +3,8 @@
 
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 import Image from 'next/image';
-import { IMAGE_PUBLIC_URL, THUMBNAIL_PUBLIC_URL } from '@/lib/adminConstants';
+import { IMAGE_PUBLIC_URL, THUMBNAIL_PUBLIC_URL, isImageFile } from '@/lib/adminConstants';
+import { resolveResourceThumb } from '@/lib/image-utils';
 
 export function renderCell({
   field,
@@ -23,24 +24,7 @@ export function renderCell({
     }
 
     const v = String(value);
-    let src: string;
-
-    if (v.startsWith('http')) {
-      // URL absoluta ya lista
-      src = v;
-    } else if (v.startsWith('/')) {
-      // Ya viene lista (por ejemplo /api/media/images/...)
-      src = v;
-    } else if (v.includes('/')) {
-      // Formato viejo: 'uploads/producto/archivo.webp'
-      const clean = v.replace(/^\/+/, '');
-      const thumb = clean.replace(/\.webp$/i, '-thumb.webp');
-      src = `${IMAGE_PUBLIC_URL}/${thumb}`;
-    } else {
-      // Formato nuevo: solo nombre => /api/media/images/images/<tabla>/<archivo>
-      const thumb = v.replace(/\.webp$/i, '-thumb.webp');
-      src = `${IMAGE_PUBLIC_URL}/${meta.tableName}/${thumb}`;
-    }
+    const src = resolveResourceThumb(meta.tableName, v) || v;
 
     return (
       <div className="flex items-center gap-2">
@@ -64,12 +48,33 @@ export function renderCell({
     const v = String(value);
     const filename = v.split('/').pop() ?? v;
     const lower = filename.toLowerCase();
+    
     const isVideo =
       field.widget === 'video' ||
       field.fileKind === 'video' ||
       lower.endsWith('.mp4') ||
       lower.endsWith('.webm') ||
       lower.endsWith('.mov');
+
+    // Si es archivo pero resulta ser una imagen (ej. slider banner), mostramos thumb
+    if (!isVideo && isImageFile(v)) {
+      const src = resolveResourceThumb(meta.tableName, v) || v;
+      return (
+        <div className="flex items-center gap-2">
+          <Image
+            src={src}
+            alt={field.name}
+            width={42}
+            height={42}
+            className="rounded border border-slate-800 object-cover"
+            unoptimized
+          />
+          <span className="max-w-[120px] truncate text-xs text-slate-300" title={filename}>
+            {filename}
+          </span>
+        </div>
+      );
+    }
 
     if (!isVideo) {
       return (
