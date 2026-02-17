@@ -1,10 +1,49 @@
 // apps/web/src/app/admin/resources/[resource]/renderCell.tsx
 'use client';
 
+import { useState } from 'react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 import Image from 'next/image';
-import { IMAGE_PUBLIC_URL, THUMBNAIL_PUBLIC_URL, isImageFile } from '@/lib/adminConstants';
+import { THUMBNAIL_PUBLIC_URL, isImageFile } from '@/lib/adminConstants';
 import { resolveResourceThumb } from '@/lib/image-utils';
+
+function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; alt: string; fallbackSrc?: string; originalSrc?: string }) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className="flex h-[42px] w-[42px] items-center justify-center rounded border border-slate-800 bg-slate-900 text-xs text-slate-500" title="No image">
+        Img
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={currentSrc}
+      alt={alt}
+      width={42}
+      height={42}
+      className="rounded border border-slate-800 object-cover"
+      unoptimized
+      onError={() => {
+        // 1. Si falla la principal (con /thumbs/), probar fallback (plana)
+        if (fallbackSrc && currentSrc === src) {
+          setCurrentSrc(fallbackSrc);
+          return;
+        }
+        // 2. Si falla fallback, probar original (sin thumb)
+        if (originalSrc && currentSrc !== originalSrc) {
+          setCurrentSrc(originalSrc);
+          return;
+        }
+        // 3. Si todo falla
+        setError(true);
+      }}
+    />
+  );
+}
 
 export function renderCell({
   field,
@@ -24,17 +63,21 @@ export function renderCell({
     }
 
     const v = String(value);
-    const src = resolveResourceThumb(meta.tableName, v) || v;
+    const primarySrc = resolveResourceThumb(meta.tableName, v) || v;
+    
+    // Fallback: Si la ruta generada tiene /thumbs/, probar la ruta plana (legacy uploads)
+    let fallbackSrc: string | undefined;
+    if (primarySrc.includes('/thumbs/') && primarySrc.startsWith('/uploads/')) {
+       fallbackSrc = primarySrc.replace('/thumbs/', '/');
+    }
 
     return (
       <div className="flex items-center gap-2">
-        <Image
-          src={src}
-          alt={field.name}
-          width={42}
-          height={42}
-          className="rounded border border-slate-800 object-cover"
-          unoptimized
+        <ThumbnailImage 
+          src={primarySrc} 
+          alt={field.name} 
+          fallbackSrc={fallbackSrc}
+          originalSrc={v !== primarySrc ? v : undefined}
         />
         <span className="max-w-[120px] truncate text-xs text-slate-300">
           {v}
@@ -58,16 +101,20 @@ export function renderCell({
 
     // Si es archivo pero resulta ser una imagen (ej. slider banner), mostramos thumb
     if (!isVideo && isImageFile(v)) {
-      const src = resolveResourceThumb(meta.tableName, v) || v;
+      const primarySrc = resolveResourceThumb(meta.tableName, v) || v;
+      
+      let fallbackSrc: string | undefined;
+      if (primarySrc.includes('/thumbs/') && primarySrc.startsWith('/uploads/')) {
+         fallbackSrc = primarySrc.replace('/thumbs/', '/');
+      }
+
       return (
         <div className="flex items-center gap-2">
-          <Image
-            src={src}
-            alt={field.name}
-            width={42}
-            height={42}
-            className="rounded border border-slate-800 object-cover"
-            unoptimized
+          <ThumbnailImage 
+            src={primarySrc} 
+            alt={field.name} 
+            fallbackSrc={fallbackSrc}
+            originalSrc={v !== primarySrc ? v : undefined}
           />
           <span className="max-w-[120px] truncate text-xs text-slate-300" title={filename}>
             {filename}

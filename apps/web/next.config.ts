@@ -52,8 +52,12 @@ const nextConfig: NextConfig = {
       { source: '/api/:path*',                  destination: `${U.origin}/api/:path*` },
       { source: '/api/media/images/:path*',     destination: `${U.origin}/api/media/images/:path*` },
       { source: '/api/media/public/:path*',     destination: `${U.origin}/api/media/images/:path*` },
+      // LEGACY IMAGES: Si alguien pide /images/, redirigir a /uploads/ si no existe, o intentar servir
+      // Pero como el usuario dijo "todo se sube en uploads", quizás debamos mapear /images a /uploads?
+      // Mejor mapear /images al static handler de images del backend por si acaso queda algo
       { source: `${IMAGE_PUBLIC_URL}/:path*`,   destination: `${U.origin}${IMAGE_PUBLIC_URL}/:path*` },
       { source: `${DOC_PUBLIC_URL}/:path*`,     destination: `${U.origin}${DOC_PUBLIC_URL}/:path*` },
+      // REGLA CLAVE: /uploads/ mapea al backend /uploads/
       { source: '/uploads/:path*',              destination: `${U.origin}/uploads/:path*` },
       { source: '/api/media/uploads/:path*',              destination: `${U.origin}/uploads/:path*` },
       { source: '/static/:path*',               destination: `${U.origin}/static/:path*` },

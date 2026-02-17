@@ -12,10 +12,10 @@
  */
 
 // FRONT: rutas que usás en <img src="...">, <video src="...">, etc.
-export const IMAGE_PUBLIC_URL = '/images';
-export const DOC_PUBLIC_URL = '/docs';
-export const VIDEO_PUBLIC_URL = '/videos';
-export const THUMBNAIL_PUBLIC_URL = '/thumbnails';
+export const IMAGE_PUBLIC_URL = '/uploads'; // Antes /images
+export const DOC_PUBLIC_URL = '/uploads/docs'; // Antes /docs
+export const VIDEO_PUBLIC_URL = '/uploads/media'; // Antes /videos
+export const THUMBNAIL_PUBLIC_URL = '/uploads/thumbnails'; // Antes /thumbnails
 
 // Base genérica por si la necesitás
 export const MEDIA_PUBLIC_URL = '/api/media';

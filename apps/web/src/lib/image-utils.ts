@@ -125,26 +125,8 @@ export function resolveResourceThumb(resource: string, src?: string | null): str
     return [...parts, 'thumbs', thumbName].join('/');
   }
 
-  // LEGACY: /images/
-  if (src.startsWith('/images/')) {
-    // Si ya tiene /thumbs/, devolver
-    if (src.includes('/thumbs/')) return src;
-    
-    // Intentar inyectar thumbs si sigue patrón /images/recurso/archivo
-    // /images/slider/foo.webp -> /images/slider/thumbs/foo.webp
-    const parts = src.split('/');
-    if (parts.length >= 4) { // "", "images", "recurso", "archivo"
-       const filename = parts.pop();
-       return [...parts, 'thumbs', filename].join('/');
-    }
-    return src;
-  }
-
-  // Solo filename (asumimos nuevo sistema /uploads/recurso/thumbs/...)
-  // OJO: Si es un sistema mixto, esto podría fallar para archivos viejos que no tienen ruta completa en DB
-  // pero típicamente en DB se guarda solo el nombre o la ruta relativa.
-  // Si en DB hay solo nombre, asumimos la estructura nueva por defecto, o la vieja si no existe?
-  // Por ahora, priorizamos la estructura nueva /uploads/
+  // Solo filename o path relativo: asumimos nuevo sistema /uploads/recurso/thumbs/...
+  // (El usuario confirmó que "todo se sube en uploads")
   
   const filename = src.split('/').pop()!;
   const thumbName = filename.includes('-thumb.')
