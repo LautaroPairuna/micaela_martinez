@@ -621,8 +621,8 @@ export class MediaStorageService {
     const spritePath = path.join(fullOutputDir, spriteName);
     const vttPath = path.join(fullOutputDir, vttName);
 
-    // Configuración OPTIMIZADA (15s / 120px)
-    const interval = 15;
+    // Configuración OPTIMIZADA (5s / 120px) - Mejor sincro
+    const interval = 5;
     const width = 120;
     const height = 68;
     const cols = 5;

@@ -617,7 +617,13 @@ export function CourseVideoPlayer({
                       transform: 'translateX(-50%)'
                     }}
                   >
-                    <div className="w-40 aspect-video bg-black relative overflow-hidden">
+                    <div 
+                      className="bg-black relative overflow-hidden"
+                      style={{
+                        width: currentThumbnail ? currentThumbnail.w : 160,
+                        height: currentThumbnail ? currentThumbnail.h : 90,
+                      }}
+                    >
                       {currentThumbnail ? (
                         <div
                           style={{
