@@ -79,11 +79,17 @@ export class MediaStorageService {
   // ---------- IMÁGENES ----------
 
   async saveImageWebp(
-    file: { originalname: string; buffer: Buffer },
+    file: { originalname: string; buffer?: Buffer; path?: string },
     opts: { folder: string; width?: number; baseName?: string },
   ): Promise<{ path: string; url: string; originalName: string }> {
     const width = opts.width ?? 1200;
 
+    if (!file.buffer && !file.path) {
+      throw new Error('Debe proveerse buffer o path del archivo');
+    }
+
+    const input = file.path ?? file.buffer;
+    
     const originalBase = file.originalname.replace(/\.[^.]+$/, '');
     const rawBase = opts.baseName || originalBase;
     const safeBase = this.slugify(rawBase);
@@ -108,18 +114,28 @@ export class MediaStorageService {
     const thumbName = `${safeBase}-${hash}-thumb.webp`;
     const thumbPath = path.join(thumbsFolder, thumbName);
 
-    const webpBuffer = await sharp(file.buffer)
-      .resize({ width, withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer();
+    // Optimizaciones:
+    // 1. Usar Promise.all para paralelo
+    // 2. Usar toFile directo (stream a disco) en lugar de toBuffer
+    // 3. Usar clone() si es necesario (sharp lo maneja bien con multiples pipelines)
+    
+    const pipeline = sharp(input);
+    
+    await Promise.all([
+      // Imagen principal
+      pipeline
+        .clone()
+        .resize({ width, withoutEnlargement: true })
+        .webp({ quality: 80, effort: 2 }) // effort bajo para velocidad
+        .toFile(fullPath),
 
-    await fs.writeFile(fullPath, webpBuffer);
-
-    const thumbBuffer = await sharp(file.buffer)
-      .resize({ width: 320, withoutEnlargement: true })
-      .webp({ quality: 75 })
-      .toBuffer();
-    await fs.writeFile(thumbPath, thumbBuffer);
+      // Thumbnail
+      pipeline
+        .clone()
+        .resize({ width: 320, withoutEnlargement: true })
+        .webp({ quality: 75, effort: 2 })
+        .toFile(thumbPath),
+    ]);
 
     // Normalizar ruta relativa para DB (siempre forward slashes)
     // Guardamos relativo a 'uploads' si queremos consistencia, 

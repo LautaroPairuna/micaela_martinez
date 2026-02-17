@@ -314,9 +314,10 @@ export class AdminUploadController {
 
     try {
       if (mediaKind === 'image') {
-        const buf = await fsp.readFile(file.path);
+        // Optimización: pasar path directo para que sharp haga streaming
+        // sin cargar todo el archivo en memoria.
         const saved = await this.mediaStorage.saveImageWebp(
-          { originalname: file.originalname, buffer: buf },
+          { originalname: file.originalname, path: file.path },
           { folder, baseName },
         );
         filenameOnly = path.basename(saved.path);
