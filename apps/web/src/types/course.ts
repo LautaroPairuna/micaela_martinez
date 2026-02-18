@@ -60,6 +60,11 @@ export interface Course {
   descripcion?: string | null;
   imagenUrl?: string | null;
   modulos?: Module[] | null;
+  certificado?: {
+    existe: boolean;
+    url?: string;
+    uuid?: string;
+  };
 }
 
 /** Progreso detallado opcional para una inscripción */

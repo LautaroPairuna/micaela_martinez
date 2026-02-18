@@ -80,10 +80,12 @@ export class CertificateService {
     const progress = (enrollment.progreso as any) || {};
     let totalLessons = 0;
     let completedLessons = 0;
+    let courseTotalMinutes = 0; // Suma de duración de lecciones (en minutos)
 
     for (const modulo of enrollment.curso.modulos) {
       for (const leccion of modulo.lecciones) {
         totalLessons++;
+        courseTotalMinutes += leccion.duracion || 0; // Asumimos que duracion en BD son minutos
         
         // Verificar si está completada en el JSON de progreso
         // Estructura esperada: progreso[moduleId][lessonId] exists/completed
@@ -103,6 +105,27 @@ export class CertificateService {
     // Usaremos 100% estricto, o > 99% por temas de redondeo si fuera float
     if (Math.round(percentage) < 100) {
        throw new BadRequestException(`El curso no está completado. Progreso actual: ${percentage.toFixed(1)}%`);
+    }
+
+    // 2.1 Validación de Tiempo Mínimo (Anti-Fraude Básico - Capa B)
+    // Solo aplicar si el curso tiene una duración definida significativa (> 10 min)
+    if (courseTotalMinutes > 10) {
+        const enrollmentAgeMs = new Date().getTime() - enrollment.creadoEn.getTime();
+        const enrollmentAgeMinutes = enrollmentAgeMs / (1000 * 60);
+        
+        // Umbral: El usuario debe haber estado inscrito al menos el 20% de la duración total.
+        // Ejemplo: Curso de 5 horas (300 min) -> Requiere > 60 min desde inscripción.
+        const minRequiredMinutes = courseTotalMinutes * 0.2; 
+        
+        if (enrollmentAgeMinutes < minRequiredMinutes) {
+             this.logger.warn(`[Certificate] Intento prematuro bloqueado. User: ${userId}, Curso: ${courseId}. Edad: ${enrollmentAgeMinutes.toFixed(2)}m, Req: ${minRequiredMinutes.toFixed(2)}m (Total: ${courseTotalMinutes}m)`);
+             
+             // Mensaje amigable pero firme
+             throw new BadRequestException(
+                `No es posible generar el certificado aún. El sistema detectó que el curso se completó en un tiempo inusualmente corto (${Math.floor(enrollmentAgeMinutes)} min). ` +
+                `Por favor, asegúrate de haber visualizado todo el contenido correctamente. Inténtalo de nuevo más tarde.`
+             );
+        }
     }
 
     // 3. Generar HTML
