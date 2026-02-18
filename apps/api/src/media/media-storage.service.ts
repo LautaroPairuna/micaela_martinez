@@ -1,5 +1,5 @@
 // apps/api/src/media/media-storage.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { randomBytes } from 'crypto';
@@ -74,6 +74,27 @@ export class MediaStorageService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 80);
+  }
+
+  async getFile(urlOrPath: string): Promise<Buffer> {
+    // Remove /media prefix if present
+    const relativePath = urlOrPath.startsWith('/media')
+      ? urlOrPath.substring(6)
+      : urlOrPath;
+
+    // Remove leading slash if present (to avoid absolute path confusion)
+    const cleanPath = relativePath.startsWith('/')
+      ? relativePath.substring(1)
+      : relativePath;
+
+    const fullPath = path.join(this.publicRoot, cleanPath);
+
+    try {
+      return await fs.readFile(fullPath);
+    } catch (error) {
+      this.logger.error(`Error reading file ${fullPath}: ${error}`);
+      throw new NotFoundException(`File not found: ${urlOrPath}`);
+    }
   }
 
   // ---------- IMÁGENES ----------
@@ -179,6 +200,33 @@ export class MediaStorageService {
         // Ignorar si no existe o error
       }
     }
+  }
+
+  // ✅ Eliminar video y sus assets (VTT, Sprite, Thumbs)
+  async deleteVideoResources(relativePath: string): Promise<void> {
+    // 1. Borrar video principal
+    await this.delete(relativePath);
+
+    // 2. Borrar assets derivados
+    // Asumimos estructura estándar: video en uploads/media, assets en uploads/media o uploads/thumbnails
+    const dir = path.dirname(relativePath);
+    const filename = path.basename(relativePath);
+    const baseName = filename.replace(/\.[^.]+$/, '');
+
+    // VTT y Sprite (mismo dir que video)
+    const vttPath = path.join(dir, `${baseName}-preview.vtt`).replace(/\\/g, '/');
+    const spritePath = path.join(dir, `${baseName}-sprite.jpg`).replace(/\\/g, '/');
+    
+    await this.delete(vttPath);
+    await this.delete(spritePath);
+
+    // Thumbnails (en uploads/thumbnails)
+    const thumbDir = 'uploads/thumbnails';
+    const thumbWebp = path.join(thumbDir, `${baseName}-thumb.webp`).replace(/\\/g, '/');
+    const thumbJpg = path.join(thumbDir, `${baseName}-thumb.jpg`).replace(/\\/g, '/'); // legacy
+
+    await this.delete(thumbWebp);
+    await this.delete(thumbJpg);
   }
 
   // ---------- VIDEO: (VIEJO) buffer -> tmp -> ffmpeg ----------

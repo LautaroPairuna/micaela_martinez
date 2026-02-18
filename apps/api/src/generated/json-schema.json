@@ -125,6 +125,12 @@
           "items": {
             "$ref": "#/definitions/PagoSuscripcion"
           }
+        },
+        "certificados": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Certificado"
+          }
         }
       },
       "required": [
@@ -334,6 +340,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/ItemCarrito"
+          }
+        },
+        "certificados": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Certificado"
           }
         }
       },
@@ -1755,6 +1767,41 @@
         "carritoId",
         "tipo"
       ]
+    },
+    "Certificado": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "usuarioId": {
+          "type": "integer"
+        },
+        "cursoId": {
+          "type": "integer"
+        },
+        "url": {
+          "type": "string"
+        },
+        "creadoEn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "usuario": {
+          "$ref": "#/definitions/Usuario"
+        },
+        "curso": {
+          "$ref": "#/definitions/Curso"
+        }
+      },
+      "required": [
+        "usuarioId",
+        "cursoId",
+        "url"
+      ]
     }
   },
   "type": "object",
@@ -1839,6 +1886,9 @@
     },
     "itemCarrito": {
       "$ref": "#/definitions/ItemCarrito"
+    },
+    "certificado": {
+      "$ref": "#/definitions/Certificado"
     }
   }
 }

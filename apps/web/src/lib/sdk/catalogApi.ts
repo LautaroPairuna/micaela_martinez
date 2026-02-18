@@ -74,6 +74,7 @@ export type CourseDetail = CourseListItem & {
     }>|null 
   }>|null;
   _count?: { modulos?: number } | null;
+  certificado?: { existe: boolean; url?: string; uuid?: string };
 };
 export type NivelFacet = { nivel: CourseLevel; count: number; label?: string };
 export type TagFacet   = { tag: string;        count: number; label?: string };

@@ -565,6 +565,26 @@ export class AdminUploadController {
         console.error('Error generando VTT en admin upload:', e);
       }
 
+      // 2.5 Borrar video anterior si existe (Clean up)
+      try {
+        const existingRecord = await client.findUnique({ where: { id } });
+        if (existingRecord && existingRecord[fieldName]) {
+          const oldFilename = existingRecord[fieldName];
+          // Solo borrar si es string y diferente al nuevo (por si acaso)
+          if (
+            typeof oldFilename === 'string' &&
+            oldFilename &&
+            oldFilename !== filenameOnly
+          ) {
+            const oldPath = path.join(folder, oldFilename).replace(/\\/g, '/');
+            await this.mediaStorage.deleteVideoResources(oldPath);
+            console.info(`[VideoCleanup] Borrado video anterior: ${oldPath}`);
+          }
+        }
+      } catch (e) {
+        console.warn('[VideoCleanup] Error borrando video anterior:', e);
+      }
+
       // 3. Actualizar BD con el nombre final
       const updateData: Record<string, unknown> = {
         [fieldName]: filenameOnly,

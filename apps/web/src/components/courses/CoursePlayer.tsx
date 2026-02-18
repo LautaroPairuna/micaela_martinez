@@ -8,7 +8,8 @@ import { MiniPlayer } from './MiniPlayer';
 import { ContentPlayer } from './ContentPlayer';
 import { CourseHeader } from './CourseHeader';
 import { CourseProgress } from './CourseProgress';
-import { ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Award, Download } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/Button';
 import { useProgress } from '@/components/courses/ProgressContext';
 import { getSecureVideoUrl } from '@/lib/media-utils';
@@ -67,6 +68,14 @@ export function CoursePlayer({
   const [contentError, setContentError] = useState<string | null>(null);
   const [actualVideoDuration, setActualVideoDuration] = useState<number | null>(null);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
+  const [hasCertificate, setHasCertificate] = useState(course.certificado?.existe || false);
+
+  // Calcular porcentaje de progreso
+  const totalLessons = course.modulos?.reduce((acc, mod) => acc + (mod.lecciones?.length || 0), 0) || 0;
+  const completedLessonsCount = Object.keys(lessonProgress).filter(key => lessonProgress[key]).length;
+  // Asegurar que no exceda 100% y manejar caso de 0 lecciones
+  const progressPercentage = totalLessons > 0 ? Math.min(100, Math.round((completedLessonsCount / totalLessons) * 100)) : 0;
+  const isCourseCompleted = progressPercentage >= 100;
 
   const [videoDurationsCache, setVideoDurationsCache] = useState<Record<string, number>>(() => {
     if (typeof window !== 'undefined') {
@@ -530,6 +539,49 @@ export function CoursePlayer({
     setShowMiniPlayer(false);
   }, []);
 
+  const [isDownloadingCertificate, setIsDownloadingCertificate] = useState(false);
+
+  const handleDownloadCertificate = async () => {
+    if (!isCourseCompleted) {
+      toast.info('Completa todas las lecciones para descargar tu certificado', {
+        icon: <Award className="h-5 w-5 text-yellow-500" />
+      });
+      return;
+    }
+
+    try {
+      setIsDownloadingCertificate(true);
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`/api/certificates/course/${course.id}`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al descargar el certificado');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Certificado-${course.slug}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Certificado descargado con éxito');
+      setHasCertificate(true);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Error al descargar el certificado');
+    } finally {
+      setIsDownloadingCertificate(false);
+    }
+  };
+
   // Mini-player: navegación
   useEffect(() => {
     if (showMiniPlayer && miniPlayerLesson && currentLesson && miniPlayerLesson.id !== currentLesson.id) {
@@ -737,10 +789,26 @@ export function CoursePlayer({
                       <ChevronRight className="h-5 w-5 text-[#af966d]" />
                     </Button>
                   ) : (
-                    <div className="flex-1 h-12 flex items-center justify-center text-center">
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400">
-                        ¡Completado!
+                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-1 h-auto min-h-[48px]">
+                      <div className="text-sm font-medium text-green-600 dark:text-green-400 leading-none">
+                        {isCourseCompleted ? '¡Completado!' : 'Finaliza todas las lecciones'}
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`gap-1.5 h-7 px-2 text-xs border-[#af966d] text-[#af966d] transition-all ${
+                          !isCourseCompleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#af966d]/10 hover:border-[#9a8560]'
+                        }`}
+                        onClick={handleDownloadCertificate}
+                        disabled={isDownloadingCertificate || !isCourseCompleted}
+                      >
+                        <Award className="h-3 w-3" />
+                        {isDownloadingCertificate 
+                          ? '...' 
+                          : course.certificado?.existe 
+                            ? 'Descargar' 
+                            : 'Generar'}
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -789,13 +857,31 @@ export function CoursePlayer({
                       <ChevronRight className="h-5 w-5 text-[#af966d] group-hover:text-[#9a8560] transition-colors" />
                     </Button>
                   ) : (
-                    <div className="w-full p-4 text-center">
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400">
-                        ¡Curso completado!
+                    <div className="w-full p-4 text-center flex flex-col items-center gap-3">
+                      <div>
+                        <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                          {isCourseCompleted ? '¡Curso completado!' : '¡Casi terminas!'}
+                        </div>
+                        <div className="text-xs text-[var(--muted)] mt-1">
+                          {isCourseCompleted ? 'Has terminado todas las lecciones' : `Has completado el ${progressPercentage}% del curso`}
+                        </div>
                       </div>
-                      <div className="text-xs text-[var(--muted)] mt-1">
-                        Has terminado todas las lecciones
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`gap-2 border-[#af966d] text-[#af966d] w-full justify-center transition-all ${
+                          !isCourseCompleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#af966d]/10 hover:border-[#9a8560]'
+                        }`}
+                        onClick={handleDownloadCertificate}
+                        disabled={isDownloadingCertificate || !isCourseCompleted}
+                      >
+                        {hasCertificate ? <Download className="h-4 w-4" /> : <Award className="h-4 w-4" />}
+                        {isDownloadingCertificate 
+                          ? 'Generando...' 
+                          : hasCertificate
+                            ? 'Descargar Certificado' 
+                            : 'Generar Certificado'}
+                      </Button>
                     </div>
                   )}
                 </div>

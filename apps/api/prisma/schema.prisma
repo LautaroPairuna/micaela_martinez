@@ -39,6 +39,7 @@ model Usuario {
   auditLogs            AuditLog[]
   carrito              Carrito?
   pagosSuscripciones   PagoSuscripcion[]
+  certificados         Certificado[]
 
   @@map("usuario")
 }
@@ -105,6 +106,7 @@ model Curso {
   resenas       Resena[]
   borradores    ResenaBorrador[]
   itemsCarrito  ItemCarrito[]
+  certificados  Certificado[]
 
   @@index([publicado, destacado, creadoEn])
   @@fulltext([titulo, resumen])
@@ -548,6 +550,23 @@ model ItemCarrito {
   @@index([cursoId], map: "item_carrito_curso_id_fkey")
   @@index([productoId], map: "item_carrito_producto_id_fkey")
   @@map("item_carrito")
+}
+
+model Certificado {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  usuarioId Int      @map("usuario_id")
+  cursoId   Int      @map("curso_id")
+  url       String   @db.VarChar(255)
+  creadoEn  DateTime @default(now()) @map("creado_en")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  curso   Curso   @relation(fields: [cursoId], references: [id])
+
+  @@unique([usuarioId, cursoId])
+  @@index([usuarioId])
+  @@index([cursoId])
+  @@map("certificado")
 }
 
 enum TipoItemOrden {

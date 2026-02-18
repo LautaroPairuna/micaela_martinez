@@ -316,6 +316,24 @@ export class CoursesService {
     }
 
     // Si tiene acceso válido, devolver el contenido completo del curso
-    return this.bySlug(slug);
+    const courseData = await this.bySlug(slug);
+
+    // Verificar si ya tiene certificado
+    const certificado = await this.prisma.certificado.findUnique({
+      where: {
+        usuarioId_cursoId: {
+          usuarioId: parseInt(userId),
+          cursoId: curso.id,
+        },
+      },
+      select: { id: true, url: true, uuid: true },
+    });
+
+    return {
+      ...courseData,
+      certificado: certificado
+        ? { existe: true, url: certificado.url, uuid: certificado.uuid }
+        : { existe: false },
+    };
   }
 }
