@@ -1333,9 +1333,9 @@ export function AdminResourceForm({
           const mb = 1024 * 1024;
           const rawChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_CHUNK_MB ?? '10');
           const safeChunkMb = Number.isFinite(rawChunkMb) ? rawChunkMb : 10;
-          const boundedChunkMb = Math.min(10, Math.max(1, safeChunkMb));
-          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '7');
-          const safeMinChunkMb = Number.isFinite(rawMinChunkMb) ? rawMinChunkMb : 7;
+          const boundedChunkMb = Math.min(100, Math.max(1, safeChunkMb));
+          const rawMinChunkMb = Number(process.env.NEXT_PUBLIC_UPLOAD_MIN_CHUNK_MB ?? '10');
+          const safeMinChunkMb = Number.isFinite(rawMinChunkMb) ? rawMinChunkMb : 10;
           const boundedMinChunkMb = Math.min(boundedChunkMb, Math.max(1, safeMinChunkMb));
           const CHUNK_SIZE = Math.round(boundedChunkMb * mb);
           const MIN_CHUNK_SIZE = Math.round(boundedMinChunkMb * mb);
@@ -1509,13 +1509,13 @@ export function AdminResourceForm({
             } catch (err) {
               if (CHUNK_SIZE > MIN_CHUNK_SIZE) {
                 setVideoStatusMessage(
-                  'Detectamos inestabilidad en el proxy. Reintentando con 5MB...'
+                  `Detectamos inestabilidad en el proxy. Reintentando con ${boundedMinChunkMb}MB...`
                 );
                 persistUploadProgress({
                   status: 'uploading',
                   progress: 0,
                   stage: null,
-                  message: 'Detectamos inestabilidad en el proxy. Reintentando con 5MB...',
+                  message: `Detectamos inestabilidad en el proxy. Reintentando con ${boundedMinChunkMb}MB...`,
                 });
                 if (typeof window !== 'undefined') sessionStorage.removeItem(stateKey);
                 uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -1657,13 +1657,20 @@ export function AdminResourceForm({
                     field.name === 'contenido' &&
                     lessonFormSchema?.fields?.length
                   ) {
+                    // Evitar duplicar campos que ya existen como columna base (ej: duracion)
+                    const existingBaseFields = new Set(
+                      formFields.map((ff) => ff.name),
+                    );
+
                     return (
                       <div key={field.name} className="md:col-span-2 space-y-3">
                         {lessonFormLoading ? (
                           <div className="text-xs text-slate-400">Cargando formulario…</div>
                         ) : null}
                         <div className="grid gap-4 md:grid-cols-2">
-                          {lessonFormSchema.fields.map((f) => renderLessonField(f))}
+                          {lessonFormSchema.fields
+                            .filter((f) => !existingBaseFields.has(f.key))
+                            .map((f) => renderLessonField(f))}
                         </div>
                       </div>
                     );

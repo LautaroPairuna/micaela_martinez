@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Res, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Res,
+  UseGuards,
+  ParseIntPipe,
+  NotFoundException,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { CertificateService } from './certificate.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -17,22 +25,28 @@ export class CertificateController {
     @Res() res: Response,
   ) {
     try {
-        const { buffer, filename } = await this.certificateService.generateCertificate(user.sub, courseId);
+      const { buffer, filename } =
+        await this.certificateService.generateCertificate(user.sub, courseId);
 
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${filename}"`,
-            'Content-Length': buffer.length,
-        });
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': buffer.length,
+      });
 
-        res.send(buffer);
+      res.send(buffer);
     } catch (error) {
-        if (error instanceof NotFoundException) {
-             res.status(404).json({ message: error.message });
-        } else {
-            // BadRequestException u otros
-             res.status(400).json({ message: error instanceof Error ? error.message : 'Error generando certificado' });
-        }
+      if (error instanceof NotFoundException) {
+        res.status(404).json({ message: error.message });
+      } else {
+        // BadRequestException u otros
+        res.status(400).json({
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Error generando certificado',
+        });
+      }
     }
   }
 }

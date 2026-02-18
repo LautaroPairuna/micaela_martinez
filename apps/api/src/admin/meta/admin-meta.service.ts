@@ -43,6 +43,7 @@ const IMAGE_FIELD_HINTS = [
   'thumbnail',
   'avatar',
   'archivo',
+  'preview',
 ];
 
 const STRING_FILTER_OPS: FilterOperator[] = [

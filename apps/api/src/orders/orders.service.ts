@@ -12,7 +12,7 @@ import {
   MercadoPagoSubscriptionDto,
 } from './dto/orders.dto';
 import {
- Prisma,
+  Prisma,
   EstadoOrden,
   TipoItemOrden,
   EstadoInscripcion,
@@ -251,7 +251,7 @@ export class OrdersService {
     });
     if (!order)
       throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
-    
+
     const [enriched] = await this.enrichOrdersWithImages([order]);
     return enriched;
   }
@@ -336,7 +336,6 @@ export class OrdersService {
       return { ...order, items: enrichedItems };
     });
   }
-
 
   async updateOrderStatus(
     orderId: number,
@@ -463,7 +462,9 @@ export class OrdersService {
       );
     }
 
-    const hasCourses = order.items?.some((i: ItemOrden) => i.tipo === TipoItemOrden.CURSO);
+    const hasCourses = order.items?.some(
+      (i: ItemOrden) => i.tipo === TipoItemOrden.CURSO,
+    );
     if (!hasCourses) {
       throw new HttpException(
         'No hay cursos en la orden para crear una suscripción',

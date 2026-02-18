@@ -157,14 +157,12 @@ export class LessonFormService {
         version: 1,
         title: 'Video',
         fields: [
-          { key: 'url', label: 'URL del video', type: 'url', required: true },
           {
             key: 'duracionMin',
             label: 'Duración (min)',
             type: 'number',
             min: 0,
           },
-          { key: 'posterUrl', label: 'Poster', type: 'url' },
           { key: 'resumen', label: 'Resumen', type: 'textarea' },
         ],
       };
@@ -176,7 +174,6 @@ export class LessonFormService {
         title: 'Documento',
         fields: [
           { key: 'tituloDoc', label: 'Título del documento', type: 'text' },
-          { key: 'url', label: 'URL del documento', type: 'url' },
           { key: 'resumen', label: 'Resumen', type: 'textarea' },
         ],
       };
@@ -228,9 +225,10 @@ export class LessonFormService {
 
       if (!config) {
         this.logger.warn(`No se encontró config para ${tipo}, usando default`);
+        const schema = this.sanitizeSchema(tipo, this.defaultSchema(tipo));
         return {
           tipo,
-          schema: this.defaultSchema(tipo),
+          schema,
           ui: { layout: '1col' },
           version: 1,
         };
@@ -246,10 +244,11 @@ export class LessonFormService {
         validatedSchema = this.defaultSchema(tipo);
       }
 
+      const schema = this.sanitizeSchema(tipo, validatedSchema);
       return {
         id: config.id,
         tipo: config.tipo,
-        schema: validatedSchema,
+        schema,
         ui: config.ui ?? { layout: '1col' },
         version: config.version,
       };
@@ -286,5 +285,19 @@ export class LessonFormService {
       update: { schema: safeSchema, ui: safeUi, version: safeVersion },
       create: { tipo, schema: safeSchema, ui: safeUi, version: safeVersion },
     });
+  }
+
+  private sanitizeSchema(tipo: TipoLeccion, schema: LessonFormSchema) {
+    const blockedKeys =
+      tipo === TipoLeccion.VIDEO
+        ? ['duracionMin', 'url', 'posterUrl']
+        : tipo === TipoLeccion.DOCUMENTO
+          ? ['url']
+          : [];
+    if (blockedKeys.length === 0) return schema;
+    return {
+      ...schema,
+      fields: (schema.fields ?? []).filter((f) => !blockedKeys.includes(f.key)),
+    };
   }
 }

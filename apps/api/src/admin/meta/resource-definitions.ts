@@ -31,9 +31,10 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       help: 'Nombre del archivo de video o documento.',
     },
     previewUrl: {
-      label: 'URL Vista Previa',
+      label: 'Imagen de Portada (Preview)',
       showInList: false,
-      help: 'URL pública para previsualización.',
+      help: 'Imagen o URL pública para previsualización.',
+      showInForm: false,
     },
     orden: {
       label: 'Orden',

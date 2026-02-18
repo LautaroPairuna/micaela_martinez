@@ -338,6 +338,22 @@
         "isForeignKey": false,
         "showInList": false,
         "showInForm": false
+      },
+      {
+        "name": "certificados",
+        "type": "Certificado",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": true,
+        "isEnum": false,
+        "relationModel": "Certificado",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": true,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
       }
     ],
     "searchFields": [
@@ -1039,7 +1055,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "isImage": false,
+        "isImage": true,
         "isFile": true,
         "fileKind": "video",
         "widget": "video",
@@ -1221,6 +1237,22 @@
         "isList": true,
         "isEnum": false,
         "relationModel": "ItemCarrito",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": true,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "certificados",
+        "type": "Certificado",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": true,
+        "isEnum": false,
+        "relationModel": "Certificado",
         "isImage": false,
         "isFile": false,
         "isParentChildCount": true,
@@ -2078,20 +2110,20 @@
       },
       {
         "name": "previewUrl",
-        "label": "URL Vista Previa",
-        "help": "URL pública para previsualización.",
+        "label": "Imagen de Portada (Preview)",
+        "help": "Imagen o URL pública para previsualización.",
         "type": "String",
         "kind": "scalar",
         "isId": false,
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "isImage": false,
+        "isImage": true,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
         "showInList": false,
-        "showInForm": true
+        "showInForm": false
       },
       {
         "name": "duracion",
@@ -8254,6 +8286,225 @@
         ],
         "group": "technical",
         "priority": 1,
+        "hiddenByDefault": true
+      }
+    ]
+  },
+  {
+    "name": "Certificado",
+    "tableName": "certificado",
+    "displayName": "Certificado",
+    "fields": [
+      {
+        "name": "id",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": true,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": false
+      },
+      {
+        "name": "uuid",
+        "type": "String",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "usuarioId",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": true,
+        "fkResource": "Usuario",
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "cursoId",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": true,
+        "fkResource": "Curso",
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "url",
+        "type": "String",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": true
+      },
+      {
+        "name": "creadoEn",
+        "type": "DateTime",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "usuario",
+        "type": "Usuario",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Usuario",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      },
+      {
+        "name": "curso",
+        "type": "Curso",
+        "kind": "relation",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "relationModel": "Curso",
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": false,
+        "showInForm": false
+      }
+    ],
+    "searchFields": [
+      "uuid",
+      "url"
+    ],
+    "filters": [
+      {
+        "field": "cursoId",
+        "label": "Curso Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Curso",
+        "group": "relations",
+        "priority": 80
+      },
+      {
+        "field": "usuarioId",
+        "label": "Usuario Id",
+        "input": "relation",
+        "operators": [
+          "equals",
+          "in"
+        ],
+        "relationModel": "Usuario",
+        "group": "relations",
+        "priority": 80
+      },
+      {
+        "field": "creadoEn",
+        "label": "Creado En",
+        "input": "date",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ],
+        "group": "dates",
+        "priority": 70
+      },
+      {
+        "field": "url",
+        "label": "Url",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ],
+        "group": "technical",
+        "priority": 10,
+        "hiddenByDefault": true
+      },
+      {
+        "field": "uuid",
+        "label": "Uuid",
+        "input": "string",
+        "operators": [
+          "contains",
+          "equals",
+          "startsWith",
+          "endsWith"
+        ],
+        "group": "technical",
+        "priority": 10,
+        "hiddenByDefault": true
+      },
+      {
+        "field": "id",
+        "label": "Id",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ],
+        "group": "technical",
+        "priority": 5,
         "hiddenByDefault": true
       }
     ]

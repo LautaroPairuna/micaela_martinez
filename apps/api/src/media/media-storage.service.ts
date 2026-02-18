@@ -110,7 +110,7 @@ export class MediaStorageService {
     }
 
     const input = file.path ?? file.buffer;
-    
+
     const originalBase = file.originalname.replace(/\.[^.]+$/, '');
     const rawBase = opts.baseName || originalBase;
     const safeBase = this.slugify(rawBase);
@@ -119,15 +119,15 @@ export class MediaStorageService {
     const filename = `${safeBase}-${hash}.webp`;
 
     // Asegurar que se guarde dentro de 'uploads'
-    const folderRelative = opts.folder.startsWith('uploads') 
-      ? opts.folder 
+    const folderRelative = opts.folder.startsWith('uploads')
+      ? opts.folder
       : path.join('uploads', opts.folder);
 
     const folderPath = path.join(this.publicRoot, folderRelative);
     await fs.mkdir(folderPath, { recursive: true });
 
     const fullPath = path.join(folderPath, filename);
-    
+
     // Crear carpeta thumbs
     const thumbsFolder = path.join(folderPath, 'thumbs');
     await fs.mkdir(thumbsFolder, { recursive: true });
@@ -139,9 +139,9 @@ export class MediaStorageService {
     // 1. Usar Promise.all para paralelo
     // 2. Usar toFile directo (stream a disco) en lugar de toBuffer
     // 3. Usar clone() si es necesario (sharp lo maneja bien con multiples pipelines)
-    
+
     const pipeline = sharp(input);
-    
+
     await Promise.all([
       // Imagen principal
       pipeline
@@ -159,16 +159,18 @@ export class MediaStorageService {
     ]);
 
     // Normalizar ruta relativa para DB (siempre forward slashes)
-    // Guardamos relativo a 'uploads' si queremos consistencia, 
+    // Guardamos relativo a 'uploads' si queremos consistencia,
     // O relativo a publicRoot (ej: uploads/producto/foto.webp)
-    const relativePath = path.join(folderRelative, filename).replace(/\\/g, '/');
-    
+    const relativePath = path
+      .join(folderRelative, filename)
+      .replace(/\\/g, '/');
+
     // La URL pública directa
-    const url = `/${relativePath}`; 
+    const url = `/${relativePath}`;
 
     return {
       path: relativePath,
-      url, 
+      url,
       originalName: file.originalname,
     };
   }
@@ -176,7 +178,7 @@ export class MediaStorageService {
   async delete(relativePath: string): Promise<void> {
     const fullPath = path.join(this.publicRoot, relativePath);
     await fs.rm(fullPath, { force: true });
-    
+
     if (
       relativePath.endsWith('.webp') &&
       !relativePath.endsWith('-thumb.webp')
@@ -185,10 +187,10 @@ export class MediaStorageService {
       const dir = path.dirname(relativePath);
       const file = path.basename(relativePath);
       const thumbName = file.replace(/\.webp$/i, '-thumb.webp');
-      
+
       const thumbPath = path.join(this.publicRoot, dir, 'thumbs', thumbName);
       await fs.rm(thumbPath, { force: true });
-      
+
       // Intentar borrar carpeta thumbs si quedó vacía (opcional, pero limpio)
       const thumbsDir = path.join(this.publicRoot, dir, 'thumbs');
       try {
@@ -214,16 +216,24 @@ export class MediaStorageService {
     const baseName = filename.replace(/\.[^.]+$/, '');
 
     // VTT y Sprite (mismo dir que video)
-    const vttPath = path.join(dir, `${baseName}-preview.vtt`).replace(/\\/g, '/');
-    const spritePath = path.join(dir, `${baseName}-sprite.jpg`).replace(/\\/g, '/');
-    
+    const vttPath = path
+      .join(dir, `${baseName}-preview.vtt`)
+      .replace(/\\/g, '/');
+    const spritePath = path
+      .join(dir, `${baseName}-sprite.jpg`)
+      .replace(/\\/g, '/');
+
     await this.delete(vttPath);
     await this.delete(spritePath);
 
     // Thumbnails (en uploads/thumbnails)
     const thumbDir = 'uploads/thumbnails';
-    const thumbWebp = path.join(thumbDir, `${baseName}-thumb.webp`).replace(/\\/g, '/');
-    const thumbJpg = path.join(thumbDir, `${baseName}-thumb.jpg`).replace(/\\/g, '/'); // legacy
+    const thumbWebp = path
+      .join(thumbDir, `${baseName}-thumb.webp`)
+      .replace(/\\/g, '/');
+    const thumbJpg = path
+      .join(thumbDir, `${baseName}-thumb.jpg`)
+      .replace(/\\/g, '/'); // legacy
 
     await this.delete(thumbWebp);
     await this.delete(thumbJpg);

@@ -201,8 +201,10 @@ export function AdminResourceClient({
   const stalledToastEmittedRef = useRef(false);
   const lastOpenedIdRef = useRef<string | null>(null);
   const lastClosedIdRef = useRef<string | null>(null);
+  const lastReadOnlyToastRef = useRef<string | null>(null);
 
   const filtersMeta = useMemo(() => meta.filters ?? [], [meta.filters]);
+  const isReadOnlyResource = meta.name === 'Inscripcion';
   const filtersParam = searchParams.get('filters');
   const qParam = searchParams.get('q');
   const editIdParam = searchParams.get('editId');
@@ -510,6 +512,19 @@ export function AdminResourceClient({
       lastClosedIdRef.current = null;
       return;
     }
+    if (isReadOnlyResource) {
+      const targetId = normalizeId(editIdParam);
+      if (targetId && lastReadOnlyToastRef.current !== targetId) {
+        lastReadOnlyToastRef.current = targetId;
+        showToast({
+          variant: 'info',
+          title: 'Recurso de solo lectura',
+          description: 'Las inscripciones no se pueden editar desde el panel.',
+        });
+      }
+      return;
+    }
+
     if (!hasEditor) {
       showToast({
         variant: 'info',
@@ -575,6 +590,7 @@ export function AdminResourceClient({
   }, [
     editIdParam,
     hasEditor,
+    isReadOnlyResource,
     showToast,
     normalizeId,
     formOpen,
@@ -584,6 +600,14 @@ export function AdminResourceClient({
   ]);
 
   const handleOpenCreate = useCallback(() => {
+    if (isReadOnlyResource) {
+      showToast({
+        variant: 'info',
+        title: 'Recurso de solo lectura',
+        description: 'Las inscripciones no se pueden editar desde el panel.',
+      });
+      return;
+    }
     if (!hasEditor) {
       showToast({
         variant: 'info',
@@ -602,10 +626,18 @@ export function AdminResourceClient({
     setFormMode('create');
     setCurrentRow(null);
     setFormOpen(true);
-  }, [hasEditor, showToast, router, resource, searchParams]);
+  }, [hasEditor, isReadOnlyResource, showToast, router, resource, searchParams]);
 
   const handleOpenEdit = useCallback(
     (row: any) => {
+      if (isReadOnlyResource) {
+        showToast({
+          variant: 'info',
+          title: 'Recurso de solo lectura',
+          description: 'Las inscripciones no se pueden editar desde el panel.',
+        });
+        return;
+      }
       if (!hasEditor) {
         showToast({
           variant: 'info',
@@ -624,7 +656,7 @@ export function AdminResourceClient({
       setCurrentRow(row);
       setFormOpen(true);
     },
-    [hasEditor, showToast, router, resource, searchParams],
+    [hasEditor, isReadOnlyResource, showToast, router, resource, searchParams],
   );
 
   const handleCloseForm = useCallback(() => {
@@ -924,13 +956,15 @@ export function AdminResourceClient({
               Filtros
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="rounded-md bg-[#13392c] border border-[#08885d] px-4 py-2 text-sm font-medium text-white shadow hover:bg-[#08885d]"
-          >
-            Nuevo {meta.displayName}
-          </button>
+          {!isReadOnlyResource && (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="rounded-md bg-[#13392c] border border-[#08885d] px-4 py-2 text-sm font-medium text-white shadow hover:bg-[#08885d]"
+            >
+              Nuevo {meta.displayName}
+            </button>
+          )}
         </div>
       </header>
 
@@ -1206,24 +1240,26 @@ export function AdminResourceClient({
                       className="sticky left-0 z-10 bg-[#101010] px-3 py-2 align-middle"
                       style={{ minWidth: '96px' }}
                     >
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(row)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-sky-200 hover:bg-[#262626] hover:text-sky-100"
-                          aria-label="Editar"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(row)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-rose-300 hover:bg-[#262626] hover:text-rose-200"
-                          aria-label="Borrar"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                      {!isReadOnlyResource ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(row)}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-sky-200 hover:bg-[#262626] hover:text-sky-100"
+                            aria-label="Editar"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(row)}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-rose-300 hover:bg-[#262626] hover:text-rose-200"
+                            aria-label="Borrar"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : null}
                     </td>
 
                     {listFields.map((field) => (

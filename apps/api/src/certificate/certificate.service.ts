@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MediaStorageService } from '../media/media-storage.service';
 import puppeteer from 'puppeteer';
@@ -35,17 +40,19 @@ export class CertificateService {
       // Necesitamos el path físico para leer el buffer y enviarlo al usuario
       // O podríamos devolver solo la URL y que el frontend lo descargue (redirect).
       // Pero el controlador actual espera devolver un buffer.
-      
+
       try {
         const buffer = await this.mediaStorage.getFile(existingCert.url);
-        
+
         return {
           buffer,
           filename: existingCert.url.split('/').pop() || 'certificado.pdf',
-          url: existingCert.url
+          url: existingCert.url,
         };
       } catch (error) {
-        this.logger.warn(`Certificado registrado pero archivo no encontrado: ${existingCert.url}. Se regenerará.`);
+        this.logger.warn(
+          `Certificado registrado pero archivo no encontrado: ${existingCert.url}. Se regenerará.`,
+        );
         // Si falla la lectura, procedemos a regenerar
       }
     }
@@ -86,7 +93,7 @@ export class CertificateService {
       for (const leccion of modulo.lecciones) {
         totalLessons++;
         courseTotalMinutes += leccion.duracion || 0; // Asumimos que duracion en BD son minutos
-        
+
         // Verificar si está completada en el JSON de progreso
         // Estructura esperada: progreso[moduleId][lessonId] exists/completed
         const modProg = progress[String(modulo.id)];
@@ -99,55 +106,65 @@ export class CertificateService {
       }
     }
 
-    const percentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
-    
+    const percentage =
+      totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
     // Permitir un pequeño margen de error o requerir 100% estricto?
     // Usaremos 100% estricto, o > 99% por temas de redondeo si fuera float
     if (Math.round(percentage) < 100) {
-       throw new BadRequestException(`El curso no está completado. Progreso actual: ${percentage.toFixed(1)}%`);
+      throw new BadRequestException(
+        `El curso no está completado. Progreso actual: ${percentage.toFixed(1)}%`,
+      );
     }
 
     // 2.1 Validación de Tiempo Mínimo (Anti-Fraude Básico - Capa B)
     // Solo aplicar si el curso tiene una duración definida significativa (> 10 min)
     if (courseTotalMinutes > 10) {
-        const enrollmentAgeMs = new Date().getTime() - enrollment.creadoEn.getTime();
-        const enrollmentAgeMinutes = enrollmentAgeMs / (1000 * 60);
-        
-        // Umbral: El usuario debe haber estado inscrito al menos el 20% de la duración total.
-        // Ejemplo: Curso de 5 horas (300 min) -> Requiere > 60 min desde inscripción.
-        const minRequiredMinutes = courseTotalMinutes * 0.2; 
-        
-        if (enrollmentAgeMinutes < minRequiredMinutes) {
-             this.logger.warn(`[Certificate] Intento prematuro bloqueado. User: ${userId}, Curso: ${courseId}. Edad: ${enrollmentAgeMinutes.toFixed(2)}m, Req: ${minRequiredMinutes.toFixed(2)}m (Total: ${courseTotalMinutes}m)`);
-             
-             // Mensaje amigable pero firme
-             throw new BadRequestException(
-                `No es posible generar el certificado aún. El sistema detectó que el curso se completó en un tiempo inusualmente corto (${Math.floor(enrollmentAgeMinutes)} min). ` +
-                `Por favor, asegúrate de haber visualizado todo el contenido correctamente. Inténtalo de nuevo más tarde.`
-             );
-        }
+      const enrollmentAgeMs =
+        new Date().getTime() - enrollment.creadoEn.getTime();
+      const enrollmentAgeMinutes = enrollmentAgeMs / (1000 * 60);
+
+      // Umbral: El usuario debe haber estado inscrito al menos el 20% de la duración total.
+      // Ejemplo: Curso de 5 horas (300 min) -> Requiere > 60 min desde inscripción.
+      const minRequiredMinutes = courseTotalMinutes * 0.2;
+
+      if (enrollmentAgeMinutes < minRequiredMinutes) {
+        this.logger.warn(
+          `[Certificate] Intento prematuro bloqueado. User: ${userId}, Curso: ${courseId}. Edad: ${enrollmentAgeMinutes.toFixed(2)}m, Req: ${minRequiredMinutes.toFixed(2)}m (Total: ${courseTotalMinutes}m)`,
+        );
+
+        // Mensaje amigable pero firme
+        throw new BadRequestException(
+          `No es posible generar el certificado aún. El sistema detectó que el curso se completó en un tiempo inusualmente corto (${Math.floor(enrollmentAgeMinutes)} min). ` +
+            `Por favor, asegúrate de haber visualizado todo el contenido correctamente. Inténtalo de nuevo más tarde.`,
+        );
+      }
     }
 
     // 3. Generar HTML
     const userName = enrollment.usuario.nombre || enrollment.usuario.email;
     const courseName = enrollment.curso.titulo;
-    const completionDate = new Date().toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+    const completionDate = new Date().toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
 
-    const htmlContent = this.getCertificateHtml(userName, courseName, completionDate);
+    const htmlContent = this.getCertificateHtml(
+      userName,
+      courseName,
+      completionDate,
+    );
 
     // 4. Generar PDF con Puppeteer
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
-    
+
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
+
     const pdfBuffer = await page.pdf({
       format: 'A4',
       landscape: true,
@@ -156,47 +173,50 @@ export class CertificateService {
         top: '0px',
         right: '0px',
         bottom: '0px',
-        left: '0px'
-      }
+        left: '0px',
+      },
     });
 
     await browser.close();
 
     // 5. Guardar en disco usando MediaStorageService
-    const savedFile = await this.mediaStorage.saveRawFile({
+    const savedFile = await this.mediaStorage.saveRawFile(
+      {
         buffer: Buffer.from(pdfBuffer),
         originalname: `Certificado-${this.sanitizeFilename(courseName)}.pdf`,
         mimetype: 'application/pdf',
-        size: pdfBuffer.length
-    }, {
+        size: pdfBuffer.length,
+      },
+      {
         folder: 'uploads/certificates',
-        baseName: `cert-${this.sanitizeFilename(courseName)}-${this.sanitizeFilename(userName)}`
-    });
+        baseName: `cert-${this.sanitizeFilename(courseName)}-${this.sanitizeFilename(userName)}`,
+      },
+    );
 
     // 6. Guardar registro en BD
     await this.prisma.certificado.upsert({
-        where: {
-            usuarioId_cursoId: {
-                usuarioId: userId,
-                cursoId: courseId
-            }
+      where: {
+        usuarioId_cursoId: {
+          usuarioId: userId,
+          cursoId: courseId,
         },
-        create: {
-            usuarioId: userId,
-            cursoId: courseId,
-            url: savedFile.url,
-            uuid: crypto.randomUUID()
-        },
-        update: {
-            url: savedFile.url,
-            creadoEn: new Date() // actualizar fecha si se regenera
-        }
+      },
+      create: {
+        usuarioId: userId,
+        cursoId: courseId,
+        url: savedFile.url,
+        uuid: crypto.randomUUID(),
+      },
+      update: {
+        url: savedFile.url,
+        creadoEn: new Date(), // actualizar fecha si se regenera
+      },
     });
 
     return {
-        buffer: pdfBuffer,
-        filename: savedFile.originalName,
-        url: savedFile.url
+      buffer: pdfBuffer,
+      filename: savedFile.originalName,
+      url: savedFile.url,
     };
   }
 
@@ -204,11 +224,15 @@ export class CertificateService {
     return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
   }
 
-  private getCertificateHtml(studentName: string, courseName: string, date: string): string {
+  private getCertificateHtml(
+    studentName: string,
+    courseName: string,
+    date: string,
+  ): string {
     const component = React.createElement(CertificateTemplate, {
       studentName,
       courseName,
-      date
+      date,
     });
     const bodyHtml = renderToStaticMarkup(component);
 

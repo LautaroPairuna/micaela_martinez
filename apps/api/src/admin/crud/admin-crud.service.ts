@@ -392,6 +392,11 @@ export class AdminCrudService {
       };
     }
 
+    if (meta.name === 'Inscripcion') {
+      include.usuario = { select: { id: true, nombre: true, email: true } };
+      include.curso = { select: { id: true, titulo: true, slug: true } };
+    }
+
     return include;
   }
 
@@ -587,6 +592,9 @@ export class AdminCrudService {
 
   async create(resource: string, body: any) {
     const meta = await this.getResourceMeta(resource);
+    if (meta.name === 'Inscripcion') {
+      throw new BadRequestException('Las inscripciones son de solo lectura.');
+    }
     const client = this.getPrismaClient(meta);
 
     const data = this.sanitizeData(meta, body);
@@ -608,6 +616,9 @@ export class AdminCrudService {
 
   async update(resource: string, id: string, body: any) {
     const meta = await this.getResourceMeta(resource);
+    if (meta.name === 'Inscripcion') {
+      throw new BadRequestException('Las inscripciones son de solo lectura.');
+    }
     const client = this.getPrismaClient(meta);
 
     const idField = meta.fields.find((f) => f.isId);
@@ -644,6 +655,9 @@ export class AdminCrudService {
 
   async delete(resource: string, id: string) {
     const meta = await this.getResourceMeta(resource);
+    if (meta.name === 'Inscripcion') {
+      throw new BadRequestException('Las inscripciones son de solo lectura.');
+    }
     const client = this.getPrismaClient(meta);
 
     const idField = meta.fields.find((f) => f.isId);

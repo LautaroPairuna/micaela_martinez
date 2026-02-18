@@ -7,6 +7,20 @@ import Image from 'next/image';
 import { THUMBNAIL_PUBLIC_URL, isImageFile } from '@/lib/adminConstants';
 import { resolveResourceThumb } from '@/lib/image-utils';
 
+function lowerFirst(value: string) {
+  return value ? value.charAt(0).toLowerCase() + value.slice(1) : value;
+}
+
+function resolveRelationLabel(relation: any) {
+  if (!relation || typeof relation !== 'object') return null;
+  const candidates = ['nombre', 'name', 'titulo', 'title', 'email', 'slug'];
+  for (const key of candidates) {
+    const v = relation[key];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return null;
+}
+
 function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; alt: string; fallbackSrc?: string; originalSrc?: string }) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [error, setError] = useState(false);
@@ -180,6 +194,19 @@ export function renderCell({
   // ──────────────── VACÍOS ────────────────
   if (value === null || value === undefined || value === '') {
     return <span className="text-[12px] text-slate-500">—</span>;
+  }
+
+  if (field.isForeignKey && field.fkResource) {
+    const relationKey = lowerFirst(field.fkResource);
+    const relation = row?.[relationKey];
+    const label = resolveRelationLabel(relation);
+    if (label) {
+      return (
+        <span className="max-w-[180px] truncate text-[12px] text-slate-100" title={label}>
+          {label}
+        </span>
+      );
+    }
   }
 
   // ──────────────── DATETIME ────────────────
