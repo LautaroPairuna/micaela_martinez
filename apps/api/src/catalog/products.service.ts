@@ -224,7 +224,7 @@ export class ProductsService {
         count: b._count._all,
       }))
       // @ts-ignore: Prisma 7 inference workaround
-      .sort((a: any, b: any) => b.count - a.count);
+      .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
 
     const byCategory = await this.prisma.producto.groupBy({
       by: ['categoriaId'],
@@ -255,7 +255,7 @@ export class ProductsService {
         count: c._count._all,
       }))
       // @ts-ignore: Prisma 7 inference workaround
-      .sort((a: any, b: any) => b.count - a.count);
+      .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
 
     // Rango de precios (respetando filtros de marca/cat pero ignorando precio)
     const whereForPrice: Prisma.ProductoWhereInput = {

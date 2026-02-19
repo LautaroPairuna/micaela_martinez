@@ -1804,24 +1804,6 @@
         "showInForm": true
       },
       {
-        "name": "parentId",
-        "label": "Módulo Padre",
-        "help": "Si es un submódulo, selecciona el padre.",
-        "type": "Int",
-        "kind": "scalar",
-        "isId": false,
-        "isRequired": false,
-        "isList": false,
-        "isEnum": false,
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": true,
-        "fkResource": "Modulo",
-        "showInList": true,
-        "showInForm": true
-      },
-      {
         "name": "curso",
         "type": "Curso",
         "kind": "relation",
@@ -1839,6 +1821,7 @@
       },
       {
         "name": "lecciones",
+        "label": "Lecciones",
         "type": "Leccion",
         "kind": "relation",
         "isId": false,
@@ -1850,39 +1833,7 @@
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
-        "showInList": false,
-        "showInForm": false
-      },
-      {
-        "name": "parent",
-        "type": "Modulo",
-        "kind": "relation",
-        "isId": false,
-        "isRequired": false,
-        "isList": false,
-        "isEnum": false,
-        "relationModel": "Modulo",
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": false,
-        "showInList": false,
-        "showInForm": false
-      },
-      {
-        "name": "hijos",
-        "type": "Modulo",
-        "kind": "relation",
-        "isId": false,
-        "isRequired": true,
-        "isList": true,
-        "isEnum": false,
-        "relationModel": "Modulo",
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": true,
-        "isForeignKey": false,
-        "showInList": false,
+        "showInList": true,
         "showInForm": false
       }
     ],
@@ -1899,18 +1850,6 @@
           "in"
         ],
         "relationModel": "Curso",
-        "group": "relations",
-        "priority": 80
-      },
-      {
-        "field": "parentId",
-        "label": "Parent Id",
-        "input": "relation",
-        "operators": [
-          "equals",
-          "in"
-        ],
-        "relationModel": "Modulo",
         "group": "relations",
         "priority": 80
       },
@@ -3378,28 +3317,13 @@
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
-        "showInList": true,
-        "showInForm": true
+        "showInList": false,
+        "showInForm": false
       },
       {
         "name": "activa",
         "label": "¿Activa?",
         "type": "Boolean",
-        "kind": "scalar",
-        "isId": false,
-        "isRequired": true,
-        "isList": false,
-        "isEnum": false,
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": false,
-        "showInList": true,
-        "showInForm": true
-      },
-      {
-        "name": "orden",
-        "type": "Int",
         "kind": "scalar",
         "isId": false,
         "isRequired": true,
@@ -3429,6 +3353,7 @@
       },
       {
         "name": "productos",
+        "label": "Productos",
         "type": "Producto",
         "kind": "relation",
         "isId": false,
@@ -3440,7 +3365,7 @@
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
-        "showInList": false,
+        "showInList": true,
         "showInForm": false
       }
     ],
@@ -3518,22 +3443,6 @@
       {
         "field": "id",
         "label": "Id",
-        "input": "number",
-        "operators": [
-          "equals",
-          "gt",
-          "gte",
-          "lt",
-          "lte",
-          "in"
-        ],
-        "group": "technical",
-        "priority": 5,
-        "hiddenByDefault": true
-      },
-      {
-        "field": "orden",
-        "label": "Orden",
         "input": "number",
         "operators": [
           "equals",
@@ -3647,21 +3556,6 @@
         "showInForm": true
       },
       {
-        "name": "orden",
-        "type": "Int",
-        "kind": "scalar",
-        "isId": false,
-        "isRequired": true,
-        "isList": false,
-        "isEnum": false,
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": false,
-        "showInList": true,
-        "showInForm": true
-      },
-      {
         "name": "creadoEn",
         "type": "DateTime",
         "kind": "scalar",
@@ -3677,24 +3571,8 @@
         "showInForm": false
       },
       {
-        "name": "parentId",
-        "label": "Categoría Padre",
-        "type": "Int",
-        "kind": "scalar",
-        "isId": false,
-        "isRequired": false,
-        "isList": false,
-        "isEnum": false,
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": true,
-        "fkResource": "Categoria",
-        "showInList": true,
-        "showInForm": true
-      },
-      {
         "name": "productos",
+        "label": "Productos",
         "type": "Producto",
         "kind": "relation",
         "isId": false,
@@ -3706,39 +3584,7 @@
         "isFile": false,
         "isParentChildCount": true,
         "isForeignKey": false,
-        "showInList": false,
-        "showInForm": false
-      },
-      {
-        "name": "parent",
-        "type": "Categoria",
-        "kind": "relation",
-        "isId": false,
-        "isRequired": false,
-        "isList": false,
-        "isEnum": false,
-        "relationModel": "Categoria",
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": false,
-        "showInList": false,
-        "showInForm": false
-      },
-      {
-        "name": "hijos",
-        "type": "Categoria",
-        "kind": "relation",
-        "isId": false,
-        "isRequired": true,
-        "isList": true,
-        "isEnum": false,
-        "relationModel": "Categoria",
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": true,
-        "isForeignKey": false,
-        "showInList": false,
+        "showInList": true,
         "showInForm": false
       }
     ],
@@ -3756,18 +3602,6 @@
         ],
         "group": "quick",
         "priority": 100
-      },
-      {
-        "field": "parentId",
-        "label": "Parent Id",
-        "input": "relation",
-        "operators": [
-          "equals",
-          "in"
-        ],
-        "relationModel": "Categoria",
-        "group": "relations",
-        "priority": 80
       },
       {
         "field": "creadoEn",
@@ -3842,22 +3676,6 @@
       {
         "field": "id",
         "label": "Id",
-        "input": "number",
-        "operators": [
-          "equals",
-          "gt",
-          "gte",
-          "lt",
-          "lte",
-          "in"
-        ],
-        "group": "technical",
-        "priority": 5,
-        "hiddenByDefault": true
-      },
-      {
-        "field": "orden",
-        "label": "Orden",
         "input": "number",
         "operators": [
           "equals",

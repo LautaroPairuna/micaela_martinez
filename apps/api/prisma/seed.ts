@@ -83,18 +83,18 @@ const upsertUserByEmail = async (
   return u.id;
 };
 
-const upsertCategoriaBySlug = (slug: string, nombre: string, orden = 0, parentId?: number) =>
+const upsertCategoriaBySlug = (slug: string, nombre: string) =>
   prisma.categoria.upsert({
     where: { slug },
-    update: { nombre, activa: true, orden, parentId: parentId ?? null },
-    create: { slug, nombre, activa: true, orden, parentId: parentId ?? null, creadoEn: new Date() },
+    update: { nombre, activa: true },
+    create: { slug, nombre, activa: true, creadoEn: new Date() },
   });
 
-const upsertMarcaBySlug = (slug: string, nombre: string, orden = 0) =>
+const upsertMarcaBySlug = (slug: string, nombre: string) =>
   prisma.marca.upsert({
     where: { slug },
-    update: { nombre, activa: true, orden },
-    create: { slug, nombre, activa: true, orden, creadoEn: new Date() },
+    update: { nombre, activa: true },
+    create: { slug, nombre, activa: true, creadoEn: new Date() },
   });
 
 /** Producto por slug → devuelve id Int */
@@ -298,27 +298,27 @@ async function main() {
     });
   }
 
-  // ───────────────── Categorías (árbol)
-  const catMaqu = await upsertCategoriaBySlug('maquillaje', 'Maquillaje', 1);
-  await upsertCategoriaBySlug('labios', 'Labios', 10, catMaqu.id);
-  await upsertCategoriaBySlug('ojos', 'Ojos', 11, catMaqu.id);
-  await upsertCategoriaBySlug('cejas', 'Cejas', 12, catMaqu.id);
-  await upsertCategoriaBySlug('herramientas', 'Herramientas', 50, catMaqu.id);
+  // ───────────────── Categorías (lista plana)
+  const catMaqu = await upsertCategoriaBySlug('maquillaje', 'Maquillaje');
+  await upsertCategoriaBySlug('labios', 'Labios');
+  await upsertCategoriaBySlug('ojos', 'Ojos');
+  await upsertCategoriaBySlug('cejas', 'Cejas');
+  await upsertCategoriaBySlug('herramientas', 'Herramientas');
 
-  const catSkin = await upsertCategoriaBySlug('skincare', 'Skincare', 2);
-  await upsertCategoriaBySlug('limpieza', 'Limpieza', 21, catSkin.id);
-  await upsertCategoriaBySlug('tratamiento', 'Tratamiento', 22, catSkin.id);
-  await upsertCategoriaBySlug('proteccion', 'Protección Solar', 23, catSkin.id);
+  const catSkin = await upsertCategoriaBySlug('skincare', 'Skincare');
+  await upsertCategoriaBySlug('limpieza', 'Limpieza');
+  await upsertCategoriaBySlug('tratamiento', 'Tratamiento');
+  await upsertCategoriaBySlug('proteccion', 'Protección Solar');
 
   // ───────────────── Marcas
-  await upsertMarcaBySlug('loreal', "L'Oréal", 10);
-  await upsertMarcaBySlug('cerave', 'CeraVe', 20);
-  await upsertMarcaBySlug('natura', 'Natura', 30);
-  await upsertMarcaBySlug('maybelline', 'Maybelline', 15);
-  await upsertMarcaBySlug('neutrogena', 'Neutrogena', 25);
-  await upsertMarcaBySlug('revlon', 'Revlon', 16);
-  await upsertMarcaBySlug('elf', 'e.l.f.', 17);
-  await upsertMarcaBySlug('real-techniques', 'Real Techniques', 55);
+  await upsertMarcaBySlug('loreal', "L'Oréal");
+  await upsertMarcaBySlug('cerave', 'CeraVe');
+  await upsertMarcaBySlug('natura', 'Natura');
+  await upsertMarcaBySlug('maybelline', 'Maybelline');
+  await upsertMarcaBySlug('neutrogena', 'Neutrogena');
+  await upsertMarcaBySlug('revlon', 'Revlon');
+  await upsertMarcaBySlug('elf', 'e.l.f.');
+  await upsertMarcaBySlug('real-techniques', 'Real Techniques');
 
   // ───────────────── Productos (11)
   const prodId_prueba = await upsertProductoGetId({
@@ -478,7 +478,7 @@ async function main() {
 
   await resetImgs(prodId_labial, [
     { archivo: 'labial1.jpg', alt: 'Labial Mate - foto 1', orden: 0 },
-    { archivo: 'labial1-b.jpg', alt: 'Labial Mate - foto 2', orden: 1 },
+    { archivo: 'labial2.jpg', alt: 'Labial Mate - foto 2', orden: 1 },
   ]);
   await resetImgs(prodId_crema, [{ archivo: 'crema1.jpg', alt: 'Crema Hidratante - foto 1', orden: 0 }]);
   await resetImgs(prodId_eyeliner, [{ archivo: 'eyeliner1.jpg', alt: 'Delineador - foto 1', orden: 0 }]);

@@ -48,13 +48,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     cursoId: { label: 'Curso' },
     titulo: { label: 'Título del Módulo' },
     orden: { label: 'Orden' },
-    parentId: {
-      label: 'Módulo Padre',
-      help: 'Si es un submódulo, selecciona el padre.',
-      showInList: false,
-      showInForm: false,
-    },
-    hijos: { showInList: false },
+    lecciones: { label: 'Lecciones', showInList: true },
   },
   Curso: {
     portada: { label: 'Imagen de Portada', widget: 'image' },
@@ -134,17 +128,12 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     nombre: { label: 'Nombre de Marca' },
     imagen: { label: 'Logo', showInList: false, showInForm: false },
     activa: { label: '¿Activa?' },
-    orden: { label: 'Orden', showInList: false, showInForm: false },
+    productos: { label: 'Productos', showInList: true },
   },
   Categoria: {
     nombre: { label: 'Nombre Categoría' },
     descripcion: { label: 'Descripción' },
-    parentId: {
-      label: 'Categoría Padre',
-      showInList: false,
-      showInForm: false,
-    },
-    hijos: { showInList: false },
+    productos: { label: 'Productos', showInList: true },
   },
   Orden: {
     usuarioId: { label: 'Cliente' },

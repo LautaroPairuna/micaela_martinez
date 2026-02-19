@@ -423,12 +423,6 @@
         "orden": {
           "type": "integer"
         },
-        "parentId": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
         "curso": {
           "$ref": "#/definitions/Curso"
         },
@@ -436,22 +430,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Leccion"
-          }
-        },
-        "parent": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Modulo"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "hijos": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Modulo"
           }
         }
       },
@@ -763,10 +741,6 @@
           "type": "boolean",
           "default": true
         },
-        "orden": {
-          "type": "integer",
-          "default": 0
-        },
         "creadoEn": {
           "type": "string",
           "format": "date-time"
@@ -811,40 +785,14 @@
           "type": "boolean",
           "default": true
         },
-        "orden": {
-          "type": "integer",
-          "default": 0
-        },
         "creadoEn": {
           "type": "string",
           "format": "date-time"
-        },
-        "parentId": {
-          "type": [
-            "integer",
-            "null"
-          ]
         },
         "productos": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Producto"
-          }
-        },
-        "parent": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Categoria"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "hijos": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Categoria"
           }
         }
       },

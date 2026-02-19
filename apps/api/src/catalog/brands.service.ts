@@ -9,7 +9,7 @@ export class BrandsService {
   async list() {
     const marcas = await this.prisma.marca.findMany({
       where: { activa: true },
-      orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
+      orderBy: { nombre: 'asc' },
     });
 
     return marcas.map((marca) => ({

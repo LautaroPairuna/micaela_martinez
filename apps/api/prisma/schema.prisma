@@ -131,19 +131,15 @@ model Inscripcion {
 }
 
 model Modulo {
-  id       Int    @id @default(autoincrement())
-  cursoId  Int    @map("curso_id")
-  titulo   String
-  orden    Int
-  parentId Int?   @map("parent_id")
+  id        Int      @id @default(autoincrement())
+  cursoId   Int      @map("curso_id")
+  titulo    String   @db.VarChar(255)
+  orden     Int
 
-  curso     Curso    @relation(fields: [cursoId], references: [id])
+  curso     Curso     @relation(fields: [cursoId], references: [id])
   lecciones Leccion[]
-  parent    Modulo?  @relation("ModuloParent", fields: [parentId], references: [id])
-  hijos     Modulo[] @relation("ModuloParent")
 
   @@index([cursoId, orden])
-  @@index([parentId])
   @@map("modulo")
 }
 
@@ -234,12 +230,10 @@ model Marca {
   nombre   String
   imagen   String?  @map("imagen_archivo") @db.VarChar(255)
   activa   Boolean  @default(true)
-  orden    Int      @default(0)
   creadoEn DateTime @default(now()) @map("creado_en")
 
   productos Producto[]
 
-  @@index([orden])
   @@map("marca")
 }
 
@@ -250,15 +244,10 @@ model Categoria {
   descripcion String?  @db.VarChar(512)
   imagen      String?  @map("imagen_archivo") @db.VarChar(255)
   activa      Boolean  @default(true)
-  orden       Int      @default(0)
   creadoEn    DateTime @default(now()) @map("creado_en")
-  parentId    Int?     @map("parent_id")
 
   productos Producto[]
-  parent    Categoria?  @relation("CategoriaParent", fields: [parentId], references: [id])
-  hijos     Categoria[] @relation("CategoriaParent")
 
-  @@index([parentId, orden])
   @@map("categoria")
 }
 
