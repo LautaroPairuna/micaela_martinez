@@ -884,6 +884,17 @@ export function AdminResourceClient({
         return all.filter((r) => allowed.includes(r.name));
       }
 
+      // Regla específica para Modulo: mostrar lecciones, ocultar hijos
+      if (resource.toLowerCase() === 'modulo') {
+        const allowed = ['lecciones'];
+        return all.filter((r) => allowed.includes(r.name));
+      }
+
+      // Regla específica para Categoria: ocultar hijos
+      if (resource.toLowerCase() === 'categoria') {
+        return all.filter((r) => r.name !== 'hijos');
+      }
+
       return all;
     },
     [meta.fields, resource],
