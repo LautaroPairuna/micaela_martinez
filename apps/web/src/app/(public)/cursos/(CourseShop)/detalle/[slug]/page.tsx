@@ -165,6 +165,21 @@ export default async function CursoPage({
     }
   }
 
+  // ✅ Normalizamos requisitos para que sea siempre array string[]
+  const requisitosList: string[] = [];
+  if (typeof c.requisitos === 'string') {
+    // Intenta parsear si viene como JSON stringificado o usa saltos de línea
+    try {
+        const parsed = JSON.parse(c.requisitos);
+        if(Array.isArray(parsed)) requisitosList.push(...parsed);
+        else requisitosList.push(c.requisitos);
+    } catch {
+        requisitosList.push(...c.requisitos.split('\n').filter(Boolean));
+    }
+  } else if (Array.isArray(c.requisitos)) {
+     requisitosList.push(...(c.requisitos as string[]));
+  }
+
   // ✅ Normalizamos estructura para CourseCurriculum (titulo siempre string y lecciones siempre [])
   const curriculumModules: CurriculumModule[] = modules.map((m, idx) => {
     const leccionesSrc = Array.isArray(m.lecciones) ? m.lecciones : [];
@@ -389,11 +404,21 @@ export default async function CursoPage({
             </div>
 
             {/* Requisitos */}
-            {c.requisitos && (
+            {requisitosList.length > 0 && (
               <div>
                 <h2 className="text-2xl font-bold text-[var(--fg)] mb-4 font-display">Requisitos</h2>
-                <div className="prose prose-invert max-w-none text-[var(--fg-muted)] [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-[var(--pink)]">
-                  <div dangerouslySetInnerHTML={{ __html: c.requisitos }} />
+                <div className="prose prose-invert max-w-none text-[var(--fg-muted)]">
+                  <ul className="space-y-2">
+                    {requisitosList.map((req, i) => {
+                       const text = req.trim().replace(/^[-•*]\s*/, '');
+                       return text ? (
+                        <li key={i} className="flex items-start gap-3">
+                          <span className="mt-1.5 size-1.5 rounded-full bg-[var(--pink)] flex-shrink-0 shadow-[0_0_8px_var(--pink)]" />
+                          <span>{text}</span>
+                        </li>
+                      ) : null;
+                    })}
+                  </ul>
                 </div>
               </div>
             )}

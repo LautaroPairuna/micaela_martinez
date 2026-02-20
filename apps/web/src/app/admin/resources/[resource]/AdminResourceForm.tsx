@@ -979,7 +979,10 @@ export function AdminResourceForm({
           <label className="block text-xs font-medium text-slate-100" htmlFor={inputId}>
             {field.label}
           </label>
-          {field.help && <Tooltip content={field.help} />}
+          {/* Modal Tooltip */}
+      {field.help && (
+        <Tooltip content={field.help} side="top" className="z-[1500]" />
+      )}
         </div>
       );
 
@@ -1029,7 +1032,10 @@ export function AdminResourceForm({
           <div key={field.key} className="flex items-center justify-between rounded-md bg-[#101010] px-3 py-2">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-100">{field.label}</span>
-              {field.help && <Tooltip content={field.help} />}
+              {/* Modal Tooltip */}
+              {field.help && (
+                <Tooltip content={field.help} side="top" className="z-[1500]" />
+              )}
             </div>
             <button
               type="button"

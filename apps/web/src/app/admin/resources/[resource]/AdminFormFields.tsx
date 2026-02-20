@@ -567,7 +567,7 @@ export function renderAdminField({
       <label className="block text-xs font-medium text-slate-100">
         {label}
       </label>
-      {field.help && <Tooltip content={field.help} />}
+      {field.help && <Tooltip content={field.help} side="top" className="z-[1500]" />}
     </div>
   );
 

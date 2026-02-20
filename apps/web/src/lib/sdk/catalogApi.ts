@@ -55,7 +55,7 @@ export type CourseListItem = {
 };
 export type CourseDetail = CourseListItem & {
   descripcionMD?: string | null; nivel?: CourseLevel; resumen?: string | null;
-  requisitos?: string | null; duracionTotalS?: number | null;
+  requisitos?: string | string[] | null; duracionTotalS?: number | null;
   estudiantesCount?: number;
   creadoEn?: string;
   videoPreview?: string | null;

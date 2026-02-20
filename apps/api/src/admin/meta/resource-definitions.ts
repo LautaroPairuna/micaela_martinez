@@ -73,7 +73,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       label: 'Lo que aprenderás',
       help: 'Lista de puntos clave.',
       showInList: true,
-      widget: 'markdown',
+      widget: 'json-list',
     },
     videoPreview: {
       label: 'Vista Previa (Video)',
@@ -84,7 +84,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     requisitos: {
       label: 'Requisitos',
       help: 'Lista de requisitos (uno por línea o bullets).',
-      widget: 'markdown',
+      widget: 'json-list',
       showInList: true,
     },
     descripcionMD: {
