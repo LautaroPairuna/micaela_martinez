@@ -892,7 +892,8 @@ export function AdminResourceClient({
 
       // Regla específica para Categoria: ocultar hijos
       if (resource.toLowerCase() === 'categoria') {
-        return all.filter((r) => r.name !== 'hijos');
+        const allowed = ['productos'];
+        return all.filter((r) => allowed.includes(r.name));
       }
 
       return all;

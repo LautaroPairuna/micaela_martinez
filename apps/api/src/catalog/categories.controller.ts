@@ -5,24 +5,14 @@ import { CategoriesService } from './categories.service';
 export class CategoriesController {
   constructor(private service: CategoriesService) {}
 
+  @Get()
+  list() {
+    return this.service.list();
+  }
+
   @Get('arbol')
   tree() {
     return this.service.tree();
-  }
-
-  @Get('con-conteos')
-  withChildrenCounts() {
-    return this.service.getWithChildrenCounts();
-  }
-
-  @Get(':id/hijos/conteo')
-  getChildrenCount(@Param('id') parentId: string) {
-    return this.service.getChildrenCount(parentId);
-  }
-
-  @Post('conteos-multiples')
-  getMultipleChildrenCounts(@Body() body: { parentIds: string[] }) {
-    return this.service.getMultipleChildrenCounts(body.parentIds);
   }
 
   @Get(':slug')
