@@ -884,19 +884,22 @@ export function AdminResourceClient({
         return all.filter((r) => allowed.includes(r.name));
       }
 
-      // Regla específica para Modulo: ocultar lecciones (columna duplicada)
+      // Regla específica para Modulo: mostrar lecciones (botón)
       if (resource.toLowerCase() === 'modulo') {
-        return [];
+        const allowed = ['lecciones'];
+        return all.filter((r) => allowed.includes(r.name));
       }
 
-      // Regla específica para Categoria: ocultar hijos y productos (columna duplicada)
+      // Regla específica para Categoria: mostrar productos (botón)
       if (resource.toLowerCase() === 'categoria') {
-        return [];
+        const allowed = ['productos'];
+        return all.filter((r) => allowed.includes(r.name));
       }
 
-      // Regla específica para Marca: ocultar productos (columna duplicada)
+      // Regla específica para Marca: mostrar productos (botón)
       if (resource.toLowerCase() === 'marca') {
-        return [];
+        const allowed = ['productos'];
+        return all.filter((r) => allowed.includes(r.name));
       }
 
       return all;
