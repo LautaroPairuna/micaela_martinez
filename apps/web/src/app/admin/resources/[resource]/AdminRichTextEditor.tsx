@@ -1,12 +1,12 @@
 'use client';
 
-import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import { useEditor, EditorContent, type Editor, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Bold,
   Italic,
@@ -25,9 +25,20 @@ import {
   Redo,
   Link as LinkIcon,
   Unlink,
-  RemoveFormatting
+  RemoveFormatting,
+  X,
+  Pencil,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/Dialog';
 
 interface AdminRichTextEditorProps {
   value: string;
@@ -72,27 +83,8 @@ const MenuButton = ({
   </button>
 );
 
-const Toolbar = ({ editor }: { editor: Editor | null }) => {
+const Toolbar = ({ editor, onLinkClick }: { editor: Editor | null, onLinkClick: () => void }) => {
   if (!editor) return null;
-
-  const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL del enlace:', previousUrl);
-
-    // cancelled
-    if (url === null) {
-      return;
-    }
-
-    // empty
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-
-    // update
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  };
 
   return (
     <div className="border-b border-slate-200 dark:border-[#131313] p-1 flex flex-wrap gap-1 bg-slate-50 dark:bg-[#101010] rounded-t-md items-center sticky top-0 z-10">
@@ -196,7 +188,7 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
       <div className="w-px h-5 bg-slate-300 dark:bg-[#131313] mx-1" />
 
       <MenuButton
-        onClick={setLink}
+        onClick={onLinkClick}
         isActive={editor.isActive('link')}
         icon={LinkIcon}
         title="Enlace"
@@ -230,6 +222,9 @@ export function AdminRichTextEditor({
   maxHeight = '600px',
   disabled = false,
 }: AdminRichTextEditorProps) {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -262,6 +257,7 @@ export function AdminRichTextEditor({
           'prose-p:my-2 prose-headings:my-3 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5',
           'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
           'prose-img:rounded-md prose-img:shadow-sm',
+          '[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5',
           disabled && 'cursor-not-allowed'
         ),
         style: `min-height: ${minHeight}; max-height: ${maxHeight}; overflow-y: auto;`
@@ -273,6 +269,23 @@ export function AdminRichTextEditor({
       onChange(editor.getHTML());
     },
   });
+
+  const openLinkDialog = useCallback(() => {
+    if (!editor) return;
+    const previousUrl = editor.getAttributes('link').href;
+    setLinkUrl(previousUrl || '');
+    setLinkDialogOpen(true);
+  }, [editor]);
+
+  const saveLink = useCallback(() => {
+    if (!editor) return;
+    if (linkUrl === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
+    }
+    setLinkDialogOpen(false);
+  }, [editor, linkUrl]);
 
   // Sincronizar cambios externos solo si no hay foco (evitar conflictos de cursor)
   useEffect(() => {
@@ -291,12 +304,101 @@ export function AdminRichTextEditor({
   }, [value, editor]);
 
   return (
-    <div className={cn(
-      "border border-slate-200 dark:border-[#131313] rounded-md shadow-sm bg-white dark:bg-[#101010] flex flex-col overflow-hidden transition-all ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-      disabled && "opacity-60 pointer-events-none bg-slate-50 dark:bg-slate-900"
-    )}>
-      <Toolbar editor={editor} />
-      <EditorContent editor={editor} className="flex-1 cursor-text w-full" />
-    </div>
+    <>
+      <div className={cn(
+        "border border-slate-200 dark:border-[#131313] rounded-md shadow-sm bg-white dark:bg-[#101010] flex flex-col overflow-hidden transition-all ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        disabled && "opacity-60 pointer-events-none bg-slate-50 dark:bg-slate-900"
+      )}>
+        <Toolbar editor={editor} onLinkClick={openLinkDialog} />
+        
+        {editor && (
+          <BubbleMenu
+            editor={editor}
+            tippyOptions={{ duration: 100 }}
+            shouldShow={({ editor }) => editor.isActive('link')}
+            className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 shadow-md dark:border-[#2a2a2a] dark:bg-[#1a1a1a]"
+          >
+            <a
+              href={editor.getAttributes('link').href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#2a2a2a] dark:hover:text-slate-100"
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span className="max-w-[150px] truncate">
+                {editor.getAttributes('link').href}
+              </span>
+            </a>
+            
+            <div className="h-4 w-px bg-slate-200 dark:bg-[#2a2a2a]" />
+            
+            <button
+              onClick={openLinkDialog}
+              className="flex items-center justify-center rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#2a2a2a] dark:hover:text-slate-100"
+              title="Editar enlace"
+              type="button"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+            
+            <button
+              onClick={() => editor.chain().focus().unsetLink().run()}
+              className="flex items-center justify-center rounded p-1 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+              title="Quitar enlace"
+              type="button"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </BubbleMenu>
+        )}
+
+        <EditorContent editor={editor} className="flex-1 cursor-text w-full" />
+      </div>
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-w-md bg-[#1a1a1a] border border-[#2a2a2a] text-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-50">Insertar enlace</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="url" className="text-xs font-semibold text-slate-300">
+                URL del destino
+              </label>
+              <input
+                id="url"
+                className="block w-full p-2 text-sm text-slate-200 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg focus:ring-[#08885d] focus:border-[#08885d] placeholder-slate-500"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveLink();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setLinkDialogOpen(false)}
+              className="rounded border border-[#2a2a2a] px-4 py-2 text-xs text-slate-200 hover:bg-[#1e1e1e]"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={saveLink}
+              className="rounded bg-[#13392c] border border-[#08885d] px-4 py-2 text-xs text-white hover:bg-[#08885d]"
+            >
+              Guardar enlace
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
