@@ -199,3 +199,32 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     leida: { label: '¿Leída?' },
   },
 };
+
+export const RESOURCE_LABELS: Record<string, string> = {
+  // Usuarios & Accesos
+  Usuario: 'Usuarios',
+  Role: 'Roles',
+
+  // Catálogo & Ventas
+  Producto: 'Productos',
+  ProductoImagen: 'Imágenes de Productos',
+  Marca: 'Marcas',
+  Categoria: 'Categorías',
+  Orden: 'Pedidos',
+  Slider: 'Banners',
+
+  // Cursos & Lecciones
+  Curso: 'Cursos',
+  Leccion: 'Lecciones',
+  Modulo: 'Módulos',
+  Inscripcion: 'Inscripciones',
+
+  // Sistema
+  Direccion: 'Direcciones',
+
+  // Otros
+  Carrito: 'Carritos',
+  ItemCarrito: 'Items Carrito',
+  LeccionTipoConfig: 'Config. Lecciones',
+  Resena: 'Reseñas',
+};

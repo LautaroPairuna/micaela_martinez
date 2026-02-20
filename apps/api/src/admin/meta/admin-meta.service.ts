@@ -11,7 +11,7 @@ import {
   FilterGroup,
   VirtualFilter,
 } from './admin-meta.types';
-import { RESOURCE_DEFINITIONS } from './resource-definitions';
+import { RESOURCE_DEFINITIONS, RESOURCE_LABELS } from './resource-definitions';
 
 import { Prisma } from '@prisma/client';
 
@@ -698,7 +698,7 @@ export class AdminMetaService {
       resources.push({
         name: resourceName,
         tableName,
-        displayName: humanizeName(resourceName),
+        displayName: RESOURCE_LABELS[resourceName] || humanizeName(resourceName),
         fields,
         searchFields,
         filters: buildFiltersFromFields(fields, resourceName),
@@ -823,7 +823,7 @@ export class AdminMetaService {
       resources.push({
         name: model.name,
         tableName,
-        displayName: humanizeName(model.name),
+        displayName: RESOURCE_LABELS[model.name] || humanizeName(model.name),
         fields,
         searchFields,
         filters: buildFiltersFromFields(fields, model.name),
