@@ -1,6 +1,6 @@
 'use client';
 
-import { useEditor, EditorContent, type Editor, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -310,48 +310,6 @@ export function AdminRichTextEditor({
         disabled && "opacity-60 pointer-events-none bg-slate-50 dark:bg-slate-900"
       )}>
         <Toolbar editor={editor} onLinkClick={openLinkDialog} />
-        
-        {editor && (
-          <BubbleMenu
-            editor={editor}
-            tippyOptions={{ duration: 100 }}
-            shouldShow={({ editor }) => editor.isActive('link')}
-            className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 shadow-md dark:border-[#2a2a2a] dark:bg-[#1a1a1a]"
-          >
-            <a
-              href={editor.getAttributes('link').href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#2a2a2a] dark:hover:text-slate-100"
-            >
-              <ExternalLink className="h-3 w-3" />
-              <span className="max-w-[150px] truncate">
-                {editor.getAttributes('link').href}
-              </span>
-            </a>
-            
-            <div className="h-4 w-px bg-slate-200 dark:bg-[#2a2a2a]" />
-            
-            <button
-              onClick={openLinkDialog}
-              className="flex items-center justify-center rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#2a2a2a] dark:hover:text-slate-100"
-              title="Editar enlace"
-              type="button"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-            
-            <button
-              onClick={() => editor.chain().focus().unsetLink().run()}
-              className="flex items-center justify-center rounded p-1 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-              title="Quitar enlace"
-              type="button"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          </BubbleMenu>
-        )}
-
         <EditorContent editor={editor} className="flex-1 cursor-text w-full" />
       </div>
 
