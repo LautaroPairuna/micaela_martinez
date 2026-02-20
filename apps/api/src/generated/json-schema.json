@@ -242,7 +242,11 @@
         },
         "requisitos": {
           "type": [
+            "number",
             "string",
+            "boolean",
+            "object",
+            "array",
             "null"
           ]
         },

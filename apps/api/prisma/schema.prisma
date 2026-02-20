@@ -88,7 +88,7 @@ model Curso {
   titulo        String     @db.VarChar(255)
   resumen       String?
   descripcionMD String?    @map("descripcion_md")
-  requisitos    String?    @db.Text
+  requisitos    Json?
   precio        Int
   publicado     Boolean    @default(false)
   nivel         NivelCurso @default(BASICO)

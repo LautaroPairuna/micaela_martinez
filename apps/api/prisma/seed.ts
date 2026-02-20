@@ -163,7 +163,7 @@ const upsertCursoGetId = async (c: {
   tags?: string[];
   queAprenderas?: string[];
   videoPreview?: string;
-  requisitos?: string;
+  requisitos?: string | string[]; // <-- Permitir string[] también
 }) => {
   const nivelKey = E.nivelCurso(c.nivel); // <- CLAVE: manda "BASICO"/"INTERMEDIO"/"AVANZADO"
 
@@ -181,7 +181,7 @@ const upsertCursoGetId = async (c: {
       tags: json(c.tags ?? []),
       queAprenderas: c.queAprenderas ? json(c.queAprenderas) : undefined,
       videoPreview: c.videoPreview ?? null,
-      requisitos: c.requisitos ?? null,
+      requisitos: c.requisitos ? json(c.requisitos) : undefined,
     } as any,
     create: {
       slug: c.idSlug,
@@ -197,7 +197,7 @@ const upsertCursoGetId = async (c: {
       creadoEn: new Date(),
       queAprenderas: json(c.queAprenderas ?? []),
       videoPreview: c.videoPreview ?? null,
-      requisitos: c.requisitos ?? null,
+      requisitos: json(c.requisitos ?? []),
     } as any,
   });
 
@@ -511,7 +511,7 @@ async function main() {
     tags: ['prueba', 'testing', 'suscripcion'],
     queAprenderas: ['Cómo realizar pagos', 'Cómo cancelar suscripciones', 'Acceso al contenido'],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-makeup-to-a-woman-5264/1080p.mp4',
-    requisitos: 'Ninguno.\nAcceso a internet.',
+    requisitos: ['Ninguno.', 'Acceso a internet.'],
   });
 
   const cursoMaquId = await upsertCursoGetId({
@@ -532,7 +532,7 @@ async function main() {
       'Maquillaje para fotografía y eventos',
     ],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-makeup-artist-applying-eyeshadow-5263/1080p.mp4',
-    requisitos: 'Kit básico de maquillaje.\nBrochas y esponjas limpias.\nModelo para practicar (opcional).',
+    requisitos: ['Kit básico de maquillaje.', 'Brochas y esponjas limpias.', 'Modelo para practicar (opcional).'],
   });
 
   const cursoSkinId = await upsertCursoGetId({
@@ -552,7 +552,7 @@ async function main() {
       'Errores comunes en el cuidado de la piel',
     ],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-cream-to-face-5268/1080p.mp4',
-    requisitos: 'Espejo con buena iluminación.\nVincha para retirar el cabello.\nDisposición para crear nuevos hábitos.',
+    requisitos: ['Espejo con buena iluminación.', 'Vincha para retirar el cabello.', 'Disposición para crear nuevos hábitos.'],
   });
 
   const cursoOjosId = await upsertCursoGetId({
@@ -572,7 +572,7 @@ async function main() {
       'Aplicación de glitter y pigmentos',
     ],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-applying-eyeliner-5265/1080p.mp4',
-    requisitos: 'Conocimientos básicos de maquillaje.\nVariedad de pinceles de ojos (difuminar, precisión).\nPrebase de sombras y pigmentos.',
+    requisitos: ['Conocimientos básicos de maquillaje.', 'Variedad de pinceles de ojos (difuminar, precisión).', 'Prebase de sombras y pigmentos.'],
   });
 
   const cursoCejasId = await upsertCursoGetId({
@@ -592,7 +592,7 @@ async function main() {
       'Henna y tinte híbrido',
     ],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-shaping-eyebrows-5266/1080p.mp4',
-    requisitos: 'Pinza de depilar y tijera pequeña.\nHilo para diseño (mapping).\nCepillo de cejas (goubillon).',
+    requisitos: ['Pinza de depilar y tijera pequeña.', 'Hilo para diseño (mapping).', 'Cepillo de cejas (goubillon).'],
   });
 
   const cursoDermoId = await upsertCursoGetId({
@@ -612,7 +612,7 @@ async function main() {
       'Rutinas anti-age con evidencia científica',
     ],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-woman-applying-serum-5267/1080p.mp4',
-    requisitos: 'Conocimientos de biología de la piel (recomendado).\nInterés en química cosmética.\nNotebook para tomar apuntes.',
+    requisitos: ['Conocimientos de biología de la piel (recomendado).', 'Interés en química cosmética.', 'Notebook para tomar apuntes.'],
   });
 
   const cursoSkinSensId = await upsertCursoGetId({
@@ -632,7 +632,7 @@ async function main() {
       'Maquillaje apto para pieles reactivas',
     ],
     videoPreview: 'https://cdn.coverr.co/videos/coverr-woman-washing-face-5269/1080p.mp4',
-    requisitos: 'Piel sensible o reactiva (propia o de clientes).\nPaciencia para probar productos.\nEvitar exfoliantes fuertes durante el curso.',
+    requisitos: ['Piel sensible o reactiva (propia o de clientes).', 'Paciencia para probar productos.', 'Evitar exfoliantes fuertes durante el curso.'],
   });
 
   // ───────────────── Módulos + Lecciones
