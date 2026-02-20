@@ -219,11 +219,25 @@ export function renderCell({
     );
   }
 
+  // ──────────────── WIDGET: MARKDOWN / RICH TEXT ────────────────
+  if (field.widget === 'markdown' || field.widget === 'rich-text') {
+    if (!value) return <span className="text-[12px] text-slate-500">—</span>;
+    if (typeof value === 'string') {
+      // Eliminar tags HTML para mostrar preview limpio en tabla
+      const textOnly = value.replace(/<[^>]*>?/gm, ' ').trim();
+      return (
+        <span className="max-w-[200px] truncate block text-[12px] text-slate-300" title={textOnly}>
+          {textOnly || '...'}
+        </span>
+      );
+    }
+  }
+
   // ──────────────── JSON / ARRAY (Tags, Listas) ────────────────
   if (field.type === 'Json') {
     if (!value) return <span className="text-[12px] text-slate-500">—</span>;
     
-    // Si es un array de strings (tags, requisitos simples)
+    // Si es un array de strings (tags, requisitos simples - LEGACY)
     if (Array.isArray(value)) {
       if (value.length === 0) return <span className="text-[12px] text-slate-500">—</span>;
       // Si son strings
