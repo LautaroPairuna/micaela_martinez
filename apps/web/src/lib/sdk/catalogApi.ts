@@ -59,7 +59,7 @@ export type CourseDetail = CourseListItem & {
   estudiantesCount?: number;
   creadoEn?: string;
   videoPreview?: string | null;
-  queAprenderas?: string[] | null;
+  queAprenderas?: string[] | string | null;
   tags?: Record<string, unknown>;
   modulos?: Array<{ 
     id: string;
