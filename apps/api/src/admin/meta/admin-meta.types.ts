@@ -116,6 +116,8 @@ export interface FieldMeta {
   label?: string; // Título amigable del campo (ej: "Precio de Venta")
   help?: string; // Tooltip o texto de ayuda
   placeholder?: string;
+
+  readOnly?: boolean; // Nuevo: soporte para campos de solo lectura
 }
 
 export interface ResourceMeta {

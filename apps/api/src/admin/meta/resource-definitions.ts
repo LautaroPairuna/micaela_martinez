@@ -4,7 +4,8 @@ export type FieldDefinition = {
   placeholder?: string;
   showInList?: boolean;
   showInForm?: boolean;
-  widget?: 'markdown' | 'video' | 'list' | 'json-list' | 'image' | 'date';
+  widget?: 'markdown' | 'video' | 'list' | 'json-list' | 'image' | 'date' | 'select';
+  readOnly?: boolean;
 };
 
 export type ResourceDefinitions = Record<
@@ -138,16 +139,21 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     productos: { label: 'Productos', showInList: false },
   },
   Orden: {
-    usuarioId: { label: 'Cliente' },
-    estado: { label: 'Estado Orden' },
-    total: { label: 'Total a Pagar' },
-    referenciaPago: { label: 'Ref. Pago', help: 'ID de transacción externa.' },
-    esSuscripcion: { label: '¿Es Suscripción?' },
-    direccionEnvioId: { label: 'Dirección Envío', showInList: false },
+    usuarioId: { label: 'Cliente', readOnly: true },
+    estado: { label: 'Estado Orden', widget: 'select' },
+    total: { label: 'Total a Pagar', readOnly: true },
+    moneda: { label: 'Moneda', readOnly: true },
+    referenciaPago: { label: 'Ref. Pago', help: 'ID de transacción externa.', readOnly: true },
+    esSuscripcion: { label: '¿Es Suscripción?', readOnly: true },
+    suscripcionActiva: { label: 'Suscripción Activa', readOnly: true },
+    suscripcionId: { label: 'ID Suscripción MP', readOnly: true },
+    direccionEnvioId: { label: 'Dirección Envío', showInList: false, readOnly: true },
     direccionFacturacionId: {
       label: 'Dirección Facturación',
       showInList: false,
+      readOnly: true,
     },
+    metadatos: { label: 'Metadatos', readOnly: true, showInList: false },
   },
 
   // ─────────────────────────────────────────────────────────────

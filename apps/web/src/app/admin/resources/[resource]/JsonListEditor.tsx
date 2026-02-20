@@ -9,6 +9,7 @@ interface JsonListEditorProps {
   placeholder?: string;
   label?: string;
   help?: string;
+  disabled?: boolean;
 }
 
 export function JsonListEditor({
@@ -17,6 +18,7 @@ export function JsonListEditor({
   placeholder = 'Nuevo elemento...',
   label,
   help,
+  disabled,
 }: JsonListEditorProps) {
   // Normalizar valor inicial
   const items = useMemo<string[]>(() => {
@@ -115,11 +117,11 @@ export function JsonListEditor({
           {items.map((item, idx) => (
             <div
               key={idx}
-              draggable
-              onDragStart={() => onDragStart(idx)}
-              onDragEnter={() => onDragEnter(idx)}
-              onDragEnd={onDragEnd}
-              onDragOver={onDragOver}
+              draggable={!disabled}
+              onDragStart={() => !disabled && onDragStart(idx)}
+              onDragEnter={() => !disabled && onDragEnter(idx)}
+              onDragEnd={!disabled ? onDragEnd : undefined}
+              onDragOver={!disabled ? onDragOver : undefined}
               className={cn(
                 "flex items-center gap-2 group transition-colors rounded p-1",
                 draggedIndex === idx 
@@ -127,7 +129,7 @@ export function JsonListEditor({
                   : "hover:bg-[#1a1a1a]"
               )}
             >
-              <div className="cursor-grab active:cursor-grabbing p-1">
+              <div className={cn("p-1", disabled ? "cursor-default opacity-50" : "cursor-grab active:cursor-grabbing")}>
                 <GripVertical className="w-4 h-4 text-slate-600 hover:text-slate-400" />
               </div>
               
@@ -135,17 +137,20 @@ export function JsonListEditor({
                 type="text"
                 value={item}
                 onChange={(e) => handleEdit(idx, e.target.value)}
-                className="flex-1 bg-transparent border-b border-transparent focus:border-emerald-500 text-sm text-slate-200 py-1 outline-none transition-colors"
+                disabled={disabled}
+                className="flex-1 bg-transparent border-b border-transparent focus:border-emerald-500 text-sm text-slate-200 py-1 outline-none transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               />
               
-              <button
-                type="button"
-                onClick={() => handleRemove(idx)}
-                className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Eliminar"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => handleRemove(idx)}
+                  className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Eliminar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           ))}
           
@@ -157,6 +162,7 @@ export function JsonListEditor({
         </div>
 
         {/* Input para nuevo item */}
+        {!disabled && (
         <div className="flex items-center gap-2 pt-2 border-t border-[#2a2a2a]">
           <input
             type="text"
@@ -176,6 +182,7 @@ export function JsonListEditor({
             <Plus className="w-4 h-4" />
           </button>
         </div>
+        )}
       </div>
     </div>
   );

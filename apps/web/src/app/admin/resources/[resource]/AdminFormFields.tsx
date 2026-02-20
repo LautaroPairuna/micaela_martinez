@@ -52,6 +52,7 @@ type BooleanSwitchProps = {
   help?: string;
   checked: boolean;
   onChange: (value: boolean) => void;
+  disabled?: boolean;
 };
 
 const BooleanSwitch: React.FC<BooleanSwitchProps> = ({
@@ -59,20 +60,22 @@ const BooleanSwitch: React.FC<BooleanSwitchProps> = ({
   help,
   checked,
   onChange,
+  disabled,
 }) => (
-  <div className="flex items-center justify-between rounded-md bg-[#101010] px-3 py-2">
+  <div className={`flex items-center justify-between rounded-md bg-[#101010] px-3 py-2 ${disabled ? 'opacity-60' : ''}`}>
     <div className="flex flex-col">
       <span className="text-xs text-slate-100">{label}</span>
       {help && <span className="text-[10px] text-slate-500 mt-0.5">{help}</span>}
     </div>
     <button
       type="button"
-      onClick={() => onChange(!checked)}
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
       className={`relative inline-flex h-5 w-9 items-center rounded-full border transition-colors ${
         checked
           ? 'border-emerald-500 bg-emerald-500'
           : 'border-[#3a3a3a] bg-[#181818]'
-      }`}
+      } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span
         className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
@@ -91,6 +94,7 @@ type ImageDropzoneProps = {
   tableName: string;
   storedValue: string | null | undefined;
   onFileSelected: (file: File | null) => void;
+  readOnly?: boolean;
 };
 
 const ImageDropzone: React.FC<ImageDropzoneProps> = ({
@@ -99,6 +103,7 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
   tableName,
   storedValue,
   onFileSelected,
+  readOnly,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -119,8 +124,8 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
   const inputId = `image-${tableName}-${label.replace(/\s+/g, '-').toLowerCase()}`;
 
   const handleClickBrowse = useCallback(() => {
-    inputRef.current?.click();
-  }, []);
+    if (!readOnly) inputRef.current?.click();
+  }, [readOnly]);
 
   const validateImageSize = (file: File): boolean => {
     if (file.size > IMAGE_MAX_BYTES) {
@@ -201,14 +206,16 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
       </div>
 
       <div
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        onDragOver={!readOnly ? handleDragOver : undefined}
+        onDragEnter={!readOnly ? handleDragEnter : undefined}
+        onDragLeave={!readOnly ? handleDragLeave : undefined}
+        onDrop={!readOnly ? handleDrop : undefined}
         className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-4 py-4 text-center transition-colors ${
           dragging
             ? 'border-emerald-400 bg-emerald-500/10'
-            : 'border-[#2a2a2a] bg-[#101010] hover:border-emerald-500/70'
+            : readOnly 
+              ? 'border-[#2a2a2a] bg-[#101010] opacity-60 cursor-default'
+              : 'border-[#2a2a2a] bg-[#101010] hover:border-emerald-500/70'
         }`}
       >
         {/* Preview 1:1 */}
@@ -227,6 +234,7 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
         </div>
 
         {/* Texto + botón */}
+        {!readOnly && (
         <div className="flex flex-col items-center gap-2 text-xs text-slate-300">
           <p className="text-[11px]">
             Arrastrá una imagen aquí o usá el botón para seleccionarla desde tu
@@ -243,6 +251,7 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
             Formatos: JPG, PNG, WebP · tamaño máx. {formatSize(IMAGE_MAX_BYTES)}.
           </p>
         </div>
+        )}
 
         <input
           id={inputId}
@@ -251,6 +260,7 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
           accept="image/*"
           className="hidden"
           onChange={handleInputChange}
+          disabled={readOnly}
         />
       </div>
     </div>
@@ -265,6 +275,7 @@ type MediaDropzoneProps = {
   fileKind?: 'video' | 'document' | 'generic';
   storedValue: string | null | undefined;
   onFileSelected: (file: File | null) => void;
+  readOnly?: boolean;
 };
 
 const MediaDropzone: React.FC<MediaDropzoneProps> = ({
@@ -273,6 +284,7 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
   fileKind = 'generic',
   storedValue,
   onFileSelected,
+  readOnly,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -448,13 +460,15 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
       </div>
 
       <div
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        onDragOver={!readOnly ? handleDragOver : undefined}
+        onDragEnter={!readOnly ? handleDragEnter : undefined}
+        onDragLeave={!readOnly ? handleDragLeave : undefined}
+        onDrop={!readOnly ? handleDrop : undefined}
         className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-4 py-4 text-center transition-colors ${
           dragging
             ? 'border-emerald-400 bg-emerald-500/10'
+            : readOnly
+            ? 'border-[#2a2a2a] bg-[#101010] opacity-60 cursor-default'
             : 'border-[#2a2a2a] bg-[#101010] hover:border-emerald-500/70'
         }`}
       >
@@ -493,6 +507,7 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
         </div>
 
         {/* Texto + botón */}
+        {!readOnly && (
         <div className="flex flex-col items-center gap-2 text-xs text-slate-300">
           <p className="text-[11px]">
             Arrastrá un archivo aquí o usá el botón para seleccionarlo desde tu
@@ -510,12 +525,14 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
             {formatSize(DOC_MAX_BYTES)}.
           </p>
         </div>
+        )}
 
         <input
           ref={inputRef}
           type="file"
           className="hidden"
           onChange={handleInputChange}
+          disabled={readOnly}
         />
       </div>
     </div>
@@ -582,6 +599,7 @@ export function renderAdminField({
           onChange={(newVal) =>
             setFormValues((prev) => ({ ...prev, [field.name]: newVal }))
           }
+          disabled={field.readOnly}
         />
       </div>
     );
@@ -599,6 +617,7 @@ export function renderAdminField({
               setFormValues((prev) => ({ ...prev, [field.name]: val }))
             }
             placeholder={`Escribe aquí ${label}...`}
+            disabled={field.readOnly}
           />
         </div>
       </div>
@@ -626,7 +645,7 @@ export function renderAdminField({
                     : e.target.value,
               }))
             }
-            disabled={loading}
+            disabled={loading || field.readOnly}
             style={{ colorScheme: 'dark' }}
           >
             <option value="">
@@ -712,10 +731,11 @@ export function renderAdminField({
               }));
             }
           }}
-        />
-      </div>
-    );
-  }
+        readOnly={field.readOnly}
+      />
+    </div>
+  );
+}
 
   /* Boolean → switch sin descripción */
   if (field.type === 'Boolean') {
@@ -732,6 +752,7 @@ export function renderAdminField({
             [field.name]: val,
           }))
         }
+        disabled={field.readOnly}
       />
     );
   }
@@ -746,6 +767,7 @@ export function renderAdminField({
             className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
             value={value ?? ''}
             onChange={(e) => onChangeField(field, e as any)}
+            disabled={field.readOnly}
             style={{ colorScheme: 'dark' }}
           >
             <option value="">—</option>
@@ -771,6 +793,7 @@ export function renderAdminField({
           className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
           value={value ?? ''}
           onChange={(e) => onChangeField(field, e as any)}
+          disabled={field.readOnly}
         />
       </div>
     );
@@ -786,6 +809,7 @@ export function renderAdminField({
           rows={4}
           value={value ?? ''}
           onChange={(e) => onChangeField(field, e as any)}
+          disabled={field.readOnly}
         />
         <p className="text-[10px] text-slate-500">
           JSON válido. Ej: {'{"foo":"bar"}'}
@@ -809,6 +833,7 @@ export function renderAdminField({
           rows={4}
           value={value ?? ''}
           onChange={(e) => onChangeField(field, e as any)}
+          disabled={field.readOnly}
         />
       </div>
     );
@@ -826,6 +851,7 @@ export function renderAdminField({
         className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100"
         value={value ?? ''}
         onChange={(e) => onChangeField(field, e as any)}
+        disabled={field.readOnly}
       />
     </div>
   );

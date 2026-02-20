@@ -20,13 +20,14 @@ interface RequestWithUser extends ExpressRequest {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  @ApiOperation({ summary: 'Obtener perfil del usuario actual' })
-  @ApiResponse({ status: 200, description: 'Perfil obtenido correctamente' })
-  getProfile(@Request() req: RequestWithUser) {
-    return this.usersService.findById(req.user.sub);
-  }
+  // COMENTADO POR CONFLICTO: AccountController ya maneja GET /users/me
+  // @UseGuards(JwtAuthGuard)
+  // @Get('me')
+  // @ApiOperation({ summary: 'Obtener perfil del usuario actual' })
+  // @ApiResponse({ status: 200, description: 'Perfil obtenido correctamente' })
+  // getProfile(@Request() req: RequestWithUser) {
+  //   return this.usersService.findById(req.user.sub);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Get('me/enrollments')

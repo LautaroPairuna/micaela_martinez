@@ -28,7 +28,7 @@ export async function GET() {
     }
 
     // Validar token con el backend
-    const response = await fetch(`${API_BASE}/users/me`, {
+    const response = await fetch(`${API_BASE}/auth/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -16,13 +16,9 @@ import { AdminResourceForm, type AdminUploadContext } from './AdminResourceForm'
 import { renderCell } from './renderCell';
 import { Pencil, Trash2, Filter, ChevronDown, Search, Calendar, Hash, Check, X, Loader2 } from 'lucide-react';
 import { io } from 'socket.io-client';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { OrdersList } from '@/components/admin/orders/OrdersList';
+import { OrderResourceForm } from '@/components/admin/orders/OrderResourceForm';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -1210,7 +1206,15 @@ export function AdminResourceClient({
         />
       </div>
 
-      {/* Tabla */}
+      {/* Tabla o Vista Especializada */}
+      {resource.toLowerCase() === 'orden' ? (
+        <OrdersList 
+          data={data}
+          onEdit={handleOpenEdit}
+          onDelete={handleDelete}
+          getPageHref={getPageHref}
+        />
+      ) : (
       <section className="overflow-hidden rounded-lg border border-[#2a2a2a] bg-[#1a1a1a]">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
@@ -1388,17 +1392,28 @@ export function AdminResourceClient({
           </div>
         </div>
       </section>
+      )}
 
-      <AdminResourceForm
-        open={formOpen}
-        mode={formMode}
-        meta={meta}
-        resource={resource}
-        currentRow={currentRow}
-        onClose={handleCloseForm}
-        onSaved={handleSaved}
-        onUploadStart={handleUploadStart}
-      />
+      {resource.toLowerCase() === 'orden' ? (
+        <OrderResourceForm
+          open={formOpen}
+          onClose={() => handleCloseForm()}
+          currentRow={currentRow}
+          meta={meta}
+          onSaved={handleSaved}
+        />
+      ) : (
+        <AdminResourceForm
+          open={formOpen}
+          mode={formMode}
+          meta={meta}
+          resource={resource}
+          currentRow={currentRow}
+          onClose={handleCloseForm}
+          onSaved={handleSaved}
+          onUploadStart={handleUploadStart}
+        />
+      )}
     </>
   );
 }

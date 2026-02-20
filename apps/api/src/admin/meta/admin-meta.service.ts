@@ -651,9 +651,8 @@ export class AdminMetaService {
 
         const label = fieldDef?.label;
         const help = fieldDef?.help;
-        const placeholder = fieldDef?.placeholder;
-
-        // Sobreescribir visibilidad si está definida explícitamente
+      const placeholder = fieldDef?.placeholder;
+        const readOnly = fieldDef?.readOnly;// Sobreescribir visibilidad si está definida explícitamente
         if (fieldDef?.showInList !== undefined)
           showInList = fieldDef.showInList;
         if (fieldDef?.showInForm !== undefined)
@@ -682,6 +681,7 @@ export class AdminMetaService {
           fileKind,
 
           widget: fieldDef?.widget,
+          readOnly,
 
           isParentChildCount,
           isForeignKey,
@@ -782,6 +782,7 @@ export class AdminMetaService {
         const label = fieldDef?.label;
         const help = fieldDef?.help;
         const placeholder = fieldDef?.placeholder;
+        const readOnly = fieldDef?.readOnly;
 
         // Sobreescribir visibilidad si está definida explícitamente
         if (fieldDef?.showInList !== undefined)
@@ -809,6 +810,7 @@ export class AdminMetaService {
           fileKind,
 
           widget: fieldDef?.widget,
+          readOnly,
 
           isParentChildCount,
           isForeignKey,

@@ -406,6 +406,23 @@ export class AdminCrudService {
       include.categoria = { select: { nombre: true } };
     }
 
+    if (meta.name === 'Orden') {
+      include.usuario = { select: { email: true, nombre: true } };
+      include.items = {
+        select: {
+          id: true,
+          titulo: true,
+          cantidad: true,
+          precioUnitario: true,
+          tipo: true,
+          refId: true,
+        },
+      };
+      include.direccionEnvio = {
+        select: { calle: true, ciudad: true, provincia: true },
+      };
+    }
+
     return include;
   }
 
@@ -560,7 +577,7 @@ export class AdminCrudService {
       productIds.length
         ? this.prisma.producto.findMany({
             where: { id: { in: productIds } },
-            select: { id: true, imagen: true },
+            select: { id: true, imagen: true, precio: true },
           })
         : Promise.resolve([]),
       courseIds.length
@@ -574,6 +591,8 @@ export class AdminCrudService {
     const productImageById = new Map(
       products.map((p) => [p.id, ImageUrlUtil.getProductImageUrl(p.imagen)]),
     );
+    const productPriceById = new Map(products.map((p) => [p.id, p.precio]));
+
     const courseImageById = new Map(
       courses.map((c) => [c.id, ImageUrlUtil.getCourseImageUrl(c.portada)]),
     );
@@ -593,7 +612,12 @@ export class AdminCrudService {
               : null
             : null;
 
-      return { ...it, imageUrl };
+      const precioProducto =
+        tipo === 'PRODUCTO' && refId != null
+          ? (productPriceById.get(refId) ?? null)
+          : null;
+
+      return { ...it, imageUrl, precioActual: precioProducto };
     });
 
     return { ...record, items: enrichedItems };
