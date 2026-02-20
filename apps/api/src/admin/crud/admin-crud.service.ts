@@ -401,6 +401,11 @@ export class AdminCrudService {
       include.curso = { select: { titulo: true } };
     }
 
+    if (meta.name === 'Producto') {
+      include.marca = { select: { nombre: true } };
+      include.categoria = { select: { nombre: true } };
+    }
+
     return include;
   }
 

@@ -61,7 +61,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       label: '¿Destacado?',
       help: 'Aparece en secciones principales.',
     },
-    ratingProm: { label: 'Rating Promedio' },
+    ratingProm: { label: 'Rating Promedio', showInForm: false, showInList: false },
     tags: {
       label: 'Tags',
       help: 'Etiquetas para búsqueda (Enter para agregar).',
@@ -73,7 +73,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       label: 'Lo que aprenderás',
       help: 'Lista de puntos clave.',
       showInList: true,
-      widget: 'json-list',
+      widget: 'markdown',
     },
     videoPreview: {
       label: 'Vista Previa (Video)',
@@ -92,7 +92,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       showInList: true,
       widget: 'markdown',
     },
-    ratingConteo: { label: 'Total Reseñas', showInList: false },
+    ratingConteo: { label: 'Total Reseñas', showInList: false, showInForm: false },
   },
   Inscripcion: {
     usuarioId: { label: 'Usuario' },

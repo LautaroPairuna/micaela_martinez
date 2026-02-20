@@ -1197,7 +1197,7 @@ export function AdminResourceClient({
       </Dialog>
 
       {/* Barra de Búsqueda Global */}
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md mb-6">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
           <Search className="w-4 h-4 text-slate-500" />
         </div>

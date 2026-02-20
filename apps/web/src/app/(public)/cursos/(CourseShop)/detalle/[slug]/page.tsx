@@ -142,22 +142,28 @@ export default async function CursoPage({
 
   // 1. Prioridad: 'queAprenderas' desde DB
   // 2. Fallback: Calculado desde lecciones
-  const learningPoints: string[] = (() => {
+  const learningPoints: string[] = [];
+  const learningHtml: string | null = typeof c.queAprenderas === 'string' && c.queAprenderas.trim().length > 0 
+    ? c.queAprenderas 
+    : null;
+
+  if (!learningHtml) {
     if (Array.isArray(c.queAprenderas) && c.queAprenderas.length > 0) {
-      return c.queAprenderas as string[];
+      learningPoints.push(...(c.queAprenderas as string[]));
+    } else {
+      const fromLessons = modules
+        .flatMap((m) => (Array.isArray(m.lecciones) ? m.lecciones : []))
+        .map((l) => l.titulo ?? '')
+        .filter((t): t is string => Boolean(t));
+      if (fromLessons.length) learningPoints.push(...fromLessons.slice(0, 8));
+      else {
+        const fromModules = modules
+          .map((m) => m.titulo ?? '')
+          .filter((t): t is string => Boolean(t));
+        learningPoints.push(...fromModules.slice(0, 8));
+      }
     }
-
-    const fromLessons = modules
-      .flatMap((m) => (Array.isArray(m.lecciones) ? m.lecciones : []))
-      .map((l) => l.titulo ?? '')
-      .filter((t): t is string => Boolean(t));
-    if (fromLessons.length) return fromLessons.slice(0, 8);
-
-    const fromModules = modules
-      .map((m) => m.titulo ?? '')
-      .filter((t): t is string => Boolean(t));
-    return fromModules.slice(0, 8);
-  })();
+  }
 
   // ✅ Normalizamos estructura para CourseCurriculum (titulo siempre string y lecciones siempre [])
   const curriculumModules: CurriculumModule[] = modules.map((m, idx) => {
@@ -325,14 +331,21 @@ export default async function CursoPage({
               <h2 className="text-2xl font-bold text-[var(--fg)] mb-6 font-display flex items-center gap-2">
                 <span className="text-[var(--pink)]">✦</span> Lo que aprenderás
               </h2>
-              <div className="grid md:grid-cols-2 gap-y-3 gap-x-6 relative z-10">
-                {learningPoints.map((point, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <Check className="size-5 text-[var(--pink)] mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-[var(--fg-muted)]">{point}</span>
-                  </div>
-                ))}
-              </div>
+              {learningHtml ? (
+                <div 
+                  className="prose prose-invert max-w-none text-[var(--fg-muted)] [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-[var(--pink)]"
+                  dangerouslySetInnerHTML={{ __html: learningHtml }}
+                />
+              ) : (
+                <div className="grid md:grid-cols-2 gap-y-3 gap-x-6 relative z-10">
+                  {learningPoints.map((point, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <Check className="size-5 text-[var(--pink)] mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-[var(--fg-muted)]">{point}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Contenido del curso */}
@@ -379,18 +392,8 @@ export default async function CursoPage({
             {c.requisitos && (
               <div>
                 <h2 className="text-2xl font-bold text-[var(--fg)] mb-4 font-display">Requisitos</h2>
-                <div className="prose prose-invert max-w-none text-[var(--fg-muted)]">
-                  <ul className="space-y-2">
-                    {c.requisitos.split('\n').map((req, i) => {
-                      const text = req.trim().replace(/^[-•*]\s*/, '');
-                      return text ? (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="mt-1.5 size-1.5 rounded-full bg-[var(--pink)] flex-shrink-0 shadow-[0_0_8px_var(--pink)]" />
-                          <span>{text}</span>
-                        </li>
-                      ) : null;
-                    })}
-                  </ul>
+                <div className="prose prose-invert max-w-none text-[var(--fg-muted)] [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-[var(--pink)]">
+                  <div dangerouslySetInnerHTML={{ __html: c.requisitos }} />
                 </div>
               </div>
             )}
