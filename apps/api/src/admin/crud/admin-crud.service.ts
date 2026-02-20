@@ -397,6 +397,10 @@ export class AdminCrudService {
       include.curso = { select: { id: true, titulo: true, slug: true } };
     }
 
+    if (meta.name === 'Modulo') {
+      include.curso = { select: { titulo: true } };
+    }
+
     return include;
   }
 
