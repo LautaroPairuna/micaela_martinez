@@ -123,6 +123,8 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       widget: 'markdown',
       showInList: false,
     },
+    ratingProm: { label: 'Rating Promedio', showInList: false, showInForm: false },
+    ratingConteo: { label: 'Total Reseñas', showInList: false, showInForm: false },
   },
   Marca: {
     nombre: { label: 'Nombre de Marca' },
