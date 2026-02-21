@@ -684,8 +684,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
       <div className="mb-3 flex items-baseline justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-50">
-            Ingresos últimos 7 días
-          </h2>
+    Ingresos últimos 7 días
+  </h2>
           <p className="text-[11px] text-slate-500">
             Total periodo: {formatCurrency(totalPeriodo)}
           </p>

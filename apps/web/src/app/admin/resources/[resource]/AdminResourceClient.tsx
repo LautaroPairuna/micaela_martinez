@@ -947,8 +947,8 @@ export function AdminResourceClient({
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-          {meta.displayName}
-        </h1>
+            {meta.displayName}
+          </h1>
           <p className="text-xs text-slate-400">
             Recurso <code>{meta.name}</code> • tabla{' '}
             <code>{meta.tableName}</code>
@@ -1215,6 +1215,7 @@ export function AdminResourceClient({
           getPageHref={getPageHref}
         />
       ) : (
+      <>
       <section className="overflow-hidden rounded-lg border border-[#2a2a2a] bg-[#1a1a1a]">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
@@ -1347,51 +1348,73 @@ export function AdminResourceClient({
           </table>
         </div>
 
-        {/* Paginación */}
-        <div className="flex items-center justify-between border-t border-[#2a2a2a] px-4 py-3 text-[11px] text-slate-400">
-          <span>
-            Página {page} de {totalPages} • {totalItems} registro
-            {totalItems === 1 ? '' : 's'}
-          </span>
-          <div className="flex items-center gap-2">
-            {hasPrev && (
-              <Link
-                href={getPageHref(1)}
-                className="rounded border border-[#2a2a2a] px-2 py-1 hover:bg-[#262626]"
-              >
-                « First
-              </Link>
-            )}
-            {hasPrev && (
-              <Link
-                href={getPageHref(page - 1)}
-                className="rounded border border-[#2a2a2a] px-2 py-1 hover:bg-[#262626]"
-              >
-                ‹ Prev
-              </Link>
-            )}
-            <span className="rounded border border-[#2a2a2a] bg-[#262626] px-2 py-1 font-medium text-slate-100">
-              {page}
-            </span>
-            {hasNext && (
-              <Link
-                href={getPageHref(page + 1)}
-                className="rounded border border-[#2a2a2a] px-2 py-1 hover:bg-[#262626]"
-              >
-                Next ›
-              </Link>
-            )}
-            {hasNext && (
-              <Link
-                href={getPageHref(totalPages)}
-                className="rounded border border-[#2a2a2a] px-2 py-1 hover:bg-[#262626]"
-              >
-                Last »
-              </Link>
-            )}
-          </div>
-        </div>
+        {/* Paginación - Movida fuera de la tabla para mejor visibilidad */}
       </section>
+
+      {/* Paginación Mejorada */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-1">
+        <div className="text-sm text-slate-400">
+          Mostrando <span className="font-medium text-slate-200">{data.items.length}</span> de <span className="font-medium text-slate-200">{data.pagination.totalItems}</span> registros
+          <span className="mx-2">•</span>
+          Página <span className="font-medium text-slate-200">{data.pagination.page}</span> de <span className="font-medium text-slate-200">{data.pagination.totalPages}</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {data.pagination.page > 1 && (
+            <Link
+              href={getPageHref(1)}
+              className="inline-flex items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-[#262626] hover:text-white disabled:opacity-50"
+              title="Primera página"
+            >
+              « Primero
+            </Link>
+          )}
+          
+          <Link
+            href={data.pagination.page > 1 ? getPageHref(data.pagination.page - 1) : '#'}
+            aria-disabled={!(data.pagination.page > 1)}
+            className={`inline-flex items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2 text-sm font-medium transition-colors ${
+              data.pagination.page > 1 
+                ? 'text-slate-300 hover:bg-[#262626] hover:text-white' 
+                : 'pointer-events-none opacity-50 text-slate-500'
+            }`}
+          >
+            ‹ Anterior
+          </Link>
+
+          <div className="hidden sm:flex items-center gap-1 px-2">
+             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-sm font-bold text-emerald-500 border border-emerald-500/20">
+              {data.pagination.page}
+            </span>
+          </div>
+
+          <Link
+            href={data.pagination.page < data.pagination.totalPages ? getPageHref(data.pagination.page + 1) : '#'}
+            aria-disabled={!(data.pagination.page < data.pagination.totalPages)}
+            className={`inline-flex items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2 text-sm font-medium transition-colors ${
+              data.pagination.page < data.pagination.totalPages 
+                ? 'text-slate-300 hover:bg-[#262626] hover:text-white' 
+                : 'pointer-events-none opacity-50 text-slate-500'
+            }`}
+          >
+            Siguiente ›
+          </Link>
+
+          {data.pagination.page < data.pagination.totalPages && (
+            <Link
+              href={getPageHref(data.pagination.totalPages)}
+              className="inline-flex items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-[#262626] hover:text-white disabled:opacity-50"
+              title="Última página"
+            >
+              Último »
+            </Link>
+          )}
+        </div>
+      </div>
+      
+      {/* Espaciador inferior */}
+      <div className="h-8"></div>
+      </>
       )}
 
       {resource.toLowerCase() === 'orden' ? (

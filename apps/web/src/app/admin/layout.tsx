@@ -23,7 +23,7 @@ export default async function AdminLayout({
   const resources = await fetchAllResourcesMeta();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#1a1a1a] text-slate-50">
+    <div className="admin-layout flex h-screen overflow-hidden bg-[#1a1a1a] text-slate-50">
       {/* Sidebar fijo a la izquierda */}
       <AdminSidebar resources={resources} />
 

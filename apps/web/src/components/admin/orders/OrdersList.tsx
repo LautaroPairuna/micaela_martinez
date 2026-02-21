@@ -89,8 +89,8 @@ export function OrdersList({ data, onEdit, onDelete, getPageHref }: OrdersListPr
 
               {/* Precio Grande */}
               <div className="text-3xl font-bold tracking-tight text-slate-100">
-                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda }).format(order.total)}
-              </div>
+    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: order.moneda }).format(order.total)}
+  </div>
               
               {/* Detalles: Usuario e Items */}
               <div className="space-y-3 pt-2 border-t border-[#1f1f1f]">
@@ -146,17 +146,17 @@ export function OrdersList({ data, onEdit, onDelete, getPageHref }: OrdersListPr
 
       {/* Paginación */}
       <div className="flex items-center justify-between border-t border-[#2a2a2a] pt-4 px-1">
-        <span className="text-xs text-slate-500">
+        <span className="text-sm text-slate-400">
           Página {page} de {totalPages} • {totalItems} órdenes
         </span>
         <div className="flex items-center gap-2">
           {hasPrev && (
-            <Link href={getPageHref(page - 1)} className="px-3 py-1 rounded border border-[#2a2a2a] bg-[#1a1a1a] text-xs text-slate-300 hover:bg-[#262626] transition-colors">
+            <Link href={getPageHref(page - 1)} className="px-4 py-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-sm font-medium text-slate-300 hover:bg-[#262626] hover:text-white transition-colors">
               Anterior
             </Link>
           )}
           {hasNext && (
-            <Link href={getPageHref(page + 1)} className="px-3 py-1 rounded border border-[#2a2a2a] bg-[#1a1a1a] text-xs text-slate-300 hover:bg-[#262626] transition-colors">
+            <Link href={getPageHref(page + 1)} className="px-4 py-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-sm font-medium text-slate-300 hover:bg-[#262626] hover:text-white transition-colors">
               Siguiente
             </Link>
           )}

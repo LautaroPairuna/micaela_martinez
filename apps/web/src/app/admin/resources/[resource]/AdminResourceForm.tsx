@@ -1626,10 +1626,10 @@ export function AdminResourceForm({
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-50">
-              {mode === 'edit'
-                ? `Editar ${meta.displayName}`
-                : `Nuevo ${meta.displayName}`}
-            </h2>
+    {mode === 'edit'
+      ? `Editar ${meta.displayName}`
+      : `Nuevo ${meta.displayName}`}
+  </h2>
             <p className="mt-0.5 text-[11px] text-slate-500">
               Recurso: <code>{meta.name}</code> · tabla{' '}
               <code>{meta.tableName}</code>

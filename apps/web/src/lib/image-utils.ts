@@ -9,7 +9,7 @@ export const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
  * - Solo nombre de archivo -> asume /images/producto/ (legacy)
  */
 export function resolveProductThumb(src?: string | null): string | undefined {
-  if (!src) return undefined;
+  if (!src || typeof src !== 'string') return undefined;
 
   // Remota/CDN → dejar como está
   if (src.startsWith('http://') || src.startsWith('https://')) return src;
@@ -61,7 +61,7 @@ export function resolveProductThumb(src?: string | null): string | undefined {
  * Normaliza una referencia de imagen de curso.
  */
 export function resolveCourseThumb(src?: string | null): string | undefined {
-  if (!src) return undefined;
+  if (!src || typeof src !== 'string') return undefined;
 
   // Remota/CDN
   if (src.startsWith('http://') || src.startsWith('https://')) return src;
@@ -103,7 +103,7 @@ export function resolveCourseThumb(src?: string | null): string | undefined {
  * @param src Ruta o nombre de archivo
  */
 export function resolveResourceThumb(resource: string, src?: string | null): string | undefined {
-  if (!src) return undefined;
+  if (!src || typeof src !== 'string') return undefined;
 
   // Remota/CDN
   if (src.startsWith('http://') || src.startsWith('https://')) return src;
@@ -138,7 +138,7 @@ export function resolveResourceThumb(resource: string, src?: string | null): str
 
 /** Para casos donde quieras el original (detalle de producto, zoom, etc.) */
 export function resolveProductOriginal(src?: string | null): string | undefined {
-  if (!src) return undefined;
+  if (!src || typeof src !== 'string') return undefined;
   if (src.startsWith('http://') || src.startsWith('https://')) return src;
 
   // NUEVO

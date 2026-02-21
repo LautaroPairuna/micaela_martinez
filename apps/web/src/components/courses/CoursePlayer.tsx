@@ -657,7 +657,7 @@ export function CoursePlayer({
   const nextLesson = getAdjacentLesson('next');
 
   return (
-    <div className="h-screen bg-[var(--bg)] flex flex-col overflow-hidden">
+    <div className="course-player-layout h-screen bg-[var(--bg)] flex flex-col overflow-hidden">
       {!isTheaterMode && (
         <CourseHeader
           course={course}
@@ -736,7 +736,16 @@ export function CoursePlayer({
                         <ErrorBoundary onError={(err) => setContentError(err.message)} fallback={null}>
                           <ContentPlayer
                             lesson={currentLesson}
+                            isCompleted={currentModule && currentLesson ? !!lessonProgress[getLessonProgressKey(currentModule.id, currentLesson.id)] : false}
+                            onToggleComplete={() => toggleLessonComplete(currentLesson.id)}
                             onComplete={() => markLessonComplete(currentLesson.id)}
+                            onNext={() => {
+                              if (nextLesson) {
+                                navigateToLesson(nextLesson.lesson.id, nextLesson.module.id);
+                              } else {
+                                toast.success('¡Has llegado al final del curso!', { icon: () => <span>🎉</span> });
+                              }
+                            }}
                             onProgress={(_progress) => {
                               void _progress;
                               // Hook para tracking si lo necesitás

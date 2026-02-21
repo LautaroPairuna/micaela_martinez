@@ -12,6 +12,24 @@ h1, h2, .font-display {
   font-family: var(--font-tanAegean), ui-serif, Georgia, "Times New Roman", Times, serif;
 }
 
+/* Admin Override: Forzar sans-serif (Montserrat) en todo el panel para un look limpio/técnico */
+.admin-layout h1, 
+.admin-layout h2, 
+.admin-layout h3,
+.admin-layout .font-display {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+  letter-spacing: normal;
+}
+
+/* Course Player Override: Forzar sans-serif (Montserrat) para consistencia con admin */
+.course-player-layout h1, 
+.course-player-layout h2, 
+.course-player-layout h3,
+.course-player-layout .font-display {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+  letter-spacing: normal;
+}
+
 /* h3, h4, h5, h6 heredan Montserrat del body */
 h3, h4, h5, h6 {
   font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;

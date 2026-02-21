@@ -1,177 +1,362 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { CheckCircle, Circle, FileText, HelpCircle, Clock, ArrowRight, RotateCcw, Play } from 'lucide-react';
+import { 
+  CheckCircle, 
+  Circle, 
+  FileText, 
+  HelpCircle, 
+  Clock, 
+  ArrowRight, 
+  RotateCcw, 
+  FileIcon, 
+  Download, 
+  ExternalLink, 
+  AlertCircle,
+  ChevronRight,
+  ChevronLeft,
+  Lock,
+  XCircle
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn, formatDuration } from '@/lib/utils';
 import { Lesson, QuizQuestion } from '@/types/course';
+import { toast } from 'react-toastify';
 
 type LessonContentProps = {
   lesson: Lesson;
   isCompleted?: boolean;
   onToggleComplete?: () => void;
   onComplete?: () => void;
+  onNext?: () => void;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
 
-
-// Componente para contenido de texto
-function TextContent({ lesson, isCompleted = false, onToggleComplete, onComplete }: LessonContentProps) {
-  // Extraer contenido real (prioridad: contenido > descripcion)
-  const content = useMemo(() => {
-    if (!lesson.contenido) return lesson.descripcion;
-    
-    // Si es string, asumimos que es Markdown directo
-    if (typeof lesson.contenido === 'string') {
-      // Intentar parsear por si es un JSON stringificado accidentalmente
+// Helper robusto para extraer contenido de texto de estructuras variadas
+const extractTextContent = (data: any): string | null => {
+  if (!data) return null;
+  
+  // Caso 1: String directo
+  if (typeof data === 'string') {
+    // Intentar parsear si parece JSON
+    if (data.trim().startsWith('{') || data.trim().startsWith('[')) {
       try {
-        const parsed = JSON.parse(lesson.contenido);
-        // Si es un objeto con propiedad markdown/content
-        if (parsed && typeof parsed === 'object') {
-          return parsed.markdown || parsed.content || parsed.body || lesson.contenido;
-        }
-        return lesson.contenido;
+        const parsed = JSON.parse(data);
+        return extractTextContent(parsed);
       } catch {
-        return lesson.contenido;
+        // Si falla el parseo, devolver el string tal cual (asumimos texto plano/html)
+        return data;
       }
     }
+    return data;
+  }
+
+  // Caso 2: Objeto
+  if (typeof data === 'object') {
+    // Lista de propiedades comunes donde suele venir el contenido
+    const potentialKeys = ['markdown', 'content', 'body', 'html', 'text', 'descripcion', 'value', 'contenido'];
     
-    // Si es objeto
-    const obj = lesson.contenido as any;
-    return obj.markdown || obj.content || obj.body || lesson.descripcion;
-  }, [lesson.contenido, lesson.descripcion]);
+    for (const key of potentialKeys) {
+      if (key in data && data[key] && typeof data[key] === 'string') {
+        return data[key];
+      }
+    }
+
+    // Búsqueda en propiedad 'data' anidada (común en CMS)
+    if (data.data) {
+      return extractTextContent(data.data);
+    }
+    
+    // Si es un array de bloques (ej: Editor.js o similar), intentar unir texto
+    if (Array.isArray(data.blocks)) {
+      return data.blocks.map((b: any) => b.text || '').join('\n\n');
+    }
+  }
+
+  return null;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENTE: DOCUMENTO
+// ─────────────────────────────────────────────────────────────────────────────
+function DocumentContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
+  const docInfo = useMemo(() => {
+    const content = lesson.contenido as any;
+    if (!content) return null;
+    
+    // Normalización de estructuras de datos (legacy vs new)
+    if (content.url) return { url: content.url, nombre: content.nombre || lesson.titulo, tipo: content.tipo || 'PDF' };
+    if (content.documento) return { url: content.documento.url, nombre: content.documento.nombre || lesson.titulo, tipo: content.documento.tipo || 'PDF' };
+    if (content.data) return { url: content.data.url, nombre: content.data.nombre || lesson.titulo, tipo: content.data.tipoArchivo || 'PDF' };
+    
+    if (typeof content === 'string') {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.url) return { url: parsed.url, nombre: parsed.nombre || lesson.titulo, tipo: parsed.tipo || 'PDF' };
+      } catch {}
+    }
+    return null;
+  }, [lesson.contenido, lesson.titulo]);
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header de la lección */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <FileText className="w-5 h-5 text-purple-600" />
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Lección de texto</span>
-            {lesson.duracion && (
-              <>
-                <span>•</span>
-                <span>{formatDuration(Math.round(lesson.duracion * 60))}</span>
-              </>
-            )}
-          </div>
-        </div>
-        
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">{lesson.titulo}</h1>
-      </div>
-
-      {/* Contenido de la lección - Ocupa todo el espacio disponible */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="h-full p-4 md:p-6 lg:p-8 pb-20">
-          <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 lg:p-8 h-full min-h-full">
-            {content ? (
-              <div className="prose prose-lg prose-gray max-w-none">
-                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-base md:text-lg">
-                  {/* Si el contenido es markdown, aquí deberíamos usar un parser de Markdown real (ej. react-markdown).
-                      Por ahora mantenemos el comportamiento de mostrarlo como texto formateado, pero mostrando el contenido real. */}
-                  {String(content)}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-16 text-gray-500">
-                <FileText className="w-16 h-16 mx-auto mb-6 opacity-50" />
-                <p className="text-lg">El contenido de texto para esta lección aún no está disponible.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Acciones de completado - Fijo en la parte inferior */}
-      <div className="bg-white border-t border-gray-200 px-6 py-4 flex-shrink-0">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={onToggleComplete}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                  isCompleted
-                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                )}
-              >
-                {isCompleted ? (
-                   <CheckCircle className="w-5 h-5" />
-                 ) : (
-                   <Circle className="w-5 h-5" />
-                 )}
-                {isCompleted ? "Completada" : "Marcar como completada"}
-              </button>
+    <div className="flex h-full flex-col bg-[#F8F9FA]">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="mx-auto max-w-3xl space-y-8">
+          
+          {/* Header Card */}
+          <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-900/5 md:p-12 text-center">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-100">
+              <FileIcon className="h-10 w-10 text-slate-400" />
             </div>
             
-            {!isCompleted && (
-              <button
-                onClick={onComplete}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Continuar
-              </button>
+            <h1 className="mb-3 text-3xl font-bold tracking-tight text-slate-900">
+              {docInfo?.nombre || lesson.titulo}
+            </h1>
+            
+            <div className="mx-auto mb-8 flex max-w-md items-center justify-center gap-4 text-sm text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                {lesson.duracion ? formatDuration(Math.round(lesson.duracion * 60)) : 'Lectura'}
+              </span>
+              <span>•</span>
+              <span className="uppercase">{docInfo?.tipo || 'Documento'}</span>
+            </div>
+
+            <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-600">
+              {lesson.descripcion || "Descarga este recurso para complementar tu aprendizaje. Puedes consultarlo en cualquier momento."}
+            </p>
+
+            {docInfo ? (
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <a 
+                  href={docInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 w-full min-w-[200px] items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 font-semibold text-white transition-transform active:scale-95 hover:bg-slate-800 sm:w-auto"
+                >
+                  <Download className="h-5 w-5" />
+                  Descargar
+                </a>
+                <a 
+                  href={docInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 w-full min-w-[200px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:w-auto"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  Vista Previa
+                </a>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                El archivo no está disponible en este momento.
+              </div>
             )}
           </div>
+
+          {/* Tips Section */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">
+              Sugerencias de estudio
+            </h3>
+            <ul className="space-y-3 text-slate-600">
+              <li className="flex items-start gap-3">
+                <div className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400" />
+                <span>Guarda este documento en una carpeta dedicada a este curso para fácil acceso.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400" />
+                <span>Toma notas de los puntos clave mientras lees.</span>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-slate-200 bg-white px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between">
+          <button
+            onClick={onToggleComplete}
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors",
+              isCompleted ? "bg-green-50 text-green-700" : "text-slate-600 hover:bg-slate-100"
+            )}
+          >
+            {isCompleted ? <CheckCircle className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+            {isCompleted ? "Completado" : "Marcar como leído"}
+          </button>
+          
+          {(!isCompleted || onNext) && (
+            <Button onClick={() => onNext?.() || onComplete?.()} className="bg-slate-900 text-white hover:bg-slate-800">
+              Continuar
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Componente para quiz
-function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete }: LessonContentProps) {
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENTE: TEXTO
+// ─────────────────────────────────────────────────────────────────────────────
+function TextContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
+  const content = useMemo(() => {
+    // Usar el helper robusto
+    const extracted = extractTextContent(lesson.contenido);
+    return extracted || lesson.descripcion || null;
+  }, [lesson.contenido, lesson.descripcion]);
+
+  return (
+    <div className="flex h-full flex-col bg-white">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-2xl px-6 py-12 md:py-16">
+          
+          {/* Header Minimalista */}
+          <div className="mb-10 border-b border-slate-100 pb-8 text-center">
+            <div className="mb-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+              <FileText className="h-4 w-4" />
+              <span>Lección de Texto</span>
+            </div>
+            <h1 className="text-3xl font-bold leading-tight text-slate-900 md:text-4xl">
+              {lesson.titulo}
+            </h1>
+            {lesson.duracion && (
+              <p className="mt-4 text-slate-500 font-medium">
+                Lectura estimada: {formatDuration(Math.round(lesson.duracion * 60))}
+              </p>
+            )}
+          </div>
+
+          {/* Article Body */}
+          <article className="prose prose-slate prose-lg max-w-none">
+            <div className="whitespace-pre-wrap text-xl leading-8 text-slate-800 antialiased">
+              {content ? (
+                // Si el contenido parece HTML (empieza con <), usar dangerouslySetInnerHTML con precaución
+                // O renderizar como texto plano. Asumimos texto plano/markdown por seguridad por ahora, 
+                // a menos que el usuario indique HTML explícito.
+                // Si el usuario necesita HTML, deberíamos sanitizar.
+                String(content)
+              ) : (
+                <p className="italic text-slate-400">Contenido no disponible.</p>
+              )}
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      {/* Footer Fijo */}
+      <div className="border-t border-slate-100 bg-white/80 px-6 py-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
+          <button
+            onClick={onToggleComplete}
+            className={cn(
+              "flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all",
+              isCompleted 
+                ? "bg-green-100 text-green-800 ring-1 ring-green-200" 
+                : "bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200"
+            )}
+          >
+            {isCompleted ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+            {isCompleted ? "Leída" : "Marcar como leída"}
+          </button>
+          
+          {(!isCompleted || onNext) && (
+            <Button 
+              onClick={() => {
+                if (!isCompleted) onComplete?.();
+                onNext?.();
+              }} 
+              className="rounded-full bg-slate-900 px-8 text-white hover:bg-slate-800"
+            >
+              Siguiente Lección
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENTE: QUIZ
+// ─────────────────────────────────────────────────────────────────────────────
+function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  
+  // Cooldown
+  const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
-  // Resetear estado al cambiar de lección
+  // Cargar estado inicial y cooldown
   useEffect(() => {
     setHasStarted(false);
     setIsSubmitted(false);
     setSelectedAnswers({});
     setCurrentQuestionIndex(0);
-  }, [lesson.id]);
 
-  // Obtener preguntas e intro de forma robusta
-  const { questions, intro } = useMemo(() => {
-    let content = lesson.contenido as any;
-
-    // Intentar parsear si es string
-    if (typeof content === 'string') {
-      try {
-        content = JSON.parse(content);
-      } catch (e) {
-        console.warn('Error parsing quiz content:', e);
-        return { questions: [], intro: null };
+    // Chequear cooldown en localStorage
+    const savedCooldown = localStorage.getItem(`quiz-cooldown-${lesson.id}`);
+    if (savedCooldown) {
+      const date = new Date(savedCooldown);
+      if (date > new Date()) {
+        setCooldownUntil(date);
+      } else {
+        localStorage.removeItem(`quiz-cooldown-${lesson.id}`);
       }
     }
+  }, [lesson.id]);
 
+  // Timer para el cooldown
+  useEffect(() => {
+    if (!cooldownUntil) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = cooldownUntil.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setCooldownUntil(null);
+        localStorage.removeItem(`quiz-cooldown-${lesson.id}`);
+        clearInterval(interval);
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldownUntil, lesson.id]);
+
+  const { questions, intro } = useMemo(() => {
+    let content = lesson.contenido as any;
+    if (typeof content === 'string') {
+      try { content = JSON.parse(content); } catch {}
+    }
+    
     let qs: QuizQuestion[] = [];
     let introText: string | null = null;
 
-    if (!content) return { questions: [], intro: null };
-    
-    // 1. Estructura plana (actual)
-    if (Array.isArray(content.preguntas)) {
-      qs = content.preguntas;
-      introText = content.intro || null;
+    if (content) {
+      if (Array.isArray(content.preguntas)) { qs = content.preguntas; introText = content.intro || null; }
+      else if (content.data && Array.isArray(content.data.preguntas)) { qs = content.data.preguntas; introText = content.data.intro || null; }
+      else if (content.quiz) { qs = [content.quiz]; }
     }
-    // 2. Estructura anidada (legacy unificada)
-    else if (content.data && Array.isArray(content.data.preguntas)) {
-      qs = content.data.preguntas;
-      introText = content.data.intro || null;
-    }
-    // 3. Fallback quiz simple
-    else if (content.quiz) {
-      qs = [content.quiz];
-    }
-
     return { questions: qs, intro: introText };
   }, [lesson.contenido]);
 
@@ -180,20 +365,15 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const allAnswered = questions.every((_, idx) => selectedAnswers[idx] !== undefined);
 
-  // Auto-iniciar si no hay intro
+  // Auto-start si no hay intro
   useEffect(() => {
-    if (!intro && hasQuestions && !hasStarted) {
-      setHasStarted(true);
-    }
+    if (!intro && hasQuestions && !hasStarted) setHasStarted(true);
   }, [intro, hasQuestions, hasStarted]);
 
-  // Calcular resultado
   const score = useMemo(() => {
     let correct = 0;
     questions.forEach((q, idx) => {
-      if (selectedAnswers[idx] === q.respuestaCorrecta) {
-        correct++;
-      }
+      if (selectedAnswers[idx] === q.respuestaCorrecta) correct++;
     });
     return {
       correct,
@@ -204,317 +384,332 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 
   const handleOptionSelect = (optionIndex: number) => {
     if (isSubmitted) return;
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [currentQuestionIndex]: optionIndex
-    }));
-  };
-
-  const handleNext = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
+    setSelectedAnswers(prev => ({ ...prev, [currentQuestionIndex]: optionIndex }));
   };
 
   const handleSubmit = () => {
     setIsSubmitted(true);
-    // Si aprueba con más del 70% (ajustable), marcar como completado
-    if (score.percentage >= 70) {
+    // REGLA: 100% para aprobar
+    if (score.percentage === 100) {
+      toast.success('¡Felicitaciones! Has aprobado el examen.');
       onComplete?.();
+    } else {
+      // Activar cooldown de 2 minutos
+      const now = new Date();
+      const cooldownTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutos
+      setCooldownUntil(cooldownTime);
+      localStorage.setItem(`quiz-cooldown-${lesson.id}`, cooldownTime.toISOString());
+      toast.error('No has alcanzado el 100%. Debes esperar para reintentar.');
     }
   };
 
   const handleRetry = () => {
+    if (cooldownUntil) return;
     setSelectedAnswers({});
     setIsSubmitted(false);
     setCurrentQuestionIndex(0);
-    // No reseteamos hasStarted para que no vuelva a mostrar la intro al reintentar
   };
 
   if (!hasQuestions) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
-        <HelpCircle className="w-16 h-16 mb-4 opacity-30" />
-        <h3 className="text-xl font-semibold mb-2">No hay preguntas disponibles</h3>
-        <p>Este quiz aún no tiene contenido configurado.</p>
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-slate-400">
+        <HelpCircle className="mb-4 h-16 w-16 opacity-20" />
+        <p>Este quiz no tiene preguntas configuradas.</p>
       </div>
     );
   }
 
-  // Pantalla de Introducción
-  if (intro && !hasStarted && !isSubmitted) {
+  // PANTALLA: INTRO (o BLOQUEO COOLDOWN)
+  if ((intro && !hasStarted && !isSubmitted) || (cooldownUntil && !isSubmitted)) {
     return (
-      <div className="h-full w-full bg-white text-gray-900 overflow-auto flex flex-col items-center justify-center p-6 md:p-12">
-        <div className="max-w-2xl w-full text-center space-y-8">
-          <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <HelpCircle className="w-10 h-10 text-purple-600" />
-          </div>
+      <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50 p-6 md:p-12">
+        <div className="w-full max-w-xl rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-900/5 md:p-12 text-center">
           
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">Antes de comenzar</h2>
-            <div className="prose prose-lg prose-gray mx-auto text-gray-600">
-               <p className="whitespace-pre-wrap">{intro}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-6 text-gray-500 text-sm">
-            <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
-              <HelpCircle className="w-4 h-4" />
-              <span>{questions.length} preguntas</span>
-            </div>
-            {lesson.duracion && (
-              <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
-                <Clock className="w-4 h-4" />
-                <span>Tiempo estimado: {formatDuration(Math.round(lesson.duracion * 60))}</span>
+          {cooldownUntil ? (
+             // MODO COOLDOWN
+            <>
+              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                <Clock className="h-10 w-10 animate-pulse" />
               </div>
-            )}
-          </div>
+              <h2 className="mb-4 text-3xl font-bold text-slate-900">Tiempo de espera</h2>
+              <p className="mb-8 text-lg text-slate-600">
+                Debes esperar unos minutos antes de volver a intentar el examen para repasar los conceptos.
+              </p>
+              <div className="mb-8 text-4xl font-mono font-bold text-orange-600">
+                {timeLeft || 'Calculando...'}
+              </div>
+              <Button disabled className="w-full rounded-xl bg-slate-200 text-slate-400">
+                Espera para reintentar
+              </Button>
+            </>
+          ) : (
+            // MODO INTRO
+            <>
+              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                <HelpCircle className="h-10 w-10" />
+              </div>
+              
+              <h2 className="mb-4 text-3xl font-bold text-slate-900">Evaluación de Conocimientos</h2>
+              <div className="mb-8 text-lg text-slate-600 whitespace-pre-wrap leading-relaxed">
+                {intro}
+              </div>
 
-          <Button 
-            onClick={() => setHasStarted(true)}
-            size="lg"
-            className="w-full sm:w-auto min-w-[200px] text-lg h-12"
-          >
-            <Play className="w-5 h-5 mr-2" fill="currentColor" />
-            Comenzar Quiz
-          </Button>
+              <div className="mb-10 flex flex-wrap justify-center gap-4">
+                <div className="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
+                  <HelpCircle className="h-4 w-4" />
+                  {questions.length} preguntas
+                </div>
+                <div className="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
+                  <CheckCircle className="h-4 w-4" />
+                  Se requiere 100%
+                </div>
+              </div>
+
+              <Button onClick={() => setHasStarted(true)} size="lg" className="w-full rounded-xl bg-indigo-600 text-lg hover:bg-indigo-700 md:w-auto md:px-12">
+                Comenzar Quiz
+              </Button>
+            </>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full bg-white text-gray-900 overflow-auto">
-      <div className="h-full w-full p-4 md:p-6 lg:p-8">
-        <div className="max-w-3xl mx-auto h-full flex flex-col">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-              <HelpCircle className="h-5 w-5 text-white" />
+    <div className="flex h-full w-full flex-col bg-[#F8FAFC]">
+      {/* Header / Progress */}
+      <div className="border-b border-slate-200 bg-white px-6 py-4">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-lg font-bold text-slate-900">{lesson.titulo}</h1>
+            <div className="text-sm font-medium text-slate-500">
+              {isSubmitted ? 'Resultados' : `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`}
             </div>
-            <div className="flex-1">
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{lesson.titulo}</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="flex items-center gap-1">
-                  <HelpCircle className="h-4 w-4" />
-                  Quiz: {currentQuestionIndex + 1} de {questions.length}
-                </span>
-                {lesson.duracion && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {formatDuration(Math.round(lesson.duracion * 60))}
-                  </span>
-                )}
-              </div>
-            </div>
-            {isSubmitted && (
-              <div className={cn(
-                "px-4 py-2 rounded-lg font-bold text-lg",
-                score.percentage >= 70 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-              )}>
-                {score.percentage}%
-              </div>
-            )}
           </div>
+          
+          {/* Progress Bar */}
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div 
+              className="h-full bg-indigo-600 transition-all duration-500 ease-out"
+              style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
 
-          {/* Contenido principal */}
-          <div className="flex-1 flex flex-col mb-4">
-            {!isSubmitted ? (
-              // Modo Preguntas
-              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="mb-2 text-sm font-medium text-gray-500 uppercase tracking-wider">
-                  Pregunta {currentQuestionIndex + 1}
-                </div>
-                <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="mx-auto flex h-full max-w-3xl flex-col">
+          
+          {!isSubmitted ? (
+            /* MODO: PREGUNTAS */
+            <div className="animate-in slide-in-from-right-8 fade-in duration-300">
+              <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 md:p-10">
+                <h2 className="text-xl font-medium leading-relaxed text-slate-900 md:text-2xl">
                   {currentQuestion.pregunta}
                 </h2>
+              </div>
 
-                <div className="space-y-3">
-                  {currentQuestion.opciones.map((option, index) => (
+              <div className="space-y-3">
+                {currentQuestion.opciones.map((option, index) => {
+                  const isSelected = selectedAnswers[currentQuestionIndex] === index;
+                  return (
                     <button
                       key={index}
                       onClick={() => handleOptionSelect(index)}
                       className={cn(
-                        "w-full p-4 md:p-5 text-left rounded-xl border-2 transition-all duration-200 group relative overflow-hidden",
-                        selectedAnswers[currentQuestionIndex] === index
-                          ? "border-blue-500 bg-blue-50/50 shadow-sm"
-                          : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                        "group relative flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200",
+                        isSelected
+                          ? "border-indigo-600 bg-indigo-50/50 shadow-md"
+                          : "border-transparent bg-white shadow-sm ring-1 ring-slate-200 hover:border-indigo-200 hover:bg-slate-50"
                       )}
                     >
-                      <div className="flex items-center gap-4 relative z-10">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-colors",
-                          selectedAnswers[currentQuestionIndex] === index
-                            ? "border-blue-500 bg-blue-500 text-white"
-                            : "border-gray-300 text-gray-500 group-hover:border-blue-400 group-hover:text-blue-500"
-                        )}>
-                          {String.fromCharCode(65 + index)}
-                        </div>
-                        <span className="text-gray-800 text-lg">{option}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              // Modo Resultados (Resumen)
-              <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                <div className="text-center py-8 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div className={cn(
-                    "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 text-3xl",
-                    score.percentage >= 70 ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                  )}>
-                    {score.percentage >= 70 ? "🎉" : "💪"}
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {score.percentage >= 70 ? "¡Felicitaciones!" : "Sigue practicando"}
-                  </h2>
-                  <p className="text-gray-600">
-                    Has acertado {score.correct} de {score.total} preguntas
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">Revisión de respuestas</h3>
-                  {questions.map((q, idx) => {
-                    const isCorrect = selectedAnswers[idx] === q.respuestaCorrecta;
-                    return (
-                      <div key={idx} className={cn(
-                        "p-4 rounded-lg border flex items-start gap-3",
-                        isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                      <div className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-colors",
+                        isSelected
+                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          : "border-slate-300 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-500"
                       )}>
-                        {isCorrect ? (
-                          <CheckCircle className="w-5 h-5 text-green-600 mt-1 flex-shrink-0" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-red-600 mt-1 flex-shrink-0" />
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900 mb-1">{q.pregunta}</p>
-                          <p className="text-sm text-gray-600">
-                            Tu respuesta: <span className="font-medium">{q.opciones[selectedAnswers[idx]]}</span>
-                          </p>
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                      <span className={cn(
+                        "text-lg",
+                        isSelected ? "font-medium text-indigo-900" : "text-slate-700"
+                      )}>
+                        {option}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* MODO: RESULTADOS */
+            <div className="animate-in zoom-in-95 fade-in duration-300 space-y-6">
+              <div className={cn(
+                "rounded-3xl p-8 text-center text-white shadow-xl",
+                score.percentage === 100 ? "bg-emerald-600" : "bg-rose-600"
+              )}>
+                <div className="mb-4 flex justify-center">
+                  {score.percentage === 100 ? (
+                    <div className="rounded-full bg-white/20 p-4"><CheckCircle className="h-12 w-12" /></div>
+                  ) : (
+                    <div className="rounded-full bg-white/20 p-4"><XCircle className="h-12 w-12" /></div>
+                  )}
+                </div>
+                <div className="mb-2 text-5xl font-bold">{score.percentage}%</div>
+                <h2 className="text-2xl font-bold">
+                  {score.percentage === 100 ? "¡Excelente trabajo!" : "Necesitas repasar"}
+                </h2>
+                <p className="mt-2 text-white/90">
+                  {score.percentage === 100 
+                    ? "Has respondido todas las preguntas correctamente." 
+                    : `Has acertado ${score.correct} de ${score.total}. Se requiere 100% para aprobar.`}
+                </p>
+                {score.percentage < 100 && (
+                  <div className="mt-4 inline-block rounded-lg bg-black/20 px-4 py-2 text-sm font-medium text-white/90">
+                     Cooldown de 2 minutos activado
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="px-2 text-sm font-bold uppercase tracking-wider text-slate-500">Revisión detallada</h3>
+                {questions.map((q, idx) => {
+                  const userAnswer = selectedAnswers[idx];
+                  const isCorrect = userAnswer === q.respuestaCorrecta;
+                  
+                  return (
+                    <div key={idx} className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                      <div className={cn(
+                        "border-l-4 p-5",
+                        isCorrect ? "border-emerald-500" : "border-rose-500"
+                      )}>
+                        <p className="mb-3 font-medium text-slate-900">{q.pregunta}</p>
+                        
+                        <div className="space-y-3 text-sm">
+                          {/* Respuesta del usuario */}
+                          <div className="flex items-start gap-2">
+                             <div className="mt-0.5">
+                               {isCorrect ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-rose-500" />}
+                             </div>
+                             <div>
+                               <span className={cn("block font-bold mb-1", isCorrect ? "text-emerald-700" : "text-rose-700")}>
+                                 Tu respuesta:
+                               </span>
+                               <span className="text-slate-700 block">
+                                 {q.opciones[userAnswer] || "Sin responder"}
+                               </span>
+                             </div>
+                          </div>
+                          
+                          {/* Corrección si falló */}
                           {!isCorrect && (
-                            <p className="text-sm text-green-700 mt-1 font-medium">
-                              Correcta: {q.opciones[q.respuestaCorrecta]}
-                            </p>
+                            <div className="mt-3 rounded-lg bg-emerald-50 p-3 border border-emerald-100">
+                              <div className="flex items-start gap-2">
+                                <CheckCircle className="mt-0.5 h-5 w-5 text-emerald-600" />
+                                <div>
+                                  <span className="block font-bold text-emerald-800 mb-1">Respuesta correcta:</span>
+                                  <span className="text-emerald-900 font-medium">{q.opciones[q.respuestaCorrecta]}</span>
+                                  {/* Aquí iría la explicación si existiera en el modelo de datos */}
+                                  <p className="mt-2 text-xs text-emerald-700">
+                                    Esta es la opción correcta porque corresponde a los conceptos vistos en la lección.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+          
+        </div>
+      </div>
 
-          {/* Footer de navegación */}
-          <div className="flex justify-between items-center py-6 border-t border-gray-100 mt-auto">
-            {!isSubmitted ? (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={handlePrevious}
-                  disabled={currentQuestionIndex === 0}
-                  className="text-gray-500 hover:text-gray-900"
+      {/* Footer Navigation */}
+      <div className="border-t border-slate-200 bg-white px-6 py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between">
+          {!isSubmitted ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentQuestionIndex === 0}
+                className="text-slate-500"
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Anterior
+              </Button>
+
+              {isLastQuestion ? (
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={!allAnswered}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
                 >
-                  Anterior
+                  Finalizar
+                  <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
-
-                <div className="flex gap-2">
-                  {questions.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        idx === currentQuestionIndex ? "bg-blue-600 w-4" :
-                        selectedAnswers[idx] !== undefined ? "bg-blue-200" : "bg-gray-200"
-                      )}
-                    />
-                  ))}
-                </div>
-
-                {isLastQuestion ? (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!allAnswered}
-                    className={cn(
-                      "bg-blue-600 hover:bg-blue-700 text-white px-6",
-                      !allAnswered && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    Finalizar Quiz
-                    <CheckCircle className="ml-2 w-4 h-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNext}
-                    disabled={selectedAnswers[currentQuestionIndex] === undefined}
-                    className="bg-gray-900 hover:bg-gray-800 text-white"
-                  >
-                    Siguiente
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                )}
-              </>
-            ) : (
-              <div className="flex w-full justify-between gap-4">
-                <Button
-                  onClick={handleRetry}
-                  variant="outline"
-                  className="flex items-center gap-2"
+              ) : (
+                <Button 
+                  onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
+                  disabled={selectedAnswers[currentQuestionIndex] === undefined}
+                  className="bg-slate-900 hover:bg-slate-800 text-white min-w-[140px]"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  Reintentar
+                  Siguiente
+                  <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
-                
-                <div className="flex gap-3">
-                  <Button
-                     onClick={onToggleComplete}
-                     variant="ghost"
-                     className={cn(isCompleted && "text-green-600 bg-green-50")}
-                  >
-                    {isCompleted ? "Completada" : "Marcar completada"}
-                  </Button>
-                  
-                  <Button
-                    onClick={onComplete}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Continuar curso
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
+              )}
+            </>
+          ) : (
+            <div className="flex w-full items-center justify-between gap-4">
+              {score.percentage < 100 ? (
+                <div className="flex-1 text-center text-sm font-medium text-orange-600">
+                  Espera el tiempo de cooldown para reintentar
                 </div>
-              </div>
-            )}
-          </div>
+              ) : (
+                <Button onClick={handleRetry} variant="outline" className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Repasar
+                </Button>
+              )}
+              
+              {score.percentage === 100 && (
+                <Button onClick={() => onNext?.() || onComplete?.()} className="bg-slate-900 text-white hover:bg-slate-800">
+                  Continuar Curso
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export function LessonContent({ lesson, isCompleted, onToggleComplete, onComplete }: LessonContentProps) {
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENTE PRINCIPAL: EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
+export function LessonContent({ lesson, isCompleted, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   switch (lesson.tipo) {
     case 'TEXTO':
-      return <TextContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} />;
+      return <TextContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
+    case 'DOCUMENTO':
+      return <DocumentContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     case 'QUIZ':
-      return <QuizContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} />;
+      return <QuizContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     default:
       return (
-        <div className="h-full flex items-center justify-center bg-[var(--bg)]">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-[var(--fg)] mb-2">
-              Tipo de contenido no soportado
-            </h2>
-            <p className="text-[var(--muted)]">
-              Este tipo de lección ({lesson.tipo}) no está implementado aún.
-            </p>
+        <div className="flex h-full items-center justify-center bg-slate-50 p-8 text-center">
+          <div>
+            <h2 className="mb-2 text-xl font-bold text-slate-900">Tipo de contenido no soportado</h2>
+            <p className="text-slate-500">La lección de tipo "{lesson.tipo}" no tiene una vista implementada.</p>
           </div>
         </div>
       );
