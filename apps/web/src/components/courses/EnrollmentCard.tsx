@@ -257,10 +257,15 @@ export function EnrollmentCard({
               <Award className="h-3 w-3" />
               COMPLETADO
             </div>
-           ) : (
+           ) : progressPct > 0 ? (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--gold)] text-black text-[10px] font-bold backdrop-blur-md shadow-lg border border-white/10">
               <PlayCircle className="h-3 w-3 fill-black/10" />
               EN PROGRESO
+            </div>
+           ) : (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800/90 text-zinc-300 text-[10px] font-bold backdrop-blur-md shadow-lg border border-white/10">
+              <PlayCircle className="h-3 w-3" />
+              NO INICIADO
             </div>
            )}
         </div>

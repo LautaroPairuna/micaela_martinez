@@ -150,9 +150,28 @@ export default function DireccionesPage() {
   });
 
   const onPredeterminar = async (d: Direccion) => {
-    // upsert con id + predeterminada true; el backend desmarca las otras
-    await upsertAddress({ ...d, id: d.id, predeterminada: true });
-    await refresh();
+    // Limpiar el objeto para enviar solo los campos editables
+    const payload: DireccionInput & { id: string } = {
+      id: d.id,
+      nombre: d.nombre,
+      telefono: d.telefono,
+      etiqueta: d.etiqueta,
+      calle: d.calle,
+      numero: d.numero,
+      pisoDepto: d.pisoDepto,
+      ciudad: d.ciudad,
+      provincia: d.provincia,
+      cp: d.cp,
+      pais: d.pais || 'AR',
+      predeterminada: true,
+    };
+    
+    try {
+      await upsertAddress(payload);
+      await refresh();
+    } catch (error) {
+      console.error('Error al establecer como predeterminada:', error);
+    }
   };
 
   const onDelete = async (id: string) => {

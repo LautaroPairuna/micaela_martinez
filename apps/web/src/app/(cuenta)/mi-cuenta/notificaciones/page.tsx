@@ -1,6 +1,6 @@
 // src/app/(cuenta)/mi-cuenta/notificaciones/page.tsx
 'use client';
-import { Bell, CheckCircle, Clock, Info, Settings } from 'lucide-react';
+import { Bell, CheckCircle, Clock, Info, Settings, MessageSquare, Heart, AtSign } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NotificationsList } from '@/components/notifications/NotificationsList';
 import { Card, CardBody } from '@/components/ui/Card';
@@ -74,17 +74,34 @@ export default function NotificationsAccountPage() {
               Sobre las notificaciones
             </h3>
             <div className="space-y-3 text-sm text-zinc-400">
-              <div className="flex items-start gap-2">
-                <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
-                <p><strong className="text-zinc-200">Respuestas:</strong> Recibirás una notificación cuando alguien responda a tus reseñas.</p>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 p-1 rounded-full bg-[var(--gold)]/20 text-[var(--gold)]">
+                  <MessageSquare className="h-3 w-3" />
+                </div>
+                <div>
+                  <strong className="block text-zinc-200 mb-0.5">Respuestas y Comentarios</strong>
+                  <p>Recibe alertas instantáneas cuando alguien responda a tus reseñas o preguntas en los cursos.</p>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
-                <p><strong className="text-zinc-200">Likes:</strong> Te notificaremos cuando alguien le dé like a tus reseñas.</p>
+              
+              <div className="flex items-start gap-3">
+                <div className="mt-1 p-1 rounded-full bg-[var(--gold)]/20 text-[var(--gold)]">
+                  <Heart className="h-3 w-3" />
+                </div>
+                <div>
+                  <strong className="block text-zinc-200 mb-0.5">Interacciones y Likes</strong>
+                  <p>Entérate cuando otros usuarios valoren tus aportes y reseñas con un "Me gusta".</p>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="inline-block w-2 h-2 bg-[var(--gold)] rounded-full mt-2 flex-shrink-0"></span>
-                <p><strong className="text-zinc-200">Menciones:</strong> Si alguien te menciona en una reseña o respuesta, lo sabrás al instante.</p>
+              
+              <div className="flex items-start gap-3">
+                <div className="mt-1 p-1 rounded-full bg-[var(--gold)]/20 text-[var(--gold)]">
+                  <AtSign className="h-3 w-3" />
+                </div>
+                <div>
+                  <strong className="block text-zinc-200 mb-0.5">Menciones Directas</strong>
+                  <p>Te avisaremos cuando seas mencionado explícitamente en una conversación o debate.</p>
+                </div>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-zinc-800">
