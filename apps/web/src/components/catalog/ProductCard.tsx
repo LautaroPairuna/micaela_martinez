@@ -1,3 +1,4 @@
+// components/catalog/ProductCard.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,7 +12,6 @@ import { AddProductButton } from '@/components/cart/AddProductButton';
 import { Heart, Star, ShoppingCart, Eye } from 'lucide-react';
 import { resolveProductThumb } from '@/lib/image-utils';
 import { SafeImage } from '@/components/ui/SafeImage';
-
 import { calculatePrice } from '@/lib/price-utils';
 
 export type ProductCardProps = {
@@ -44,11 +44,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
       .replace(/(^-|-$)/g, '');
 
   // Origen de imagen: prioridad imagenUrl → primera de imagenes → imagen
-  const rawImg: string | null =
-    p.imagenUrl ??
-    p.imagenes?.[0]?.url ??
-    p.imagen ??
-    null;
+  const rawImg: string | null = p.imagenUrl ?? p.imagenes?.[0]?.url ?? p.imagen ?? null;
 
   // Para el grid usamos el THUMB
   const img = resolveProductThumb(rawImg);
@@ -57,12 +53,20 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
   const isOutOfStock = (stock ?? 0) <= 0;
 
   // Calculamos el precio final usando la utilidad centralizada
-  const { final: precioFinal, original: precioOriginal, hasDiscount, discountPercentage } = calculatePrice(precio, p.descuento);
-  
+  const { final: precioFinal, original: precioOriginal, hasDiscount, discountPercentage } = calculatePrice(
+    precio,
+    p.descuento
+  );
+
   const { isFavorite, toggleFavorite, isLoading } = useFavoritesClient();
-  const numericId = p.id 
-    ? (typeof p.id === 'number' ? p.id : (/^\d+$/.test(String(p.id)) ? Number(p.id) : undefined))
+  const numericId = p.id
+    ? typeof p.id === 'number'
+      ? p.id
+      : /^\d+$/.test(String(p.id))
+        ? Number(p.id)
+        : undefined
     : undefined;
+
   const isFav = mounted && numericId ? isFavorite(numericId) : false;
 
   useEffect(() => setMounted(true), []);
@@ -79,6 +83,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
   return (
     <div className="relative group">
       <div className="pointer-events-none absolute -inset-6 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100 bg-[radial-gradient(80%_80%_at_50%_50%,rgba(255,45,149,0.55),transparent_72%)]" />
+
       <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl">
         {/* Imagen */}
         <div className="relative overflow-hidden rounded-t-xl">
@@ -100,6 +105,33 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
                 </div>
               )}
             </Link>
+
+            {/* Overlay Hover Actions */}
+            <div className="absolute inset-0 z-20 hidden lg:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40 backdrop-blur-[2px] rounded-t-xl">
+              <div className="flex flex-col gap-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                <AddProductButton
+                  p={{
+                    id: p.id || p.slug,
+                    slug: p.slug,
+                    titulo: p.titulo,
+                    precio: precioFinal,
+                    stock: p.stock,
+                    imagen: img,
+                    imagenes: p.imagenes,
+                    descuento: p.descuento,
+                  }}
+                  variant="icon"
+                  className="h-12 w-12 rounded-full bg-[var(--pink)] text-white hover:bg-[var(--pink-strong)] hover:scale-110 shadow-lg shadow-[var(--pink)]/20 border border-[var(--pink-strong)]/30 transition-all duration-200"
+                />
+                <Link
+                  href={`/tienda/producto/${p.slug}`}
+                  className="flex items-center justify-center h-12 w-12 rounded-full bg-white text-black hover:bg-gray-100 hover:scale-110 shadow-lg transition-all duration-200"
+                  title="Ver detalles"
+                >
+                  <Eye className="w-6 h-6" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -112,6 +144,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
                 Destacado
               </span>
             ) : null}
+
             {hasDiscount && (
               <span className="rounded-full bg-[var(--pink)] px-2.5 py-1 text-xs font-bold text-black shadow-lg border border-[var(--pink-strong)]/30">
                 -{discountPercentage}%
@@ -166,7 +199,10 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
               <span className="text-xs text-gray-500">({p.ratingConteo})</span>
             </div>
           ) : (
-            <div className="h-5" /> /* Espaciador para mantener altura consistente */
+            <>
+              <div className="h-5" />
+              {/* Espaciador para mantener altura consistente */}
+            </>
           )}
 
           {/* Meta */}
@@ -181,11 +217,11 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
                 {p.marca.nombre}
               </Link>
             ) : null}
+
             {p.categoria?.nombre ? (
               <Link
                 href={buildTiendaPrettyPath({
-                  categoria:
-                    p.categoria.slug || slugify(p.categoria.nombre),
+                  categoria: p.categoria.slug || slugify(p.categoria.nombre),
                 })}
                 className="inline-flex items-center rounded-full bg-[var(--pink)]/10 border border-[var(--pink)]/25 px-3 py-1 text-xs font-medium text-[var(--pink)] transition-all duration-200 hover:bg-[var(--pink)]/20"
               >
@@ -205,12 +241,14 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
                 stock: p.stock,
                 imagen: img,
                 imagenes: p.imagenes,
+                descuento: p.descuento,
               }}
               className="flex-1 bg-[var(--gold)] text-black text-xs font-bold py-2 rounded-lg hover:bg-[var(--gold-200)] shadow-sm"
             >
               <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
               Agregar
             </AddProductButton>
+
             <Link
               href={`/tienda/producto/${p.slug}`}
               className="flex items-center justify-center px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-zinc-200 hover:bg-[#252525] transition-colors"

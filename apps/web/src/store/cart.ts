@@ -15,6 +15,7 @@ export type CartLineProduct = {
   image?: string | null;
   quantity: number;      // >=1
   maxQty?: number | null;
+  descuento?: number | null; // Descuento opcional
 };
 
 export type CartLineCourse = {
@@ -25,6 +26,7 @@ export type CartLineCourse = {
   price: number;         // precio directo
   image?: string | null;
   quantity: 1;           // fijo
+  descuento?: number | null; // Descuento opcional
 };
 
 export type CartLine = CartLineProduct | CartLineCourse;
