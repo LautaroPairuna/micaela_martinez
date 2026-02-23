@@ -107,8 +107,8 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
             </Link>
 
             {/* Overlay Hover Actions */}
-            <div className="absolute inset-0 z-20 hidden lg:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40 backdrop-blur-[2px] rounded-t-xl">
-              <div className="flex flex-col gap-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+            <div className="absolute inset-0 z-20 hidden lg:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/60 backdrop-blur-[3px] rounded-t-xl">
+              <div className="flex flex-col gap-3 w-full px-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                 <AddProductButton
                   p={{
                     id: p.id || p.slug,
@@ -120,15 +120,14 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
                     imagenes: p.imagenes,
                     descuento: p.descuento,
                   }}
-                  variant="icon"
-                  className="h-12 w-12 rounded-full bg-[var(--pink)] text-white hover:bg-[var(--pink-strong)] hover:scale-110 shadow-lg shadow-[var(--pink)]/20 border border-[var(--pink-strong)]/30 transition-all duration-200"
+                  className="w-full bg-[var(--pink)] text-white hover:bg-[var(--pink-strong)] shadow-lg shadow-[var(--pink)]/20 border border-[var(--pink-strong)]/30 font-bold tracking-wide"
                 />
                 <Link
                   href={`/tienda/producto/${p.slug}`}
-                  className="flex items-center justify-center h-12 w-12 rounded-full bg-white text-black hover:bg-gray-100 hover:scale-110 shadow-lg transition-all duration-200"
-                  title="Ver detalles"
+                  className="group/btn flex items-center justify-center w-full py-2 rounded-xl bg-white text-black hover:bg-gray-100 shadow-lg font-bold tracking-wide transition-all duration-200"
                 >
-                  <Eye className="w-6 h-6" />
+                  <Eye className="w-4 h-4 mr-2 transition-transform group-hover/btn:scale-110" />
+                  Ver detalle
                 </Link>
               </div>
             </div>

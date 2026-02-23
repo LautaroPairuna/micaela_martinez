@@ -33,6 +33,7 @@ type CourseMinimal = {
   _count?: { modulos?: number };
   totalLessons?: number;
   totalDuration?: number;
+  descuento?: number | null;
 };
 
 type InscripcionMini = {
@@ -175,7 +176,8 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
                         slug: c.slug,
                         titulo: c.titulo,
                         precio: c.precio,
-                        portadaUrl: c.portadaUrl
+                        portadaUrl: c.portadaUrl,
+                        descuento: c.descuento
                       }}
                       className="w-full rounded-xl bg-[var(--pink)] text-black font-bold px-4 py-2 transition-all duration-300 hover:bg-[var(--pink-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 disabled:opacity-50 disabled:cursor-not-allowed"
                     />

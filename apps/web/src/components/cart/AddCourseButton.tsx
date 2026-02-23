@@ -10,6 +10,7 @@ type CourseForCartButton = {
   titulo: string;
   precio: number; // precio directo
   portadaUrl?: string | null;
+  descuento?: number | null;
 };
 
 export function AddCourseButton({ c, className }: { c: CourseForCartButton; className?: string }) {
@@ -28,6 +29,7 @@ export function AddCourseButton({ c, className }: { c: CourseForCartButton; clas
         title: c.titulo,
         price: c.precio,
         image,
+        descuento: c.descuento,
       });
       toast.success('Curso agregado al carrito');
     } catch (error) {
