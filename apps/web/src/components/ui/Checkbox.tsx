@@ -30,10 +30,10 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <div
           className={[
-            'h-4 w-4 rounded border border-gray-300 bg-white',
+            'h-4 w-4 rounded border border-gray-300',
             'flex items-center justify-center',
             'focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-0',
-            checked ? 'bg-black border-black' : 'bg-white',
+            checked ? 'bg-black border-black' : 'bg-transparent border-gray-600',
             disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             className,
           ].join(' ')}

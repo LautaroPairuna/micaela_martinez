@@ -14,7 +14,7 @@ import type {
 import type { AdminListResponse } from '@/lib/admin/fetch-admin-meta';
 import { AdminResourceForm, type AdminUploadContext } from './AdminResourceForm';
 import { renderCell } from './renderCell';
-import { Pencil, Trash2, Filter, ChevronDown, Search, Calendar, Hash, Check, X, Loader2, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, Filter, ChevronDown, Search, Calendar, Hash, Check, X, Loader2, AlertTriangle, Plus } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/Dialog';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -208,8 +208,9 @@ export function AdminResourceClient({
   
   const [searchTerm, setSearchTerm] = useState(qParam || '');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<any | null>(null);
 
   const [filters, setFilters] = useState<FilterDraft[]>(() =>
     parseFiltersParam(filtersParam, filtersMeta),
@@ -707,13 +708,17 @@ export function AdminResourceClient({
     setSelectedIds(new Set());
   }, [data.pagination.page, resource]);
 
-  const handleBulkDelete = useCallback(async () => {
-    if (selectedIds.size === 0) return;
-    setBulkDeleting(true);
+  const handleConfirmDelete = useCallback(async () => {
+    const itemsToDelete = itemToDelete 
+      ? [itemToDelete] 
+      : data.items.filter((i: any) => selectedIds.has(String(i.id)));
+
+    if (itemsToDelete.length === 0) return;
+    setIsDeleting(true);
 
     try {
-      const ids = Array.from(selectedIds);
-      // Ejecutar en paralelo (con límite si fueran muchos, pero aquí son max paginación)
+      const ids = itemsToDelete.map((i: any) => String(i.id));
+      
       const results = await Promise.allSettled(
         ids.map((id) =>
           fetch(`${API_BASE}/admin/resources/${resource}/${id}`, {
@@ -751,7 +756,6 @@ export function AdminResourceClient({
           };
         });
         
-        // Remover solo los eliminados de la selección
         setSelectedIds((prev) => {
           const next = new Set(prev);
           successIds.forEach(id => next.delete(id));
@@ -762,7 +766,7 @@ export function AdminResourceClient({
       if (failCount === 0) {
         showToast({
           variant: 'success',
-          title: `Eliminados ${successIds.length} elementos`,
+          title: `Eliminado${successIds.length > 1 ? 's' : ''} ${successIds.length} elemento${successIds.length > 1 ? 's' : ''}`,
         });
       } else {
         showToast({
@@ -776,65 +780,21 @@ export function AdminResourceClient({
       showToast({
         variant: 'error',
         title: 'Error al eliminar',
-        description: 'Ocurrió un error inesperado durante la eliminación masiva.',
+        description: 'Ocurrió un error inesperado.',
       });
     } finally {
-      setBulkDeleting(false);
-      setBulkDeleteDialogOpen(false);
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setItemToDelete(null); // Resetear single delete state
     }
-  }, [selectedIds, resource, showToast]);
+  }, [selectedIds, resource, showToast, itemToDelete, data.items]);
 
   const handleDelete = useCallback(
-    async (row: any) => {
-      const confirmMsg = `¿Eliminar este ${meta.displayName}? (ID: ${
-        row.id ?? 'sin ID'
-      })`;
-      if (!window.confirm(confirmMsg)) return;
-
-      try {
-        const url = `${API_BASE}/admin/resources/${resource}/${row.id}`;
-        const res = await fetch(url, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Error eliminando: ${res.status} ${text}`);
-        }
-
-        setData((prev) => {
-          const newItems = prev.items.filter(
-            (it: any) => it.id !== row.id,
-          );
-          return {
-            ...prev,
-            items: newItems,
-            pagination: {
-              ...prev.pagination,
-              totalItems:
-                prev.pagination.totalItems > 0
-                  ? prev.pagination.totalItems - 1
-                  : 0,
-            },
-          };
-        });
-
-        showToast({
-          variant: 'success',
-          title: `${meta.displayName} eliminado`,
-        });
-      } catch (err) {
-        console.error(err);
-        showToast({
-          variant: 'error',
-          title: 'Error al eliminar',
-          description:
-            err instanceof Error ? err.message : 'Error desconocido',
-        });
-      }
+    (row: any) => {
+      setItemToDelete(row);
+      setDeleteDialogOpen(true);
     },
-    [meta.displayName, resource, showToast],
+    [],
   );
 
   const handleSaved = useCallback(
@@ -1309,6 +1269,29 @@ export function AdminResourceClient({
         </DialogContent>
       </Dialog>
 
+      {data.items.length === 0 && !searchTerm && filters.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 duration-300 border border-[#2a2a2a] rounded-xl bg-[#1a1a1a]/50 border-dashed m-4">
+          <div className="bg-[#1a1a1a] p-4 rounded-full mb-4 border border-[#2a2a2a] shadow-xl">
+            <Plus className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-200 mb-2">
+            No hay {meta.displayName.toLowerCase()}s todavía
+          </h3>
+          <p className="text-slate-400 text-sm max-w-sm mb-6">
+            Comienza creando tu primer elemento para poblar esta lista.
+          </p>
+          {!isReadOnlyResource && (
+            <button
+              onClick={handleOpenCreate}
+              className="inline-flex items-center gap-2 rounded-md bg-[#13392c] border border-[#08885d] px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-[#08885d] transition-all hover:scale-105 active:scale-95"
+            >
+              <Plus className="h-4 w-4" />
+              Crear {meta.displayName}
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
       {/* Barra de Búsqueda Global */}
       <div className="relative w-full max-w-md mb-6 flex gap-4 items-center">
         <div className="relative flex-1">
@@ -1332,7 +1315,7 @@ export function AdminResourceClient({
             </span>
             <div className="h-4 w-px bg-[#333]" />
             <button
-               onClick={() => setBulkDeleteDialogOpen(true)}
+               onClick={() => setDeleteDialogOpen(true)}
                className="text-xs font-medium text-rose-400 hover:text-rose-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-rose-900/20 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -1578,6 +1561,8 @@ export function AdminResourceClient({
       <div className="h-8"></div>
       </>
       )}
+      </>
+      )}
 
       {resource.toLowerCase() === 'orden' ? (
         <OrderResourceForm
@@ -1600,13 +1585,16 @@ export function AdminResourceClient({
         />
       )}
 
-      {/* Modal de Eliminación Masiva */}
-      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+      {/* Modal de Eliminación (Individual o Masiva) */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) setItemToDelete(null);
+      }}>
         <DialogContent className="max-w-md bg-[#141414] border border-[#2a2a2a] text-slate-200">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-400">
               <AlertTriangle className="h-5 w-5" />
-              ¿Eliminar {selectedIds.size} elementos?
+              Confirmar eliminación
             </DialogTitle>
             <DialogDescription className="text-slate-400">
               Esta acción no se puede deshacer. Se eliminarán permanentemente los siguientes registros:
@@ -1615,38 +1603,39 @@ export function AdminResourceClient({
 
           <div className="max-h-[40vh] overflow-y-auto my-4 rounded border border-[#2a2a2a] bg-[#1a1a1a] p-2">
             <ul className="space-y-1">
-              {data.items
-                .filter((item: any) => selectedIds.has(String(item.id)))
-                .map((item: any) => {
-                   // Intentar encontrar un nombre legible
-                   const name = item.nombre || item.name || item.title || item.username || item.email || item.slug || 'Elemento sin nombre';
-                   return (
-                     <li key={item.id} className="text-xs text-slate-300 flex justify-between items-center px-2 py-1 hover:bg-[#222] rounded border-b border-[#222] last:border-0">
-                       <span className="truncate mr-2" title={String(name)}>{name}</span>
-                       <span className="text-slate-500 font-mono text-[10px] whitespace-nowrap opacity-70">(ID: {item.id})</span>
-                     </li>
-                   );
-                })}
+              {(itemToDelete ? [itemToDelete] : data.items.filter((item: any) => selectedIds.has(String(item.id)))).map((item: any) => {
+                 // Intentar encontrar un nombre legible
+                 const name = item.nombre || item.name || item.title || item.username || item.email || item.slug || 'Elemento sin nombre';
+                 return (
+                   <li key={item.id} className="text-xs text-slate-300 flex justify-between items-center px-2 py-1 hover:bg-[#222] rounded border-b border-[#222] last:border-0">
+                     <span className="truncate mr-2" title={String(name)}>{name}</span>
+                     <span className="text-slate-500 font-mono text-[10px] whitespace-nowrap opacity-70">(ID: {item.id})</span>
+                   </li>
+                 );
+              })}
             </ul>
           </div>
 
           <DialogFooter>
             <button
               type="button"
-              onClick={() => setBulkDeleteDialogOpen(false)}
-              disabled={bulkDeleting}
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setItemToDelete(null);
+              }}
+              disabled={isDeleting}
               className="rounded border border-[#2a2a2a] px-4 py-2 text-xs text-slate-200 hover:bg-[#1e1e1e] disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="button"
-              onClick={handleBulkDelete}
-              disabled={bulkDeleting}
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
               className="flex items-center gap-2 rounded bg-rose-900/50 border border-rose-500/50 px-4 py-2 text-xs text-rose-200 hover:bg-rose-900 hover:text-white disabled:opacity-50"
             >
-              {bulkDeleting && <Loader2 className="h-3 w-3 animate-spin" />}
-              {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar todo'}
+              {isDeleting && <Loader2 className="h-3 w-3 animate-spin" />}
+              {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
             </button>
           </DialogFooter>
         </DialogContent>
