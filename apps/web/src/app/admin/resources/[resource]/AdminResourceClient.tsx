@@ -14,9 +14,10 @@ import type {
 import type { AdminListResponse } from '@/lib/admin/fetch-admin-meta';
 import { AdminResourceForm, type AdminUploadContext } from './AdminResourceForm';
 import { renderCell } from './renderCell';
-import { Pencil, Trash2, Filter, ChevronDown, Search, Calendar, Hash, Check, X, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Filter, ChevronDown, Search, Calendar, Hash, Check, X, Loader2, AlertTriangle } from 'lucide-react';
 import { io } from 'socket.io-client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/Dialog';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { OrdersList } from '@/components/admin/orders/OrdersList';
 import { OrderResourceForm } from '@/components/admin/orders/OrderResourceForm';
 
@@ -206,6 +207,9 @@ export function AdminResourceClient({
   const editIdParam = searchParams.get('editId');
   
   const [searchTerm, setSearchTerm] = useState(qParam || '');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const [filters, setFilters] = useState<FilterDraft[]>(() =>
     parseFiltersParam(filtersParam, filtersMeta),
@@ -666,6 +670,119 @@ export function AdminResourceClient({
     setCurrentRow(null);
     lastOpenedIdRef.current = null;
   }, [router, resource, searchParams, currentRow, normalizeId]);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      // Solo consideramos los items de la página actual
+      const pageIds = data.items.map((i: any) => String(i.id));
+      
+      // Si todos los de la página están seleccionados, deseleccionamos todos (de la página)
+      // Nota: Si queremos mantener selección entre páginas, la lógica sería diferente.
+      // Por simplicidad en admin, solemos limpiar al cambiar de página, o manejar solo la página actual.
+      // Aquí asumo que el usuario quiere seleccionar/deseleccionar lo que ve.
+      
+      const allSelected = pageIds.every(id => prev.has(id));
+      
+      const next = new Set(prev);
+      if (allSelected) {
+        pageIds.forEach(id => next.delete(id));
+      } else {
+        pageIds.forEach(id => next.add(id));
+      }
+      return next;
+    });
+  }, [data.items]);
+
+  const toggleSelectOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Limpiar selección al cambiar de página o recurso
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [data.pagination.page, resource]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+
+    try {
+      const ids = Array.from(selectedIds);
+      // Ejecutar en paralelo (con límite si fueran muchos, pero aquí son max paginación)
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          fetch(`${API_BASE}/admin/resources/${resource}/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          })
+        )
+      );
+
+      const successIds: string[] = [];
+      let failCount = 0;
+
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        const id = ids[i];
+        if (r.status === 'fulfilled' && r.value.ok) {
+          successIds.push(id);
+        } else {
+          failCount++;
+        }
+      }
+
+      if (successIds.length > 0) {
+        setData((prev) => {
+          const newItems = prev.items.filter(
+            (it: any) => !successIds.includes(String(it.id))
+          );
+          return {
+            ...prev,
+            items: newItems,
+            pagination: {
+              ...prev.pagination,
+              totalItems: Math.max(0, prev.pagination.totalItems - successIds.length),
+            },
+          };
+        });
+        
+        // Remover solo los eliminados de la selección
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          successIds.forEach(id => next.delete(id));
+          return next;
+        });
+      }
+
+      if (failCount === 0) {
+        showToast({
+          variant: 'success',
+          title: `Eliminados ${successIds.length} elementos`,
+        });
+      } else {
+        showToast({
+          variant: 'warning',
+          title: 'Eliminación parcial',
+          description: `Se eliminaron ${successIds.length} elementos. ${failCount} fallaron.`,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast({
+        variant: 'error',
+        title: 'Error al eliminar',
+        description: 'Ocurrió un error inesperado durante la eliminación masiva.',
+      });
+    } finally {
+      setBulkDeleting(false);
+      setBulkDeleteDialogOpen(false);
+    }
+  }, [selectedIds, resource, showToast]);
 
   const handleDelete = useCallback(
     async (row: any) => {
@@ -1193,17 +1310,49 @@ export function AdminResourceClient({
       </Dialog>
 
       {/* Barra de Búsqueda Global */}
-      <div className="relative w-full max-w-md mb-6">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <Search className="w-4 h-4 text-slate-500" />
+      <div className="relative w-full max-w-md mb-6 flex gap-4 items-center">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="w-4 h-4 text-slate-500" />
+          </div>
+          <input
+            type="text"
+            className="block w-full p-2 pl-10 text-sm text-slate-200 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg focus:ring-[#08885d] focus:border-[#08885d] placeholder-slate-500"
+            placeholder="Buscar en todos los campos..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
         </div>
-        <input
-          type="text"
-          className="block w-full p-2 pl-10 text-sm text-slate-200 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg focus:ring-[#08885d] focus:border-[#08885d] placeholder-slate-500"
-          placeholder="Buscar en todos los campos..."
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
+        
+        {/* Acciones Masivas */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg px-3 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <span className="text-xs font-medium text-slate-300 mr-2">
+              {selectedIds.size} seleccionados
+            </span>
+            <div className="h-4 w-px bg-[#333]" />
+            <button
+               onClick={() => setBulkDeleteDialogOpen(true)}
+               className="text-xs font-medium text-rose-400 hover:text-rose-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-rose-900/20 transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Eliminar
+            </button>
+            <button
+               onClick={() => {
+                  showToast({
+                    variant: 'info',
+                    title: 'Edición masiva',
+                    description: 'Esta funcionalidad estará disponible pronto.',
+                  });
+               }}
+               className="text-xs font-medium text-sky-400 hover:text-sky-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-sky-900/20 transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Editar
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabla o Vista Especializada */}
@@ -1224,7 +1373,14 @@ export function AdminResourceClient({
                 <th
                   className="sticky left-0 z-20 border-b border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-300"
                   style={{ minWidth: '96px' }}
-                />
+                >
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={data.items.length > 0 && data.items.every((i: any) => selectedIds.has(String(i.id)))}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </div>
+                </th>
                 {listFields.map((field) => (
                   <th
                     key={field.name}
@@ -1263,26 +1419,32 @@ export function AdminResourceClient({
                       className="sticky left-0 z-10 bg-[#101010] px-3 py-2 align-middle"
                       style={{ minWidth: '96px' }}
                     >
-                      {!isReadOnlyResource ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(row)}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-sky-200 hover:bg-[#262626] hover:text-sky-100"
-                            aria-label="Editar"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(row)}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-rose-300 hover:bg-[#262626] hover:text-rose-200"
-                            aria-label="Borrar"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ) : null}
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={selectedIds.has(String(row.id))}
+                          onCheckedChange={() => toggleSelectOne(String(row.id))}
+                        />
+                        {!isReadOnlyResource && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(row)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-sky-200 hover:bg-[#262626] hover:text-sky-100"
+                              aria-label="Editar"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(row)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2a2a2a] bg-[#1c1c1c] text-rose-300 hover:bg-[#262626] hover:text-rose-200"
+                              aria-label="Borrar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {listFields.map((field) => (
@@ -1437,6 +1599,58 @@ export function AdminResourceClient({
           onUploadStart={handleUploadStart}
         />
       )}
+
+      {/* Modal de Eliminación Masiva */}
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <DialogContent className="max-w-md bg-[#141414] border border-[#2a2a2a] text-slate-200">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-400">
+              <AlertTriangle className="h-5 w-5" />
+              ¿Eliminar {selectedIds.size} elementos?
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Esta acción no se puede deshacer. Se eliminarán permanentemente los siguientes registros:
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[40vh] overflow-y-auto my-4 rounded border border-[#2a2a2a] bg-[#1a1a1a] p-2">
+            <ul className="space-y-1">
+              {data.items
+                .filter((item: any) => selectedIds.has(String(item.id)))
+                .map((item: any) => {
+                   // Intentar encontrar un nombre legible
+                   const name = item.name || item.title || item.username || item.email || item.slug || 'Elemento sin nombre';
+                   return (
+                     <li key={item.id} className="text-xs text-slate-300 flex justify-between items-center px-2 py-1 hover:bg-[#222] rounded border-b border-[#222] last:border-0">
+                       <span className="truncate mr-2" title={String(name)}>{name}</span>
+                       <span className="text-slate-500 font-mono text-[10px] whitespace-nowrap opacity-70">(ID: {item.id})</span>
+                     </li>
+                   );
+                })}
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setBulkDeleteDialogOpen(false)}
+              disabled={bulkDeleting}
+              className="rounded border border-[#2a2a2a] px-4 py-2 text-xs text-slate-200 hover:bg-[#1e1e1e] disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="flex items-center gap-2 rounded bg-rose-900/50 border border-rose-500/50 px-4 py-2 text-xs text-rose-200 hover:bg-rose-900 hover:text-white disabled:opacity-50"
+            >
+              {bulkDeleting && <Loader2 className="h-3 w-3 animate-spin" />}
+              {bulkDeleting ? 'Eliminando...' : 'Sí, eliminar todo'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

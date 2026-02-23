@@ -78,6 +78,14 @@ export function DialogTitle({ className, children }: DialogTitleProps) {
   );
 }
 
+export function DialogDescription({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <p className={cn('text-sm text-gray-500', className)}>
+      {children}
+    </p>
+  );
+}
+
 export function DialogFooter({ className, children }: DialogFooterProps) {
   return (
     <div className={cn('flex justify-end gap-2 mt-6', className)}>
