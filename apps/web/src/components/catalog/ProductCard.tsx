@@ -107,7 +107,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
             </Link>
 
             {/* Overlay Hover Actions */}
-            <div className="absolute inset-0 z-20 hidden lg:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/60 backdrop-blur-[3px] rounded-t-xl">
+            <div className="absolute inset-0 z-20 hidden lg:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40 backdrop-blur-[2px] rounded-t-xl">
               <div className="flex flex-col gap-3 w-full px-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                 <AddProductButton
                   p={{
