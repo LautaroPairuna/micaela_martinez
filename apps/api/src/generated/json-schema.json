@@ -253,6 +253,10 @@
         "precio": {
           "type": "integer"
         },
+        "descuento": {
+          "type": "integer",
+          "default": 0
+        },
         "publicado": {
           "type": "boolean",
           "default": false
@@ -603,11 +607,9 @@
             "null"
           ]
         },
-        "precioLista": {
-          "type": [
-            "integer",
-            "null"
-          ]
+        "descuento": {
+          "type": "integer",
+          "default": 0
         },
         "ratingProm": {
           "type": [

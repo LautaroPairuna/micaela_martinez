@@ -90,6 +90,7 @@ model Curso {
   descripcionMD String?    @map("descripcion_md")
   requisitos    Json?
   precio        Int
+  descuento     Int        @default(0)
   publicado     Boolean    @default(false)
   nivel         NivelCurso @default(BASICO)
   portada       String?    @map("portada_archivo") @db.VarChar(255)
@@ -183,7 +184,7 @@ model Producto {
   destacado     Boolean  @default(false)
   imagen        String?  @map("imagen_archivo") @db.VarChar(255)
   descripcionMD String?  @map("descripcion_md")
-  precioLista   Int?     @map("precio_lista")
+  descuento     Int      @default(0)
   ratingProm    Decimal? @map("rating_prom") @db.Decimal(3, 2)
   ratingConteo  Int      @default(0) @map("rating_conteo")
   creadoEn      DateTime @default(now()) @map("creado_en")

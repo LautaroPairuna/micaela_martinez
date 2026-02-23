@@ -989,6 +989,23 @@
         "showInForm": true
       },
       {
+        "name": "descuento",
+        "label": "Descuento (%)",
+        "help": "Porcentaje de descuento (0-100).",
+        "type": "Int",
+        "kind": "scalar",
+        "isId": false,
+        "isRequired": true,
+        "isList": false,
+        "isEnum": false,
+        "isImage": false,
+        "isFile": false,
+        "isParentChildCount": false,
+        "isForeignKey": false,
+        "showInList": true,
+        "showInForm": true
+      },
+      {
         "name": "publicado",
         "label": "¿Publicado?",
         "help": "Visible para los usuarios.",
@@ -1473,6 +1490,22 @@
         ],
         "group": "technical",
         "priority": 5,
+        "hiddenByDefault": true
+      },
+      {
+        "field": "descuento",
+        "label": "Descuento",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ],
+        "group": "technical",
+        "priority": 1,
         "hiddenByDefault": true
       }
     ]
@@ -2572,13 +2605,13 @@
         "showInForm": true
       },
       {
-        "name": "precioLista",
-        "label": "Precio de Lista (Tachado)",
-        "help": "Precio original antes de descuento.",
+        "name": "descuento",
+        "label": "Descuento (%)",
+        "help": "Porcentaje de descuento (0-100).",
         "type": "Int",
         "kind": "scalar",
         "isId": false,
-        "isRequired": false,
+        "isRequired": true,
         "isList": false,
         "isEnum": false,
         "isImage": false,
@@ -2830,21 +2863,7 @@
         }
       },
       {
-        "field": "__hasListPrice",
-        "label": "Tiene precio lista",
-        "input": "boolean",
-        "operators": [
-          "equals"
-        ],
-        "group": "quick",
-        "priority": 103,
-        "virtual": {
-          "kind": "hasValue",
-          "field": "precioLista"
-        }
-      },
-      {
-        "field": "__discounted",
+        "field": "__hasDiscount",
         "label": "Con descuento",
         "input": "boolean",
         "operators": [
@@ -2853,9 +2872,8 @@
         "group": "quick",
         "priority": 102,
         "virtual": {
-          "kind": "discounted",
-          "priceField": "precio",
-          "listField": "precioLista"
+          "kind": "inStock",
+          "field": "descuento"
         }
       },
       {
@@ -2919,21 +2937,6 @@
       {
         "field": "precio",
         "label": "Precio",
-        "input": "number",
-        "operators": [
-          "equals",
-          "gt",
-          "gte",
-          "lt",
-          "lte",
-          "in"
-        ],
-        "group": "metrics",
-        "priority": 60
-      },
-      {
-        "field": "precioLista",
-        "label": "Precio Lista",
         "input": "number",
         "operators": [
           "equals",
@@ -3061,6 +3064,22 @@
         ],
         "group": "technical",
         "priority": 5,
+        "hiddenByDefault": true
+      },
+      {
+        "field": "descuento",
+        "label": "Descuento",
+        "input": "number",
+        "operators": [
+          "equals",
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "in"
+        ],
+        "group": "technical",
+        "priority": 1,
         "hiddenByDefault": true
       }
     ]

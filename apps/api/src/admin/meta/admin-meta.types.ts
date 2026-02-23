@@ -55,7 +55,7 @@ export type VirtualFilter =
   | { kind: 'hasImage'; field: string } // notNull
   | { kind: 'inStock'; field: string } // gt 0
   | { kind: 'outOfStock'; field: string } // equals 0
-  | { kind: 'discounted'; priceField: string; listField: string } // precio < precioLista
+  | { kind: 'discounted'; discountField: string } // descuento > 0
   | { kind: 'ratingAtLeast'; field: string }; // ratingProm >= X (si quisieras)
 
 export interface FilterMeta {

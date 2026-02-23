@@ -20,11 +20,12 @@ export type ProductQuery = {
 };
 export type ProductListItem = {
   id: string; slug: string; titulo: string; precio: number;
+  descuento?: number | null;
   imagen?: string | null; imagenes?: Array<{ url: string }> | null;
   stock?: number | null; ratingProm?: number | null; ratingConteo?: number | null;
 };
 export type ProductDetail = ProductListItem & {
-  descripcionMD?: string | null; precioLista?: number | null; destacado?: boolean | null;
+  descripcionMD?: string | null; destacado?: boolean | null;
   marca?: { nombre?: string | null } | null;
   categoria?: { nombre?: string | null; slug?: string | null; id?: string | number | null } | null;
 };

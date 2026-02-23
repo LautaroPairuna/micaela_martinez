@@ -85,7 +85,7 @@ export type ProductMinimal = {
   slug: string;
   titulo: string;
   precio: number; // precio directo
-  precioLista?: number | null;
+  descuento?: number | null;
   imagen?: string | null;
   imagenes?: { url: string }[];
   destacado?: boolean | null;
@@ -468,7 +468,7 @@ export async function listFavoriteProducts(): Promise<ProductMinimal[]> {
       ratingConteo: null,
       marca: null,
       categoria: null,
-      precioLista: null,
+      descuento: null,
     }));
 
     if (fallback.length > 0) {

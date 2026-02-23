@@ -455,32 +455,17 @@ function buildFiltersFromFields(
       virtual: { kind: 'outOfStock', field: 'stock' } satisfies VirtualFilter,
     });
 
-    // Con precio lista: precioLista not null
+    // Con descuento: descuento > 0
     virtuals.push({
-      field: '__hasListPrice',
-      label: 'Tiene precio lista',
-      input: 'boolean',
-      operators: ['equals'],
-      group: 'quick',
-      priority: 103,
-      virtual: {
-        kind: 'hasValue',
-        field: 'precioLista',
-      } satisfies VirtualFilter,
-    });
-
-    // Con descuento: precioLista not null AND precio < precioLista
-    virtuals.push({
-      field: '__discounted',
+      field: '__hasDiscount',
       label: 'Con descuento',
       input: 'boolean',
       operators: ['equals'],
       group: 'quick',
       priority: 102,
       virtual: {
-        kind: 'discounted',
-        priceField: 'precio',
-        listField: 'precioLista',
+        kind: 'inStock', // Reusing inStock logic (gt: 0) for now, need to check if 'gt' is supported for generic field
+        field: 'descuento',
       } satisfies VirtualFilter,
     });
   }

@@ -128,7 +128,7 @@ export function AuthView() {
 /* ───────────────────────── Tabs con slider mejorado ───────────────────────── */
 function Tabs({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
   return (
-    <div className="relative grid grid-cols-2 bg-gradient-to-r from-[var(--bg-muted,#f6f6f6)] to-[var(--bg-muted,#f6f6f6)] border-b border-default/50">
+    <div className="relative grid grid-cols-2 bg-gradient-to-r from-[var(--bg-muted)] to-[var(--bg-muted)] border-b border-default/50">
         {/* Indicador deslizante mejorado */}
         <span
           aria-hidden

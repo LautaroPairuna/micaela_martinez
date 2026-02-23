@@ -2,7 +2,7 @@ export type Marca = { id:string; slug:string; nombre:string };
 export type Categoria = { id:string; slug:string; nombre:string };
 export type Producto = {
   id:string; slug:string; titulo:string; precio:number;
-  precioLista?:number|null; imagen?:string|null;
+  descuento?:number|null; imagen?:string|null;
   marca?:Marca|null; categoria?:Categoria|null;
   imagenes?:{ url:string; alt?:string; orden:number }[];
   ratingProm?: string|null; ratingConteo?: number;

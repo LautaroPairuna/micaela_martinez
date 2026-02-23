@@ -57,6 +57,10 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     slug: { label: 'Slug (URL)', help: 'Identificador único para la URL.' },
     nivel: { label: 'Nivel', help: 'Básico, Intermedio o Avanzado.' },
     precio: { label: 'Precio', help: 'Precio actual del curso.' },
+    descuento: {
+      label: 'Descuento (%)',
+      help: 'Porcentaje de descuento (0-100).',
+    },
     publicado: { label: '¿Publicado?', help: 'Visible para los usuarios.' },
     destacado: {
       label: '¿Destacado?',
@@ -115,9 +119,9 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     categoriaId: { label: 'Categoría' },
     publicado: { label: '¿Publicado?' },
     destacado: { label: '¿Destacado?' },
-    precioLista: {
-      label: 'Precio de Lista (Tachado)',
-      help: 'Precio original antes de descuento.',
+    descuento: {
+      label: 'Descuento (%)',
+      help: 'Porcentaje de descuento (0-100).',
     },
     descripcionMD: {
       label: 'Descripción Completa (MD)',

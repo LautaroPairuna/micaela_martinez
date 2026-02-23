@@ -120,6 +120,7 @@ export class ProductsService {
     // Transformar los datos para incluir URLs de imagen
     const transformedItems = items.map((item) => ({
       ...item,
+      descuento: item.descuento,
       imagenUrl: ImageUrlUtil.getProductImageUrl(item.imagen),
       marca: item.marca
         ? {

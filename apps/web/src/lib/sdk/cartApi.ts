@@ -12,6 +12,7 @@ export interface CartItemResponse {
     id: number;
     titulo: string;
     precio: number;
+    descuento?: number | null;
     slug: string;
     imagen?: string | null;
     imagenes?: unknown; // Prisma might return array or json
@@ -21,6 +22,7 @@ export interface CartItemResponse {
     id: number;
     titulo: string;
     precio: number;
+    descuento?: number | null;
     slug: string;
     portada?: string | null;
   } | null;
@@ -53,23 +55,31 @@ function mapResponseToLines(data: CartResponse): CartLine[] {
           image = typeof imgs[0] === 'string' ? imgs[0] : null;
       }
 
+      const p = item.producto;
+      const desc = p.descuento || 0;
+      const finalPrice = desc > 0 ? Number(p.precio) * (1 - desc / 100) : Number(p.precio);
+
       return {
         type: 'product',
         id: item.producto.id.toString(),
         slug: item.producto.slug,
         title: item.producto.titulo,
-        price: Number(item.producto.precio),
+        price: finalPrice,
         image: image ?? null,
         quantity: item.cantidad,
         maxQty: item.producto.stock
       } as CartLine;
     } else if (!isProduct && item.curso) {
+      const c = item.curso;
+      const desc = c.descuento || 0;
+      const finalPrice = desc > 0 ? Number(c.precio) * (1 - desc / 100) : Number(c.precio);
+
       return {
         type: 'course',
         id: item.curso.id.toString(),
         slug: item.curso.slug,
         title: item.curso.titulo,
-        price: Number(item.curso.precio),
+        price: finalPrice,
         image: item.curso.portada ?? null,
         quantity: 1
       } as CartLine;

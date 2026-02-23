@@ -101,7 +101,7 @@ const upsertMarcaBySlug = (slug: string, nombre: string) =>
 const upsertProductoGetId = async (p: {
   slug: string; titulo: string; precio: number; stock: number;
   publicado?: boolean; destacado?: boolean; imagen?: string | null;
-  descripcionMD?: string | null; precioLista?: number | null;
+  descripcionMD?: string | null; descuento?: number | null;
   marcaSlug?: string | null; categoriaSlug?: string | null;
 }) => {
   const marca = p.marcaSlug
@@ -122,7 +122,7 @@ const upsertProductoGetId = async (p: {
       destacado: p.destacado ?? false,
       imagen: p.imagen ?? null,
       descripcionMD: p.descripcionMD ?? null,
-      precioLista: p.precioLista ?? null,
+      descuento: p.descuento ?? 0,
       marcaId: marca?.id ?? null,
       categoriaId: categoria?.id ?? null,
     },
@@ -135,7 +135,7 @@ const upsertProductoGetId = async (p: {
       destacado: p.destacado ?? false,
       imagen: p.imagen ?? null,
       descripcionMD: p.descripcionMD ?? null,
-      precioLista: p.precioLista ?? null,
+      descuento: p.descuento ?? 0,
       marcaId: marca?.id ?? null,
       categoriaId: categoria?.id ?? null,
       creadoEn: new Date(),
@@ -160,6 +160,7 @@ const upsertCursoGetId = async (c: {
   nivel: NivelCurso | string; // aceptamos string para que no te mate el bug
   portada: string;
   destacado?: boolean;
+  descuento?: number;
   tags?: string[];
   queAprenderas?: string[];
   videoPreview?: string;
@@ -178,6 +179,7 @@ const upsertCursoGetId = async (c: {
       nivel: nivelKey,
       portada: c.portada,
       destacado: c.destacado ?? false,
+      descuento: c.descuento ?? 0,
       tags: json(c.tags ?? []),
       queAprenderas: c.queAprenderas ? json(c.queAprenderas) : undefined,
       videoPreview: c.videoPreview ?? null,
@@ -193,13 +195,14 @@ const upsertCursoGetId = async (c: {
       nivel: nivelKey,
       portada: c.portada,
       destacado: c.destacado ?? false,
+      descuento: c.descuento ?? 0,
       tags: json(c.tags ?? []),
       creadoEn: new Date(),
       queAprenderas: json(c.queAprenderas ?? []),
       videoPreview: c.videoPreview ?? null,
       requisitos: json(c.requisitos ?? []),
     } as any,
-  });
+    });
 
   const curso = await prisma.curso.findUnique({
     where: { slug: c.idSlug },
@@ -330,7 +333,7 @@ async function main() {
     destacado: true,
     imagen: 'producto_prueba.jpg',
     descripcionMD: 'Producto de prueba con precio 1000 para testing de pagos.',
-    precioLista: 1200,
+    descuento: 20,
     marcaSlug: 'loreal',
     categoriaSlug: 'maquillaje',
   });
@@ -344,7 +347,7 @@ async function main() {
     destacado: true,
     imagen: 'labial1.jpg',
     descripcionMD: 'Labial mate de larga duración con acabado profesional.',
-    precioLista: 18000,
+    descuento: 15,
     marcaSlug: 'loreal',
     categoriaSlug: 'labios',
   });

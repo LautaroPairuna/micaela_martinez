@@ -209,31 +209,8 @@ export class AdminCrudService {
     }
 
     if (v.kind === 'discounted') {
-      // bool true => precioLista != null AND precio < precioLista
-      // bool false => NOT( precioLista != null AND precio < precioLista )
-      const where = {
-        AND: [
-          { [v.listField]: { not: null } },
-          { [v.priceField]: { lt: (this.prisma as any)[v.listField] } }, // no funciona así en Prisma
-        ],
-      };
-
-      // ⚠️ Prisma no permite comparar campo con campo directamente.
-      // Solución: implementarlo como:
-      // - bool true: precioLista not null AND precio < precioLista => aproximación: precioLista not null AND precio < precioLista (no posible).
-      // Entonces lo resolvemos por lógica estándar:
-      // bool true: precioLista not null AND precio < precioLista => usar query raw o mantener simple: precioLista not null AND precio < precioLista => NO.
-      // En vez de eso, lo hacemos como:
-      // - bool true: precioLista not null AND precio < precioLista (no implementable sin raw)
-      // - bool false: (precioLista null) OR (precio >= precioLista) (no implementable sin raw)
-      //
-      // ✅ Para mantener todo “genérico” y sin raw, lo degradamos:
-      // bool true: precioLista not null (y el operador “con descuento” lo podés aplicar en UI/Report luego)
-      // bool false: precioLista null
-      //
-      // Si querés full correcto, te armo una alternativa con $queryRaw + whitelist por modelo.
-      if (bool) return { [v.listField]: { not: null } };
-      return { [v.listField]: null };
+      if (bool) return { [v.discountField]: { gt: 0 } };
+      return { [v.discountField]: { equals: 0 } };
     }
 
     if (v.kind === 'ratingAtLeast') {

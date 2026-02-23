@@ -16,7 +16,7 @@ import {
 import { RelatedProducts } from '@/components/catalog/RelatedProducts';
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
-import { formatCurrency } from '@/lib/format';
+import { calculatePrice, formatPrice } from '@/lib/price-utils';
 import { FadeIn } from '@/components/ui/Motion';
 
 export const revalidate = 120;
@@ -35,7 +35,7 @@ type Product = {
   imagenUrl?: string | null;
   imagenes?: ProductImage[] | null;
   precio: number;
-  precioLista?: number | null;
+  descuento?: number | null;
   stock?: number | null;
   marca?: { nombre?: string | null } | null;
   categoria?: { nombre?: string | null; slug?: string | null; id?: string | number | null } | null;
@@ -128,10 +128,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     });
   }
 
-  // Calcular descuento
-  const compareAt = product.precioLista ?? undefined;
-  const hasDiscount = !!(compareAt && compareAt > product.precio);
-  const discount = hasDiscount ? Math.round(((Number(compareAt) - product.precio) / Number(compareAt)) * 100) : 0;
+  // Calcular descuento usando utilidad centralizada
+  const { final: precioFinal, original: precioOriginal, hasDiscount, discountPercentage } = calculatePrice(product.precio, product.descuento);
   
   // JSON-LD
   const jsonLd = productJsonLd({
@@ -144,7 +142,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   });
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen text-zinc-200 font-sans selection:bg-pink-500/30">
+    <div className="bg-[#111111] min-h-screen text-zinc-200 font-sans selection:bg-pink-500/30">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -169,7 +167,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <div className="relative">
                 {hasDiscount && (
                   <span className="absolute top-4 left-4 z-10 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-pink-500/20">
-                    OFERTA
+                    -{discountPercentage}%
                   </span>
                 )}
                 {/* Contenedor de galería con estilo flotante (sin bordes/fondo) y tamaño reducido */}
@@ -196,29 +194,31 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               </h1>
 
               {/* Rating */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex text-[var(--gold)]">
-                  <RatingStars value={product.ratingProm || 0} size="md" />
-                </div>
-                {product.ratingConteo && product.ratingConteo > 0 && (
+              {(product.ratingConteo || 0) > 0 ? (
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex text-[var(--gold)]">
+                    <RatingStars value={product.ratingProm || 0} size="md" />
+                  </div>
                   <span className="text-sm text-zinc-500 font-medium">
                     ({product.ratingConteo} {product.ratingConteo === 1 ? 'reseña' : 'reseñas'})
                   </span>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="mb-6" /> /* Espacio equivalente si no hay rating */
+              )}
 
               {/* Precios */}
               <div className="flex items-end gap-4 mb-8 pb-8 border-b border-zinc-800">
                 <span className="text-4xl font-bold text-pink-500 tracking-tight">
-                  {formatCurrency(product.precio)}
+                  {formatPrice(precioFinal)}
                 </span>
                 {hasDiscount && (
                   <>
                     <span className="text-lg text-zinc-500 line-through mb-1">
-                      {formatCurrency(compareAt!)}
+                      {formatPrice(precioOriginal!)}
                     </span>
                     <span className="mb-2 px-2 py-0.5 bg-pink-500/10 text-pink-500 text-xs font-bold rounded border border-pink-500/20">
-                      {discount}% OFF
+                      {discountPercentage}% OFF
                     </span>
                   </>
                 )}
@@ -262,7 +262,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                       id: product.id || product.slug || slug,
                       slug: product.slug || slug,
                       titulo: product.titulo,
-                      precio: product.precio,
+                      precio: precioFinal,
                       stock: product.stock,
                       imagen: product.imagen,
                       imagenes: product.imagenes,

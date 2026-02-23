@@ -4,21 +4,22 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { buildTiendaPrettyPath } from '@/lib/routes';
 import { Card, CardBody } from '@/components/ui/Card';
-import { SafeImage } from '@/components/ui/SafeImage';
 import { Price } from '@/components/ui/Price';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useFavoritesClient } from '@/hooks/useFavoritesData';
 import { AddProductButton } from '@/components/cart/AddProductButton';
 import { Heart, Star, ShoppingCart, Eye } from 'lucide-react';
-
 import { resolveProductThumb } from '@/lib/image-utils';
+import { SafeImage } from '@/components/ui/SafeImage';
+
+import { calculatePrice } from '@/lib/price-utils';
 
 export type ProductCardProps = {
   id?: string | number;
   slug: string;
   titulo: string;
   precio: number;
-  precioLista?: number | null;
+  descuento?: number | null;
   imagen?: string | null;
   imagenes?: { url: string }[] | null;
   destacado?: boolean | null;
@@ -52,16 +53,15 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
   // Para el grid usamos el THUMB
   const img = resolveProductThumb(rawImg);
 
-  const compareAt = p.precioLista ?? undefined;
-  const hasDiscount = !!(compareAt && compareAt > p.precio);
-  const offPct = hasDiscount
-    ? Math.round(((Number(compareAt) - p.precio) / Number(compareAt)) * 100)
-    : 0;
-  const outOfStock = typeof p.stock === 'number' && p.stock <= 0;
+  const { precio, stock } = p;
+  const isOutOfStock = (stock ?? 0) <= 0;
 
+  // Calculamos el precio final usando la utilidad centralizada
+  const { final: precioFinal, original: precioOriginal, hasDiscount, discountPercentage } = calculatePrice(precio, p.descuento);
+  
   const { isFavorite, toggleFavorite, isLoading } = useFavoritesClient();
   const numericId = p.id 
-    ? (typeof p.id === 'number' ? p.id : (/^\d+$/.test(p.id) ? Number(p.id) : undefined))
+    ? (typeof p.id === 'number' ? p.id : (/^\d+$/.test(String(p.id)) ? Number(p.id) : undefined))
     : undefined;
   const isFav = mounted && numericId ? isFavorite(numericId) : false;
 
@@ -82,34 +82,23 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
       <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl">
         {/* Imagen */}
         <div className="relative overflow-hidden rounded-t-xl">
-        <div className="transition-transform duration-500 ease-out group-hover:scale-105">
-          <SafeImage src={img} alt={p.titulo} ratio="1/1" />
-        </div>
-
-        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
-
-        <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 translate-y-2 transition-all duration-300 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
-          <div className="w-[85%] space-y-2">
-            <AddProductButton
-              p={{
-                id: p.id || p.slug,
-                slug: p.slug,
-                titulo: p.titulo,
-                precio: p.precio,
-                stock: p.stock,
-                imagen: img,
-                imagenes: p.imagenes,
-              }}
-            />
-            <Link
-              href={`/tienda/producto/${p.slug}`}
-              className="block w-full rounded-xl bg-[var(--gold)] px-4 py-2 text-center transition-all duration-300 text-black hover:bg-[var(--gold-200)] hover:shadow-md"
-            >
-              <div className="flex items-center justify-center gap-2 text-sm font-semibold">
-                <span>Ver detalles</span>
-              </div>
+          <div className="transition-transform duration-500 ease-out group-hover:scale-105">
+            <Link href={`/tienda/producto/${p.slug}`} className="block aspect-[4/5] bg-gray-900 relative">
+              {img ? (
+                <SafeImage
+                  src={img}
+                  alt={p.titulo}
+                  className="w-full h-full object-cover"
+                  ratio="4/5"
+                  fit="cover"
+                  hoverZoom={false} // Ya tenemos zoom en el wrapper
+                  useBackendProxy={false} // img ya viene resuelto
+                />
+              ) : (
+                <div className="w-full h-full grid place-items-center text-gray-700">
+                  <span className="text-xs">Sin imagen</span>
+                </div>
+              )}
             </Link>
           </div>
         </div>
@@ -125,7 +114,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
             ) : null}
             {hasDiscount && (
               <span className="rounded-full bg-[var(--pink)] px-2.5 py-1 text-xs font-bold text-black shadow-lg border border-[var(--pink-strong)]/30">
-                -{offPct}%
+                -{discountPercentage}%
               </span>
             )}
           </div>
@@ -150,26 +139,35 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
         </div>
 
         {/* Sin stock */}
-        {outOfStock && (
+        {isOutOfStock && (
           <div className="absolute inset-0 z-20 grid place-items-center bg-gray-900/90 backdrop-blur-md">
             <div className="rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold text-white shadow-xl border border-gray-600">
               Sin stock
             </div>
           </div>
         )}
-        </div>
 
         {/* Cuerpo */}
         <CardBody className="flex flex-col gap-3 flex-1 p-3 sm:p-4 bg-[#141414] rounded-b-xl">
           {/* Precio */}
           <div className="flex items-baseline justify-between">
-            <Price value={p.precio} compareAt={compareAt ?? undefined} tone="pink" />
+            <Price value={precioFinal} compareAt={precioOriginal} tone="pink" />
           </div>
 
           {/* Título */}
           <h3 className="relative text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">
             {p.titulo}
           </h3>
+
+          {/* Rating */}
+          {p.ratingConteo && p.ratingConteo > 0 ? (
+            <div className="flex items-center gap-2 h-5">
+              <RatingStars value={Number(p.ratingProm || 0)} size="sm" />
+              <span className="text-xs text-gray-500">({p.ratingConteo})</span>
+            </div>
+          ) : (
+            <div className="h-5" /> /* Espaciador para mantener altura consistente */
+          )}
 
           {/* Meta */}
           <div className="flex flex-wrap gap-2 min-h-[2rem]">
@@ -203,7 +201,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
                 id: p.id || p.slug,
                 slug: p.slug,
                 titulo: p.titulo,
-                precio: p.precio,
+                precio: precioFinal,
                 stock: p.stock,
                 imagen: img,
                 imagenes: p.imagenes,
@@ -221,17 +219,6 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
               <Eye className="h-4 w-4" />
             </Link>
           </div>
-
-          {/* Rating */}
-          {p.ratingProm && p.ratingConteo && p.ratingConteo > 0 && (
-            <div className="min-h-[24px] flex items-center">
-              <RatingStars
-                value={Number(p.ratingProm || 0)}
-                count={p.ratingConteo || 0}
-                size="sm"
-              />
-            </div>
-          )}
         </CardBody>
       </Card>
     </div>
