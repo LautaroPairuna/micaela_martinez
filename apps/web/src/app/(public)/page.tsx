@@ -105,7 +105,7 @@ export default async function HomePage() {
   // Usar funciones seguras que no fallan en build estático
   const [cursos, productos, heroImages] = await Promise.all([
     safeGetCourses({ sort: "relevancia", page: 1, perPage: 8 }),
-    safeGetProducts({ sort: "relevancia", page: 1, perPage: 12 }),
+    safeGetProducts({ destacado: true, page: 1, perPage: 12 }),
     safeGetHeroImages(),
   ]);
 

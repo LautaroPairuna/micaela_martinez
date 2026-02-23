@@ -55,7 +55,7 @@ export class ProductsService {
       return cachedResult;
     }
 
-    const { page, perPage, q, marca, categoria, minPrice, maxPrice, sort } =
+    const { page, perPage, q, marca, categoria, minPrice, maxPrice, sort, destacado } =
       dto;
     const { skip, take } = getSkipTake(page, perPage);
 
@@ -100,6 +100,7 @@ export class ProductsService {
       ...(marcaId ? { marcaId } : {}),
       ...(categoriaId ? { categoriaId } : {}),
       ...(priceFilter ? { precio: priceFilter } : {}),
+      ...(destacado ? { destacado: true } : {}),
     } satisfies Prisma.ProductoWhereInput;
 
     const [items, total] = await this.prisma.$transaction([

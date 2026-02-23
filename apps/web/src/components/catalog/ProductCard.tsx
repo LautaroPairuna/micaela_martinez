@@ -86,16 +86,16 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
 
       <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl">
         {/* Imagen */}
-        <div className="relative overflow-hidden rounded-t-xl">
+        <div className="relative overflow-hidden rounded-t-xl bg-white">
           <div className="transition-transform duration-500 ease-out group-hover:scale-105">
-            <Link href={`/tienda/producto/${p.slug}`} className="block aspect-[4/5] bg-gray-900 relative">
+            <Link href={`/tienda/producto/${p.slug}`} className="block aspect-square relative">
               {img ? (
                 <SafeImage
                   src={img}
                   alt={p.titulo}
-                  className="w-full h-full object-cover"
-                  ratio="4/5"
-                  fit="cover"
+                  className="w-full h-full object-contain p-2"
+                  ratio="1/1"
+                  fit="contain"
                   hoverZoom={false} // Ya tenemos zoom en el wrapper
                   useBackendProxy={false} // img ya viene resuelto
                 />

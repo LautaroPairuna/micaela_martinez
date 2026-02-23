@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 export class QueryProductDto extends PaginationDto {
@@ -26,6 +26,11 @@ export class QueryProductDto extends PaginationDto {
   @IsInt()
   @Min(0)
   maxPrice?: number;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  destacado?: boolean;
 
   @IsOptional()
   @IsIn(['relevancia', 'novedades', 'precio_asc', 'precio_desc', 'rating_desc'])

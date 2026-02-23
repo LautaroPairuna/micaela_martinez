@@ -67,7 +67,7 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[var(--gold)]/10" />
         {/* Imagen */}
         <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:h-auto">
-          <div className="aspect-video lg:aspect-square w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
+          <div className="aspect-video w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
             <SafeImage
               src={c.portadaUrl || null}
               alt={c.titulo}

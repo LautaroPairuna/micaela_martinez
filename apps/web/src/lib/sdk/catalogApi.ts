@@ -17,6 +17,7 @@ export type ListResp<T> = { items: T[]; meta?: PaginationMeta; total?: number; p
 export type ProductQuery = {
   q?: string; marca?: string; categoria?: string; tag?: string;
   minPrice?: number; maxPrice?: number; sort?: ProductSort; page?: number; perPage?: number;
+  destacado?: boolean;
 };
 export type ProductListItem = {
   id: string; slug: string; titulo: string; precio: number;
@@ -101,6 +102,7 @@ function cleanProductQuery(q: Partial<ProductQuery>): Record<string, string> {
   push('q', q.q); push('marca', q.marca); push('categoria', q.categoria); push('tag', q.tag);
   const minP = clampInt(q.minPrice, 0); const maxP = clampInt(q.maxPrice, 0);
   if (minP !== undefined) out.minPrice = String(minP); if (maxP !== undefined) out.maxPrice = String(maxP);
+  if (q.destacado) out.destacado = 'true';
   if (q.sort && (ALLOWED_PRODUCT_SORT as readonly string[]).includes(q.sort)) out.sort = q.sort; else if (q.sort === undefined) out.sort = 'relevancia';
   const page = clampInt(q.page, 1); const perPage = clampInt(q.perPage, 1, 100);
   if (page !== undefined) out.page = String(page); if (perPage !== undefined) out.perPage = String(perPage);
