@@ -88,10 +88,4 @@ import { ScheduleModule } from '@nestjs/schedule';
     },
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(StaticFilesMiddleware)
-      .forRoutes({ path: '*path', method: RequestMethod.GET });
-  }
-}
+export class AppModule {}

@@ -24,8 +24,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.30.1",
   "devDependencies": {
+    "lefthook": "^2.1.1",
     "turbo": "^2.5.6",
     "typescript": "^5.9.2"
   }

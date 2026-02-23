@@ -135,22 +135,15 @@ export class MediaStorageService {
     const thumbName = `${safeBase}-${hash}-thumb.webp`;
     const thumbPath = path.join(thumbsFolder, thumbName);
 
-    // Optimizaciones:
-    // 1. Usar Promise.all para paralelo
-    // 2. Usar toFile directo (stream a disco) en lugar de toBuffer
-    // 3. Usar clone() si es necesario (sharp lo maneja bien con multiples pipelines)
-
     const pipeline = sharp(input);
 
     await Promise.all([
-      // Imagen principal
       pipeline
         .clone()
         .resize({ width, withoutEnlargement: true })
-        .webp({ quality: 80, effort: 2 }) // effort bajo para velocidad
+        .webp({ quality: 80, effort: 2 })
         .toFile(fullPath),
 
-      // Thumbnail
       pipeline
         .clone()
         .resize({ width: 320, withoutEnlargement: true })
@@ -158,14 +151,10 @@ export class MediaStorageService {
         .toFile(thumbPath),
     ]);
 
-    // Normalizar ruta relativa para DB (siempre forward slashes)
-    // Guardamos relativo a 'uploads' si queremos consistencia,
-    // O relativo a publicRoot (ej: uploads/producto/foto.webp)
     const relativePath = path
       .join(folderRelative, filename)
       .replace(/\\/g, '/');
 
-    // La URL pública directa
     const url = `/${relativePath}`;
 
     return {
@@ -191,7 +180,6 @@ export class MediaStorageService {
       const thumbPath = path.join(this.publicRoot, dir, 'thumbs', thumbName);
       await fs.rm(thumbPath, { force: true });
 
-      // Intentar borrar carpeta thumbs si quedó vacía (opcional, pero limpio)
       const thumbsDir = path.join(this.publicRoot, dir, 'thumbs');
       try {
         const files = await fs.readdir(thumbsDir);
@@ -210,7 +198,6 @@ export class MediaStorageService {
     await this.delete(relativePath);
 
     // 2. Borrar assets derivados
-    // Asumimos estructura estándar: video en uploads/media, assets en uploads/media o uploads/thumbnails
     const dir = path.dirname(relativePath);
     const filename = path.basename(relativePath);
     const baseName = filename.replace(/\.[^.]+$/, '');
@@ -240,7 +227,6 @@ export class MediaStorageService {
   }
 
   // ---------- VIDEO: (VIEJO) buffer -> tmp -> ffmpeg ----------
-  // Lo dejamos por compatibilidad. Para 8GB NO es ideal.
   async saveCompressedVideo(
     file: {
       buffer: Buffer;
@@ -295,7 +281,6 @@ export class MediaStorageService {
 
     await fs.writeFile(tmpInputPath, file.buffer);
 
-    // log de tamaño tmp
     try {
       const st = await fs.stat(tmpInputPath);
       this.logger.log(
@@ -323,7 +308,6 @@ export class MediaStorageService {
         }`,
       );
 
-      // fallback: guardar crudo desde buffer (esto sí usa RAM, por eso es “viejo”)
       return this.saveRawFile(file, opts);
     } finally {
       if (transcodeOk || !this.keepTmpOnFfmpegError) {
@@ -372,7 +356,6 @@ export class MediaStorageService {
   ): Promise<{ path: string; url: string; originalName: string }> {
     const { clientId } = opts;
 
-    // Diagnóstico: tamaño real en disco vs multer
     try {
       const st = await fs.stat(file.path);
       this.logger.log(
@@ -396,7 +379,6 @@ export class MediaStorageService {
     const finalMp4Name = `${safeBase}-${uniq}.mp4`;
     const finalMp4Path = path.join(targetDir, finalMp4Name);
 
-    // Si transcode está off o es chico -> mover raw
     if (
       this.transcodeMode === 'off' ||
       file.size < this.minSizeForTranscodeBytes
@@ -406,13 +388,8 @@ export class MediaStorageService {
 
       await this.safeMoveFile(file.path, rawFinalPath);
 
-      // Si no hubo transcode, emitimos 100% y done si aplica
       if (clientId) {
         this.videoGateway.emitProgress(clientId, 100);
-        // No emitimos DONE aquí porque podría haber paso 2 (assets)
-        // Pero como es raw, quizás no haya paso 2?
-        // Asumiremos que el controller orquesta.
-        // En el modo raw, la compresión termina instantáneamente.
       }
 
       const relativePath = path
@@ -436,11 +413,9 @@ export class MediaStorageService {
       );
     }
 
-    // Notificar etapa: Compresión
     this.videoGateway.emitStage(clientId, 'compressing');
     this.videoGateway.emitProgress(clientId, 0);
 
-    // Intentar transcode desde disco
     try {
       await this.runFfmpegFluent(
         file.path,
@@ -452,7 +427,6 @@ export class MediaStorageService {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Fallo la transcodificación (disk). Error: ${msg}`);
 
-      // fallback: guardar crudo (pero preservar tmp si está hardcodeado)
       const rawExt = path.extname(file.originalname) || '.mp4';
       const rawFinalPath = path.join(targetDir, `${safeBase}-${uniq}${rawExt}`);
 
@@ -460,7 +434,7 @@ export class MediaStorageService {
         this.logger.warn(
           `[TMP(disk)] keepTmpOnFfmpegError=true -> tmp preservado: ${file.path}`,
         );
-        await this.safeCopyFile(file.path, rawFinalPath); // copia y deja tmp
+        await this.safeCopyFile(file.path, rawFinalPath);
       } else {
         await this.safeMoveFile(file.path, rawFinalPath);
       }
@@ -475,7 +449,6 @@ export class MediaStorageService {
       };
     }
 
-    // Transcode OK -> borrar tmp
     try {
       await fs.unlink(file.path);
     } catch {
@@ -498,26 +471,25 @@ export class MediaStorageService {
     clientId?: string,
     durationSeconds?: number | null,
   ): Promise<void> {
-    // Threads: 0 = auto (usa todos los cores). Si el usuario define ENV, lo respetamos.
-    // Antes limitábamos a 2, lo cual causa "bajo uso de CPU" y lentitud.
     const threads = process.env.FFMPEG_THREADS
       ? Number(process.env.FFMPEG_THREADS)
       : 0;
 
     return new Promise((resolve, reject) => {
       this.logger.log(
-        `Iniciando ffmpeg (fluent) → ${outputPath} con threads=${threads === 0 ? 'auto' : threads} (clientId=${clientId})`,
+        `Iniciando ffmpeg (fluent) → ${outputPath} con threads=${
+          threads === 0 ? 'auto' : threads
+        } (clientId=${clientId})`,
       );
 
       ffmpeg(inputPath)
         .videoCodec('libx264')
         .audioCodec('aac')
         .outputOptions([
-          // Scale con algoritmo rápido (bilinear) y mantén FPS nativo para evitar overhead de conversión
           '-vf scale=-2:720:flags=fast_bilinear',
-          '-preset superfast', // Balance ideal entre velocidad y tamaño (ultrafast genera archivos muy grandes)
-          '-crf 26', // Calidad visualmente muy buena para web (antes 30 era un poco baja)
-          '-b:a 128k', // Audio un poco mejor (128k estándar)
+          '-preset superfast',
+          '-crf 26',
+          '-b:a 128k',
           '-movflags +faststart',
           `-threads ${threads}`,
         ])
@@ -739,8 +711,6 @@ export class MediaStorageService {
     // 3. Generar VTT
     let vttContent = 'WEBVTT\n\n';
 
-    // Usar solo el nombre del archivo para la referencia dentro del VTT
-    // (asumiendo que vtt y sprite están en la misma carpeta o servidos igual)
     const spriteBasename = path.basename(spriteName);
 
     for (let i = 0; i < totalImages; i++) {
@@ -754,7 +724,6 @@ export class MediaStorageService {
       const y = Math.floor(i / cols) * height;
 
       vttContent += `${startStr} --> ${endStr}\n`;
-      // Referencia relativa simple
       vttContent += `${spriteBasename}#xywh=${x},${y},${width},${height}\n\n`;
     }
 
@@ -764,10 +733,10 @@ export class MediaStorageService {
     // Al final de todo (sprite + vtt), emitimos DONE
     this.videoGateway.emitDone(clientId);
 
-    // Construir URLs públicas
+    // ✅ CAMBIO: publicar directo por Nginx desde /uploads
     return {
-      vttUrl: `/api/media/assets/${path.basename(vttPath)}`,
-      spriteUrl: `/api/media/assets/${path.basename(spritePath)}`,
+      vttUrl: `/uploads/media/${path.basename(vttPath)}`,
+      spriteUrl: `/uploads/media/${path.basename(spritePath)}`,
     };
   }
 
@@ -800,17 +769,13 @@ export class MediaStorageService {
           .run();
       });
 
-      const relativePath = path.join(outputDir, thumbName).replace(/\\/g, '/');
-      // Ajustar según prefijo de API. Asumimos /media/ para archivos estáticos si outputDir es uploads/thumbnails
-      // O si hay un controller específico. El código original usaba /api/media/thumbnails/
-      // Vamos a usar una ruta relativa estándar a public o la que usaba el controller.
-      // El controller espera una URL absoluta o relativa a la raiz del sitio.
-      // En saveImageWebp retorna: /api/media/images/...
-      // Aquí retornaremos: /api/media/thumbnails/nombre-archivo
-      return { thumbUrl: `/api/media/thumbnails/${thumbName}` };
+      // ✅ CAMBIO: publicar directo por Nginx desde /uploads
+      return { thumbUrl: `/uploads/thumbnails/${thumbName}` };
     } catch (e) {
       this.logger.error(
-        `Error generando thumbnail de video: ${e instanceof Error ? e.message : String(e)}`,
+        `Error generando thumbnail de video: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
       );
       return { thumbUrl: null };
     }
@@ -820,7 +785,6 @@ export class MediaStorageService {
     return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(path, (err: Error | null, metadata: any) => {
         if (err) return reject(err);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const val = metadata?.format?.duration;
         const duration = parseFloat(val);
         resolve(isNaN(duration) ? 0 : duration);

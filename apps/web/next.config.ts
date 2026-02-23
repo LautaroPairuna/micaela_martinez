@@ -46,10 +46,9 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 
-  // 4) Rewrites usando la URL ya parseada
+  // 4) Rewrites using the parsed URL
   async rewrites() {
     return [
-      { source: '/api/:path*',                  destination: `${U.origin}/api/:path*` },
       { source: '/api/media/images/:path*',     destination: `${U.origin}/api/media/images/:path*` },
       { source: '/api/media/public/:path*',     destination: `${U.origin}/api/media/images/:path*` },
       // LEGACY IMAGES: Si alguien pide /images/, redirigir a /uploads/ si no existe, o intentar servir
@@ -73,10 +72,20 @@ const nextConfig: NextConfig = {
       // La regla de abajo puede interferir si no se matchea bien.
       { source: '/socket.io/:path*',            destination: `${U.origin}/socket.io/:path*` },
       { source: '/_next/image',                 destination: '/_next/image' },
+      { source: '/api/:path*',                  destination: `${U.origin}/api/:path*` },
     ];
   },
 
   serverExternalPackages: ['sharp'],
+
+  // Permitir acceso desde la red local durante desarrollo (Nivel raíz en Next.js recientes)
+  // experimental: {
+  //   allowedDevOrigins: [
+  //     'localhost:3000',
+  //     '127.0.0.1:3000',
+  //     '192.168.100.18:3000',
+  //   ],
+  // },
 
   // Silenciar advertencia de root en workspaces monorepo
   outputFileTracingRoot: path.resolve(__dirname, '..', '..'),

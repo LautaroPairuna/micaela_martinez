@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { SubscriptionCancelButton } from '@/components/subscription/SubscriptionCancelButton';
-import { GraduationCap, Clock, PlayCircle, BookOpen, Award, TrendingUp } from 'lucide-react';
-import { useMemo, useCallback } from 'react';
+import { Clock, PlayCircle, BookOpen, Award, Loader2 } from 'lucide-react';
+import { useMemo, useCallback, useState } from 'react';
+import { toast } from 'react-toastify';
 
 type EnrollmentProgreso = {
   porcentaje?: number | null;
@@ -77,7 +78,7 @@ export function EnrollmentCard({
   courseModules = []
 }: EnrollmentCardProps) {
   const course = enrollment.curso ?? null;
-  const isCompleted = enrollment.estado === 'DESACTIVADA';
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Usar la misma lógica que CoursePlayer para procesar el progreso
   const serverProgress = useMemo(() => {
@@ -188,6 +189,9 @@ export function EnrollmentCard({
   }, [course?.modulos, serverProgress, courseModules, lessonProgress, getLessonProgressKey, enrollment.id, logProgressSummary]);
 
   const progressPct = realTimeProgress.percentage;
+  
+  // Estado completado: explícito o 100% (o todas las lecciones completadas)
+  const isCompleted = enrollment.estado === 'DESACTIVADA' || progressPct >= 100 || (realTimeProgress.totalLessons > 0 && realTimeProgress.completedLessons >= realTimeProgress.totalLessons);
 
   // Datos de suscripción (cuando viene desde progreso.subscription)
   const progreso = enrollment.progreso as EnrollmentProgreso;
@@ -196,8 +200,49 @@ export function EnrollmentCard({
   const durationMonths = Number(subscription?.duration ?? 3);
   const diasTotales = Number.isFinite(durationMonths) ? durationMonths * 30 : 90; // fallback
 
+  const handleDownloadCertificate = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isDownloading) return;
+    setIsDownloading(true);
+
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      
+      const response = await fetch(`/api/certificates/course/${enrollment.cursoId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'No se pudo descargar el certificado');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Certificado-${course?.slug || 'curso'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Certificado descargado con éxito');
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Error al descargar');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [enrollment.cursoId, course?.slug, isDownloading]);
+
   const ctaHref = useMemo(() => {
-    if (isCompleted || !course?.slug) return `/cursos/${course?.slug ?? enrollment.cursoId}`;
+    // Si está completado, redirigir al player para repasar
+    if (isCompleted && course?.slug) return `/cursos/player/${course.slug}`;
+    // Si falta el slug, redirigir a la ficha del curso (fallback)
+    if (!course?.slug) return `/cursos/${enrollment.cursoId}`;
+    
     const modulesToUse = (course?.modulos && course.modulos.length > 0)
       ? course.modulos
       : (courseModules && courseModules.length > 0 ? courseModules : []);
@@ -317,26 +362,47 @@ export function EnrollmentCard({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-6">
-          <Link
-            href={ctaHref}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-bold text-sm shadow-lg shadow-[var(--gold)]/10 hover:shadow-[var(--gold)]/30 hover:-translate-y-0.5 transition-all duration-300 group/btn"
-          >
-            {isCompleted ? (
-              <>
-                <Award className="h-4 w-4" />
-                Ver Certificado
-              </>
-            ) : (
-              <>
-                <span className="relative flex h-2 w-2 mr-1">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-30"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-black/80"></span>
-                </span>
-                Continuar aprendiendo
-              </>
-            )}
-          </Link>
+        <div className="mt-6 space-y-2">
+          {isCompleted ? (
+            <>
+              <button
+                onClick={handleDownloadCertificate}
+                disabled={isDownloading}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-bold text-sm shadow-lg shadow-[var(--gold)]/10 hover:shadow-[var(--gold)]/30 hover:-translate-y-0.5 transition-all duration-300 group/btn disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Descargando...
+                  </>
+                ) : (
+                  <>
+                    <Award className="h-4 w-4" />
+                    Descargar Certificado
+                  </>
+                )}
+              </button>
+              
+              <Link
+                href={ctaHref}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 text-zinc-400 hover:text-white font-medium text-xs transition-all duration-200 border border-white/5 hover:border-white/10"
+              >
+                <PlayCircle className="h-3.5 w-3.5" />
+                Repasar curso
+              </Link>
+            </>
+          ) : (
+            <Link
+              href={ctaHref}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--gold)] hover:bg-[var(--gold-200)] text-black font-bold text-sm shadow-lg shadow-[var(--gold)]/10 hover:shadow-[var(--gold)]/30 hover:-translate-y-0.5 transition-all duration-300 group/btn"
+            >
+              <span className="relative flex h-2 w-2 mr-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-30"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-black/80"></span>
+              </span>
+              {progressPct > 0 ? 'Continuar aprendiendo' : 'Empezar'}
+            </Link>
+          )}
         </div>
       </CardBody>
     </Card>
