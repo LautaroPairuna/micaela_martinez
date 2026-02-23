@@ -1,10 +1,15 @@
 export const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
+// URL base del backend para evitar pasar por el proxy de Next.js
+// Si existe, se usará para construir URLs absolutas.
+const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || '')
+  .replace(/\/api\/?$/, ''); // Quitar /api del final si existe
+
 /**
  * Normaliza una referencia de imagen para que funcione con el rewrite de Next.
  * Soporta:
  * - URLs absolutas (http/https)
- * - Rutas nuevas (/uploads/...) -> inyecta sufijo -thumb
+ * - Rutas nuevas (/uploads/...) -> inyecta sufijo -thumb y prefijo de backend
  * - Rutas viejas (/images/...) -> inyecta carpeta /thumbs/
  * - Solo nombre de archivo -> asume /images/producto/ (legacy)
  */
@@ -17,21 +22,29 @@ export function resolveProductThumb(src?: string | null): string | undefined {
   // NUEVO: Soporte para /uploads/
   // Convención: /uploads/{resource}/thumbs/{filename}-thumb.webp
   if (src.startsWith('/uploads/')) {
-    // Si ya tiene /thumbs/ en la ruta, devolver tal cual
-    if (src.includes('/thumbs/')) return src;
-
-    // Si no tiene /thumbs/, inyectarlo antes del archivo
-    // ej: /uploads/producto/foto.webp -> /uploads/producto/thumbs/foto-thumb.webp
-    const parts = src.split('/');
-    const filename = parts.pop();
-    if (!filename) return src;
+    let finalPath = src;
     
-    // Si el filename ya es un thumb (por error o legacy reciente), no duplicar sufijo
-    const thumbName = filename.includes('-thumb.') 
-      ? filename 
-      : filename.replace(/(\.[^.]+)$/, '-thumb$1');
-
-    return [...parts, 'thumbs', thumbName].join('/');
+    // Si ya tiene /thumbs/ en la ruta, usar tal cual
+    if (!src.includes('/thumbs/')) {
+      // Si no tiene /thumbs/, inyectarlo antes del archivo
+      // ej: /uploads/producto/foto.webp -> /uploads/producto/thumbs/foto-thumb.webp
+      const parts = src.split('/');
+      const filename = parts.pop();
+      if (filename) {
+        // Si el filename ya es un thumb (por error o legacy reciente), no duplicar sufijo
+        const thumbName = filename.includes('-thumb.') 
+          ? filename 
+          : filename.replace(/(\.[^.]+)$/, '-thumb$1');
+    
+        finalPath = [...parts, 'thumbs', thumbName].join('/');
+      }
+    }
+    
+    // Si tenemos URL de backend configurada, retornamos absoluta para evitar proxy
+    if (BACKEND_URL) {
+      return `${BACKEND_URL}${finalPath}`;
+    }
+    return finalPath;
   }
 
   // LEGACY: Soporte para /images/ (estructura vieja con carpeta /thumbs/)
@@ -68,17 +81,25 @@ export function resolveCourseThumb(src?: string | null): string | undefined {
 
   // NUEVO: /uploads/ (ej: /uploads/curso/file.webp -> /uploads/curso/thumbs/file-thumb.webp)
   if (src.startsWith('/uploads/')) {
-    if (src.includes('/thumbs/')) return src;
+    let finalPath = src;
+
+    if (!src.includes('/thumbs/')) {
+      const parts = src.split('/');
+      const filename = parts.pop();
+      if (filename) {
+        const thumbName = filename.includes('-thumb.') 
+          ? filename 
+          : filename.replace(/(\.[^.]+)$/, '-thumb$1');
+  
+        finalPath = [...parts, 'thumbs', thumbName].join('/');
+      }
+    }
     
-    const parts = src.split('/');
-    const filename = parts.pop();
-    if (!filename) return src;
-
-    const thumbName = filename.includes('-thumb.') 
-      ? filename 
-      : filename.replace(/(\.[^.]+)$/, '-thumb$1');
-
-    return [...parts, 'thumbs', thumbName].join('/');
+    // Si tenemos URL de backend configurada, retornamos absoluta para evitar proxy
+    if (BACKEND_URL) {
+      return `${BACKEND_URL}${finalPath}`;
+    }
+    return finalPath;
   }
 
   // LEGACY: /images/curso/
@@ -112,17 +133,19 @@ export function resolveResourceThumb(resource: string, src?: string | null): str
 
   // NUEVO: /uploads/
   if (src.startsWith('/uploads/')) {
-    if (src.includes('/thumbs/')) return src;
-    
-    const parts = src.split('/');
-    const filename = parts.pop();
-    if (!filename) return src;
-
-    const thumbName = filename.includes('-thumb.') 
-      ? filename 
-      : filename.replace(/(\.[^.]+)$/, '-thumb$1');
-
-    return [...parts, 'thumbs', thumbName].join('/');
+    let finalPath = src;
+    if (!src.includes('/thumbs/')) {
+      const parts = src.split('/');
+      const filename = parts.pop();
+      if (filename) {
+        const thumbName = filename.includes('-thumb.') 
+          ? filename 
+          : filename.replace(/(\.[^.]+)$/, '-thumb$1');
+        finalPath = [...parts, 'thumbs', thumbName].join('/');
+      }
+    }
+    if (BACKEND_URL) return `${BACKEND_URL}${finalPath}`;
+    return finalPath;
   }
 
   // Solo filename o path relativo: asumimos nuevo sistema /uploads/recurso/thumbs/...
@@ -133,7 +156,9 @@ export function resolveResourceThumb(resource: string, src?: string | null): str
     ? filename
     : filename.replace(/(\.[^.]+)$/, '-thumb$1');
 
-  return `/uploads/${resLower}/thumbs/${thumbName}`;
+  const finalPath = `/uploads/${resLower}/thumbs/${thumbName}`;
+  if (BACKEND_URL) return `${BACKEND_URL}${finalPath}`;
+  return finalPath;
 }
 
 /** Para casos donde quieras el original (detalle de producto, zoom, etc.) */
@@ -143,7 +168,11 @@ export function resolveProductOriginal(src?: string | null): string | undefined 
 
   // NUEVO
   if (src.startsWith('/uploads/')) {
-    return src.replace('-thumb.', '.');
+    const finalPath = src.replace('-thumb.', '.');
+    if (BACKEND_URL) {
+      return `${BACKEND_URL}${finalPath}`;
+    }
+    return finalPath;
   }
 
   // LEGACY
