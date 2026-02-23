@@ -32,15 +32,15 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           className={[
             'h-4 w-4 rounded border border-gray-300 bg-white',
             'flex items-center justify-center',
-            'focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-0',
-            checked ? 'bg-blue-600 border-blue-600' : 'bg-white',
+            'focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-0',
+            checked ? 'bg-black border-black' : 'bg-white',
             disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             className,
           ].join(' ')}
           onClick={() => !disabled && onCheckedChange?.(!checked)}
         >
           {checked && (
-            <Check className="h-3 w-3 text-white" strokeWidth={3} />
+            <Check className="h-3 w-3 text-green-500" strokeWidth={3} />
           )}
         </div>
       </div>

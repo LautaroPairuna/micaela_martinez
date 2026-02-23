@@ -1619,7 +1619,7 @@ export function AdminResourceClient({
                 .filter((item: any) => selectedIds.has(String(item.id)))
                 .map((item: any) => {
                    // Intentar encontrar un nombre legible
-                   const name = item.name || item.title || item.username || item.email || item.slug || 'Elemento sin nombre';
+                   const name = item.nombre || item.name || item.title || item.username || item.email || item.slug || 'Elemento sin nombre';
                    return (
                      <li key={item.id} className="text-xs text-slate-300 flex justify-between items-center px-2 py-1 hover:bg-[#222] rounded border-b border-[#222] last:border-0">
                        <span className="truncate mr-2" title={String(name)}>{name}</span>
