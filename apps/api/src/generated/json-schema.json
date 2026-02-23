@@ -775,12 +775,6 @@
         "nombre": {
           "type": "string"
         },
-        "descripcion": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "imagen": {
           "type": [
             "string",

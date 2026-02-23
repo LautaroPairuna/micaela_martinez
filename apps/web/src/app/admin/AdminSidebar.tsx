@@ -16,6 +16,7 @@ import {
   User,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueries } from '@tanstack/react-query';
 
 const HIDDEN_RESOURCES = [
   'AuditLog',
@@ -152,41 +153,36 @@ export function AdminSidebar({ resources }: AdminSidebarProps) {
 
   const isActiveHref = (href: string) => pathname.startsWith(href);
 
-  // Contadores
-  const [counts, setCounts] = useState<Record<string, number | null>>({});
+  // Contadores con TanStack Query
+  const queries = useQueries({
+    queries: visibleResources.map((r) => ({
+      queryKey: ['admin-resource-count', r.tableName],
+      queryFn: async () => {
+        const base = API_BASE || '';
+        const url = `${base}/admin/resources/${r.tableName}?page=1&pageSize=1`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const total = json?.pagination?.totalItems;
+        return typeof total === 'number' ? total : null;
+      },
+      refetchInterval: 5000, // Actualizar cada 5s
+      staleTime: 4000,
+    })),
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCounts() {
-      try {
-        const entries = await Promise.all(
-          visibleResources.map(async (r) => {
-            try {
-              const base = API_BASE || '';
-              const url = `${base}/admin/resources/${r.tableName}?page=1&pageSize=1`;
-              const res = await fetch(url, { cache: 'no-store' });
-              if (!res.ok) return [r.tableName, null] as const;
-
-              const json = await res.json();
-              const total = json?.pagination?.totalItems;
-              return [r.tableName, typeof total === 'number' ? total : null] as const;
-            } catch {
-              return [r.tableName, null] as const;
-            }
-          }),
-        );
-        if (!cancelled) setCounts(Object.fromEntries(entries));
-      } catch {
-        /* ignore */
+  const counts = useMemo(() => {
+    const map: Record<string, number | null> = {};
+    visibleResources.forEach((r, i) => {
+      const q = queries[i];
+      if (typeof q.data === 'number') {
+        map[r.tableName] = q.data;
+      } else {
+        map[r.tableName] = null;
       }
-    }
-
-    if (visibleResources.length > 0) loadCounts();
-    return () => {
-      cancelled = true;
-    };
-  }, [visibleResources]);
+    });
+    return map;
+  }, [visibleResources, queries]);
 
   const renderCount = (tableName: string) => {
     const value = counts[tableName];

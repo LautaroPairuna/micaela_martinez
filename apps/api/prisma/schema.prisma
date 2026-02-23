@@ -242,7 +242,6 @@ model Categoria {
   id          Int      @id @default(autoincrement())
   slug        String   @unique @db.VarChar(128)
   nombre      String
-  descripcion String?  @db.VarChar(512)
   imagen      String?  @map("imagen_archivo") @db.VarChar(255)
   activa      Boolean  @default(true)
   creadoEn    DateTime @default(now()) @map("creado_en")

@@ -1,3 +1,4 @@
+
 /// <reference types="node" />
 import 'dotenv/config';
 import {
@@ -53,6 +54,18 @@ const E = {
 };
 
 /* ───────── Helpers ───────── */
+
+function simpleSlug(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+}
 
 const upsertRoleBySlug = (slug: string, name: string) =>
   prisma.role.upsert({
@@ -301,204 +314,185 @@ async function main() {
     });
   }
 
-  // ───────────────── Categorías (lista plana)
-  const catMaqu = await upsertCategoriaBySlug('maquillaje', 'Maquillaje');
-  await upsertCategoriaBySlug('labios', 'Labios');
-  await upsertCategoriaBySlug('ojos', 'Ojos');
-  await upsertCategoriaBySlug('cejas', 'Cejas');
-  await upsertCategoriaBySlug('herramientas', 'Herramientas');
+  // ───────────────── Categorías Reales
+  await upsertCategoriaBySlug('pestanas', 'Pestañas');
+  await upsertCategoriaBySlug('pestanas-tecnologicas', 'Pestañas Tecnológicas');
+  await upsertCategoriaBySlug('adhesivos', 'Adhesivos y Preparadores');
+  await upsertCategoriaBySlug('herramientas-pestanas', 'Herramientas y Accesorios');
+  await upsertCategoriaBySlug('cosmetica', 'Cosmética Profesional');
+  await upsertCategoriaBySlug('cuidado-facial', 'Cuidado Facial');
+  await upsertCategoriaBySlug('cuidado-corporal', 'Cuidado Corporal');
+  await upsertCategoriaBySlug('proteccion-solar', 'Protección Solar');
 
-  const catSkin = await upsertCategoriaBySlug('skincare', 'Skincare');
-  await upsertCategoriaBySlug('limpieza', 'Limpieza');
-  await upsertCategoriaBySlug('tratamiento', 'Tratamiento');
-  await upsertCategoriaBySlug('proteccion', 'Protección Solar');
+  // ───────────────── Marcas Reales
+  await upsertMarcaBySlug('nagaraku', 'Nagaraku');
+  await upsertMarcaBySlug('exel', 'Exel');
 
-  // ───────────────── Marcas
-  await upsertMarcaBySlug('loreal', "L'Oréal");
-  await upsertMarcaBySlug('cerave', 'CeraVe');
-  await upsertMarcaBySlug('natura', 'Natura');
-  await upsertMarcaBySlug('maybelline', 'Maybelline');
-  await upsertMarcaBySlug('neutrogena', 'Neutrogena');
-  await upsertMarcaBySlug('revlon', 'Revlon');
-  await upsertMarcaBySlug('elf', 'e.l.f.');
-  await upsertMarcaBySlug('real-techniques', 'Real Techniques');
+  // ───────────────── Productos Reales
+  const productosData = [
+    // NAGARAKU - Pestañas
+    {
+      titulo: 'Nagaraku 4D -U- 0.07 «D» MIX 8-15mm',
+      precio: 9890,
+      stock: 45,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'pestanas-tecnologicas',
+      descripcion: 'Extensiones de pestañas Nagaraku, fabricadas en fibra especial para un acabado natural y ligero. Curva D, grosor 0.07 mm, y mix de longitudes (8 a 15 mm). Incluye 12 líneas por bandeja.',
+    },
+    {
+      titulo: 'Nagaraku 3D -U- 0.07 «D» MIX 8-15mm',
+      precio: 14600,
+      stock: 30,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'pestanas-tecnologicas',
+      descripcion: 'Extensiones de pestañas volumen 3D pre-armado. Ideales para lograr volumen y definición profesional en cada aplicación de manera rápida.',
+    },
+    {
+      titulo: 'Nagaraku YY – 0.05 Curva D – Mix',
+      precio: 6300,
+      stock: 60,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'pestanas-tecnologicas',
+      descripcion: 'Pestañas tecnológicas formato YY (Y Shape). Acabado trenzado suave que otorga volumen con un look texturizado único. Grosor 0.05 para máxima ligereza.',
+    },
+    {
+      titulo: 'Nagaraku W Shape 3D – 0.07 Mix',
+      precio: 10500,
+      stock: 25,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'pestanas-tecnologicas',
+      descripcion: 'Pestañas tecnológicas formato W (Trébol). Tres puntas por base para un volumen rápido y eficaz. Fibra suave y ligera.',
+    },
+    {
+      titulo: 'Nagaraku Ellipse Flat - Mate 0.15 Mix',
+      precio: 9000,
+      stock: 40,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'pestanas-tecnologicas',
+      descripcion: 'Pestañas planas (Ellipse) con acabado mate. Base aplanada para mejor adherencia y menor peso. Apariencia de mayor grosor sin dañar la pestaña natural.',
+    },
 
-  // ───────────────── Productos (11)
-  const prodId_prueba = await upsertProductoGetId({
-    slug: 'producto-de-prueba',
-    titulo: 'Producto de Prueba',
-    precio: 1000,
-    stock: 100,
-    publicado: true,
-    destacado: true,
-    imagen: 'producto_prueba.jpg',
-    descripcionMD: 'Producto de prueba con precio 1000 para testing de pagos.',
-    descuento: 20,
-    marcaSlug: 'loreal',
-    categoriaSlug: 'maquillaje',
-  });
+    // NAGARAKU - Adhesivos y Herramientas
+    {
+      titulo: 'Adhesivo Nagaraku Premium 5ml',
+      precio: 18500,
+      stock: 15,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'adhesivos',
+      descripcion: 'Pegamento profesional para extensiones de pestañas. Secado rápido (1-2 seg) y retención prolongada de hasta 6 semanas. Baja emisión de vapores.',
+    },
+    {
+      titulo: 'Removedor en Crema Nagaraku (Green) 5g',
+      precio: 10200,
+      stock: 20,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'adhesivos',
+      descripcion: 'Removedor de adhesivo en crema, fórmula suave. No irrita, ideal para pieles sensibles. Color verde para fácil visualización. Acción en 3-5 minutos.',
+    },
+    {
+      titulo: 'Pinza Nagaraku N-01 Recta (Aislar)',
+      precio: 5500,
+      stock: 50,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'herramientas-pestanas',
+      descripcion: 'Pinza de acero inoxidable de alta precisión serie N. Punta recta fina ideal para aislar pestañas naturales con comodidad.',
+    },
+    {
+      titulo: 'Pinza Nagaraku N-02 Curva (Volumen)',
+      precio: 5800,
+      stock: 45,
+      marcaSlug: 'nagaraku',
+      categoriaSlug: 'herramientas-pestanas',
+      descripcion: 'Pinza curva de precisión para técnica de volumen y clásica. Agarre perfecto (sweet spot) para abanicos.',
+    },
 
-  const prodId_labial = await upsertProductoGetId({
-    slug: 'labial-mate-rojo',
-    titulo: 'Labial Mate Rojo',
-    precio: 15000,
-    stock: 120,
-    publicado: true,
-    destacado: true,
-    imagen: 'labial1.jpg',
-    descripcionMD: 'Labial mate de larga duración con acabado profesional.',
-    descuento: 15,
-    marcaSlug: 'loreal',
-    categoriaSlug: 'labios',
-  });
+    // EXEL - Facial
+    {
+      titulo: 'Gel Hidratante Reparador con Liposomas de Vitamina C',
+      precio: 23760,
+      stock: 12,
+      marcaSlug: 'exel',
+      categoriaSlug: 'cuidado-facial',
+      descripcion: 'Gel liviano antioxidante y reparador. Sus liposomas de Vitamina C penetran en profundidad mejorando la luminosidad y elasticidad de la piel.',
+    },
+    {
+      titulo: 'Máscara Facial Hidratante y Reparadora con ADN',
+      precio: 23200,
+      stock: 10,
+      marcaSlug: 'exel',
+      categoriaSlug: 'cuidado-facial',
+      descripcion: 'Máscara cremosa reparadora. Contiene ADN vegetal y Ácido Hialurónico para una hidratación profunda y efecto anti-age visible.',
+    },
+    {
+      titulo: 'Loción Herbácea Tonificante con Aloe Vera',
+      precio: 15400,
+      stock: 25,
+      marcaSlug: 'exel',
+      categoriaSlug: 'cuidado-facial',
+      descripcion: 'Tónico descongestivo y humectante. Ideal para finalizar la limpieza facial y equilibrar el pH de la piel. Para todo tipo de pieles.',
+    },
+    {
+      titulo: 'Emulsión de Limpieza con Vitamina E',
+      precio: 12500,
+      stock: 30,
+      marcaSlug: 'exel',
+      categoriaSlug: 'cuidado-facial',
+      descripcion: 'Leche de limpieza suave que elimina maquillaje e impurezas sin resecar. Enriquecida con Vitamina E antioxidante.',
+    },
 
-  const prodId_crema = await upsertProductoGetId({
-    slug: 'crema-hidratante',
-    titulo: 'Crema Hidratante Diario',
-    precio: 22000,
-    stock: 80,
-    publicado: true,
-    destacado: false,
-    imagen: 'crema1.jpg',
-    descripcionMD: 'Hidratación 24h con ceramidas.',
-    marcaSlug: 'cerave',
-    categoriaSlug: 'tratamiento',
-  });
+    // EXEL - Corporal y Solar
+    {
+      titulo: 'Crema Corporal Reafirmante con Q10',
+      precio: 28900,
+      stock: 8,
+      marcaSlug: 'exel',
+      categoriaSlug: 'cuidado-corporal',
+      descripcion: 'Emulsión corporal formulada para mejorar la firmeza y elasticidad de la piel. Coenzima Q10 y Centella Asiática.',
+    },
+    {
+      titulo: 'Gel Neutro Conductior 1kg',
+      precio: 8500,
+      stock: 50,
+      marcaSlug: 'exel',
+      categoriaSlug: 'cuidado-corporal',
+      descripcion: 'Gel base neutro de alta viscosidad para aparatología estética (ultrasonido, radiofrecuencia). Hipoalergénico y soluble en agua.',
+    },
+    {
+      titulo: 'Protector Solar Pantalla FPS 60',
+      precio: 19800,
+      stock: 18,
+      marcaSlug: 'exel',
+      categoriaSlug: 'proteccion-solar',
+      descripcion: 'Pantalla solar de muy alta protección. Filtros UVA/UVB de amplio espectro. Textura no grasa, toque seco. Resistente al agua.',
+    },
+  ];
 
-  const prodId_eyeliner = await upsertProductoGetId({
-    slug: 'delineador-liquido-precision',
-    titulo: 'Delineador Líquido Precisión',
-    precio: 12500,
-    stock: 150,
-    publicado: true,
-    destacado: true,
-    imagen: 'eyeliner1.jpg',
-    descripcionMD: 'Trazo ultra negro y resistente al agua.',
-    marcaSlug: 'maybelline',
-    categoriaSlug: 'ojos',
-  });
+  let demoProductId: number = 0;
+  let demoProductTitle = '';
+  let demoProductPrice = 0;
 
-  const prodId_mascara = await upsertProductoGetId({
-    slug: 'mascara-volumen-extremo',
-    titulo: 'Máscara Volumen Extremo',
-    precio: 18000,
-    stock: 95,
-    publicado: true,
-    destacado: true,
-    imagen: 'mascara1.jpg',
-    descripcionMD: 'Pestañas más largas y definidas en una pasada.',
-    marcaSlug: 'revlon',
-    categoriaSlug: 'ojos',
-  });
-
-  const prodId_gloss = await upsertProductoGetId({
-    slug: 'gloss-hidratante-brillo-natural',
-    titulo: 'Gloss Hidratante Brillo Natural',
-    precio: 11000,
-    stock: 140,
-    publicado: true,
-    destacado: false,
-    imagen: 'gloss1.jpg',
-    descripcionMD: 'Acabado jugoso sin sensación pegajosa.',
-    marcaSlug: 'elf',
-    categoriaSlug: 'labios',
-  });
-
-  const prodId_cleanser = await upsertProductoGetId({
-    slug: 'gel-limpieza-suave',
-    titulo: 'Gel de Limpieza Suave',
-    precio: 16000,
-    stock: 200,
-    publicado: true,
-    destacado: false,
-    imagen: 'cleanser1.jpg',
-    descripcionMD: 'Limpia sin resecar. Ideal uso diario.',
-    marcaSlug: 'neutrogena',
-    categoriaSlug: 'limpieza',
-  });
-
-  const prodId_serum = await upsertProductoGetId({
-    slug: 'serum-vitamina-c-10',
-    titulo: 'Sérum Vitamina C 10%',
-    precio: 32000,
-    stock: 60,
-    publicado: true,
-    destacado: true,
-    imagen: 'serum1.jpg',
-    descripcionMD: 'Ilumina y unifica el tono. Antioxidante diario.',
-    marcaSlug: 'natura',
-    categoriaSlug: 'tratamiento',
-  });
-
-  const prodId_sunscreen = await upsertProductoGetId({
-    slug: 'protector-solar-fps-50',
-    titulo: 'Protector Solar FPS 50',
-    precio: 28000,
-    stock: 110,
-    publicado: true,
-    destacado: true,
-    imagen: 'sunscreen1.jpg',
-    descripcionMD: 'Amplio espectro, textura ligera, sin rastro blanco.',
-    marcaSlug: 'neutrogena',
-    categoriaSlug: 'proteccion',
-  });
-
-  const prodId_toner = await upsertProductoGetId({
-    slug: 'tonico-hidratante',
-    titulo: 'Tónico Hidratante',
-    precio: 14000,
-    stock: 130,
-    publicado: true,
-    destacado: false,
-    imagen: 'toner1.jpg',
-    descripcionMD: 'Equilibra el pH y prepara la piel para el tratamiento.',
-    marcaSlug: 'cerave',
-    categoriaSlug: 'limpieza',
-  });
-
-  const prodId_brochas = await upsertProductoGetId({
-    slug: 'set-brochas-profesional-8',
-    titulo: 'Set de Brochas Profesional x8',
-    precio: 26000,
-    stock: 70,
-    publicado: true,
-    destacado: false,
-    imagen: 'brochas1.jpg',
-    descripcionMD: 'Cerdas sintéticas, mango ergonómico. Incluye estuche.',
-    marcaSlug: 'real-techniques',
-    categoriaSlug: 'herramientas',
-  });
-
-  // ───────────────── Imágenes (idempotente simple: borramos y recreamos por producto)
-  const resetImgs = async (productoId: number, data: { archivo: string; alt: string; orden: number }[]) => {
-    await prisma.productoImagen.deleteMany({ where: { productoId } });
-    if (!data.length) return;
-    await prisma.productoImagen.createMany({
-      data: data.map((d) => ({ productoId, ...d })),
-      skipDuplicates: true,
+  for (const p of productosData) {
+    const slug = simpleSlug(p.titulo);
+    const id = await upsertProductoGetId({
+      slug,
+      titulo: p.titulo,
+      precio: p.precio,
+      stock: p.stock,
+      publicado: true,
+      destacado: Math.random() > 0.7,
+      descripcionMD: p.descripcion,
+      marcaSlug: p.marcaSlug,
+      categoriaSlug: p.categoriaSlug,
+      imagen: null, // Sin imagen por ahora
     });
-  };
 
-  await resetImgs(prodId_labial, [
-    { archivo: 'labial1.jpg', alt: 'Labial Mate - foto 1', orden: 0 },
-    { archivo: 'labial2.jpg', alt: 'Labial Mate - foto 2', orden: 1 },
-  ]);
-  await resetImgs(prodId_crema, [{ archivo: 'crema1.jpg', alt: 'Crema Hidratante - foto 1', orden: 0 }]);
-  await resetImgs(prodId_eyeliner, [{ archivo: 'eyeliner1.jpg', alt: 'Delineador - foto 1', orden: 0 }]);
-  await resetImgs(prodId_mascara, [{ archivo: 'mascara1.jpg', alt: 'Máscara - foto 1', orden: 0 }]);
-  await resetImgs(prodId_gloss, [{ archivo: 'gloss1.jpg', alt: 'Gloss - foto 1', orden: 0 }]);
-  await resetImgs(prodId_cleanser, [{ archivo: 'cleanser1.jpg', alt: 'Gel de limpieza - foto 1', orden: 0 }]);
-  await resetImgs(prodId_serum, [{ archivo: 'serum1.jpg', alt: 'Sérum - foto 1', orden: 0 }]);
-  await resetImgs(prodId_sunscreen, [{ archivo: 'sunscreen1.jpg', alt: 'Protector solar - foto 1', orden: 0 }]);
-  await resetImgs(prodId_toner, [{ archivo: 'toner1.jpg', alt: 'Tónico - foto 1', orden: 0 }]);
-  await resetImgs(prodId_brochas, [{ archivo: 'brochas1.jpg', alt: 'Set de brochas - foto 1', orden: 0 }]);
-
-  // ───────────────── Favorito
-  await prisma.favorito.upsert({
-    where: { usuarioId_productoId: { usuarioId: clienteId, productoId: prodId_labial } },
-    update: {},
-    create: { usuarioId: clienteId, productoId: prodId_labial, creadoEn: new Date() } as any,
-  });
+    // Guardamos el primero como demo
+    if (!demoProductId) {
+      demoProductId = id;
+      demoProductTitle = p.titulo;
+      demoProductPrice = p.precio;
+    }
+  }
 
   // ───────────────── Cursos (incluye curso de prueba)
   const cursoPruebaId = await upsertCursoGetId({
@@ -906,6 +900,7 @@ async function main() {
                 'Difuminar bordes con brocha limpia',
                 'Usar sombra sin transición',
                 'Sellar con polvo suelto',
+                'Difuminar bordes con brocha limpia',
               ],
               respuestaCorrecta: 1,
               explicacion: 'El difuminado con brocha limpia evita cortes visibles.',
@@ -1001,11 +996,14 @@ async function main() {
   });
 
   // ───────────────── Reseña DEMO (producto)
-  await prisma.resena.upsert({
-    where: { productoId_usuarioId: { productoId: prodId_labial, usuarioId: clienteId } },
-    update: { puntaje: 5, comentario: 'Excelente pigmentación y duración.' },
-    create: { productoId: prodId_labial, usuarioId: clienteId, puntaje: 5, comentario: 'Excelente pigmentación y duración.', creadoEn: new Date() } as any,
-  });
+  // Usamos el primer producto real como demo si existe
+  if (demoProductId) {
+    await prisma.resena.upsert({
+      where: { productoId_usuarioId: { productoId: demoProductId, usuarioId: clienteId } },
+      update: { puntaje: 5, comentario: 'Excelente calidad, justo lo que necesitaba.' },
+      create: { productoId: demoProductId, usuarioId: clienteId, puntaje: 5, comentario: 'Excelente calidad, justo lo que necesitaba.', creadoEn: new Date() } as any,
+    });
+  }
 
   // ───────────────── Orden + Ítems
   const refPago = 'MP-REF-0001';
@@ -1031,25 +1029,30 @@ async function main() {
       ).id;
 
   await prisma.itemOrden.deleteMany({ where: { ordenId } });
+  
+  const itemsOrdenData = [];
+  if (demoProductId) {
+    itemsOrdenData.push({
+      ordenId,
+      tipo: E.tipoItemOrden(TipoItemOrden.PRODUCTO),
+      refId: demoProductId,
+      titulo: demoProductTitle,
+      cantidad: 2,
+      precioUnitario: demoProductPrice,
+    });
+  }
+  
+  itemsOrdenData.push({
+    ordenId,
+    tipo: E.tipoItemOrden(TipoItemOrden.CURSO),
+    refId: cursoMaquId,
+    titulo: 'Maquillaje Profesional',
+    cantidad: 1,
+    precioUnitario: 40000,
+  });
+
   await prisma.itemOrden.createMany({
-    data: [
-      {
-        ordenId,
-        tipo: E.tipoItemOrden(TipoItemOrden.PRODUCTO),
-        refId: prodId_labial,
-        titulo: 'Labial Mate Rojo',
-        cantidad: 2,
-        precioUnitario: 15000,
-      },
-      {
-        ordenId,
-        tipo: E.tipoItemOrden(TipoItemOrden.CURSO),
-        refId: cursoMaquId,
-        titulo: 'Maquillaje Profesional',
-        cantidad: 1,
-        precioUnitario: 40000,
-      },
-    ] as any,
+    data: itemsOrdenData as any,
   });
 
   // ───────────────── Slider (PRO)
@@ -1072,301 +1075,29 @@ async function main() {
         creadoEn: new Date(),
       },
       {
-        titulo: 'Productos de Calidad Premium',
-        subtitulo: 'Selección curada',
-        descripcion: 'Productos probados y recomendados para resultados pro.',
+        titulo: 'Productos Profesionales de Pestañas',
+        subtitulo: 'Nagaraku & Exel',
+        descripcion: 'La mejor calidad para tus servicios de extensiones y cuidado facial.',
         etiqueta: 'Envío a todo el país',
         ctaPrimarioTexto: 'Ver tienda',
         ctaPrimarioHref: '/tienda',
-        ctaSecundarioTexto: 'Ver ofertas',
-        ctaSecundarioHref: '/tienda?sort=novedades',
-        alt: 'Los mejores productos para profesionales del sector',
-        archivo: 'hero-productos-calidad.svg',
+        ctaSecundarioTexto: 'Novedades',
+        ctaSecundarioHref: '/tienda?sort=newest',
+        alt: 'Productos profesionales para pestañas y cosmética',
+        archivo: 'hero-productos.svg',
         activa: true,
         orden: 2,
         creadoEn: new Date(),
       },
-      {
-        titulo: 'Instructores Expertos',
-        subtitulo: 'Aprendé de verdad',
-        descripcion: 'Profesionales con experiencia real, guías paso a paso y feedback.',
-        etiqueta: 'Soporte incluido',
-        ctaPrimarioTexto: 'Conocer instructoras',
-        ctaPrimarioHref: '/instructoras',
-        ctaSecundarioTexto: 'Preguntas frecuentes',
-        ctaSecundarioHref: '/faq',
-        alt: 'Aprende de los mejores profesionales del sector',
-        archivo: 'hero-instructores-expertos.svg',
-        activa: true,
-        orden: 3,
-        creadoEn: new Date(),
-      },
-    ] as any,
-    skipDuplicates: true,
+    ],
   });
 
-  // ───────────────── Formulario dinámico por tipo de lección (contenido)
-  const tipoVideo = E.tipoLeccion(TipoLeccion.VIDEO);
-  const tipoDocumento = E.tipoLeccion(TipoLeccion.DOCUMENTO);
-  const tipoQuiz = E.tipoLeccion(TipoLeccion.QUIZ);
-  const tipoTexto = E.tipoLeccion(TipoLeccion.TEXTO);
-
-  await prisma.leccionTipoConfig.upsert({
-    where: { tipo: tipoVideo },
-    update: {
-      schema: json({
-        version: 2,
-        title: 'Video',
-        fields: [
-          { 
-            key: 'url', 
-            label: 'URL del Video', 
-            type: 'url', 
-            required: true,
-            help: 'Enlace directo al archivo de video (mp4, webm) o plataforma soportada.'
-          },
-          { 
-            key: 'duracionMin', 
-            label: 'Duración (minutos)', 
-            type: 'number', 
-            min: 0,
-            help: 'Tiempo estimado de duración en minutos para mostrar al alumno.'
-          },
-          { 
-            key: 'posterUrl', 
-            label: 'Imagen de Portada (Poster)', 
-            type: 'url',
-            help: 'Imagen que se muestra antes de reproducir el video. Opcional.'
-          },
-          { 
-            key: 'resumen', 
-            label: 'Resumen Corto', 
-            type: 'textarea',
-            help: 'Breve descripción del contenido del video que aparecerá en el listado.'
-          },
-        ],
-      }),
-      ui: json({ layout: '2col' }),
-      version: 2,
-    },
-    create: {
-      tipo: tipoVideo,
-      schema: json({
-        version: 2,
-        title: 'Video',
-        fields: [
-          { 
-            key: 'url', 
-            label: 'URL del Video', 
-            type: 'url', 
-            required: true,
-            help: 'Enlace directo al archivo de video (mp4, webm) o plataforma soportada.'
-          },
-          { 
-            key: 'duracionMin', 
-            label: 'Duración (minutos)', 
-            type: 'number', 
-            min: 0,
-            help: 'Tiempo estimado de duración en minutos para mostrar al alumno.'
-          },
-          { 
-            key: 'posterUrl', 
-            label: 'Imagen de Portada (Poster)', 
-            type: 'url',
-            help: 'Imagen que se muestra antes de reproducir el video. Opcional.'
-          },
-          { 
-            key: 'resumen', 
-            label: 'Resumen Corto', 
-            type: 'textarea',
-            help: 'Breve descripción del contenido del video que aparecerá en el listado.'
-          },
-        ],
-      }),
-      ui: json({ layout: '2col' }),
-      version: 2,
-      creadoEn: new Date(),
-    },
-  });
-
-  await prisma.leccionTipoConfig.upsert({
-    where: { tipo: tipoDocumento },
-    update: {
-      schema: json({
-        version: 2,
-        title: 'Documento',
-        fields: [
-          { 
-            key: 'tituloDoc', 
-            label: 'Título del Archivo', 
-            type: 'text',
-            help: 'Nombre visible del archivo para descargar.'
-          },
-          { 
-            key: 'url', 
-            label: 'URL del Documento', 
-            type: 'url',
-            help: 'Enlace directo al archivo PDF, DOCX, etc.'
-          },
-          { 
-            key: 'resumen', 
-            label: 'Resumen Corto', 
-            type: 'textarea',
-            help: 'Descripción breve sobre qué contiene el documento.'
-          },
-        ],
-      }),
-      ui: json({ layout: '1col' }),
-      version: 2,
-    },
-    create: {
-      tipo: tipoDocumento,
-      schema: json({
-        version: 2,
-        title: 'Documento',
-        fields: [
-          { 
-            key: 'tituloDoc', 
-            label: 'Título del Archivo', 
-            type: 'text',
-            help: 'Nombre visible del archivo para descargar.'
-          },
-          { 
-            key: 'url', 
-            label: 'URL del Documento', 
-            type: 'url',
-            help: 'Enlace directo al archivo PDF, DOCX, etc.'
-          },
-          { 
-            key: 'resumen', 
-            label: 'Resumen Corto', 
-            type: 'textarea',
-            help: 'Descripción breve sobre qué contiene el documento.'
-          },
-        ],
-      }),
-      ui: json({ layout: '1col' }),
-      version: 2,
-      creadoEn: new Date(),
-    },
-  });
-
-  await prisma.leccionTipoConfig.upsert({
-    where: { tipo: tipoQuiz },
-    update: {
-      schema: json({
-        version: 2,
-        title: 'Quiz',
-        fields: [
-          { 
-            key: 'intro', 
-            label: 'Introducción / Instrucciones', 
-            type: 'textarea',
-            help: 'Texto que se mostrará en una pantalla de bienvenida antes de comenzar el quiz. Útil para dar instrucciones o reglas.'
-          },
-          { 
-            key: 'preguntas', 
-            label: 'Preguntas del Cuestionario', 
-            type: 'quiz',
-            help: 'Agrega y configura las preguntas, opciones y respuestas correctas.'
-          },
-        ],
-      }),
-      ui: json({ layout: '1col' }),
-      version: 2,
-    },
-    create: {
-      tipo: tipoQuiz,
-      schema: json({
-        version: 2,
-        title: 'Quiz',
-        fields: [
-          { 
-            key: 'intro', 
-            label: 'Introducción / Instrucciones', 
-            type: 'textarea',
-            help: 'Texto que se mostrará en una pantalla de bienvenida antes de comenzar el quiz. Útil para dar instrucciones o reglas.'
-          },
-          { 
-            key: 'preguntas', 
-            label: 'Preguntas del Cuestionario', 
-            type: 'quiz',
-            help: 'Agrega y configura las preguntas, opciones y respuestas correctas.'
-          },
-        ],
-      }),
-      ui: json({ layout: '1col' }),
-      version: 2,
-      creadoEn: new Date(),
-    },
-  });
-
-  await prisma.leccionTipoConfig.upsert({
-    where: { tipo: tipoTexto },
-    update: {
-      schema: json({
-        version: 2,
-        title: 'Texto',
-        fields: [
-          { 
-            key: 'contenido', 
-            label: 'Contenido Principal', 
-            type: 'richtext', 
-            required: true,
-            help: 'Cuerpo principal de la lección. Puedes usar formato enriquecido, imágenes y enlaces.'
-          },
-          { 
-            key: 'resumen', 
-            label: 'Resumen Corto', 
-            type: 'textarea',
-            help: 'Breve descripción que se muestra en la vista previa de la lección.'
-          },
-        ],
-      }),
-      ui: json({ layout: '1col' }),
-      version: 2,
-    },
-    create: {
-      tipo: tipoTexto,
-      schema: json({
-        version: 2,
-        title: 'Texto',
-        fields: [
-          { 
-            key: 'contenido', 
-            label: 'Contenido Principal', 
-            type: 'richtext', 
-            required: true,
-            help: 'Cuerpo principal de la lección. Puedes usar formato enriquecido, imágenes y enlaces.'
-          },
-          { 
-            key: 'resumen', 
-            label: 'Resumen Corto', 
-            type: 'textarea',
-            help: 'Breve descripción que se muestra en la vista previa de la lección.'
-          },
-        ],
-      }),
-      ui: json({ layout: '1col' }),
-      version: 2,
-      creadoEn: new Date(),
-    },
-  });
-
-  // ───────────────── Resumen
-  const [usuarios, productos, cursos, ordenes] = await Promise.all([
-    prisma.usuario.count(),
-    prisma.producto.count(),
-    prisma.curso.count(),
-    prisma.orden.count(),
-  ]);
-
-  console.log({ usuarios, productos, cursos, ordenes, prodId_prueba });
+  console.log('✅ Seed finalizado correctamente con datos REALES de Nagaraku y Exel.');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

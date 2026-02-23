@@ -742,6 +742,16 @@ export function AdminResourceClient({
       }
 
       if (successIds.length > 0) {
+        // Verificar si necesitamos navegar a la página anterior
+        const remainingItems = data.items.length - successIds.length;
+        const currentPage = data.pagination.page;
+
+        if (remainingItems === 0 && currentPage > 1) {
+           const params = new URLSearchParams(searchParams.toString());
+           params.set('page', String(currentPage - 1));
+           router.replace(`/admin/resources/${resource}?${params.toString()}`);
+        }
+
         setData((prev) => {
           const newItems = prev.items.filter(
             (it: any) => !successIds.includes(String(it.id))
@@ -787,7 +797,7 @@ export function AdminResourceClient({
       setDeleteDialogOpen(false);
       setItemToDelete(null); // Resetear single delete state
     }
-  }, [selectedIds, resource, showToast, itemToDelete, data.items]);
+  }, [selectedIds, resource, showToast, itemToDelete, data.items, data.pagination.page, router, searchParams]);
 
   const handleDelete = useCallback(
     (row: any) => {
