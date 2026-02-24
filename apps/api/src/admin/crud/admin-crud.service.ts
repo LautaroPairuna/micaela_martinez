@@ -5,6 +5,7 @@ import { ExtendedPrismaClient } from '../../prisma/prisma.extensions';
 import type { ResourceMeta } from '../meta/admin-meta.types';
 import { AdminMetaService } from '../meta/admin-meta.service';
 import { ImageUrlUtil } from '../../common/utils/image-url.util';
+import { RevalidationService } from '../../common/services/revalidation.service';
 
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min, IsString, MaxLength } from 'class-validator';
@@ -60,6 +61,7 @@ export class AdminCrudService {
   constructor(
     @Inject(PRISMA) private readonly prisma: ExtendedPrismaClient,
     private readonly adminMeta: AdminMetaService,
+    private readonly revalidationService: RevalidationService,
   ) {}
 
   private async getResourceMeta(resource: string): Promise<ResourceMeta> {
@@ -452,6 +454,23 @@ export class AdminCrudService {
     }
   }
 
+  // ─────────────────────── REVALIDACIÓN ───────────────────────
+
+  private async triggerRevalidation(resourceName: string) {
+    const map: Record<string, string[]> = {
+      Producto: ['products'],
+      Curso: ['courses'],
+      Marca: ['products'],
+      Categoria: ['products'],
+      Hero: ['hero'],
+    };
+
+    const tags = map[resourceName] || [];
+    if (tags.length > 0) {
+      await Promise.all(tags.map((tag) => this.revalidationService.revalidate(tag)));
+    }
+  }
+
   // ─────────────────────── CRUD ───────────────────────
 
   async list(
@@ -621,6 +640,7 @@ export class AdminCrudService {
       (idField ? created[idField.name] : created.id) ?? created.slug ?? '';
 
     await this.logAudit(meta, 'create', recordId, null, created);
+    await this.revalidationService.revalidateResource(meta.name);
     return created;
   }
 
@@ -660,6 +680,7 @@ export class AdminCrudService {
     });
 
     await this.logAudit(meta, 'update', parsedId, before, updated);
+    await this.revalidationService.revalidateResource(meta.name);
     return updated;
   }
 
@@ -687,6 +708,7 @@ export class AdminCrudService {
       where: { [idField.name]: parsedId },
     });
     await this.logAudit(meta, 'delete', parsedId, deleted, null);
+    await this.revalidationService.revalidateResource(meta.name);
 
     return deleted;
   }

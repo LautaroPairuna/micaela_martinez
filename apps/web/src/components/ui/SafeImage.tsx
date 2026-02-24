@@ -98,77 +98,49 @@ export function SafeImage({
     }
     
     // Para otras rutas, usamos el proxy si está habilitado
-    if (useBackendProxy && !s.startsWith('data:') && !s.startsWith('/api/media/')) {
+    if (useBackendProxy && !processedSrc.startsWith('data:')) {
       return getPublicImageUrl(processedSrc);
     }
     
     return processedSrc;
   }, [src, err, useBackendProxy]);
 
-  const roundedCls =
-    rounded === 'all' ? 'rounded-xl2' : rounded === 'top' ? 'rounded-t-xl2' : '';
+  if (!loaded && skeleton) {
+    return (
+      <div 
+        className={`relative overflow-hidden bg-gray-200 animate-pulse ${className}`} 
+        style={{ aspectRatio: ratio === 'auto' ? undefined : ratio.replace('/', ' / ') }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          <svg className="w-8 h-8 opacity-20" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        </div>
+      </div>
+    );
+  }
 
-  const fitCls = fit === 'contain' ? 'object-contain' : 'object-cover';
-
-  // Determinar si es un SVG para usar el componente adecuado
-  const isSvg = finalSrc.toLowerCase().endsWith('.svg');
-
+  const Tag = ratio === 'auto' ? 'div' : 'div'; // wrapper siempre div
+  
   return (
-    <div
-      className={[
-        'relative w-full overflow-hidden',
-        withBg ? 'bg-neutral-100' : '',
-        roundedCls,
-        hoverZoom ? 'group-hover/card:scale-[1.02] will-change-transform' : '',
-        className,
-      ].join(' ')}
-      style={ratio === 'auto' ? undefined : { aspectRatio: ratio.replace('/', ' / ') }}
+    <Tag 
+      className={`relative overflow-hidden ${withBg ? 'bg-gray-50' : ''} ${className} ${rounded === 'all' ? 'rounded-xl' : rounded === 'top' ? 'rounded-t-xl' : ''}`}
+      style={{ aspectRatio: ratio === 'auto' ? undefined : ratio.replace('/', ' / ') }}
     >
-      {skeleton && (
-        <div
-          aria-hidden
-          suppressHydrationWarning
-          className={[
-            'absolute inset-0',
-            'bg-[linear-gradient(90deg,rgba(0,0,0,0)_0%,rgba(0,0,0,.04)_50%,rgba(0,0,0,0)_100%)]',
-            'animate-[shimmer_1.4s_infinite]',
-            loaded ? 'opacity-0' : 'opacity-100',
-            'transition-opacity duration-200',
-          ].join(' ')}
-          style={{ backgroundSize: '200% 100%' }}
-        />
-      )}
-
       <Image
-        src={finalSrc || PIXEL}
-        alt={alt || 'imagen'}
-        fill
+        src={finalSrc}
+        alt={alt}
+        fill={ratio !== 'auto'}
+        width={ratio === 'auto' ? 800 : undefined}
+        height={ratio === 'auto' ? 600 : undefined}
+        className={`transition-all duration-700 ease-in-out ${
+          loaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-lg'
+        } ${hoverZoom ? 'group-hover:scale-105' : ''} ${imgClassName}`}
+        style={{ objectFit: fit, objectPosition }}
         sizes={sizes}
         priority={priority}
-        onError={() => {
-          setErr(true);
-          setLoaded(true); // Aseguramos que se muestre el placeholder si falla
-        }}
+        onError={() => setErr(true)}
         onLoad={() => setLoaded(true)}
-        draggable={false}
-        suppressHydrationWarning
-        className={[
-          fitCls,
-          'h-full w-full',
-          skeleton ? (loaded ? 'opacity-100' : 'opacity-0') : 'opacity-100',
-          'transition-opacity duration-200',
-          imgClassName,
-        ].join(' ')}
-        style={objectPosition ? { objectPosition } : undefined}
-        unoptimized={isSvg}
+        unoptimized={finalSrc.endsWith('.gif')} // GIFs animados no optimizar
       />
-
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-    </div>
+    </Tag>
   );
 }

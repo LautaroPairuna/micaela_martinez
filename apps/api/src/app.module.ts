@@ -28,6 +28,7 @@ import { MediaModule } from './media/media.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { CartModule } from './cart/cart.module';
 import { CertificateModule } from './certificate/certificate.module';
+import { CommonServicesModule } from './common/services/common-services.module';
 
 // 👇 Módulo agregador de todo el admin
 import { AdminModule } from './admin/admin.module';
@@ -66,6 +67,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     WebsocketsModule, // WebSockets para tiempo real
     CartModule, // Carrito de compras (DB persistente)
     CertificateModule, // Generación de certificados
+    CommonServicesModule, // Servicios comunes (Revalidación, utilidades)
 
     // ── Admin centralizado ────────────────────────────────────────
     AdminModule, // Meta + CRUD genérico + Uploads + Dashboard + Resources

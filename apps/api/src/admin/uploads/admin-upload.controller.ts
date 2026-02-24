@@ -20,6 +20,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MediaStorageService } from '../../media/media-storage.service';
 import { AdminMetaService } from '../meta/admin-meta.service';
 import { VideoProgressGateway } from '../../media/video-progress.gateway';
+import { RevalidationService } from '../../common/services/revalidation.service';
 
 const IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const DOC_MAX_BYTES = 50 * 1024 * 1024;
@@ -32,6 +33,7 @@ export class AdminUploadController {
     private readonly mediaStorage: MediaStorageService,
     private readonly adminMeta: AdminMetaService,
     private readonly videoGateway: VideoProgressGateway,
+    private readonly revalidationService: RevalidationService,
   ) {}
 
   @Post(':resource/:id/upload/:field')
@@ -300,6 +302,7 @@ export class AdminUploadController {
         id,
         fieldMeta.name,
         isLesson,
+        resourceMeta.name,
       ).catch((err: unknown) => {
         console.error('Error en background video processing:', err);
       });
@@ -348,6 +351,11 @@ export class AdminUploadController {
     const updated = await client.update({
       where: { id },
       data: { [fieldMeta.name]: filenameOnly },
+    });
+
+    // Revalidar recurso asociado
+    await this.revalidationService.revalidateResource(resourceMeta.name).catch((err) => {
+      console.error('Error revalidating after upload:', err);
     });
 
     return {
@@ -484,6 +492,7 @@ export class AdminUploadController {
         id,
         fieldMeta.name,
         isLesson,
+        resourceMeta.name,
       );
     } catch (err) {
       console.error('video_assemble_error', {
@@ -516,6 +525,7 @@ export class AdminUploadController {
     id: number,
     fieldName: string,
     isLesson: boolean,
+    resourceName: string,
   ) {
     const processStart = Date.now();
     try {
@@ -614,6 +624,11 @@ export class AdminUploadController {
       await client.update({
         where: { id },
         data: updateData,
+      });
+
+      // Revalidar recurso asociado (video)
+      await this.revalidationService.revalidateResource(resourceName).catch((err) => {
+        console.error('Error revalidating after video process:', err);
       });
 
       console.info('video_process_done', {
