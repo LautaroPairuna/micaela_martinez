@@ -84,19 +84,21 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
     <div className="relative group">
       <div className="pointer-events-none absolute -inset-6 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100 bg-[radial-gradient(80%_80%_at_50%_50%,rgba(255,45,149,0.55),transparent_72%)]" />
 
-      <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl">
+      <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl overflow-hidden">
         {/* Imagen */}
-        <div className="relative overflow-hidden rounded-t-xl bg-white/95">
+        <div className="relative overflow-hidden bg-white/95">
           <div className="transition-transform duration-500 ease-out group-hover:scale-105">
             <Link href={`/tienda/producto/${p.slug}`} className="block aspect-square relative">
               <SafeImage
                 src={img}
                 alt={p.titulo}
-                className="w-full h-full object-contain p-4" // Fondo blanco unificado (viene del wrapper bg-white/95)
+                className="w-full h-full"
+                imgClassName="w-full h-full object-contain p-4"
                 ratio="1/1"
                 fit="contain"
-                hoverZoom={false} // Ya tenemos zoom en el wrapper
-                useBackendProxy={false} // img ya viene resuelto
+                hoverZoom={false}
+                useBackendProxy={false}
+                rounded="none"
               />
             </Link>
 
