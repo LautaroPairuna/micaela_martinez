@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class RevalidationService {
@@ -7,6 +8,8 @@ export class RevalidationService {
   private readonly frontendUrl =
     process.env.FRONTEND_URL || 'http://localhost:3000';
   private readonly secret = process.env.REVALIDATION_SECRET;
+
+  constructor(private readonly cacheService: CacheService) {}
 
   async revalidate(tag: string) {
     if (!this.secret) {
@@ -48,6 +51,12 @@ export class RevalidationService {
     const tags = map[resourceName] || [];
     if (tags.length > 0) {
       await Promise.all(tags.map((tag) => this.revalidate(tag)));
+    }
+
+    // Invalidar caché interno de NestJS (CatalogService manual cache)
+    if (['Producto', 'Marca', 'Categoria'].includes(resourceName)) {
+      const count = this.cacheService.deletePattern('catalog:products:');
+      this.logger.log(`Invalidated ${count} catalog cache entries for ${resourceName}`);
     }
   }
 }

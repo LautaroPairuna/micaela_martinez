@@ -83,7 +83,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 // Derivamos tipos desde las cards (evita any y mantiene sincronía)
 type CourseMinimal = ComponentProps<typeof CourseCard>["c"];

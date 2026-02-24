@@ -76,7 +76,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     CustomCacheModule, // Cache avanzado propio
     CacheModule.register({
       isGlobal: true,
-      ttl: 60, // 60 segundos (1 minuto). Si querés 60.000s, volvé a 60 * 1000.
+      ttl: 10, // Reducido a 10s para evitar stale data en updates rápidos
       max: 100,
     }),
   ],

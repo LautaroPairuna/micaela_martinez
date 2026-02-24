@@ -124,14 +124,15 @@ function cleanCourseQuery(q: Partial<CourseQuery>): Record<string, string> {
 /* ───────────────── Endpoints Productos (vía proxy) ───────────────── */
 export async function getProducts(params: Partial<ProductQuery> = {}) {
   const qp = cleanProductQuery(params);
-  return apiProxy<ListResp<ProductListItem>>(`/catalog/productos${toQS(qp)}`, { next: { revalidate: 3600, tags: ['products'] } });
+  // Reducimos revalidate a 60s para asegurar frescura rápida si falla on-demand
+  return apiProxy<ListResp<ProductListItem>>(`/catalog/productos${toQS(qp)}`, { next: { revalidate: 60, tags: ['products'] } });
 }
 export async function getProductFacets(params: Partial<ProductQuery> = {}) {
   const qp = cleanProductQuery(params);
-  return apiProxy<ProductFacets>(`/catalog/productos/filtros${toQS(qp)}`, { next: { revalidate: 3600, tags: ['products'] } });
+  return apiProxy<ProductFacets>(`/catalog/productos/filtros${toQS(qp)}`, { next: { revalidate: 60, tags: ['products'] } });
 }
 export async function getProductBySlug(slug: string) {
-  return apiProxy<ProductDetail>(`/catalog/productos/${encodeURIComponent(slug)}`, { next: { revalidate: 3600, tags: ['products', `product:${slug}`] } });
+  return apiProxy<ProductDetail>(`/catalog/productos/${encodeURIComponent(slug)}`, { next: { revalidate: 60, tags: ['products', `product:${slug}`] } });
 }
 
 export async function getRelatedProducts(categoriaSlug: string, excludeSlug?: string, limit = 6) {
@@ -140,7 +141,7 @@ export async function getRelatedProducts(categoriaSlug: string, excludeSlug?: st
     perPage: limit + (excludeSlug ? 1 : 0), // Pedimos uno extra si vamos a excluir
   };
   const qp = cleanProductQuery(params);
-  const response = await apiProxy<ListResp<ProductListItem>>(`/catalog/productos${toQS(qp)}`, { next: { revalidate: 3600, tags: ['products'] } });
+  const response = await apiProxy<ListResp<ProductListItem>>(`/catalog/productos${toQS(qp)}`, { next: { revalidate: 60, tags: ['products'] } });
   
   // Filtrar el producto actual si se especifica
   if (excludeSlug && response.items) {
@@ -153,7 +154,7 @@ export async function getRelatedProducts(categoriaSlug: string, excludeSlug?: st
 /* ───────────────── Endpoints Cursos (vía proxy) ───────────────── */
 export async function getCourses(params: Partial<CourseQuery> = {}) {
   const qp = cleanCourseQuery(params);
-  return apiProxy<ListResp<CourseListItem>>(`/catalog/cursos${toQS(qp)}`, { next: { revalidate: 3600, tags: ['courses'] } });
+  return apiProxy<ListResp<CourseListItem>>(`/catalog/cursos${toQS(qp)}`, { next: { revalidate: 60, tags: ['courses'] } });
 }
 export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
   const qp = cleanCourseQuery(params);
@@ -161,7 +162,7 @@ export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
   type RawTag   = { value?: string;       tag?: string;        count: number; label?: string };
   type RawResp  = { niveles?: RawNivel[]; tags?: RawTag[]; price?: { min: number; max: number } };
 
-  const raw = await apiProxy<RawResp>(`/catalog/cursos/filtros${toQS(qp)}`, { next: { revalidate: 3600, tags: ['courses'] } });
+  const raw = await apiProxy<RawResp>(`/catalog/cursos/filtros${toQS(qp)}`, { next: { revalidate: 60, tags: ['courses'] } });
 
   const niveles: NivelFacet[] = Array.isArray(raw.niveles)
     ? raw.niveles.flatMap<NivelFacet>((n) => {
@@ -180,7 +181,7 @@ export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
   return { niveles, tags, price: raw.price, minPrice: raw.price?.min, maxPrice: raw.price?.max } as CourseFacets;
 }
 export async function getCourseBySlug(slug: string) {
-  return apiProxy<CourseDetail>(`/catalog/cursos/${encodeURIComponent(slug)}`, { next: { revalidate: 3600, tags: ['courses', `course:${slug}`] } });
+  return apiProxy<CourseDetail>(`/catalog/cursos/${encodeURIComponent(slug)}`, { next: { revalidate: 60, tags: ['courses', `course:${slug}`] } });
 }
 
 export async function getCourseContentBySlug(slug: string) {
@@ -192,7 +193,7 @@ export async function getCourseContentBySlug(slug: string) {
 
 /* ───────────────── Hero ───────────────── */
 export async function getHeroImages() {
-  return apiProxy<SliderItem[]>('/hero/images', { next: { revalidate: 3600, tags: ['hero'] } });
+  return apiProxy<SliderItem[]>('/hero/images', { next: { revalidate: 60, tags: ['hero'] } });
 }
 
 /* ───────────────── Safe variants ───────────────── */

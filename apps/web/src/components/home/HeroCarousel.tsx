@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Autoplay from 'embla-carousel-autoplay';
+import { ImageIcon } from 'lucide-react'; // Importamos icono para placeholder
 
 import type { SliderItem } from '@/lib/hero-types';
 
@@ -98,6 +99,82 @@ function CTAButton({
     <a href={href} className={cls}>
       {children}
     </a>
+  );
+}
+
+/**
+ * Componente que maneja la imagen con efecto "Blur Background" para evitar franjas negras
+ * y muestra un Skeleton mientras carga.
+ */
+function HeroSlideImage({
+  src,
+  alt,
+  isSkeleton,
+  aspectClassName,
+  loadingType,
+}: {
+  src: string;
+  alt: string;
+  isSkeleton: boolean;
+  aspectClassName: string;
+  loadingType: 'eager' | 'lazy';
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  // Si es un skeleton (loading=true desde padre), siempre mostramos skeleton
+  if (isSkeleton) {
+    return (
+      <div
+        className={cn(
+          aspectClassName,
+          'w-full animate-pulse bg-white/5 flex items-center justify-center text-white/10',
+        )}
+      >
+        <ImageIcon className="h-16 w-16 opacity-20" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        aspectClassName,
+        'relative w-full overflow-hidden bg-[#0b0b0b]', // Fondo base oscuro
+      )}
+    >
+      {/* 1. Placeholder / Skeleton de Carga de Imagen */}
+      {!loaded && (
+        <div className="absolute inset-0 z-20 flex animate-pulse items-center justify-center bg-white/5">
+          <ImageIcon className="h-12 w-12 text-white/20" />
+        </div>
+      )}
+
+      {/* 2. Capa de Fondo (Blur Effect) para rellenar franjas negras */}
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover opacity-60 blur-2xl scale-110 transition-opacity duration-700',
+          loaded ? 'opacity-60' : 'opacity-0', // Fade-in suave
+        )}
+      />
+
+      {/* 3. Imagen Principal (Contain) */}
+      <img
+        src={src}
+        alt={alt}
+        className={cn(
+          'relative z-10 h-full w-full object-contain transition-all duration-500',
+          loaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-sm', // Fade-in + Zoom-out suave
+        )}
+        loading={loadingType}
+        onLoad={() => setLoaded(true)}
+      />
+      
+      {/* 4. Overlay Gradiente Sutil (Integración con el fondo) */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+    </div>
   );
 }
 
@@ -355,29 +432,17 @@ export function HeroCarousel({
                           <div className="absolute inset-6 rounded-3xl bg-[linear-gradient(135deg,rgba(255,80,170,0.14)_0%,rgba(255,210,120,0.12)_100%)] blur-xl" />
 
                           <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
-                            {isSkeleton ? (
-                              <div
-                                className={cn(
-                                  imageAspectClassName ?? 'aspect-[4/5] sm:aspect-[16/9]',
-                                  'w-full animate-pulse bg-white/5',
-                                )}
-                              />
-                            ) : (
-                              <img
-                                src={src}
-                                alt={alt}
-                                className={cn(
-                                  imageAspectClassName ?? 'aspect-[4/5] sm:aspect-[16/9]',
-                                  'w-full object-contain',
-                                  'bg-[#0b0b0b]',
-                                )}
-                                loading={i === 0 ? 'eager' : 'lazy'}
-                              />
-                            )}
+                            <HeroSlideImage
+                              src={src}
+                              alt={alt}
+                              isSkeleton={isSkeleton}
+                              aspectClassName={imageAspectClassName ?? 'aspect-[4/5] sm:aspect-[16/9]'}
+                              loadingType={i === 0 ? 'eager' : 'lazy'}
+                            />
 
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 sm:from-black/60 via-transparent to-transparent" />
+                            <div className="absolute inset-0 z-30 bg-gradient-to-t from-black/70 sm:from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                            <div className="absolute bottom-6 left-6 right-6">
+                            <div className="absolute bottom-6 left-6 right-6 z-40">
                               <p className="text-xl font-semibold text-white uppercase">{overlayTitle}</p>
                               <p className="text-sm text-white/70 uppercase">{overlaySubtitle}</p>
                             </div>
