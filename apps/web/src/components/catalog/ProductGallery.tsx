@@ -83,7 +83,8 @@ export function ProductGallery({
           <SafeImage
             src={current.url}
             alt={current.alt || 'Imagen del producto'}
-            className={`w-full h-full object-contain p-4`} // Padding para evitar cortes visuales en los bordes
+            className={`w-full h-full p-4`} // Padding para evitar cortes visuales en los bordes
+            fit="contain" // CRÍTICO: Asegura que la imagen completa sea visible sin recortes
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </button>
@@ -147,7 +148,7 @@ export function ProductGallery({
                   selected ? 'border-[var(--pink)] ring-1 ring-[var(--pink)]' : 'border-default hover:border-[var(--pink)]/60',
                 ].join(' ')}
               >
-                <SafeImage src={im.url} alt={im.alt || 'Miniatura'} className="object-contain p-1 w-full h-full" sizes="100px" />
+                <SafeImage src={im.url} alt={im.alt || 'Miniatura'} className="w-full h-full p-1" fit="contain" sizes="100px" />
               </button>
             );
           })}
