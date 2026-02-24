@@ -1,5 +1,5 @@
 [phases.setup]
-node_version = "20"
+node_version = "22"
 
 [phases.install]
 cmds = ["corepack enable", "pnpm install --no-frozen-lockfile"]
