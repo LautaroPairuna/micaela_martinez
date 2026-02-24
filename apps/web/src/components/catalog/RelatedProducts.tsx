@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { getRelatedProducts } from '@/lib/sdk/catalogApi';
 import { ProductCard } from './ProductCard';
 import type { ProductListItem } from '@/lib/sdk/catalogApi';
