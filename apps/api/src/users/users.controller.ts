@@ -3,16 +3,11 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
+import { JwtUser } from '../auth/types/jwt-user';
 
 // Definir la interfaz para el usuario autenticado
 interface RequestWithUser extends ExpressRequest {
-  user: {
-    sub: number;
-    email?: string;
-    name?: string;
-    roles?: string[];
-    [key: string]: any;
-  };
+  user: JwtUser;
 }
 
 @ApiTags('users')
