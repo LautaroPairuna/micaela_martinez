@@ -120,6 +120,7 @@ function HeroSlideImage({
   loadingType: 'eager' | 'lazy';
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
   // Si es un skeleton (loading=true desde padre), siempre mostramos skeleton
   if (isSkeleton) {
@@ -131,6 +132,24 @@ function HeroSlideImage({
         )}
       >
         <ImageIcon className="h-16 w-16 opacity-20" />
+      </div>
+    );
+  }
+
+  // Si hubo error de carga, mostramos un fallback o el skeleton permanente
+  if (error) {
+     return (
+      <div
+        className={cn(
+          aspectClassName,
+          'relative w-full overflow-hidden bg-[#0b0b0b] flex items-center justify-center',
+        )}
+      >
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/5">
+          <ImageIcon className="h-16 w-16 text-white/20" />
+        </div>
+        {/* Intentamos mostrar el blur al menos si cargó parcialmente, o nada */}
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
       </div>
     );
   }
@@ -170,6 +189,7 @@ function HeroSlideImage({
         )}
         loading={loadingType}
         onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
       />
       
       {/* 4. Overlay Gradiente Sutil (Integración con el fondo) */}
@@ -448,11 +468,11 @@ export function HeroCarousel({
                             </div>
                           </div>
 
-                          <div className="pointer-events-none absolute -top-7 -right-4 xl:-top-6 xl:-right-6 rounded-2xl bg-[#ff4fb2] px-5 py-3 text-white shadow-lg">
+                          <div className="pointer-events-none absolute -top-7 -right-4 xl:-top-6 xl:-right-6 rounded-2xl bg-[#ff4fb2] px-5 py-3 text-white shadow-lg z-50">
                             <p className="text-sm font-bold uppercase">{floatingTop}</p>
                           </div>
 
-                          <div className="pointer-events-none absolute -bottom-7 -left-4 xl:-bottom-7 xl:-left-7 rounded-2xl bg-[#c9aa6a] px-5 py-3 text-black shadow-lg">
+                          <div className="pointer-events-none absolute -bottom-7 -left-4 xl:-bottom-7 xl:-left-7 rounded-2xl bg-[#c9aa6a] px-5 py-3 text-black shadow-lg z-50">
                             <p className="text-sm font-bold uppercase">{floatingBottom}</p>
                           </div>
                         </div>
