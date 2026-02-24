@@ -67,8 +67,8 @@ export function ProductGallery({
 
   return (
     <div className="w-full" aria-label="Galería de producto" aria-roledescription="carousel">
-      {/* Imagen principal */}
-      <div className="relative aspect-square sm:aspect-[1/1] rounded-xl2 overflow-hidden select-none">
+      {/* Imagen principal - Fondo blanco para unificar con imágenes de producto (JPGs fondo blanco) */}
+      <div className="relative aspect-square sm:aspect-[1/1] rounded-xl2 overflow-hidden select-none bg-white">
         <button
           type="button"
           onClick={() => lightboxEnabled && setOpen(true)}
@@ -83,7 +83,7 @@ export function ProductGallery({
           <SafeImage
             src={current.url}
             alt={current.alt || 'Imagen del producto'}
-            className={`w-full h-full ${objectClass}`}
+            className={`w-full h-full object-contain p-4`} // Padding para evitar cortes visuales en los bordes
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </button>
@@ -143,11 +143,11 @@ export function ProductGallery({
                 aria-label={`Imagen ${i + 1}`}
                 title={im.alt || `Imagen ${i + 1}`}
                 className={[
-                  'relative aspect-square rounded-lg overflow-hidden border transition focus:outline-none focus:ring-2',
+                  'relative aspect-square rounded-lg overflow-hidden border transition focus:outline-none focus:ring-2 bg-white',
                   selected ? 'border-[var(--pink)] ring-1 ring-[var(--pink)]' : 'border-default hover:border-[var(--pink)]/60',
                 ].join(' ')}
               >
-                <SafeImage src={im.url} alt={im.alt || 'Miniatura'} className="object-cover w-full h-full" sizes="100px" />
+                <SafeImage src={im.url} alt={im.alt || 'Miniatura'} className="object-contain p-1 w-full h-full" sizes="100px" />
               </button>
             );
           })}

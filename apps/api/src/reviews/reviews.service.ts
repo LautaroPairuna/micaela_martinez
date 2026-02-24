@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { Prisma, TipoItemOrden, EstadoOrden } from '@prisma/client';
+import { RevalidationService } from '../common/services/revalidation.service';
 
 const toInt = (v: unknown, label = 'id'): number => {
   if (v === null || v === undefined || v === '') {
@@ -20,7 +21,10 @@ const toInt = (v: unknown, label = 'id'): number => {
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private revalidationService: RevalidationService,
+  ) {}
 
   async getAllReviews(page = 1, limit = 10) {
     const skip = (page - 1) * limit;
@@ -122,12 +126,14 @@ export class ReviewsService {
       });
     }
 
-    // Actualizar rating promedio
+    // Actualizar rating promedio y revalidar
     if (cursoIdNum !== undefined) {
       await this.updateCourseRating(cursoIdNum);
+      await this.revalidationService.revalidateResource('Curso');
     }
     if (productoIdNum !== undefined) {
       await this.updateProductRating(productoIdNum);
+      await this.revalidationService.revalidateResource('Producto');
     }
 
     return { ...resena, isUpdate };
@@ -160,12 +166,14 @@ export class ReviewsService {
       include: { usuario: { select: { id: true, nombre: true } } },
     });
 
-    // Actualizar rating promedio
+    // Actualizar rating promedio y revalidar
     if (existingReview.cursoId !== null) {
       await this.updateCourseRating(existingReview.cursoId);
+      await this.revalidationService.revalidateResource('Curso');
     }
     if (existingReview.productoId !== null) {
       await this.updateProductRating(existingReview.productoId);
+      await this.revalidationService.revalidateResource('Producto');
     }
 
     return updatedReview;
@@ -194,9 +202,11 @@ export class ReviewsService {
 
     if (existingReview.cursoId !== null) {
       await this.updateCourseRating(existingReview.cursoId);
+      await this.revalidationService.revalidateResource('Curso');
     }
     if (existingReview.productoId !== null) {
       await this.updateProductRating(existingReview.productoId);
+      await this.revalidationService.revalidateResource('Producto');
     }
 
     return { message: 'Reseña eliminada correctamente' };

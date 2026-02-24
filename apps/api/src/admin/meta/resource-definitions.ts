@@ -4,7 +4,14 @@ export type FieldDefinition = {
   placeholder?: string;
   showInList?: boolean;
   showInForm?: boolean;
-  widget?: 'markdown' | 'video' | 'list' | 'json-list' | 'image' | 'date' | 'select';
+  widget?:
+    | 'markdown'
+    | 'video'
+    | 'list'
+    | 'json-list'
+    | 'image'
+    | 'date'
+    | 'select';
   readOnly?: boolean;
 };
 
@@ -66,7 +73,11 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       label: '¿Destacado?',
       help: 'Aparece en secciones principales.',
     },
-    ratingProm: { label: 'Rating Promedio', showInForm: false, showInList: false },
+    ratingProm: {
+      label: 'Rating Promedio',
+      showInForm: false,
+      showInList: false,
+    },
     tags: {
       label: 'Tags',
       help: 'Etiquetas para búsqueda (Enter para agregar).',
@@ -97,7 +108,11 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       showInList: true,
       widget: 'markdown',
     },
-    ratingConteo: { label: 'Total Reseñas', showInList: false, showInForm: false },
+    ratingConteo: {
+      label: 'Total Reseñas',
+      showInList: false,
+      showInForm: false,
+    },
   },
   Inscripcion: {
     usuarioId: { label: 'Usuario' },
@@ -128,8 +143,16 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
       widget: 'markdown',
       showInList: false,
     },
-    ratingProm: { label: 'Rating Promedio', showInList: false, showInForm: false },
-    ratingConteo: { label: 'Total Reseñas', showInList: false, showInForm: false },
+    ratingProm: {
+      label: 'Rating Promedio',
+      showInList: false,
+      showInForm: false,
+    },
+    ratingConteo: {
+      label: 'Total Reseñas',
+      showInList: false,
+      showInForm: false,
+    },
   },
   Marca: {
     nombre: { label: 'Nombre de Marca' },
@@ -147,11 +170,19 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     estado: { label: 'Estado Orden', widget: 'select' },
     total: { label: 'Total a Pagar', readOnly: true },
     moneda: { label: 'Moneda', readOnly: true },
-    referenciaPago: { label: 'Ref. Pago', help: 'ID de transacción externa.', readOnly: true },
+    referenciaPago: {
+      label: 'Ref. Pago',
+      help: 'ID de transacción externa.',
+      readOnly: true,
+    },
     esSuscripcion: { label: '¿Es Suscripción?', readOnly: true },
     suscripcionActiva: { label: 'Suscripción Activa', readOnly: true },
     suscripcionId: { label: 'ID Suscripción MP', readOnly: true },
-    direccionEnvioId: { label: 'Dirección Envío', showInList: false, readOnly: true },
+    direccionEnvioId: {
+      label: 'Dirección Envío',
+      showInList: false,
+      readOnly: true,
+    },
     direccionFacturacionId: {
       label: 'Dirección Facturación',
       showInList: false,

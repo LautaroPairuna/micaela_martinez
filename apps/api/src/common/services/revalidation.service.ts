@@ -4,7 +4,8 @@ import { Injectable, Logger } from '@nestjs/common';
 export class RevalidationService {
   private readonly logger = new Logger(RevalidationService.name);
   // Intentar leer FRONTEND_URL, fallback a localhost
-  private readonly frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  private readonly frontendUrl =
+    process.env.FRONTEND_URL || 'http://localhost:3000';
   private readonly secret = process.env.REVALIDATION_SECRET;
 
   async revalidate(tag: string) {
@@ -17,11 +18,11 @@ export class RevalidationService {
       // Construir URL absoluta
       const baseUrl = this.frontendUrl.replace(/\/$/, '');
       const url = `${baseUrl}/api/revalidate?tag=${encodeURIComponent(tag)}&secret=${this.secret}`;
-      
+
       this.logger.log(`Revalidating tag: ${tag} -> ${url}`);
-      
+
       const res = await fetch(url, { method: 'POST' });
-      
+
       if (!res.ok) {
         const text = await res.text();
         this.logger.error(`Revalidation failed [${res.status}]: ${text}`);
@@ -29,7 +30,9 @@ export class RevalidationService {
         this.logger.log(`Revalidation success for tag: ${tag}`);
       }
     } catch (error) {
-      this.logger.error(`Revalidation error: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Revalidation error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

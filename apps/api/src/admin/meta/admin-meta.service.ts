@@ -636,8 +636,8 @@ export class AdminMetaService {
 
         const label = fieldDef?.label;
         const help = fieldDef?.help;
-      const placeholder = fieldDef?.placeholder;
-        const readOnly = fieldDef?.readOnly;// Sobreescribir visibilidad si está definida explícitamente
+        const placeholder = fieldDef?.placeholder;
+        const readOnly = fieldDef?.readOnly; // Sobreescribir visibilidad si está definida explícitamente
         if (fieldDef?.showInList !== undefined)
           showInList = fieldDef.showInList;
         if (fieldDef?.showInForm !== undefined)
@@ -683,7 +683,8 @@ export class AdminMetaService {
       resources.push({
         name: resourceName,
         tableName,
-        displayName: RESOURCE_LABELS[resourceName] || humanizeName(resourceName),
+        displayName:
+          RESOURCE_LABELS[resourceName] || humanizeName(resourceName),
         fields,
         searchFields,
         filters: buildFiltersFromFields(fields, resourceName),

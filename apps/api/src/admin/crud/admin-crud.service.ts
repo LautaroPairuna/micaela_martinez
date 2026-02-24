@@ -467,7 +467,9 @@ export class AdminCrudService {
 
     const tags = map[resourceName] || [];
     if (tags.length > 0) {
-      await Promise.all(tags.map((tag) => this.revalidationService.revalidate(tag)));
+      await Promise.all(
+        tags.map((tag) => this.revalidationService.revalidate(tag)),
+      );
     }
   }
 

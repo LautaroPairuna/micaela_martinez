@@ -354,9 +354,11 @@ export class AdminUploadController {
     });
 
     // Revalidar recurso asociado
-    await this.revalidationService.revalidateResource(resourceMeta.name).catch((err) => {
-      console.error('Error revalidating after upload:', err);
-    });
+    await this.revalidationService
+      .revalidateResource(resourceMeta.name)
+      .catch((err) => {
+        console.error('Error revalidating after upload:', err);
+      });
 
     return {
       item: updated,
@@ -627,9 +629,11 @@ export class AdminUploadController {
       });
 
       // Revalidar recurso asociado (video)
-      await this.revalidationService.revalidateResource(resourceName).catch((err) => {
-        console.error('Error revalidating after video process:', err);
-      });
+      await this.revalidationService
+        .revalidateResource(resourceName)
+        .catch((err) => {
+          console.error('Error revalidating after video process:', err);
+        });
 
       console.info('video_process_done', {
         id,

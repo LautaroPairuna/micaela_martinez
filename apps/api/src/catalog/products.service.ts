@@ -55,8 +55,17 @@ export class ProductsService {
       return cachedResult;
     }
 
-    const { page, perPage, q, marca, categoria, minPrice, maxPrice, sort, destacado } =
-      dto;
+    const {
+      page,
+      perPage,
+      q,
+      marca,
+      categoria,
+      minPrice,
+      maxPrice,
+      sort,
+      destacado,
+    } = dto;
     const { skip, take } = getSkipTake(page, perPage);
 
     // Resolver marca/categoría como slug o id

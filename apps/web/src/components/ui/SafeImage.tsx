@@ -51,15 +51,13 @@ export function SafeImage({
   // Reset de estados cuando cambia la src
   useEffect(() => {
     setErr(false);
-    setLoaded(!skeleton);
-  }, [src, skeleton]);
-
-  // Establecer el estado inicial después de la hidratación
-  useEffect(() => {
+    // Si no hay skeleton, marcamos como loaded inmediatamente (pero dejamos un tick para evitar flash)
     if (!skeleton) {
-      setLoaded(true);
+        setLoaded(true);
+    } else {
+        setLoaded(false);
     }
-  }, [skeleton]);
+  }, [src, skeleton]);
 
   const finalSrc = useMemo(() => {
     const s = (src ?? '').trim();
@@ -105,26 +103,22 @@ export function SafeImage({
     return processedSrc;
   }, [src, err, useBackendProxy]);
 
-  if (!loaded && skeleton) {
-    return (
-      <div 
-        className={`relative overflow-hidden bg-gray-200 animate-pulse ${className}`} 
-        style={{ aspectRatio: ratio === 'auto' ? undefined : ratio.replace('/', ' / ') }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          <svg className="w-8 h-8 opacity-20" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-        </div>
-      </div>
-    );
-  }
-
   const Tag = ratio === 'auto' ? 'div' : 'div'; // wrapper siempre div
   
   return (
     <Tag 
-      className={`relative overflow-hidden ${withBg ? 'bg-gray-50' : ''} ${className} ${rounded === 'all' ? 'rounded-xl' : rounded === 'top' ? 'rounded-t-xl' : ''}`}
+      className={`relative overflow-hidden ${withBg ? 'bg-white' : ''} ${className} ${rounded === 'all' ? 'rounded-xl' : rounded === 'top' ? 'rounded-t-xl' : ''}`}
       style={{ aspectRatio: ratio === 'auto' ? undefined : ratio.replace('/', ' / ') }}
     >
+      {/* Skeleton / Loading State */}
+      {!loaded && skeleton && (
+        <div 
+          className="absolute inset-0 z-10 bg-gray-100 animate-pulse flex items-center justify-center"
+        >
+           <svg className="w-8 h-8 text-gray-300 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        </div>
+      )}
+
       <Image
         src={finalSrc}
         alt={alt}
@@ -132,7 +126,7 @@ export function SafeImage({
         width={ratio === 'auto' ? 800 : undefined}
         height={ratio === 'auto' ? 600 : undefined}
         className={`transition-all duration-700 ease-in-out ${
-          loaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-lg'
+          loaded ? 'opacity-100 blur-0' : 'opacity-0 blur-lg'
         } ${hoverZoom ? 'group-hover:scale-105' : ''} ${imgClassName}`}
         style={{ objectFit: fit, objectPosition }}
         sizes={sizes}

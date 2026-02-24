@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 export class QueryProductDto extends PaginationDto {

@@ -19,7 +19,9 @@ import { AccountModule } from '../account/account.module';
       useFactory: async (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
         if (!secret && process.env.NODE_ENV === 'production') {
-          throw new Error('JWT_SECRET is not defined in production environment');
+          throw new Error(
+            'JWT_SECRET is not defined in production environment',
+          );
         }
         return {
           secret: secret ?? 'dev',

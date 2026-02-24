@@ -89,21 +89,15 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
         <div className="relative overflow-hidden rounded-t-xl bg-white/95">
           <div className="transition-transform duration-500 ease-out group-hover:scale-105">
             <Link href={`/tienda/producto/${p.slug}`} className="block aspect-square relative">
-              {img ? (
-                <SafeImage
-                  src={img}
-                  alt={p.titulo}
-                  className="w-full h-full object-contain p-4 mix-blend-multiply filter brightness-[1.03] contrast-[1.02]"
-                  ratio="1/1"
-                  fit="contain"
-                  hoverZoom={false} // Ya tenemos zoom en el wrapper
-                  useBackendProxy={false} // img ya viene resuelto
-                />
-              ) : (
-                <div className="w-full h-full grid place-items-center text-gray-700">
-                  <span className="text-xs">Sin imagen</span>
-                </div>
-              )}
+              <SafeImage
+                src={img}
+                alt={p.titulo}
+                className="w-full h-full object-contain p-4" // Fondo blanco unificado (viene del wrapper bg-white/95)
+                ratio="1/1"
+                fit="contain"
+                hoverZoom={false} // Ya tenemos zoom en el wrapper
+                useBackendProxy={false} // img ya viene resuelto
+              />
             </Link>
 
             {/* Overlay Hover Actions */}
