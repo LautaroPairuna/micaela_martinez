@@ -123,13 +123,11 @@ function HeroSlideImage({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  // Sincronizar estados cuando cambia la src
   useEffect(() => {
     setLoaded(false);
     setError(false);
   }, [src]);
 
-  // Si es un skeleton (loading=true desde padre), siempre mostramos skeleton
   if (isSkeleton) {
     return (
       <div
@@ -143,9 +141,8 @@ function HeroSlideImage({
     );
   }
 
-  // Si hubo error de carga, mostramos un fallback o el skeleton permanente
   if (error) {
-     return (
+    return (
       <div
         className={cn(
           aspectClassName,
@@ -155,51 +152,44 @@ function HeroSlideImage({
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/5">
           <ImageIcon className="h-16 w-16 text-white/20" />
         </div>
-        {/* Intentamos mostrar el blur al menos si cargó parcialmente, o nada */}
         <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
       </div>
     );
   }
 
   return (
-    <div
-      className={cn(
-        aspectClassName,
-        'relative w-full overflow-hidden bg-[#0b0b0b]', // Fondo base oscuro
-      )}
-    >
-      {/* 1. Fondo Blur (Opcional, para rellenar) */}
-      <div 
+    <div className={cn(aspectClassName, 'relative w-full overflow-hidden bg-[#0b0b0b]')}>
+      {/* Blur bg */}
+      <div
         className="absolute inset-0 z-0 opacity-40 blur-3xl scale-110 pointer-events-none"
-        style={{ 
-          backgroundImage: `url(${src})`, 
-          backgroundSize: 'cover', 
+        style={{
+          backgroundImage: `url(${src})`,
+          backgroundSize: 'cover',
           backgroundPosition: 'center',
-          // maskImage no es estándar en todos los navegadores, usar webkit
           WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
-          maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
+          maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
         }}
       />
 
-      {/* 2. Imagen Principal (Contain) */}
-      <div className="relative z-10 w-full h-full">
+      {/* ✅ SafeImage llenando el contenedor con fill (estable) */}
+      <div className="absolute inset-0 z-10">
         <SafeImage
           src={src}
           alt={alt}
           className="w-full h-full"
-          imgClassName="object-contain" // CLAVE: object-contain para no cortar
-          ratio="auto"
+          fit="contain"
+          ratio="16/9" // ✅ cualquier valor != 'auto' para que use fill
           priority={loadingType === 'eager'}
           skeleton={!loaded}
           hoverZoom={false}
           useBackendProxy={false}
-          withBg={false} // Evitar bg blanco del SafeImage
+          withBg={false}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
+          imgClassName="object-contain"
         />
       </div>
-      
-      {/* Overlay Gradiente Sutil (Integración con el fondo) */}
+
       <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
     </div>
   );
