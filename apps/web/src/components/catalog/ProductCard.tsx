@@ -86,9 +86,9 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
 
       <Card className="relative h-full flex flex-col border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 touch-manipulation rounded-xl overflow-hidden">
         {/* Imagen */}
-        <div className="relative overflow-hidden bg-white/95">
-          <div className="transition-transform duration-500 ease-out group-hover:scale-105">
-            <Link href={`/tienda/producto/${p.slug}`} className="block aspect-square relative">
+        <div className="relative aspect-square overflow-hidden bg-white/95">
+          <div className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-105">
+            <Link href={`/tienda/producto/${p.slug}`} className="block h-full w-full relative">
               <SafeImage
                 src={img}
                 alt={p.titulo}
@@ -183,7 +183,7 @@ export function ProductCard({ p }: { p: ProductCardProps }) {
           </div>
 
           {/* Título */}
-          <h3 className="relative text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3.5rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">
+          <h3 className="relative text-base sm:text-lg font-semibold leading-tight line-clamp-2 min-h-[3rem] transition-all duration-300 group-hover:text-[var(--gold)] uppercase tracking-wide text-white after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">
             {p.titulo}
           </h3>
 
