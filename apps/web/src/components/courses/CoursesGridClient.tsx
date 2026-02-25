@@ -9,7 +9,7 @@ type CourseMinimal = ComponentProps<typeof CourseCard>['c'];
 export function CoursesGridClient({ courses, isLoggedIn }: { courses: CourseMinimal[]; isLoggedIn: boolean }) {
   const enrollmentMap = useEnrollmentMap(isLoggedIn);
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 [&>*:last-child:nth-child(odd)]:md:col-span-2">
       {courses.map((course) => (
         <CourseCard key={course.slug} c={course} inscripcion={enrollmentMap.get(course.slug)} />
       ))}

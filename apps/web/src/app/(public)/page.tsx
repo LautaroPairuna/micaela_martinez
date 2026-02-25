@@ -121,9 +121,14 @@ export default async function HomePage() {
     ? [...products].sort(() => 0.5 - Math.random()) 
     : products;
 
+  // Randomización de cursos destacados si hay más de 4
+  const featuredCourses = courses.length > 4
+    ? [...courses].sort(() => 0.5 - Math.random())
+    : courses;
+
   // visibles
-  const courseCount = Math.min(4, courses.length);
-  const productCount = Math.min(8, featuredProducts.length);
+  const courseCount = Math.min(4, featuredCourses.length);
+  const productCount = Math.min(4, featuredProducts.length);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const searchJsonLd = {
@@ -190,8 +195,8 @@ export default async function HomePage() {
         <FadeIn delay={0.2}>
           {courseCount > 0 ? (
             <HydrationBoundary state={dehydrate(qc)}>
-              <div className={`${compactWrap(courseCount, "max-w-3xl")} grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 [&>*:last-child:nth-child(odd)]:md:col-span-2`}>
-                <CoursesGridClient courses={courses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
+              <div className={compactWrap(courseCount, "max-w-6xl")}>
+                <CoursesGridClient courses={featuredCourses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
               </div>
             </HydrationBoundary>
           ) : (
