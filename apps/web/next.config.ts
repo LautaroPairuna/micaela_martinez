@@ -7,10 +7,10 @@ import { IMAGE_PUBLIC_URL, DOC_PUBLIC_URL } from './src/lib/adminConstants';
 const BACKEND =
   process.env.BACKEND_INTERNAL_URL // ideal (runtime)
   ?? process.env.NEXT_PUBLIC_API_URL // opcional (si ya lo exponés)
-  ?? 'http://api:3001';              // fallback cuando corre en la misma red de Docker (service "api")
+  ?? 'http://127.0.0.1:3006';        // fallback local estándar
 
 function parseUrl(u: string) {
-  try { return new URL(u); } catch { return new URL('http://api:3001'); }
+  try { return new URL(u); } catch { return new URL('http://127.0.0.1:3006'); }
 }
 const U = parseUrl(BACKEND);
 

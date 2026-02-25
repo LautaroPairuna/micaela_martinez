@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 import Image from 'next/image';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { THUMBNAIL_PUBLIC_URL, isImageFile } from '@/lib/adminConstants';
 import { resolveResourceThumb } from '@/lib/image-utils';
 
@@ -26,7 +27,7 @@ function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; a
   const [error, setError] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Sincronizar estado local cuando cambia la prop src (ej. al guardar en el form)
+  // Sincronizar estado local cuando cambia la prop src
   useEffect(() => {
     setCurrentSrc(src);
     setError(false);
@@ -40,50 +41,80 @@ function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; a
     );
   }
 
+  const previewUrl = originalSrc || fallbackSrc || currentSrc;
+
   return (
-    <div 
-      className="relative group cursor-zoom-in"
-      onMouseEnter={() => setShowPreview(true)}
-      onMouseLeave={() => setShowPreview(false)}
-    >
-      <Image
-        src={currentSrc}
-        alt={alt}
-        width={42}
-        height={42}
-        className="rounded border border-slate-800 object-cover"
-        unoptimized
-        onError={() => {
-          // 1. Si falla la principal (con /thumbs/), probar fallback (plana)
-          if (fallbackSrc && currentSrc === src) {
-            setCurrentSrc(fallbackSrc);
-            return;
-          }
-          // 2. Si falla fallback, probar original (sin thumb)
-          if (originalSrc && currentSrc !== originalSrc) {
-            setCurrentSrc(originalSrc);
-            return;
-          }
-          // 3. Si todo falla
-          setError(true);
+    <>
+      <div 
+        className="relative group cursor-zoom-in active:scale-95 transition-transform"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowPreview(true);
         }}
-      />
+      >
+        <Image
+          src={currentSrc}
+          alt={alt}
+          width={42}
+          height={42}
+          className="rounded border border-slate-800 object-cover"
+          unoptimized
+          onError={() => {
+            if (fallbackSrc && currentSrc === src) {
+              setCurrentSrc(fallbackSrc);
+              return;
+            }
+            if (originalSrc && currentSrc !== originalSrc) {
+              setCurrentSrc(originalSrc);
+              return;
+            }
+            setError(true);
+          }}
+        />
+      </div>
 
       {showPreview && (
-        <div className="fixed z-[9999] pointer-events-none" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-          <div className="relative p-1 bg-[#1a1a1a] border border-[var(--gold)] rounded-xl shadow-2xl animate-in fade-in zoom-in duration-200">
-            <Image
-              src={originalSrc || fallbackSrc || currentSrc}
-              alt={alt}
-              width={350}
-              height={350}
-              className="rounded-lg object-contain max-h-[70vh] max-w-[70vw]"
-              unoptimized
-            />
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowPreview(false);
+          }}
+        >
+          <div 
+            className="relative p-2 bg-[#1a1a1a] border border-[var(--gold)] rounded-xl shadow-2xl animate-in zoom-in duration-300 max-w-[90vw] max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-[var(--gold)] text-black flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-10"
+              onClick={() => setShowPreview(false)}
+            >
+              ✕
+            </button>
+            
+            <div className="relative overflow-hidden rounded-lg bg-white/5 flex items-center justify-center min-w-[200px] min-h-[200px]">
+              <SafeImage
+                src={previewUrl}
+                alt={alt}
+                className="w-full h-full"
+                imgClassName="object-contain max-h-[80vh] max-w-[80vw]"
+                ratio="auto"
+                fit="contain"
+                hoverZoom={false}
+                useBackendProxy={false}
+                priority
+              />
+            </div>
+            
+            <div className="mt-3 text-center">
+              <p className="text-sm font-medium text-[var(--gold)] truncate px-4">
+                {alt}
+              </p>
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -104,8 +135,11 @@ export function renderCell({
       return <span className="text-xs text-slate-500">—</span>;
     }
 
-    const v = String(value);
+    const v = String(value).replace(/^\/+/, '');
     const primarySrc = resolveResourceThumb(meta.tableName, v) || v;
+    
+    // Ruta original completa para el preview
+    const fullOriginalSrc = `/uploads/${meta.tableName}/${v}`;
     
     // Fallback: Si la ruta generada tiene /thumbs/, probar la ruta plana (legacy uploads)
     let fallbackSrc: string | undefined;
@@ -119,7 +153,7 @@ export function renderCell({
           src={primarySrc} 
           alt={field.name} 
           fallbackSrc={fallbackSrc}
-          originalSrc={v !== primarySrc ? v : undefined}
+          originalSrc={fullOriginalSrc}
         />
         <span className="max-w-[120px] truncate text-xs text-slate-300">
           {v}
@@ -144,6 +178,7 @@ export function renderCell({
     // Si es archivo pero resulta ser una imagen (ej. slider banner), mostramos thumb
     if (!isVideo && isImageFile(v)) {
       const primarySrc = resolveResourceThumb(meta.tableName, v) || v;
+      const fullOriginalSrc = `/uploads/${meta.tableName}/${v}`;
       
       let fallbackSrc: string | undefined;
       if (primarySrc.includes('/thumbs/') && primarySrc.startsWith('/uploads/')) {
@@ -156,7 +191,7 @@ export function renderCell({
             src={primarySrc} 
             alt={field.name} 
             fallbackSrc={fallbackSrc}
-            originalSrc={v !== primarySrc ? v : undefined}
+            originalSrc={fullOriginalSrc}
           />
           <span className="max-w-[120px] truncate text-xs text-slate-300" title={filename}>
             {filename}
