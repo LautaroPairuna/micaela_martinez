@@ -177,6 +177,7 @@ function HeroSlideImage({
         priority={loadingType === 'eager'}
         skeleton={!loaded}
         hoverZoom={false}
+        useBackendProxy={false}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />
