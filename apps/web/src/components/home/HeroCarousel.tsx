@@ -168,37 +168,22 @@ function HeroSlideImage({
         'relative w-full overflow-hidden bg-[#0b0b0b]', // Fondo base oscuro
       )}
     >
-      {/* 1. Capa de Fondo (Blur Effect) para rellenar sobrantes */}
-      {src && !isSkeleton && (
-        <img
-          src={src}
-          alt=""
-          aria-hidden="true"
-          className={cn(
-            'absolute inset-0 h-full w-full object-cover opacity-50 blur-2xl scale-110 transition-opacity duration-700',
-            loaded ? 'opacity-50' : 'opacity-0',
-          )}
-        />
-      )}
-
-      {/* 2. Imagen Principal (SafeImage para Sincronización) */}
       <SafeImage
         src={src}
         alt={alt}
-        className="relative z-10 w-full h-full"
+        className="w-full h-full"
         imgClassName="object-contain"
         ratio="auto"
         priority={loadingType === 'eager'}
         skeleton={!loaded}
         hoverZoom={false}
         useBackendProxy={false}
-        withBg={false} // Quitamos fondo blanco para ver el blur
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />
       
-      {/* 3. Overlay Gradiente Sutil (Integración con el fondo) */}
-      <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+      {/* Overlay Gradiente Sutil (Integración con el fondo) */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
     </div>
   );
 }
