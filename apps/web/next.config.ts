@@ -78,14 +78,10 @@ const nextConfig: NextConfig = {
 
   serverExternalPackages: ['sharp'],
 
-  // Permitir acceso desde la red local durante desarrollo (Nivel raíz en Next.js recientes)
-  // experimental: {
-  //   allowedDevOrigins: [
-  //     'localhost:3000',
-  //     '127.0.0.1:3000',
-  //     '192.168.100.18:3000',
-  //   ],
-  // },
+  // Optimización de memoria para VPS pequeños
+  experimental: {
+    serverSourceMaps: false,
+  },
 
   // Silenciar advertencia de root en workspaces monorepo
   outputFileTracingRoot: path.resolve(__dirname, '..', '..'),

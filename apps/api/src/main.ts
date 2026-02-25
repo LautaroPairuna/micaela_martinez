@@ -75,9 +75,9 @@ async function bootstrap() {
     });
     next();
   });
-  // Aumentar límites de payload para uploads grandes
-  app.use(json({ limit: '1000mb' }));
-  app.use(urlencoded({ extended: true, limit: '1000mb' }));
+  // Aumentar límites de payload para uploads grandes (pero razonables para RAM)
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   // ✅ Servir archivos estáticos fuera del prefijo /api
   app.use(
