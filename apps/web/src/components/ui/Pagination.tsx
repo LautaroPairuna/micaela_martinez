@@ -47,7 +47,7 @@ export function Pagination({
       aria-label="Paginación"
     >
       {/* Botón Anterior */}
-      {currentPage > 1 ? (
+      {currentPage > 1 && (
         <Link
           href={hrefFor(currentPage > 1 ? currentPage - 1 : null)}
           className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-default hover:bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--gold)] transition-all duration-200 hover:scale-105"
@@ -55,10 +55,6 @@ export function Pagination({
         >
           <ChevronLeft className="w-4 h-4" />
         </Link>
-      ) : (
-        <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-default/50 text-muted cursor-not-allowed">
-          <ChevronLeft className="w-4 h-4" />
-        </span>
       )}
 
       {/* Primera página */}
@@ -120,7 +116,7 @@ export function Pagination({
       )}
 
       {/* Botón Siguiente */}
-      {currentPage < totalPages ? (
+      {currentPage < totalPages && (
         <Link
           href={hrefFor(currentPage + 1)}
           className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-default hover:bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--gold)] transition-all duration-200 hover:scale-105"
@@ -128,10 +124,6 @@ export function Pagination({
         >
           <ChevronRight className="w-4 h-4" />
         </Link>
-      ) : (
-        <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-default/50 text-muted cursor-not-allowed">
-          <ChevronRight className="w-4 h-4" />
-        </span>
       )}
     </nav>
   );
