@@ -23,6 +23,8 @@ type Props = {
   withBg?: boolean;            // bg neutro del wrapper
   skeleton?: boolean;          // shimmer de carga
   useBackendProxy?: boolean;   // usar proxy de backend para imágenes
+  onLoad?: () => void;
+  onError?: () => void;
 };
 
 const PIXEL =
@@ -43,14 +45,18 @@ export function SafeImage({
   withBg = true,
   skeleton = true,
   useBackendProxy = true,
+  onLoad,
+  onError,
 }: Props) {
   const [err, setErr] = useState(false);
   // ⬇️ Inicializar siempre como false para evitar hidratación
   const [loaded, setLoaded] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState<string | null | undefined>(src);
 
-  // Reset de estados cuando cambia la src
+  // Reset de estados cuando cambia la src (Sincronización Global)
   useEffect(() => {
     setErr(false);
+    setCurrentSrc(src);
     // Si no hay skeleton, marcamos como loaded inmediatamente (pero dejamos un tick para evitar flash)
     if (!skeleton) {
         setLoaded(true);
@@ -60,7 +66,7 @@ export function SafeImage({
   }, [src, skeleton]);
 
   const finalSrc = useMemo(() => {
-    const s = (src ?? '').trim();
+    const s = (currentSrc ?? '').trim();
     if (!s || err) return PLACEHOLDER_IMAGE;
     
     // Si es una URL relativa sin '/' inicial, agregarla
@@ -131,8 +137,14 @@ export function SafeImage({
         style={{ objectFit: fit, objectPosition }}
         sizes={sizes}
         priority={priority}
-        onError={() => setErr(true)}
-        onLoad={() => setLoaded(true)}
+        onError={() => {
+          setErr(true);
+          onError?.();
+        }}
+        onLoad={() => {
+          setLoaded(true);
+          onLoad?.();
+        }}
         unoptimized={finalSrc.endsWith('.gif')} // GIFs animados no optimizar
       />
     </Tag>

@@ -86,6 +86,14 @@ export function CourseVideoPlayer({
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
+  // Sincronización Global del Video: Reiniciar estados cuando cambia la URL
+  useEffect(() => {
+    setIsLoading(true);
+    setVideoError(null);
+    setRetryCount(0);
+    setResolvedVideoUrl(''); // Forzar nueva resolución
+  }, [videoUrl]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
