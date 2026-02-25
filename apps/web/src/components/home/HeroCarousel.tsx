@@ -168,22 +168,39 @@ function HeroSlideImage({
         'relative w-full overflow-hidden bg-[#0b0b0b]', // Fondo base oscuro
       )}
     >
-      <SafeImage
-        src={src}
-        alt={alt}
-        className="w-full h-full"
-        imgClassName="object-contain"
-        ratio="auto"
-        priority={loadingType === 'eager'}
-        skeleton={!loaded}
-        hoverZoom={false}
-        useBackendProxy={false}
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
+      {/* 1. Fondo Blur (Opcional, para rellenar) */}
+      <div 
+        className="absolute inset-0 z-0 opacity-40 blur-3xl scale-110 pointer-events-none"
+        style={{ 
+          backgroundImage: `url(${src})`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center',
+          // maskImage no es estándar en todos los navegadores, usar webkit
+          WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
+        }}
       />
+
+      {/* 2. Imagen Principal (Contain) */}
+      <div className="relative z-10 w-full h-full">
+        <SafeImage
+          src={src}
+          alt={alt}
+          className="w-full h-full"
+          imgClassName="object-contain" // CLAVE: object-contain para no cortar
+          ratio="auto"
+          priority={loadingType === 'eager'}
+          skeleton={!loaded}
+          hoverZoom={false}
+          useBackendProxy={false}
+          withBg={false} // Evitar bg blanco del SafeImage
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+        />
+      </div>
       
       {/* Overlay Gradiente Sutil (Integración con el fondo) */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
     </div>
   );
 }
