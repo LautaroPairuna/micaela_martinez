@@ -107,10 +107,18 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Limpiar preview local cuando cambia el storedValue (ej. al guardar o cerrar)
+    setLocalPreview(null);
+  }, [storedValue]);
 
   let previewSrc: string | undefined;
 
-  if (storedValue) {
+  if (localPreview) {
+    previewSrc = localPreview;
+  } else if (storedValue) {
     const v = String(storedValue);
     if (v.startsWith('blob:') || v.startsWith('http') || v.startsWith('/')) {
       previewSrc = v;
@@ -139,25 +147,30 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
     return true;
   };
 
+  const handleFile = useCallback((file: File | null) => {
+    if (file) {
+      if (!validateImageSize(file)) return;
+      
+      // Crear preview local instantánea
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLocalPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      onFileSelected(file);
+    } else {
+      setLocalPreview(null);
+      onFileSelected(null);
+    }
+  }, [onFileSelected]);
+
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file =
-        e.target.files && e.target.files[0] ? e.target.files[0] : null;
-
-      if (!file) {
-        onFileSelected(null);
-        return;
-      }
-
-      if (!validateImageSize(file)) {
-        e.target.value = '';
-        onFileSelected(null);
-        return;
-      }
-
-      onFileSelected(file);
+      const file = e.target.files?.[0] || null;
+      handleFile(file);
     },
-    [onFileSelected],
+    [handleFile],
   );
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -184,16 +197,10 @@ const ImageDropzone: React.FC<ImageDropzoneProps> = ({
       e.stopPropagation();
       setDragging(false);
 
-      const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (!file) return;
-
-      if (!validateImageSize(file)) {
-        return;
-      }
-
-      onFileSelected(file);
+      const file = e.dataTransfer.files?.[0] || null;
+      handleFile(file);
     },
-    [onFileSelected],
+    [handleFile],
   );
 
   return (

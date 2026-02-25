@@ -1,7 +1,7 @@
 // apps/web/src/app/admin/resources/[resource]/renderCell.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FieldMeta, ResourceMeta } from '@/lib/admin/meta-types';
 import Image from 'next/image';
 import { THUMBNAIL_PUBLIC_URL, isImageFile } from '@/lib/adminConstants';
@@ -24,6 +24,13 @@ function resolveRelationLabel(relation: any) {
 function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; alt: string; fallbackSrc?: string; originalSrc?: string }) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [error, setError] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Sincronizar estado local cuando cambia la prop src (ej. al guardar en el form)
+  useEffect(() => {
+    setCurrentSrc(src);
+    setError(false);
+  }, [src]);
 
   if (error) {
     return (
@@ -34,28 +41,49 @@ function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; a
   }
 
   return (
-    <Image
-      src={currentSrc}
-      alt={alt}
-      width={42}
-      height={42}
-      className="rounded border border-slate-800 object-cover"
-      unoptimized
-      onError={() => {
-        // 1. Si falla la principal (con /thumbs/), probar fallback (plana)
-        if (fallbackSrc && currentSrc === src) {
-          setCurrentSrc(fallbackSrc);
-          return;
-        }
-        // 2. Si falla fallback, probar original (sin thumb)
-        if (originalSrc && currentSrc !== originalSrc) {
-          setCurrentSrc(originalSrc);
-          return;
-        }
-        // 3. Si todo falla
-        setError(true);
-      }}
-    />
+    <div 
+      className="relative group cursor-zoom-in"
+      onMouseEnter={() => setShowPreview(true)}
+      onMouseLeave={() => setShowPreview(false)}
+    >
+      <Image
+        src={currentSrc}
+        alt={alt}
+        width={42}
+        height={42}
+        className="rounded border border-slate-800 object-cover"
+        unoptimized
+        onError={() => {
+          // 1. Si falla la principal (con /thumbs/), probar fallback (plana)
+          if (fallbackSrc && currentSrc === src) {
+            setCurrentSrc(fallbackSrc);
+            return;
+          }
+          // 2. Si falla fallback, probar original (sin thumb)
+          if (originalSrc && currentSrc !== originalSrc) {
+            setCurrentSrc(originalSrc);
+            return;
+          }
+          // 3. Si todo falla
+          setError(true);
+        }}
+      />
+
+      {showPreview && (
+        <div className="fixed z-[9999] pointer-events-none" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+          <div className="relative p-1 bg-[#1a1a1a] border border-[var(--gold)] rounded-xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <Image
+              src={originalSrc || fallbackSrc || currentSrc}
+              alt={alt}
+              width={350}
+              height={350}
+              className="rounded-lg object-contain max-h-[70vh] max-w-[70vw]"
+              unoptimized
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
