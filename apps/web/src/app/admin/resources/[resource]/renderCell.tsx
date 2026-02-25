@@ -46,31 +46,32 @@ function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; a
   return (
     <>
       <div 
-        className="relative group cursor-zoom-in active:scale-95 transition-transform"
+        className="relative group cursor-zoom-in active:scale-95 transition-transform flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           setShowPreview(true);
         }}
       >
-        <Image
-          src={currentSrc}
-          alt={alt}
-          width={42}
-          height={42}
-          className="rounded border border-slate-800 object-cover"
-          unoptimized
-          onError={() => {
-            if (fallbackSrc && currentSrc === src) {
-              setCurrentSrc(fallbackSrc);
-              return;
-            }
-            if (originalSrc && currentSrc !== originalSrc) {
-              setCurrentSrc(originalSrc);
-              return;
-            }
-            setError(true);
-          }}
-        />
+        <div className="h-[42px] w-[42px] relative overflow-hidden rounded border border-slate-800 bg-white/95">
+          <Image
+            src={currentSrc}
+            alt={alt}
+            fill
+            className="object-contain p-0.5"
+            unoptimized
+            onError={() => {
+              if (fallbackSrc && currentSrc === src) {
+                setCurrentSrc(fallbackSrc);
+                return;
+              }
+              if (originalSrc && currentSrc !== originalSrc) {
+                setCurrentSrc(originalSrc);
+                return;
+              }
+              setError(true);
+            }}
+          />
+        </div>
       </div>
 
       {showPreview && (
