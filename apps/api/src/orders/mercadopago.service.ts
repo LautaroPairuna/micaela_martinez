@@ -224,18 +224,46 @@ export class MercadoPagoService {
         capture: true,
       };
 
-      // Configurar idempotency key único
-      if (this.client.options) {
-        this.client.options.idempotencyKey = `${paymentData.external_reference}-${Date.now()}`;
-      }
+      console.log('=== BACKEND: Enviando pago a MercadoPago ===', {
+        amount: paymentRequest.transaction_amount,
+        method: paymentRequest.payment_method_id,
+        ref: paymentRequest.external_reference,
+        tokenPrefix: paymentRequest.token?.substring(0, 10),
+      });
 
-      const response = await this.payment.create({ body: paymentRequest });
+      // Configurar idempotency key único
+      const idempotencyKey = `${paymentData.external_reference}-${Date.now()}`;
+
+      const response = await this.payment.create({
+        body: paymentRequest,
+        requestOptions: { idempotencyKey },
+      });
+
+      console.log('=== BACKEND: Respuesta de MercadoPago ===', {
+        id: response.id,
+        status: response.status,
+        detail: response.status_detail,
+      });
+
       return response as MercadoPagoPaymentResponse;
     } catch (error: any) {
+      console.error('=== BACKEND: Error detallado de MercadoPago ===', {
+        message: error.message,
+        cause: error.cause,
+        details: error.cause?.details || error.errors,
+      });
+
       if (error?.cause) {
-        const errorData = error.cause;
+        // MercadoPago SDK v2 suele devolver un array en cause
+        const cause = Array.isArray(error.cause) ? error.cause[0] : error.cause;
+        const errorMsg =
+          cause?.description ||
+          cause?.message ||
+          error.message ||
+          'Error desconocido';
+
         throw new HttpException(
-          `Error de MercadoPago: ${errorData.message || errorData.description || 'Error desconocido'}`,
+          `Error de MercadoPago: ${errorMsg}`,
           HttpStatus.BAD_REQUEST,
         );
       }
