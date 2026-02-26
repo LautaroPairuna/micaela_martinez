@@ -201,21 +201,23 @@ export function MercadoPagoBricks({
 
               const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
 
-              console.log('=== FRONTEND: onSubmit de Bricks ===', JSON.stringify(cardFormData, null, 2));
+              console.log('=== FRONTEND: onSubmit de Bricks (Estructura Recibida) ===', cardFormData);
 
-              // Extraer datos de forma flexible (Bricks v2 puede anidar o aplanar)
-              const token = asStringOrNull(cardFormData.token);
-              const paymentMethodId = asStringOrNull(cardFormData.payment_method_id);
+              // 1. Extraer el token de forma ultra-flexible
+              // Bricks v2 envía { selectedPaymentMethod, formData: { token, ... } }
+              // Otras versiones envían { token, ... } directamente
+              const formData = cardFormData.formData || cardFormData;
+              const finalToken = asStringOrNull(formData.token);
               
-              // Fallback si vienen anidados en cardFormData (algunas versiones de Bricks)
-              const finalToken = token || asStringOrNull(cardFormData.formData?.token);
-              const finalPaymentMethodId = paymentMethodId || asStringOrNull(cardFormData.formData?.payment_method_id);
+              // 2. Extraer el método de pago
+              const finalPaymentMethodId = asStringOrNull(formData.payment_method_id) || 
+                                          asStringOrNull(cardFormData.selectedPaymentMethod);
 
               if (!finalToken || !finalPaymentMethodId) {
-                console.error('=== FRONTEND: Error de validación en Bricks ===', {
-                  token: finalToken,
-                  paymentMethodId: finalPaymentMethodId,
-                  fullData: cardFormData
+                console.error('=== FRONTEND: Fallo en extracción de datos de Bricks ===', {
+                  recibido: cardFormData,
+                  tokenExtraido: finalToken,
+                  methodExtraido: finalPaymentMethodId
                 });
                 onPaymentError({ 
                   message: 'Datos de tarjeta inválidos (token o método de pago ausente).',
@@ -224,9 +226,11 @@ export function MercadoPagoBricks({
                 return;
               }
 
-              const email = asStringOrNull(cardFormData.payer?.email || cardFormData.formData?.payer?.email) || undefined;
-              const identificationType = asStringOrNull(cardFormData.payer?.identification?.type || cardFormData.formData?.payer?.identification?.type) || undefined;
-              const identificationNumber = asStringOrNull(cardFormData.payer?.identification?.number || cardFormData.formData?.payer?.identification?.number) || undefined;
+              // 3. Extraer datos del pagador
+              const payer = formData.payer || cardFormData.payer || {};
+              const email = asStringOrNull(payer.email) || undefined;
+              const identificationType = asStringOrNull(payer.identification?.type) || undefined;
+              const identificationNumber = asStringOrNull(payer.identification?.number) || undefined;
 
               onPaymentStart?.();
               setIsProcessing(true);
@@ -256,7 +260,7 @@ export function MercadoPagoBricks({
                   orderId: extractId(rawResult, String(currentOrderId)),
                   paymentMethodId: finalPaymentMethodId,
                   token: finalToken,
-                  installments: cardFormData.installments || cardFormData.formData?.installments,
+                  installments: formData.installments || cardFormData.installments,
                   amount,
                   status: extractStatus(rawResult),
                 });
