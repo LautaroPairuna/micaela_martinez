@@ -66,14 +66,26 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[linear-gradient(120deg,transparent,rgba(197,164,109,0.12),transparent)] bg-[length:200%_200%] animate-shine" />
         <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[var(--gold)]/10" />
         {/* Imagen */}
-        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:h-auto bg-white flex items-center justify-center">
-          <div className="aspect-video w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
+        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:h-auto bg-black flex items-center justify-center">
+          {/* Fondo borroso (efecto relleno) */}
+          <div className="absolute inset-0 z-0">
+            <SafeImage
+              src={c.portadaUrl || null}
+              alt=""
+              ratio="auto"
+              className="h-full w-full opacity-50 blur-xl scale-110"
+              imgClassName="object-cover"
+              fit="cover"
+            />
+          </div>
+          {/* Imagen principal centrada */}
+          <div className="relative z-10 aspect-video w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
             <SafeImage
               src={c.portadaUrl || null}
               alt={c.titulo || 'Curso'}
               ratio="auto"
               className="w-full h-full"
-              imgClassName="object-contain"
+              imgClassName="object-contain drop-shadow-xl"
               fit="contain"
               rounded="all"
               hoverZoom={false}
