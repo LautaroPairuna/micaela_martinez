@@ -42,6 +42,8 @@ type PaymentBrickSettings = {
       creditCard?: 'all' | string[];
       debitCard?: 'all' | string[];
       mercadoPago?: 'all' | string[];
+      ticket?: 'all' | string[];
+      bankTransfer?: 'all' | string[];
     };
     visual?: { style?: { theme?: 'default' | 'dark' | string } };
   };
@@ -178,13 +180,22 @@ export function MercadoPagoBricks({
         const pref = asStringOrNull(preferenceId);
         if (pref) init.preferenceId = pref;
 
-        // Configuración de medios: en suscripciones ocultamos débito (MP suele no aceptarlo en AR)
+        // Configuración de medios: en suscripciones ocultamos débito y efectivo (MP requiere crédito en AR)
         type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
         const paymentMethodsCfg: PaymentMethodsCfg = isSubscription
-          ? { creditCard: ['master', 'visa', 'amex', 'cabal', 'naranja'] } // sin débito en suscripción
+          ? { 
+              creditCard: ['master', 'visa', 'amex', 'cabal', 'naranja'],
+              // Ocultamos explícitamente otros para suscripción
+              debitCard: [],
+              ticket: [],
+              bankTransfer: [],
+              mercadoPago: [] 
+            }
           : {
               creditCard: 'all',
               debitCard: 'all',
+              ticket: 'all',
+              bankTransfer: 'all',
               ...(pref ? { mercadoPago: 'all' as const } : {}), // Wallet sólo si hay preferenceId
             };
 

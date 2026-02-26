@@ -65,7 +65,7 @@ export class OrdersService {
       // normalizamos refId a number
       const refIdNum = toInt(item.refId);
 
-      let itemData: { precio: number } | null = null;
+      let itemData: { precio: Prisma.Decimal } | null = null;
 
       if (item.tipo === TipoItemOrden.CURSO) {
         itemData = await this.prisma.curso.findUnique({
@@ -91,14 +91,14 @@ export class OrdersService {
         }
       }
 
-      if (itemData && itemData.precio !== item.precioUnitario) {
+      if (itemData && !itemData.precio.equals(new Prisma.Decimal(item.precioUnitario))) {
         throw new HttpException(
           `El precio del ${item.tipo.toLowerCase()} ${item.titulo} ha cambiado`,
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      total += item.precioUnitario * item.cantidad;
+      total += Number(item.precioUnitario) * item.cantidad;
       validatedItems.push({
         tipo: item.tipo,
         refId: refIdNum,
@@ -133,7 +133,7 @@ export class OrdersService {
         data: {
           usuarioId: Number(userId),
           estado: EstadoOrden.PENDIENTE,
-          total,
+          total: new Prisma.Decimal(total) as any,
           moneda: moneda || 'ARS',
           referenciaPago,
           direccionEnvioId: shippingAddress.id,
@@ -180,7 +180,7 @@ export class OrdersService {
               refId: vi.refId, // number
               titulo: vi.titulo,
               cantidad: vi.cantidad,
-              precioUnitario: vi.precioUnitario,
+              precioUnitario: new Prisma.Decimal(vi.precioUnitario) as any,
             },
           }),
         ),
@@ -352,6 +352,11 @@ export class OrdersService {
     if (!order)
       throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
 
+    // Si la orden ya está pagada y el nuevo estado también es PAGADO, no hacemos nada (Idempotencia)
+    if (order.estado === EstadoOrden.PAGADO && estado === EstadoOrden.PAGADO) {
+      return order;
+    }
+
     const updated = await this.prisma.orden.update({
       where: { id: Number(orderId) },
       data: {
@@ -411,7 +416,7 @@ export class OrdersService {
       const paymentResult = await this.mercadoPagoService.processPayment({
         token: paymentData.token,
         payment_method_id: paymentData.paymentMethodId,
-        transaction_amount: order.total,
+        transaction_amount: Number(order.total),
         description: `Orden #${order.id}`,
         external_reference: String(order.id), // ← string
         payer: {
@@ -477,7 +482,7 @@ export class OrdersService {
         await this.mercadoPagoService.createSubscription({
           token: subscriptionData.token,
           payment_method_id: subscriptionData.paymentMethodId,
-          transaction_amount: order.total,
+          transaction_amount: Number(order.total),
           description: `Suscripción mensual - Orden #${order.id}`,
           external_reference: String(order.id), // ← string
           frequency: subscriptionData.frequency,
@@ -699,44 +704,66 @@ export class OrdersService {
 
   /** Confirma pago recurrente y registra en PagoSuscripcion */
   private async handleSubscriptionPayment(paymentId: string) {
-    // TODO: Consultar detalles reales a MP si tu servicio los expone
-    const paymentDetails = {
-      status: 'approved',
-      external_reference: 'order-id-unknown',
-      subscription_id: 'sub-id-unknown',
-    };
+    try {
+      const paymentDetails = await this.mercadoPagoService.getPayment(paymentId);
 
-    if (paymentDetails.status !== 'approved') {
-      console.warn(`Pago de suscripción rechazado: ${paymentId}`);
-      return { processed: false, status: paymentDetails.status };
+      if (paymentDetails.status !== 'approved') {
+        console.warn(`Pago de suscripción rechazado: ${paymentId}`);
+        return { processed: false, status: paymentDetails.status };
+      }
+
+      // El campo subscription_id en el pago de MP asocia el pago con el preapproval
+      const subscriptionId = (paymentDetails as any).subscription_id;
+
+      if (!subscriptionId) {
+        console.warn(
+          `El pago ${paymentId} no tiene un subscription_id asociado`,
+        );
+        return { processed: false, reason: 'no_subscription_id' };
+      }
+
+      const order = await this.prisma.orden.findFirst({
+        where: { suscripcionId: subscriptionId },
+      });
+
+      if (!order) {
+        console.warn(`No se encontró orden para la suscripción ${subscriptionId}`);
+        return { processed: false, reason: 'order_not_found' };
+      }
+
+      // Evitar duplicados (Idempotencia)
+      const existingPayment = await this.prisma.pagoSuscripcion.findFirst({
+        where: { referenciaPago: paymentId },
+      });
+
+      if (existingPayment) {
+        return { processed: true, alreadyExists: true, orderId: order.id };
+      }
+
+      await this.prisma.pagoSuscripcion.create({
+        data: {
+          ordenId: order.id,
+          usuarioId: order.usuarioId,
+          referenciaPago: paymentId,
+          monto: paymentDetails.transaction_amount as any,
+          estado: 'APROBADO',
+          metadatos: json({
+            subscriptionId,
+            paymentId,
+            status: paymentDetails.status,
+            dateApproved: paymentDetails.date_approved,
+          }),
+        },
+      });
+
+      // Renovar accesos
+      await this.renewCourseSubscriptions(order.usuarioId);
+
+      return { processed: true, orderId: order.id };
+    } catch (error) {
+      console.error(`Error en handleSubscriptionPayment:`, error);
+      throw error;
     }
-
-    const order = await this.prisma.orden.findFirst({
-      where: { suscripcionId: paymentDetails.subscription_id },
-    });
-
-    if (!order) {
-      console.warn(
-        `No se encontró orden para la suscripción ${paymentDetails.subscription_id}`,
-      );
-      return { processed: false, reason: 'order_not_found' };
-    }
-
-    await this.prisma.pagoSuscripcion.create({
-      data: {
-        ordenId: order.id, // number
-        usuarioId: order.usuarioId,
-        referenciaPago: paymentId,
-        monto: order.total,
-        estado: 'APROBADO',
-        metadatos: json({
-          subscriptionId: paymentDetails.subscription_id,
-          externalReference: paymentDetails.external_reference,
-        }),
-      },
-    });
-
-    return { processed: true, orderId: order.id };
   }
 
   /** Maneja pagos recurrentes de suscripciones */
@@ -773,7 +800,7 @@ export class OrdersService {
           ordenId: order.id, // number
           usuarioId: order.usuarioId,
           referenciaPago: paymentId,
-          monto: (paymentDetails as any).transaction_amount,
+          monto: (paymentDetails as any).transaction_amount as any,
           estado: 'APROBADO',
           metadatos: json({
             subscriptionId,

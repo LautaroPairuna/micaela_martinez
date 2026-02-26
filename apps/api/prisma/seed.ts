@@ -112,9 +112,9 @@ const upsertMarcaBySlug = (slug: string, nombre: string) =>
 
 /** Producto por slug → devuelve id Int */
 const upsertProductoGetId = async (p: {
-  slug: string; titulo: string; precio: number; stock: number;
+  slug: string; titulo: string; precio: number | string; stock: number;
   publicado?: boolean; destacado?: boolean; imagen?: string | null;
-  descripcionMD?: string | null; descuento?: number | null;
+  descripcionMD?: string | null; descuento?: number | string | null;
   marcaSlug?: string | null; categoriaSlug?: string | null;
 }) => {
   const marca = p.marcaSlug
@@ -129,26 +129,26 @@ const upsertProductoGetId = async (p: {
     where: { slug: p.slug },
     update: {
       titulo: p.titulo,
-      precio: p.precio,
+      precio: new Prisma.Decimal(p.precio) as any,
       stock: p.stock,
       publicado: p.publicado ?? true,
       destacado: p.destacado ?? false,
       imagen: p.imagen ?? null,
       descripcionMD: p.descripcionMD ?? null,
-      descuento: p.descuento ?? 0,
+      descuento: new Prisma.Decimal(p.descuento ?? 0) as any,
       marcaId: marca?.id ?? null,
       categoriaId: categoria?.id ?? null,
     },
     create: {
       slug: p.slug,
       titulo: p.titulo,
-      precio: p.precio,
+      precio: new Prisma.Decimal(p.precio) as any,
       stock: p.stock,
       publicado: p.publicado ?? true,
       destacado: p.destacado ?? false,
       imagen: p.imagen ?? null,
       descripcionMD: p.descripcionMD ?? null,
-      descuento: p.descuento ?? 0,
+      descuento: new Prisma.Decimal(p.descuento ?? 0) as any,
       marcaId: marca?.id ?? null,
       categoriaId: categoria?.id ?? null,
       creadoEn: new Date(),
@@ -169,11 +169,11 @@ const upsertCursoGetId = async (c: {
   titulo: string;
   resumen: string;
   descripcionMD: string;
-  precio: number;
+  precio: number | string;
   nivel: NivelCurso | string; // aceptamos string para que no te mate el bug
   portada: string;
   destacado?: boolean;
-  descuento?: number;
+  descuento?: number | string;
   tags?: string[];
   queAprenderas?: string[];
   videoPreview?: string;
@@ -187,12 +187,12 @@ const upsertCursoGetId = async (c: {
       titulo: c.titulo,
       resumen: c.resumen,
       descripcionMD: c.descripcionMD,
-      precio: c.precio,
+      precio: new Prisma.Decimal(c.precio),
       publicado: true,
       nivel: nivelKey,
       portada: c.portada,
       destacado: c.destacado ?? false,
-      descuento: c.descuento ?? 0,
+      descuento: new Prisma.Decimal(c.descuento ?? 0),
       tags: json(c.tags ?? []),
       queAprenderas: c.queAprenderas ? json(c.queAprenderas) : undefined,
       videoPreview: c.videoPreview ?? null,
@@ -203,12 +203,12 @@ const upsertCursoGetId = async (c: {
       titulo: c.titulo,
       resumen: c.resumen,
       descripcionMD: c.descripcionMD,
-      precio: c.precio,
+      precio: new Prisma.Decimal(c.precio),
       publicado: true,
       nivel: nivelKey,
       portada: c.portada,
       destacado: c.destacado ?? false,
-      descuento: c.descuento ?? 0,
+      descuento: new Prisma.Decimal(c.descuento ?? 0),
       tags: json(c.tags ?? []),
       creadoEn: new Date(),
       queAprenderas: json(c.queAprenderas ?? []),
@@ -597,7 +597,7 @@ async function main() {
           data: {
             usuarioId: clienteId,
             estado: E.estadoOrden(EstadoOrden.PAGADO),
-            total: 70000,
+            total: new Prisma.Decimal(70000),
             moneda: 'ARS',
             referenciaPago: refPago,
             creadoEn: new Date(),
@@ -616,7 +616,7 @@ async function main() {
       refId: demoProductId,
       titulo: demoProductTitle,
       cantidad: 2,
-      precioUnitario: demoProductPrice,
+      precioUnitario: new Prisma.Decimal(demoProductPrice),
     });
   }
   
@@ -626,7 +626,7 @@ async function main() {
       refId: cursoLiftingId,
       titulo: 'Lifting de pestañas',
       cantidad: 1,
-      precioUnitario: 35000,
+      precioUnitario: new Prisma.Decimal(35000),
     });
 
   await prisma.itemOrden.createMany({

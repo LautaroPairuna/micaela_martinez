@@ -14,7 +14,7 @@ CREATE TABLE `usuario` (
 
 -- CreateTable
 CREATE TABLE `role` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `slug` VARCHAR(64) NOT NULL,
     `name` VARCHAR(128) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -26,7 +26,7 @@ CREATE TABLE `role` (
 -- CreateTable
 CREATE TABLE `usuario_rol` (
     `usuario_id` INTEGER NOT NULL,
-    `role_id` CHAR(25) NOT NULL,
+    `role_id` INTEGER NOT NULL,
 
     INDEX `usuario_rol_role_id_idx`(`role_id`),
     PRIMARY KEY (`usuario_id`, `role_id`)
@@ -34,34 +34,37 @@ CREATE TABLE `usuario_rol` (
 
 -- CreateTable
 CREATE TABLE `favorito` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
     `producto_id` INTEGER NOT NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `favorito_usuario_id_idx`(`usuario_id`),
+    INDEX `favorito_producto_id_fkey`(`producto_id`),
     UNIQUE INDEX `favorito_usuario_id_producto_id_key`(`usuario_id`, `producto_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `curso` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `slug` VARCHAR(128) NOT NULL,
     `titulo` VARCHAR(255) NOT NULL,
     `resumen` VARCHAR(191) NULL,
     `descripcion_md` VARCHAR(191) NULL,
-    `requisitos` TEXT NULL,
-    `precio` INTEGER NOT NULL,
+    `requisitos` JSON NULL,
+    `precio` DECIMAL(10, 2) NOT NULL,
+    `descuento` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `publicado` BOOLEAN NOT NULL DEFAULT false,
     `nivel` ENUM('basico', 'intermedio', 'avanzado') NOT NULL DEFAULT 'basico',
     `portada_archivo` VARCHAR(255) NULL,
+    `video_preview_url` VARCHAR(255) NULL,
     `destacado` BOOLEAN NOT NULL DEFAULT false,
+    `que_aprenderas` JSON NULL,
     `tags` JSON NULL,
     `rating_prom` DECIMAL(3, 2) NULL,
     `rating_conteo` INTEGER NOT NULL DEFAULT 0,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `instructor_id` INTEGER NULL,
 
     UNIQUE INDEX `curso_slug_key`(`slug`),
     INDEX `curso_publicado_destacado_creado_en_idx`(`publicado`, `destacado`, `creado_en`),
@@ -71,44 +74,58 @@ CREATE TABLE `curso` (
 
 -- CreateTable
 CREATE TABLE `inscripcion` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
-    `curso_id` CHAR(25) NOT NULL,
+    `curso_id` INTEGER NOT NULL,
     `estado` ENUM('activada', 'pausada', 'desactivada') NOT NULL DEFAULT 'activada',
     `progreso` JSON NOT NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
 
+    INDEX `inscripcion_curso_id_fkey`(`curso_id`),
     UNIQUE INDEX `inscripcion_usuario_id_curso_id_key`(`usuario_id`, `curso_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `modulo` (
-    `id` CHAR(25) NOT NULL,
-    `curso_id` CHAR(25) NOT NULL,
-    `titulo` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `curso_id` INTEGER NOT NULL,
+    `titulo` VARCHAR(255) NOT NULL,
     `orden` INTEGER NOT NULL,
-    `parent_id` CHAR(25) NULL,
 
     INDEX `modulo_curso_id_orden_idx`(`curso_id`, `orden`),
-    INDEX `modulo_parent_id_idx`(`parent_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `leccion` (
-    `id` CHAR(25) NOT NULL,
-    `modulo_id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `modulo_id` INTEGER NOT NULL,
     `titulo` VARCHAR(191) NOT NULL,
-    `duracion_s` INTEGER NOT NULL DEFAULT 0,
     `ruta_src` VARCHAR(191) NULL,
     `orden` INTEGER NOT NULL,
     `tipo` ENUM('video', 'documento', 'quiz', 'texto') NOT NULL DEFAULT 'texto',
     `descripcion` TEXT NULL,
     `contenido` JSON NULL,
+    `preview_url` VARCHAR(255) NULL,
+    `duracion` DOUBLE NOT NULL DEFAULT 0,
 
     INDEX `leccion_modulo_id_orden_idx`(`modulo_id`, `orden`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `leccion_tipo_config` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `tipo` ENUM('video', 'documento', 'quiz', 'texto') NOT NULL,
+    `schema` JSON NOT NULL,
+    `ui` JSON NULL,
+    `version` INTEGER NOT NULL DEFAULT 1,
+    `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `actualizado_en` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `leccion_tipo_config_tipo_key`(`tipo`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -117,30 +134,36 @@ CREATE TABLE `producto` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `slug` VARCHAR(128) NOT NULL,
     `titulo` VARCHAR(255) NOT NULL,
-    `precio` INTEGER NOT NULL,
+    `precio` DECIMAL(10, 2) NOT NULL,
     `stock` INTEGER NOT NULL DEFAULT 0,
     `publicado` BOOLEAN NOT NULL DEFAULT false,
     `destacado` BOOLEAN NOT NULL DEFAULT false,
     `imagen_archivo` VARCHAR(255) NULL,
     `descripcion_md` VARCHAR(191) NULL,
-    `precio_lista` INTEGER NULL,
+    `descuento` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `rating_prom` DECIMAL(3, 2) NULL,
     `rating_conteo` INTEGER NOT NULL DEFAULT 0,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `marca_id` CHAR(25) NULL,
-    `categoria_id` CHAR(25) NULL,
+    `marca_id` INTEGER NULL,
+    `categoria_id` INTEGER NULL,
 
     UNIQUE INDEX `producto_slug_key`(`slug`),
     INDEX `producto_publicado_destacado_creado_en_idx`(`publicado`, `destacado`, `creado_en`),
+    INDEX `producto_publicado_precio_idx`(`publicado`, `precio`),
+    INDEX `producto_publicado_marca_id_precio_idx`(`publicado`, `marca_id`, `precio`),
+    INDEX `producto_publicado_categoria_id_precio_idx`(`publicado`, `categoria_id`, `precio`),
+    INDEX `producto_publicado_marca_id_categoria_id_idx`(`publicado`, `marca_id`, `categoria_id`),
     INDEX `producto_marca_id_idx`(`marca_id`),
     INDEX `producto_categoria_id_idx`(`categoria_id`),
+    INDEX `producto_rating_prom_rating_conteo_idx`(`rating_prom`, `rating_conteo`),
+    INDEX `producto_stock_idx`(`stock`),
     FULLTEXT INDEX `producto_titulo_idx`(`titulo`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `producto_imagen` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `producto_id` INTEGER NOT NULL,
     `archivo` VARCHAR(255) NOT NULL,
     `alt` VARCHAR(255) NULL,
@@ -152,42 +175,36 @@ CREATE TABLE `producto_imagen` (
 
 -- CreateTable
 CREATE TABLE `marca` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `slug` VARCHAR(128) NOT NULL,
     `nombre` VARCHAR(191) NOT NULL,
     `imagen_archivo` VARCHAR(255) NULL,
     `activa` BOOLEAN NOT NULL DEFAULT true,
-    `orden` INTEGER NOT NULL DEFAULT 0,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `marca_slug_key`(`slug`),
-    INDEX `marca_orden_idx`(`orden`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `categoria` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `slug` VARCHAR(128) NOT NULL,
     `nombre` VARCHAR(191) NOT NULL,
-    `descripcion` VARCHAR(512) NULL,
     `imagen_archivo` VARCHAR(255) NULL,
     `activa` BOOLEAN NOT NULL DEFAULT true,
-    `orden` INTEGER NOT NULL DEFAULT 0,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `parent_id` CHAR(25) NULL,
 
     UNIQUE INDEX `categoria_slug_key`(`slug`),
-    INDEX `categoria_parent_id_orden_idx`(`parent_id`, `orden`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `orden` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
     `estado` ENUM('pendiente', 'pagado', 'cumplido', 'cancelado', 'reembolsado') NOT NULL DEFAULT 'pendiente',
-    `total` INTEGER NOT NULL,
+    `total` DECIMAL(10, 2) NOT NULL,
     `moneda` VARCHAR(191) NOT NULL DEFAULT 'ARS',
     `referencia_pago` VARCHAR(191) NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -198,26 +215,28 @@ CREATE TABLE `orden` (
     `suscripcion_frecuencia` INTEGER NULL,
     `suscripcion_tipo_frecuencia` VARCHAR(191) NULL,
     `metadatos` JSON NULL,
-    `direccion_envio_id` CHAR(25) NULL,
-    `direccion_facturacion_id` CHAR(25) NULL,
+    `direccion_envio_id` INTEGER NULL,
+    `direccion_facturacion_id` INTEGER NULL,
 
+    UNIQUE INDEX `orden_suscripcion_id_key`(`suscripcion_id`),
     INDEX `orden_usuario_id_estado_creado_en_idx`(`usuario_id`, `estado`, `creado_en`),
     INDEX `orden_es_suscripcion_idx`(`es_suscripcion`),
-    INDEX `orden_suscripcion_id_idx`(`suscripcion_id`),
     INDEX `orden_suscripcion_activa_idx`(`suscripcion_activa`),
     INDEX `orden_referencia_pago_idx`(`referencia_pago`),
+    INDEX `orden_direccion_envio_id_fkey`(`direccion_envio_id`),
+    INDEX `orden_direccion_facturacion_id_fkey`(`direccion_facturacion_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `item_orden` (
-    `id` CHAR(25) NOT NULL,
-    `orden_id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `orden_id` INTEGER NOT NULL,
     `tipo` ENUM('curso', 'producto') NOT NULL,
-    `ref_id` CHAR(25) NOT NULL,
+    `ref_id` INTEGER NOT NULL,
     `titulo` VARCHAR(255) NOT NULL,
     `cantidad` INTEGER NOT NULL DEFAULT 1,
-    `precio_unitario` INTEGER NOT NULL,
+    `precio_unitario` DECIMAL(10, 2) NOT NULL,
 
     INDEX `item_orden_orden_id_idx`(`orden_id`),
     INDEX `item_orden_tipo_ref_id_idx`(`tipo`, `ref_id`),
@@ -226,8 +245,8 @@ CREATE TABLE `item_orden` (
 
 -- CreateTable
 CREATE TABLE `pagos_suscripciones` (
-    `id` CHAR(25) NOT NULL,
-    `orden_id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `orden_id` INTEGER NOT NULL,
     `usuario_id` INTEGER NOT NULL,
     `referencia_pago` VARCHAR(191) NOT NULL,
     `monto` DECIMAL(10, 2) NOT NULL,
@@ -238,15 +257,15 @@ CREATE TABLE `pagos_suscripciones` (
 
     INDEX `pagos_suscripciones_orden_id_idx`(`orden_id`),
     INDEX `pagos_suscripciones_usuario_id_idx`(`usuario_id`),
-    INDEX `pagos_suscripciones_referencia_pago_idx`(`referencia_pago`),
     INDEX `pagos_suscripciones_estado_idx`(`estado`),
     INDEX `pagos_suscripciones_creado_en_idx`(`creado_en`),
+    UNIQUE INDEX `pagos_suscripciones_referencia_pago_key`(`referencia_pago`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `direccion` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
     `etiqueta` VARCHAR(64) NULL,
     `nombre` VARCHAR(191) NOT NULL,
@@ -268,7 +287,7 @@ CREATE TABLE `direccion` (
 
 -- CreateTable
 CREATE TABLE `slider` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `titulo` VARCHAR(255) NOT NULL,
     `alt` VARCHAR(255) NOT NULL,
     `archivo` VARCHAR(255) NOT NULL,
@@ -276,16 +295,24 @@ CREATE TABLE `slider` (
     `orden` INTEGER NOT NULL DEFAULT 0,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
+    `cta_primario_href` VARCHAR(255) NULL,
+    `cta_primario_texto` VARCHAR(80) NULL,
+    `cta_secundario_href` VARCHAR(255) NULL,
+    `cta_secundario_texto` VARCHAR(80) NULL,
+    `descripcion` VARCHAR(600) NULL,
+    `etiqueta` VARCHAR(80) NULL,
+    `subtitulo` VARCHAR(255) NULL,
 
     INDEX `slider_activa_orden_idx`(`activa`, `orden`),
+    INDEX `slider_orden_idx`(`orden`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `resena` (
-    `id` CHAR(25) NOT NULL,
-    `curso_id` CHAR(25) NULL,
-    `producto_id` INTEGER NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `curso_id` INTEGER NULL,
+    `producto_id` INTEGER NULL,
     `usuario_id` INTEGER NOT NULL,
     `puntaje` INTEGER NOT NULL,
     `comentario` VARCHAR(191) NULL,
@@ -293,6 +320,7 @@ CREATE TABLE `resena` (
 
     INDEX `resena_curso_id_idx`(`curso_id`),
     INDEX `resena_producto_id_idx`(`producto_id`),
+    INDEX `resena_usuario_id_fkey`(`usuario_id`),
     UNIQUE INDEX `unique_resena_curso_usuario`(`curso_id`, `usuario_id`),
     UNIQUE INDEX `unique_resena_producto_usuario`(`producto_id`, `usuario_id`),
     PRIMARY KEY (`id`)
@@ -300,8 +328,8 @@ CREATE TABLE `resena` (
 
 -- CreateTable
 CREATE TABLE `resena_like` (
-    `id` CHAR(25) NOT NULL,
-    `resena_id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `resena_id` INTEGER NOT NULL,
     `usuario_id` INTEGER NOT NULL,
     `tipo` ENUM('like', 'dislike') NOT NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -314,10 +342,10 @@ CREATE TABLE `resena_like` (
 
 -- CreateTable
 CREATE TABLE `resena_respuesta` (
-    `id` CHAR(25) NOT NULL,
-    `resena_id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `resena_id` INTEGER NOT NULL,
     `usuario_id` INTEGER NOT NULL,
-    `parent_id` CHAR(25) NULL,
+    `parent_id` INTEGER NULL,
     `contenido` TEXT NOT NULL,
     `eliminado` BOOLEAN NOT NULL DEFAULT false,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -331,9 +359,9 @@ CREATE TABLE `resena_respuesta` (
 
 -- CreateTable
 CREATE TABLE `notificacion` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
-    `tipo` ENUM('respuesta_resena', 'like_resena', 'mencion', 'sistema') NOT NULL,
+    `tipo` ENUM('respuesta_resena', 'like_resena', 'mencion', 'sistema', 'promocion', 'recordatorio') NOT NULL,
     `titulo` VARCHAR(255) NOT NULL,
     `mensaje` TEXT NOT NULL,
     `leida` BOOLEAN NOT NULL DEFAULT false,
@@ -350,16 +378,12 @@ CREATE TABLE `notificacion` (
 
 -- CreateTable
 CREATE TABLE `preferencias_notificacion` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
-    `nueva_resena` BOOLEAN NOT NULL DEFAULT true,
     `respuesta_resena` BOOLEAN NOT NULL DEFAULT true,
+    `likes_resena` BOOLEAN NOT NULL DEFAULT true,
+    `descuentos_favoritos` BOOLEAN NOT NULL DEFAULT true,
     `actualizaciones_sistema` BOOLEAN NOT NULL DEFAULT true,
-    `mantenimiento` BOOLEAN NOT NULL DEFAULT true,
-    `reporte_contenido` BOOLEAN NOT NULL DEFAULT true,
-    `contenido_pendiente` BOOLEAN NOT NULL DEFAULT true,
-    `resumen_diario` BOOLEAN NOT NULL DEFAULT false,
-    `notificaciones_instantaneas` BOOLEAN NOT NULL DEFAULT true,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
 
@@ -369,9 +393,9 @@ CREATE TABLE `preferencias_notificacion` (
 
 -- CreateTable
 CREATE TABLE `resena_borrador` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `usuario_id` INTEGER NOT NULL,
-    `curso_id` CHAR(25) NULL,
+    `curso_id` INTEGER NULL,
     `producto_id` INTEGER NULL,
     `puntaje` INTEGER NULL,
     `comentario` TEXT NULL,
@@ -388,7 +412,7 @@ CREATE TABLE `resena_borrador` (
 
 -- CreateTable
 CREATE TABLE `audit_log` (
-    `id` CHAR(25) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `table_name` VARCHAR(50) NOT NULL,
     `record_id` VARCHAR(50) NOT NULL,
     `action` VARCHAR(20) NOT NULL,
@@ -407,35 +431,73 @@ CREATE TABLE `audit_log` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- AddForeignKey
-ALTER TABLE `usuario_rol` ADD CONSTRAINT `usuario_rol_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateTable
+CREATE TABLE `carrito` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `usuario_id` INTEGER NOT NULL,
+    `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `actualizado_en` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `carrito_usuario_id_key`(`usuario_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `item_carrito` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `carrito_id` INTEGER NOT NULL,
+    `tipo` ENUM('curso', 'producto') NOT NULL,
+    `producto_id` INTEGER NULL,
+    `curso_id` INTEGER NULL,
+    `cantidad` INTEGER NOT NULL DEFAULT 1,
+    `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `item_carrito_carrito_id_idx`(`carrito_id`),
+    INDEX `item_carrito_curso_id_fkey`(`curso_id`),
+    INDEX `item_carrito_producto_id_fkey`(`producto_id`),
+    UNIQUE INDEX `unique_item_carrito`(`carrito_id`, `tipo`, `producto_id`, `curso_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `certificado` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `uuid` VARCHAR(191) NOT NULL,
+    `usuario_id` INTEGER NOT NULL,
+    `curso_id` INTEGER NOT NULL,
+    `url` VARCHAR(255) NOT NULL,
+    `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `certificado_uuid_key`(`uuid`),
+    INDEX `certificado_usuario_id_idx`(`usuario_id`),
+    INDEX `certificado_curso_id_idx`(`curso_id`),
+    UNIQUE INDEX `certificado_usuario_id_curso_id_key`(`usuario_id`, `curso_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `usuario_rol` ADD CONSTRAINT `usuario_rol_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `role`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `usuario_rol` ADD CONSTRAINT `usuario_rol_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `favorito` ADD CONSTRAINT `favorito_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `usuario_rol` ADD CONSTRAINT `usuario_rol_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `role`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `favorito` ADD CONSTRAINT `favorito_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `favorito` ADD CONSTRAINT `favorito_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `curso` ADD CONSTRAINT `curso_instructor_id_fkey` FOREIGN KEY (`instructor_id`) REFERENCES `usuario`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `favorito` ADD CONSTRAINT `favorito_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `inscripcion` ADD CONSTRAINT `inscripcion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `inscripcion` ADD CONSTRAINT `inscripcion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `inscripcion` ADD CONSTRAINT `inscripcion_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `inscripcion` ADD CONSTRAINT `inscripcion_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `modulo` ADD CONSTRAINT `modulo_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `modulo` ADD CONSTRAINT `modulo_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `modulo` ADD CONSTRAINT `modulo_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `modulo`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `leccion` ADD CONSTRAINT `leccion_modulo_id_fkey` FOREIGN KEY (`modulo_id`) REFERENCES `modulo`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `leccion` ADD CONSTRAINT `leccion_modulo_id_fkey` FOREIGN KEY (`modulo_id`) REFERENCES `modulo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `producto` ADD CONSTRAINT `producto_marca_id_fkey` FOREIGN KEY (`marca_id`) REFERENCES `marca`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -444,10 +506,10 @@ ALTER TABLE `producto` ADD CONSTRAINT `producto_marca_id_fkey` FOREIGN KEY (`mar
 ALTER TABLE `producto` ADD CONSTRAINT `producto_categoria_id_fkey` FOREIGN KEY (`categoria_id`) REFERENCES `categoria`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `producto_imagen` ADD CONSTRAINT `producto_imagen_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `producto_imagen` ADD CONSTRAINT `producto_imagen_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `categoria` ADD CONSTRAINT `categoria_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `categoria`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `orden` ADD CONSTRAINT `orden_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `orden` ADD CONSTRAINT `orden_direccion_envio_id_fkey` FOREIGN KEY (`direccion_envio_id`) REFERENCES `direccion`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -456,58 +518,73 @@ ALTER TABLE `orden` ADD CONSTRAINT `orden_direccion_envio_id_fkey` FOREIGN KEY (
 ALTER TABLE `orden` ADD CONSTRAINT `orden_direccion_facturacion_id_fkey` FOREIGN KEY (`direccion_facturacion_id`) REFERENCES `direccion`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `orden` ADD CONSTRAINT `orden_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `item_orden` ADD CONSTRAINT `item_orden_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `item_orden` ADD CONSTRAINT `item_orden_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `direccion` ADD CONSTRAINT `direccion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `direccion` ADD CONSTRAINT `direccion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena` ADD CONSTRAINT `resena_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena` ADD CONSTRAINT `resena_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena` ADD CONSTRAINT `resena_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena` ADD CONSTRAINT `resena_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena` ADD CONSTRAINT `resena_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena` ADD CONSTRAINT `resena_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_like` ADD CONSTRAINT `resena_like_resena_id_fkey` FOREIGN KEY (`resena_id`) REFERENCES `resena`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_like` ADD CONSTRAINT `resena_like_resena_id_fkey` FOREIGN KEY (`resena_id`) REFERENCES `resena`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_like` ADD CONSTRAINT `resena_like_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_like` ADD CONSTRAINT `resena_like_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_resena_id_fkey` FOREIGN KEY (`resena_id`) REFERENCES `resena`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_resena_id_fkey` FOREIGN KEY (`resena_id`) REFERENCES `resena`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `resena_respuesta`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_respuesta` ADD CONSTRAINT `resena_respuesta_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `resena_respuesta`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `notificacion` ADD CONSTRAINT `notificacion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `notificacion` ADD CONSTRAINT `notificacion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `preferencias_notificacion` ADD CONSTRAINT `preferencias_notificacion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `preferencias_notificacion` ADD CONSTRAINT `preferencias_notificacion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_borrador` ADD CONSTRAINT `resena_borrador_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_borrador` ADD CONSTRAINT `resena_borrador_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_borrador` ADD CONSTRAINT `resena_borrador_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_borrador` ADD CONSTRAINT `resena_borrador_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `resena_borrador` ADD CONSTRAINT `resena_borrador_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `resena_borrador` ADD CONSTRAINT `resena_borrador_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `audit_log` ADD CONSTRAINT `audit_log_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `audit_log` ADD CONSTRAINT `audit_log_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `usuario`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `carrito` ADD CONSTRAINT `carrito_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `item_carrito` ADD CONSTRAINT `item_carrito_carrito_id_fkey` FOREIGN KEY (`carrito_id`) REFERENCES `carrito`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `item_carrito` ADD CONSTRAINT `item_carrito_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `item_carrito` ADD CONSTRAINT `item_carrito_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `certificado` ADD CONSTRAINT `certificado_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `certificado` ADD CONSTRAINT `certificado_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

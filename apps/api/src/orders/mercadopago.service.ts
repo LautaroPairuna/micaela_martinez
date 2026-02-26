@@ -423,7 +423,44 @@ export class MercadoPagoService {
     }
   }
 
-  // Webhook para notificaciones de MercadoPago
+  /**
+   * Obtiene los detalles de una suscripción (preapproval)
+   * @param preapprovalId ID de la suscripción en MercadoPago
+   */
+  async getSubscription(preapprovalId: string): Promise<any> {
+    try {
+      const response = await fetch(
+        `https://api.mercadopago.com/preapproval/${preapprovalId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN')}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new HttpException(
+          `Error al obtener suscripción: ${errorData.message || 'Error desconocido'}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Error de conexión con MercadoPago',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
   async handleWebhook(notificationData: any): Promise<void> {
     try {
       if (notificationData.type === 'payment') {

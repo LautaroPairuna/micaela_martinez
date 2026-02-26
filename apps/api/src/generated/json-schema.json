@@ -251,10 +251,10 @@
           ]
         },
         "precio": {
-          "type": "integer"
+          "type": "number"
         },
         "descuento": {
-          "type": "integer",
+          "type": "number",
           "default": 0
         },
         "publicado": {
@@ -581,7 +581,7 @@
           "type": "string"
         },
         "precio": {
-          "type": "integer"
+          "type": "number"
         },
         "stock": {
           "type": "integer",
@@ -608,7 +608,7 @@
           ]
         },
         "descuento": {
-          "type": "integer",
+          "type": "number",
           "default": 0
         },
         "ratingProm": {
@@ -822,7 +822,7 @@
           ]
         },
         "total": {
-          "type": "integer"
+          "type": "number"
         },
         "moneda": {
           "type": "string",
@@ -961,7 +961,7 @@
           "default": 1
         },
         "precioUnitario": {
-          "type": "integer"
+          "type": "number"
         },
         "orden": {
           "$ref": "#/definitions/Orden"

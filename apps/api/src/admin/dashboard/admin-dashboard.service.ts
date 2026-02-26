@@ -154,7 +154,7 @@ export class AdminDashboardService {
     const lastOrders: LastOrderDto[] = lastOrdersPrisma.map((o) => ({
       id: o.id,
       estado: o.estado,
-      total: o.total,
+      total: Number(o.total),
       moneda: o.moneda,
       creadoEn: o.creadoEn.toISOString(),
       usuarioEmail: o.usuario?.email ?? null,

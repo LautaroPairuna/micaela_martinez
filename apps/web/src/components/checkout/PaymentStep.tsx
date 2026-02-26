@@ -12,6 +12,7 @@ import {
   CreditCard,
   Building2,
   Shield,
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   CheckCircle,
@@ -51,6 +52,8 @@ export function PaymentStep() {
   const cartTotal = useCart((state) => cartSelectors.subtotal(state.items));
   const { error: showError } = useToast();
 
+  const hasCourses = cartItems.some((item) => item.type === 'course');
+
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
@@ -63,20 +66,22 @@ export function PaymentStep() {
       description: 'Tarjeta, efectivo, transferencia y más opciones',
       icon: CreditCard,
       badge: 'Recomendado',
-      features: [
-        'Tarjetas de crédito y débito',
-        'Pago en efectivo (Rapipago, Pago Fácil)',
-        'Transferencia bancaria',
-        'Dinero en cuenta de MercadoPago'
-      ]
+      features: hasCourses 
+        ? ['Solo tarjeta de crédito (requerido para cursos)']
+        : [
+            'Tarjetas de crédito y débito',
+            'Pago en efectivo (Rapipago, Pago Fácil)',
+            'Transferencia bancaria',
+            'Dinero en cuenta de MercadoPago'
+          ]
     },
-    {
+    ...(!hasCourses ? [{
       id: 'transfer',
       name: 'Transferencia Directa',
       description: 'Transferí directamente a nuestra cuenta bancaria',
       icon: Building2,
       features: ['Sin comisiones adicionales', 'Confirmación manual', 'Tiempo de procesamiento: 24-48hs']
-    }
+    }] : [])
   ];
 
   const handlePaymentMethodSelect = (methodId: string) => {
@@ -288,6 +293,21 @@ export function PaymentStep() {
                             </span>
                           </div>
                           
+                          {/* Aviso de suscripción para cursos */}
+                          {hasCourses && (
+                            <div className="flex items-start gap-3 p-4 bg-[var(--gold)]/10 border border-[var(--gold)]/30 rounded-xl mb-4">
+                              <AlertCircle className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5" />
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-[var(--gold)]">
+                                  Requisito para cursos
+                                </p>
+                                <p className="text-xs text-[var(--gold)]/80 leading-relaxed">
+                                  Al incluir cursos (suscripciones), Mercado Pago requiere el uso de **tarjeta de crédito** para garantizar la renovación de tu acceso. Otros medios de pago han sido desactivados automáticamente.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Bricks Container - El estilo dark mode ya está aplicado en el componente */}
                           <div className="min-h-[200px]">
                             <MercadoPagoBricks
@@ -297,6 +317,7 @@ export function PaymentStep() {
                               onPaymentError={handleBricksPaymentError}
                               onPaymentStart={handleBricksPaymentStart}
                               onCreateOrder={createOrderIfNeeded}
+                              isSubscription={hasCourses}
                             />
                           </div>
                         </div>
