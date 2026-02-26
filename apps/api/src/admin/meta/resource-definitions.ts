@@ -94,7 +94,8 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     videoPreview: {
       label: 'Vista Previa (Video)',
       help: 'Video promocional del curso.',
-      showInList: true,
+      showInList: false,
+      showInForm: false,
       widget: 'video',
     },
     requisitos: {

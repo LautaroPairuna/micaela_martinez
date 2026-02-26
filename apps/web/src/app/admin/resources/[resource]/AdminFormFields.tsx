@@ -537,6 +537,13 @@ const MediaDropzone: React.FC<MediaDropzoneProps> = ({
         <input
           ref={inputRef}
           type="file"
+          accept={
+            fileKind === 'video'
+              ? 'video/mp4,video/webm,video/quicktime,video/*'
+              : fileKind === 'document'
+              ? 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              : undefined
+          }
           className="hidden"
           onChange={handleInputChange}
           disabled={readOnly}
@@ -585,6 +592,8 @@ export function renderAdminField({
 }: RenderAdminFieldProps) {
   const label =
     field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1);
+
+  const isVideoField = field.widget === 'video' || field.fileKind === 'video';
 
   const LabelWithTooltip = () => (
     <div className="flex items-center gap-2 mb-1">
@@ -674,7 +683,7 @@ export function renderAdminField({
   }
 
   /* Imagen */
-  if (field.isImage) {
+  if (field.isImage && !isVideoField) {
     const stored = formValues[field.name] as string | null | undefined;
 
     return (
@@ -708,13 +717,17 @@ export function renderAdminField({
   }
 
   /* Archivos (Video, Doc, Generic) */
-  if (field.isFile && !field.isImage) {
-    const fileKind =
-      field.widget === 'video' || field.fileKind === 'video' || field.name === 'videoPreview'
-        ? 'video'
-        : field.widget === 'document' || field.name.endsWith('Pdf')
-        ? 'document'
-        : 'generic';
+  const isActuallyFile =
+    (field.isFile || isVideoField) && !(field.isImage && !isVideoField);
+
+  if (isActuallyFile) {
+    const fileKind = isVideoField
+      ? 'video'
+      : field.widget === 'document' ||
+        field.fileKind === 'doc' ||
+        field.name.endsWith('Pdf')
+      ? 'document'
+      : 'generic';
 
     return (
       <div key={field.name} className="md:col-span-2 space-y-1">

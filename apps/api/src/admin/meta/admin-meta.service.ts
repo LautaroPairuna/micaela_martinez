@@ -110,12 +110,9 @@ function detectFileField(
   field: any,
 ): { isFile: boolean; fileKind?: FileKind } {
   if (
-    (model?.name === 'Leccion' &&
-      field?.name === 'rutaSrc' &&
-      field?.type === 'String') ||
-    (model?.name === 'Curso' &&
-      field?.name === 'videoPreview' &&
-      field?.type === 'String')
+    model?.name === 'Leccion' &&
+    field?.name === 'rutaSrc' &&
+    field?.type === 'String'
   ) {
     return { isFile: true, fileKind: 'video' };
   }

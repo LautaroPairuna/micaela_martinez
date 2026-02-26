@@ -439,37 +439,40 @@ export default async function CursoPage({
         }
         childrenRight={
           <div>
-            {/* Video Preview */}
+            {/* Imagen de portada con efecto Blur */}
             <div className="relative z-10 -mb-2">
-              <div className="bg-black aspect-video rounded-t-lg overflow-hidden border border-default border-b-0 shadow-2xl">
-                {c.videoPreview ? (
-                  <video
-                    src={c.videoPreview}
-                    poster={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
-                    controls={false}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="w-full h-full object-cover"
+              <div className="bg-black w-full min-h-[220px] rounded-t-lg overflow-hidden border border-default border-b-0 shadow-2xl flex items-center justify-center relative group">
+                {/* Fondo borroso (efecto relleno) */}
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                  <SafeImage
+                    src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
+                    alt=""
+                    ratio="auto"
+                    className="h-full w-full opacity-80 blur-3xl scale-150"
+                    imgClassName="object-cover w-full h-full"
+                    fit="cover"
+                    withBg={false}
+                    skeleton={false}
+                    hoverZoom={false}
                   />
-                ) : (
-                  <div className="relative w-full h-full group cursor-pointer">
-                    <SafeImage
-                      src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
-                      alt={c.titulo}
-                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                      <div className="bg-white/90 rounded-full p-4 shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
-                        <PlayCircle className="size-8 text-black fill-current" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-4 left-0 right-0 text-center font-bold text-white drop-shadow-md">
-                      Vista previa del curso
-                    </div>
-                  </div>
-                )}
+                </div>
+                
+                {/* Imagen principal que ocupa todo el ancho y se ajusta verticalmente */}
+                <div className="relative z-10 w-full flex items-center transition-transform duration-500 ease-out group-hover:scale-105">
+                  <SafeImage
+                    src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
+                    alt={c.titulo}
+                    ratio="auto"
+                    className="w-full"
+                    imgClassName="w-full h-auto object-contain"
+                    fit="contain"
+                    rounded="none"
+                    withBg={false}
+                    skeleton={false}
+                    hoverZoom={false}
+                    sizes="(min-width:1024px) 400px, 100vw"
+                  />
+                </div>
               </div>
             </div>
 

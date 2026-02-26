@@ -66,30 +66,35 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[linear-gradient(120deg,transparent,rgba(197,164,109,0.12),transparent)] bg-[length:200%_200%] animate-shine" />
         <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[var(--gold)]/10" />
         {/* Imagen */}
-        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:h-auto bg-black flex items-center justify-center">
+        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-80 lg:self-stretch flex items-center justify-center min-h-[200px]">
           {/* Fondo borroso (efecto relleno) */}
-          <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0 pointer-events-none">
             <SafeImage
               src={c.portadaUrl || null}
               alt=""
               ratio="auto"
-              className="h-full w-full opacity-50 blur-xl scale-110"
+              className="h-full w-full opacity-80 blur-3xl scale-150"
               imgClassName="object-cover"
               fit="cover"
+              withBg={false}
+              skeleton={false}
+              hoverZoom={false}
             />
           </div>
-          {/* Imagen principal centrada */}
-          <div className="relative z-10 aspect-video w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
+          {/* Imagen principal que ocupa todo el ancho */}
+          <div className="relative z-10 w-full h-full flex items-center transition-transform duration-500 ease-out group-hover:scale-105">
             <SafeImage
               src={c.portadaUrl || null}
               alt={c.titulo || 'Curso'}
               ratio="auto"
-              className="w-full h-full"
-              imgClassName="object-contain drop-shadow-xl"
+              className="w-full"
+              imgClassName="w-full h-auto object-contain"
               fit="contain"
-              rounded="all"
+              rounded="none"
+              withBg={false}
+              skeleton={false}
               hoverZoom={false}
-              sizes="(min-width:1280px) 100vw, (min-width:768px) 50vw, 100vw"
+              sizes="(min-width:1024px) 320px, 100vw"
             />
           </div>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_70%_at_20%_20%,rgba(197,164,109,0.18),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />

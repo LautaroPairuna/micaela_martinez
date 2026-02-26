@@ -1072,7 +1072,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "isImage": true,
+        "isImage": false,
         "isFile": true,
         "fileKind": "video",
         "widget": "video",
@@ -2076,7 +2076,7 @@
         "isRequired": false,
         "isList": false,
         "isEnum": false,
-        "isImage": true,
+        "isImage": false,
         "isFile": false,
         "isParentChildCount": false,
         "isForeignKey": false,
@@ -3517,22 +3517,6 @@
         "showInForm": true
       },
       {
-        "name": "descripcion",
-        "label": "Descripción",
-        "type": "String",
-        "kind": "scalar",
-        "isId": false,
-        "isRequired": false,
-        "isList": false,
-        "isEnum": false,
-        "isImage": false,
-        "isFile": false,
-        "isParentChildCount": false,
-        "isForeignKey": false,
-        "showInList": false,
-        "showInForm": true
-      },
-      {
         "name": "imagen",
         "type": "String",
         "kind": "scalar",
@@ -3623,20 +3607,6 @@
         ],
         "group": "dates",
         "priority": 70
-      },
-      {
-        "field": "descripcion",
-        "label": "Descripcion",
-        "input": "string",
-        "operators": [
-          "contains",
-          "equals",
-          "startsWith",
-          "endsWith"
-        ],
-        "group": "technical",
-        "priority": 10,
-        "hiddenByDefault": true
       },
       {
         "field": "imagen",
