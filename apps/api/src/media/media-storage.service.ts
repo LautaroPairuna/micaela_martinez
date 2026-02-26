@@ -686,12 +686,34 @@ export class MediaStorageService {
     try {
       await new Promise<void>((resolve, reject) => {
         ffmpeg(videoPath)
-          .outputOptions(['-vf', vf, '-frames:v', '1', '-q:v', '3'])
+          .outputOptions([
+            '-vf',
+            vf,
+            '-frames:v',
+            '1',
+            '-q:v',
+            '3',
+            '-preset',
+            'ultrafast', // Acelerar generación de sprite
+          ])
           .output(spritePath)
           .on('progress', (p: FfmpegProgress) => {
-            if (typeof p?.percent === 'number') {
-              const rawPct = Math.max(0, Math.min(100, p.percent));
-              this.videoGateway.emitProgress(clientId, rawPct);
+            let rawPct: number | null = null;
+            // Intentar usar porcentaje nativo
+            if (typeof p?.percent === 'number' && p.percent > 0) {
+              rawPct = p.percent;
+            }
+            // Fallback: usar timemark si existe duración
+            else if (duration && p?.timemark) {
+              const seconds = this.parseTimemarkToSeconds(p.timemark);
+              if (seconds !== null && duration > 0) {
+                rawPct = (seconds / duration) * 100;
+              }
+            }
+
+            if (rawPct !== null) {
+              const pct = Math.max(0, Math.min(100, rawPct));
+              this.videoGateway.emitProgress(clientId, pct);
             }
           })
           .on('end', () => {
