@@ -196,22 +196,37 @@ export function MercadoPagoBricks({
           },
           callbacks: {
             onReady: () => {},
-            onSubmit: async (cardFormData: CardFormData): Promise<void> => {
+            onSubmit: async (cardFormData: any): Promise<void> => {
               if (cancelled) return;
 
               const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
 
-              // Validaciones defensivas
+              console.log('=== FRONTEND: onSubmit de Bricks ===', JSON.stringify(cardFormData, null, 2));
+
+              // Extraer datos de forma flexible (Bricks v2 puede anidar o aplanar)
               const token = asStringOrNull(cardFormData.token);
               const paymentMethodId = asStringOrNull(cardFormData.payment_method_id);
-              if (!token || !paymentMethodId) {
-                onPaymentError({ message: 'Datos de tarjeta inválidos (token o método de pago ausente).' });
+              
+              // Fallback si vienen anidados en cardFormData (algunas versiones de Bricks)
+              const finalToken = token || asStringOrNull(cardFormData.formData?.token);
+              const finalPaymentMethodId = paymentMethodId || asStringOrNull(cardFormData.formData?.payment_method_id);
+
+              if (!finalToken || !finalPaymentMethodId) {
+                console.error('=== FRONTEND: Error de validación en Bricks ===', {
+                  token: finalToken,
+                  paymentMethodId: finalPaymentMethodId,
+                  fullData: cardFormData
+                });
+                onPaymentError({ 
+                  message: 'Datos de tarjeta inválidos (token o método de pago ausente).',
+                  details: cardFormData 
+                });
                 return;
               }
 
-              const email = asStringOrNull(cardFormData.payer?.email ?? null) || undefined;
-              const identificationType = asStringOrNull(cardFormData.payer?.identification?.type ?? null) || undefined;
-              const identificationNumber = asStringOrNull(cardFormData.payer?.identification?.number ?? null) || undefined;
+              const email = asStringOrNull(cardFormData.payer?.email || cardFormData.formData?.payer?.email) || undefined;
+              const identificationType = asStringOrNull(cardFormData.payer?.identification?.type || cardFormData.formData?.payer?.identification?.type) || undefined;
+              const identificationNumber = asStringOrNull(cardFormData.payer?.identification?.number || cardFormData.formData?.payer?.identification?.number) || undefined;
 
               onPaymentStart?.();
               setIsProcessing(true);
@@ -221,8 +236,8 @@ export function MercadoPagoBricks({
 
                 const rawResult = isSubscription
                   ? await createSubscription(currentOrderId, {
-                      token,
-                      paymentMethodId,
+                      token: finalToken,
+                      paymentMethodId: finalPaymentMethodId,
                       email,
                       identificationType,
                       identificationNumber,
@@ -230,8 +245,8 @@ export function MercadoPagoBricks({
                       frequencyType: subscriptionFrequencyType,
                     })
                   : await processMercadoPagoPayment(currentOrderId, {
-                      token,
-                      paymentMethodId,
+                      token: finalToken,
+                      paymentMethodId: finalPaymentMethodId,
                       email,
                       identificationType,
                       identificationNumber,
@@ -239,9 +254,9 @@ export function MercadoPagoBricks({
 
                 onPaymentSuccess({
                   orderId: extractId(rawResult, String(currentOrderId)),
-                  paymentMethodId,
-                  token,
-                  installments: cardFormData.installments,
+                  paymentMethodId: finalPaymentMethodId,
+                  token: finalToken,
+                  installments: cardFormData.installments || cardFormData.formData?.installments,
                   amount,
                   status: extractStatus(rawResult),
                 });
