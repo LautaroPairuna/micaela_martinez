@@ -1271,7 +1271,7 @@ export function AdminResourceForm({
 
           if (!file) continue;
 
-          const isVideo = field.isFile && isVideoFile(field, file);
+          const isVideo = field.isFile && (field.fileKind === 'video' || (field as any).widget === 'video' || field.name === 'videoPreview' || isVideoFile(field, file));
 
           if (isVideo) {
             const lessonTitleRaw = isLessonResource

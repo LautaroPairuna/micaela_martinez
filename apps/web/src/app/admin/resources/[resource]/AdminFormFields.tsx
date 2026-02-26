@@ -710,7 +710,7 @@ export function renderAdminField({
   /* Archivos (Video, Doc, Generic) */
   if (field.isFile && !field.isImage) {
     const fileKind =
-      field.widget === 'video'
+      field.widget === 'video' || field.fileKind === 'video'
         ? 'video'
         : field.widget === 'document' || field.name.endsWith('Pdf')
         ? 'document'
