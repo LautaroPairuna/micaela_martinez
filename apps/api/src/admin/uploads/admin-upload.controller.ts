@@ -602,24 +602,11 @@ export class AdminUploadController {
         [fieldName]: filenameOnly,
       };
       if (isLesson && fieldName === 'rutaSrc') {
-        // Asignar duración (MINUTOS)
-        // Convertimos segundos a minutos (con decimales)
         if (typeof durationS === 'number' && durationS > 0) {
           updateData.duracion = parseFloat((durationS / 60).toFixed(2));
         }
-
-        // Asignar previewUrl (Miniatura/Thumbnail hardcodeado)
-        // El usuario pidió "ruta hardcodeada" y "primer frame".
-        // thumbUrl viene de generateVideoThumbnailWebp como /api/media/thumbnails/xxx-thumb.webp
         if (thumbUrl) {
           updateData.previewUrl = thumbUrl;
-        } else if (previewVttUrl) {
-          // Fallback al VTT si no hay thumb (aunque thumb debería generarse siempre si hay ffmpeg)
-          // Pero idealmente previewUrl es una imagen.
-          console.warn(
-            'No se generó thumbUrl, usando VTT para previewUrl como fallback',
-          );
-          // updateData.previewUrl = previewVttUrl; // Comentado para no ensuciar si se espera imagen
         }
       }
 
@@ -628,8 +615,13 @@ export class AdminUploadController {
         data: updateData,
       });
 
-      // Revalidar recurso asociado (video)
-      await this.revalidationService
+      // 4. Notificar fin al Frontend INMEDIATAMENTE después de actualizar la BD
+      if (clientId) {
+        this.videoGateway.emitDone(clientId);
+      }
+
+      // 5. Revalidar recurso en segundo plano (sin bloquear el emitDone)
+      this.revalidationService
         .revalidateResource(resourceName)
         .catch((err) => {
           console.error('Error revalidating after video process:', err);
@@ -642,14 +634,9 @@ export class AdminUploadController {
         durationS,
         previewVttUrl,
         thumbUrl,
-        updateData, // Log para verificar qué se guardó
+        updateData,
         ms: Date.now() - processStart,
       });
-
-      // 4. Notificar fin al Frontend (para que refresque)
-      if (clientId) {
-        this.videoGateway.emitDone(clientId);
-      }
     } catch (err) {
       console.error('video_process_error', {
         id,

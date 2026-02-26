@@ -69,46 +69,53 @@ export function AdminToastProvider({ children }: PropsWithChildren) {
         : circumference * (1 - progressValue / 100);
 
     const content = (
-      <div className="flex items-center gap-3">
-        {progressValue !== null ? (
-          <div className="relative flex h-9 w-9 items-center justify-center">
-            <svg className="h-8 w-8 -rotate-90" viewBox="0 0 32 32">
-              <circle
-                cx="16"
-                cy="16"
-                r={radius}
+      <div className="flex w-full items-start gap-3 overflow-hidden">
+        {typeof progress === 'number' ? (
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
+            <svg
+              className="h-full w-full -rotate-90 transform text-slate-700"
+              viewBox="0 0 36 36"
+            >
+              {/* Background Circle */}
+              <path
+                className="text-slate-700"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="3"
-                className="text-slate-600/70"
               />
-              <circle
-                cx="16"
-                cy="16"
-                r={radius}
+              {/* Progress Circle */}
+              <path
+                className="text-emerald-400 transition-all duration-300 ease-out"
+                strokeDasharray={`${progress}, 100`}
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="3"
                 strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                className="text-emerald-400 transition-all duration-300 ease-out"
               />
             </svg>
-            <span className="absolute text-[10px] font-semibold text-slate-100">
-              {progressValue}%
+            <span className="absolute text-[10px] font-bold text-white">
+              {Math.round(progress)}%
             </span>
           </div>
         ) : null}
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="truncate text-sm font-semibold text-white">{title}</p>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
+          <p className="truncate text-sm font-bold text-white leading-tight" title={title}>
+            {title}
+          </p>
           {description && (
-            <p className="text-xs text-slate-100/80">
+            <p className="truncate text-xs text-slate-300 font-medium leading-tight" title={description}>
               {description}
             </p>
           )}
           {message && (
-            <p className="text-[11px] text-slate-200/70 tabular-nums">
+            <p className="truncate text-[10px] text-slate-400 tabular-nums leading-tight" title={message}>
               {message}
             </p>
           )}

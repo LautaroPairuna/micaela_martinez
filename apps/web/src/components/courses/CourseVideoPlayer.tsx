@@ -254,15 +254,16 @@ export function CourseVideoPlayer({
   }, [isDragging, duration, resetControlsTimeout, updateSeek]);
 
   const handleProgressMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging) return; // Si arrastra, el efecto global se encarga
+    if (isDragging || !progressBarRef.current || !duration) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percentage = x / rect.width;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(1, x / rect.width));
-    const time = percentage * duration;
-    
-    setHoverPosition(x);
-    setHoverTime(time);
+    // Usar requestAnimationFrame para sincronizar con el refresco de pantalla
+    window.requestAnimationFrame(() => {
+      setHoverPosition(x);
+      setHoverTime(percentage * duration);
+    });
   };
 
   const handleProgressMouseLeave = () => {
