@@ -11,7 +11,7 @@ import { getMe, listEnrollments } from "@/lib/sdk/userApi";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { CoursesGridClient } from "@/components/courses/CoursesGridClient";
 import HeroSection from "@/components/home/HeroSection";
-import { FadeIn, StaggerContainer } from "@/components/ui/Motion";
+import { FadeIn } from "@/components/ui/Motion";
 
 // Forzar renderizado dinámico para evitar errores con headers()
 export const dynamic = "force-dynamic";
@@ -143,7 +143,7 @@ export default async function HomePage() {
   };
 
   const compactWrap = (n: number, maxW: string) => (n <= 2 ? `mx-auto ${maxW}` : "");
-  const compactPadY = (n: number) => (n <= 2 ? "py-10" : "");
+  const compactPadY = (n: number) => (n <= 2 ? "py-4" : "");
 
   const qc = new QueryClient();
   const me = await getMe({ cache: "no-store" });
@@ -188,7 +188,7 @@ export default async function HomePage() {
       <Section
         id="cursos"
         width="xl"
-        padY="sm"
+        padY={false}
         bleedBackground={<div className="absolute inset-0 bg-[#0d0d0d]" />}
         innerClassName={compactPadY(courseCount)}
       >
