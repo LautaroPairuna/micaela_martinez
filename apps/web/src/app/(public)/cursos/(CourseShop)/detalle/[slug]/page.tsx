@@ -445,7 +445,7 @@ export default async function CursoPage({
                 {/* Fondo borroso (efecto relleno) */}
                 <div className="absolute inset-0 z-0 pointer-events-none">
                   <SafeImage
-                    src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
+                    src={c.portadaUrl}
                     alt=""
                     ratio="auto"
                     className="h-full w-full opacity-80 blur-3xl scale-150"
@@ -460,7 +460,7 @@ export default async function CursoPage({
                 {/* Imagen principal que ocupa todo el ancho y se ajusta verticalmente */}
                 <div className="relative z-10 w-full flex items-center transition-transform duration-500 ease-out group-hover:scale-105">
                   <SafeImage
-                    src={c.portadaUrl ? abs(c.portadaUrl)! : undefined}
+                    src={c.portadaUrl}
                     alt={c.titulo}
                     ratio="auto"
                     className="w-full"
