@@ -38,14 +38,14 @@ export function CourseHeader({
           {/* Lado izquierdo - Navegación y título */}
           <div className="flex items-center gap-4 flex-1 min-w-0">
             {/* Botón volver */}
-            <Link href={course.slug ? `/cursos/detalle/${course.slug}` : '/mi-cuenta/mi-aprendizaje'}>
+            <Link href="/mi-cuenta/mi-aprendizaje">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="flex items-center gap-2 text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline font-medium">Volver al curso</span>
+                <span className="hidden sm:inline font-medium">Volver a mis cursos</span>
               </Button>
             </Link>
 

@@ -264,22 +264,18 @@ export default async function CursoPage({
               {/* Badges en una sola fila */}
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 {/* Rating */}
-                {ratingCount > 0 ? (
-                  <div className="flex items-center gap-1">
-                    <span className="font-bold text-[var(--pink)]">{ratingValue.toFixed(1)}</span>
-                    <RatingStars value={ratingValue} count={ratingCount} size="sm" />
-                    <span className="text-[var(--pink)] underline cursor-pointer hover:text-[var(--pink-light)]">
-                      ({ratingCount} valoraciones)
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-muted">
-                    <RatingStars value={0} count={0} size="sm" />
-                    <span>(Sin valoraciones)</span>
-                  </div>
+                {ratingCount > 0 && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <span className="font-bold text-[var(--pink)]">{ratingValue.toFixed(1)}</span>
+                      <RatingStars value={ratingValue} count={ratingCount} size="sm" />
+                      <span className="text-[var(--pink)] underline cursor-pointer hover:text-[var(--pink-light)]">
+                        ({ratingCount} valoraciones)
+                      </span>
+                    </div>
+                    <span className="text-muted">•</span>
+                  </>
                 )}
-
-                <span className="text-muted">•</span>
 
                 {/* Estudiantes */}
                 <div className="flex items-center gap-1 text-[var(--fg)]">

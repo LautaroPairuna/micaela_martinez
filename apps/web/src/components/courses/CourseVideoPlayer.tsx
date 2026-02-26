@@ -619,12 +619,21 @@ export function CourseVideoPlayer({
                 {/* Tooltip Preview */}
                 {hoverTime !== null && validUrl && !isDragging && (
                   <div 
-                    className="absolute bottom-full mb-4 flex flex-col items-center bg-black/90 rounded-lg overflow-hidden border border-white/20 shadow-xl pointer-events-none z-50 animate-in fade-in zoom-in-95 duration-150"
+                    className="absolute bottom-full mb-6 flex flex-col items-center bg-black/95 rounded-lg overflow-hidden border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.8)] pointer-events-none z-[100] animate-in fade-in zoom-in-95 duration-150"
                     style={{ 
-                      left: hoverPosition,
+                      left: (() => {
+                        if (!progressBarRef.current) return hoverPosition;
+                        const containerWidth = progressBarRef.current.offsetWidth;
+                        const tooltipWidth = currentThumbnail ? currentThumbnail.w : 160;
+                        const halfTooltip = tooltipWidth / 2;
+                        // Clampear la posición con un margen de seguridad de 8px
+                        return Math.max(halfTooltip + 8, Math.min(containerWidth - halfTooltip - 8, hoverPosition));
+                      })(),
                       transform: 'translateX(-50%)'
                     }}
                   >
+                    {/* Triángulo indicador (opcional para estilo) */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-black/95" />
                     <div 
                       className="bg-black relative overflow-hidden"
                       style={{

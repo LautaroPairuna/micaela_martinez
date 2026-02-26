@@ -687,10 +687,10 @@ export function CoursePlayer({
           />
         )}
 
-        <div className="flex-1 flex flex-col bg-black">
+        <div className="flex-1 flex flex-col bg-black min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 bg-black overflow-hidden">
-              <div className="relative w-full h-full flex flex-col">
+            <div className="flex-1 bg-black relative overflow-hidden">
+              <div className="absolute inset-0">
                 {currentLesson.tipo === 'VIDEO' && getRawVideoSrc(currentLesson) ? (
                   <CourseVideoPlayer
                     videoUrl={resolvedVideoUrl}
@@ -724,10 +724,10 @@ export function CoursePlayer({
                               </Button>
                               <Button
                                 variant="outline"
-                                onClick={() => router.push(`/cursos/${course.slug}`)}
+                                onClick={() => router.push('/mi-cuenta/mi-aprendizaje')}
                                 className="w-full"
                               >
-                                Volver al curso
+                                Volver a mis cursos
                               </Button>
                             </div>
                           </div>

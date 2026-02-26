@@ -122,10 +122,12 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
                 )}
               </div>
 
-              {c.ratingProm && c.ratingConteo && c.ratingConteo > 0 && (
+              {c.ratingProm && c.ratingConteo && c.ratingConteo > 0 ? (
                 <div className="min-h-[24px] flex items-center">
                   <RatingStars value={Number(c.ratingProm || 0)} count={c.ratingConteo || 0} size="sm" />
                 </div>
+              ) : (
+                <div className="min-h-[24px]" aria-hidden="true" />
               )}
 
               {isEnrolled && (
