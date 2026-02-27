@@ -290,19 +290,16 @@ export class MediaService {
     else if (ext === '.png') contentType = 'image/png';
 
     // Construimos la ruta interna para Nginx.
-    // Nginx debe tener un location /_protected/ configurado como internal.
+    // Nginx debe tener un location /_protected/media/ configurado como internal.
     // El archivo físico está en public/uploads/media (usualmente).
     // findVideoOr404 devuelve el path absoluto, necesitamos el relativo a /public/uploads/media
-    const relativePath = path.posix.join(
-      'media',
-      path.posix.basename(fullPath),
-    );
+    const relativePath = path.posix.basename(fullPath);
 
     return {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'X-Accel-Redirect': `/_protected/${relativePath}`,
+        'X-Accel-Redirect': `/_protected/media/${relativePath}`,
       },
     };
   }
