@@ -427,10 +427,12 @@ export class AdminUploadController {
     clientId?: string,
   ) {
     const lockPath = path.join(tmpDir, '.lock');
-    if (fs.existsSync(lockPath)) {
-      return;
-    }
+    if (fs.existsSync(lockPath)) return;
+
+    // Bloqueo para evitar procesamientos duplicados
     await fsp.writeFile(lockPath, '').catch(() => {});
+    
+    // ✅ Medicion de rendimiento integrada
     const assembleStart = Date.now();
 
     if (clientId) {
@@ -441,35 +443,37 @@ export class AdminUploadController {
     const finalName = `${uploadId}-${originalName}`;
     const finalPath = path.join(process.cwd(), 'public', 'tmp', finalName);
 
+    // ✅ Buffer de 10MB ideal para tus chunks de 50MB en NVMe
+    const writeStream = fs.createWriteStream(finalPath, { 
+      highWaterMark: 1024 * 1024 * 10 
+    });
+
     try {
       if (fs.existsSync(finalPath)) await fsp.unlink(finalPath);
-
-      const writeStream = fs.createWriteStream(finalPath);
 
       for (let i = 0; i < totalChunks; i++) {
         const chunkPath = path.join(tmpDir, `chunk-${i}`);
 
-        let retries = 0;
-        while (!fs.existsSync(chunkPath) && retries < 30) {
-          await new Promise((r) => setTimeout(r, 250));
-          retries++;
-        }
-
+        // Verificación directa (sin waits artificiales gracias a Nginx buffering off)
         if (!fs.existsSync(chunkPath)) {
-          writeStream.destroy();
-          throw new Error(`Chunk ${i} perdido durante el ensamblaje.`);
+          throw new Error(`Error crítico: El chunk ${i} no se encuentra en el disco.`);
         }
 
+        // Pipe de alto rendimiento
         await new Promise<void>((resolve, reject) => {
-          const readStream = fs.createReadStream(chunkPath);
+          const readStream = fs.createReadStream(chunkPath, { 
+            highWaterMark: 1024 * 1024 * 10 
+          });
           readStream.pipe(writeStream, { end: false });
           readStream.on('end', () => resolve());
           readStream.on('error', (err) => reject(err));
         });
 
+        // Limpieza inmediata de chunks procesados
         await fsp.unlink(chunkPath).catch(() => {});
 
-        if (clientId && i % 5 === 0) {
+        // Notificar progreso cada 10% para optimizar el socket
+        if (clientId && (i % Math.max(1, Math.floor(totalChunks / 10)) === 0 || i === totalChunks - 1)) {
           const progress = Math.round(((i + 1) / totalChunks) * 100);
           this.videoGateway.emitProgress(clientId, progress);
         }
@@ -477,14 +481,42 @@ export class AdminUploadController {
 
       writeStream.end();
 
+      // ✅ Promesa corregida para evitar el error de TypeScript
       await new Promise<void>((resolve, reject) => {
-        writeStream.on('finish', resolve);
-        writeStream.on('error', reject);
+        writeStream.on('finish', () => resolve());
+        writeStream.on('error', (err) => reject(err));
       });
 
+      // Limpieza de carpeta temporal de chunks
       await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-
+      
       const stats = await fsp.stat(finalPath);
+      const assembleDuration = (Date.now() - assembleStart) / 1000;
+
+      // ✅ Log de telemetría para monitorear el disco de Hostinger
+      console.info(`✅ Ensamblado completado: ${finalName}`, {
+        duration: `${assembleDuration}s`,
+        size: `${(stats.size / (1024 * 1024)).toFixed(2)} MB`,
+        speed: `${(stats.size / (1024 * 1024) / assembleDuration).toFixed(2)} MB/s`
+      });
+
+      // --- Uso de resource, field e id para lógica de DB ---
+      const resourceMeta = await this.adminMeta.getResourceMeta(resource);
+      const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
+      const isLesson = resourceMeta.tableName === 'leccion' || resourceMeta.name === 'Leccion';
+
+      // Acceso dinámico al modelo de Prisma
+      const prismaModelKey = resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
+      const client = (this.prisma as any)[prismaModelKey];
+      
+      const existing = await client.findUnique({ where: { id } });
+      if (!existing) throw new Error(`El registro ${id} ya no existe en la tabla ${resource}`);
+
+      // Generación de nombre base para el archivo final comprimido
+      const baseName = existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
+      const folder = path.join('uploads', 'media');
+
+      // Reconstrucción del objeto de archivo para Multer-like compatibility
       const file: Express.Multer.File = {
         fieldname: 'file',
         originalname: originalName,
@@ -498,35 +530,12 @@ export class AdminUploadController {
         buffer: Buffer.alloc(0),
       };
 
-      console.info('video_assemble_done', {
-        uploadId,
-        resource,
-        id,
-        field,
-        totalChunks,
-        size: stats.size,
-        ms: Date.now() - assembleStart,
-      });
-
-      const resourceMeta = await this.adminMeta.getResourceMeta(resource);
-      const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
-      const isLesson =
-        resourceMeta.tableName === 'leccion' || resourceMeta.name === 'Leccion';
-
-      const prismaModelKey =
-        resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
-      const client = (this.prisma as any)[prismaModelKey];
-      const existing = await client.findUnique({ where: { id } });
-
-      const baseName =
-        existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
-      const folder = path.join('uploads', 'media');
-
       if (clientId) {
         this.videoGateway.emitStage(clientId, 'processing');
         this.videoGateway.emitProgress(clientId, 0);
       }
 
+      // Disparar proceso de FFmpeg en segundo plano
       await this.processVideoBackground(
         file,
         folder,
@@ -534,29 +543,20 @@ export class AdminUploadController {
         clientId,
         client,
         id,
-        fieldMeta.name,
+        fieldMeta.name, // Columna real en DB (ej: 'video_url')
         isLesson,
         resourceMeta.name,
       );
+
     } catch (err) {
-      console.error('video_assemble_error', {
-        uploadId,
-        resource,
-        id,
-        field,
-        totalChunks,
-        ms: Date.now() - assembleStart,
-        error: err instanceof Error ? err.message : String(err),
-      });
+      console.error('❌ Error en assembleAndProcessVideo:', err);
       if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
 
       if (clientId) {
-        this.videoGateway.emitError(
-          clientId,
-          `Error procesando video: ${err instanceof Error ? err.message : err}`,
-        );
+        this.videoGateway.emitError(clientId, `Error: ${err instanceof Error ? err.message : 'Error desconocido'}`);
       }
     } finally {
+      // Liberar el lock siempre al final
       await fsp.unlink(lockPath).catch(() => {});
     }
   }
@@ -574,6 +574,8 @@ export class AdminUploadController {
   ) {
     const processStart = Date.now();
     try {
+      // 1. COMPRESIÓN (La tarea más pesada)
+      // Tip: Asegúrate que saveCompressedVideoFromDisk use -threads 1
       const saved = await this.mediaStorage.saveCompressedVideoFromDisk(
         {
           path: file.path,
@@ -587,64 +589,57 @@ export class AdminUploadController {
       const filenameOnly = path.basename(saved.path);
       const absoluteVideoPath = path.join(process.cwd(), 'public', saved.path);
 
+      // 2. TAREAS SECUNDARIAS (Metadata y Visuals)
+      // Las envolvemos en Promise.all para que, si el servidor tiene un respiro,
+      // FFmpeg pueda optimizar la lectura del archivo.
       let durationS: number | null = null;
-      try {
-        const duration =
-          await this.mediaStorage.getVideoDurationSeconds(absoluteVideoPath);
-        durationS = Math.round(duration);
-      } catch (e) {
-        console.error('Error obteniendo duración de video:', e);
-      }
-
       let previewVttUrl: string | null = null;
       let thumbUrl: string | null = null;
 
       try {
-        const baseNameForVtt = path.basename(
-          filenameOnly,
-          path.extname(filenameOnly),
-        );
-        const preview = await this.mediaStorage.generateVttAndSprite(
-          absoluteVideoPath,
-          'uploads/media',
-          baseNameForVtt,
-        );
+        const baseNameForVtt = path.basename(filenameOnly, path.extname(filenameOnly));
+
+        // Ejecutamos la duración primero porque es instantánea (FFprobe)
+        const duration = await this.mediaStorage.getVideoDurationSeconds(absoluteVideoPath);
+        durationS = Math.round(duration);
+
+        // Generamos VTT y Thumbnail
+        // Si notas que el VPS se calienta mucho, mantén estos en 'await' secuencial.
+        // Si quieres velocidad, usa Promise.allSettled.
+        const [preview, thumb] = await Promise.all([
+          this.mediaStorage.generateVttAndSprite(absoluteVideoPath, 'uploads/media', baseNameForVtt).catch(e => (console.error("VTT Error", e), null)),
+          this.mediaStorage.generateVideoThumbnailWebp(absoluteVideoPath, 'uploads/thumbnails', baseNameForVtt).catch(e => (console.error("Thumb Error", e), null))
+        ]);
+
         previewVttUrl = preview?.vttUrl ?? null;
+        thumbUrl = thumb?.thumbUrl ?? null;
+      } catch (e) {
+        console.error('Error en post-procesamiento visual:', e);
+      }
 
-        const thumb = await this.mediaStorage.generateVideoThumbnailWebp(
-          absoluteVideoPath,
-          'uploads/thumbnails',
-          baseNameForVtt,
+      // 3. LIMPIEZA DE VIDEO ANTERIOR
+      // Optimizamos: Buscamos el registro actual para saber si hay que borrar algo.
+      const existingRecord = await client.findUnique({ 
+        where: { id },
+        select: { [fieldName]: true } // Solo pedimos la columna del video
+      });
+
+      if (existingRecord?.[fieldName] && existingRecord[fieldName] !== filenameOnly) {
+        const oldPath = path.join(folder, existingRecord[fieldName]).replace(/\\/g, '/');
+        // No usamos await aquí para no retrasar la respuesta al usuario, 
+        // dejamos que se borre en "fire and forget" o con catch.
+        this.mediaStorage.deleteVideoResources(oldPath).catch(err => 
+          console.warn(`[VideoCleanup] No se pudo borrar ${oldPath}:`, err)
         );
-        thumbUrl = thumb.thumbUrl ?? null;
-      } catch (e) {
-        console.error('Error generando VTT en admin upload:', e);
       }
 
-      // Borrar video anterior si existe
-      try {
-        const existingRecord = await client.findUnique({ where: { id } });
-        if (existingRecord && existingRecord[fieldName]) {
-          const oldFilename = existingRecord[fieldName];
-          if (
-            typeof oldFilename === 'string' &&
-            oldFilename &&
-            oldFilename !== filenameOnly
-          ) {
-            const oldPath = path.join(folder, oldFilename).replace(/\\/g, '/');
-            await this.mediaStorage.deleteVideoResources(oldPath);
-            console.info(`[VideoCleanup] Borrado video anterior: ${oldPath}`);
-          }
-        }
-      } catch (e) {
-        console.warn('[VideoCleanup] Error borrando video anterior:', e);
-      }
-
+      // 4. ACTUALIZACIÓN FINAL DE BASE DE DATOS
       const updateData: Record<string, unknown> = {
         [fieldName]: filenameOnly,
       };
+
       if (isLesson && fieldName === 'rutaSrc') {
-        if (typeof durationS === 'number' && durationS > 0) {
+        if (durationS && durationS > 0) {
           updateData.duracion = parseFloat((durationS / 60).toFixed(2));
         }
         if (thumbUrl) {
@@ -657,40 +652,27 @@ export class AdminUploadController {
         data: updateData,
       });
 
+      // 5. FINALIZACIÓN
       if (clientId) {
         this.videoGateway.emitDone(clientId);
       }
 
-      this.revalidationService
-        .revalidateResource(resourceName)
-        .catch((err) => {
-          console.error('Error revalidating after video process:', err);
-        });
+      // Revalidación (Next.js o similar)
+      this.revalidationService.revalidateResource(resourceName).catch(() => {});
 
-      console.info('video_process_done', {
+      console.info('✅ video_process_done', {
         id,
-        fieldName,
         filename: filenameOnly,
-        durationS,
-        previewVttUrl,
-        thumbUrl,
-        updateData,
-        ms: Date.now() - processStart,
+        totalTime: `${(Date.now() - processStart) / 1000}s`,
       });
+
     } catch (err) {
-      console.error('video_process_error', {
-        id,
-        fieldName,
-        ms: Date.now() - processStart,
-        error: err instanceof Error ? err.message : String(err),
-      });
+      console.error('❌ video_process_error', { id, error: err });
       if (clientId) {
-        this.videoGateway.emitError(
-          clientId,
-          err instanceof Error ? err.message : String(err),
-        );
+        this.videoGateway.emitError(clientId, err instanceof Error ? err.message : String(err));
       }
     } finally {
+      // SIEMPRE borrar el archivo temporal original de 50MB-XGB
       await fsp.unlink(file.path).catch(() => {});
     }
   }
