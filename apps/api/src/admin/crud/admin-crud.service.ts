@@ -475,6 +475,26 @@ export class AdminCrudService {
 
   // ─────────────────────── CRUD ───────────────────────
 
+  async getBatchCounts(): Promise<Record<string, number>> {
+    const resources = this.adminMeta.getAllResources();
+    const results: Record<string, number> = {};
+
+    // Ejecutar todos los conteos en una sola transacción de Prisma
+    const counts = await this.prisma.$transaction(
+      resources.map((meta) => {
+        const key = meta.name.charAt(0).toLowerCase() + meta.name.slice(1);
+        const client = (this.prisma as any)[key];
+        return client.count();
+      }),
+    );
+
+    resources.forEach((meta, index) => {
+      results[meta.tableName] = counts[index];
+    });
+
+    return results;
+  }
+
   async list(
     resource: string,
     query: AdminListQuery,

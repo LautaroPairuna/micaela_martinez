@@ -16,7 +16,7 @@ import {
   User,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const HIDDEN_RESOURCES = [
   'AuditLog',
@@ -153,39 +153,23 @@ export function AdminSidebar({ resources }: AdminSidebarProps) {
 
   const isActiveHref = (href: string) => pathname.startsWith(href);
 
-  // Contadores con TanStack Query
-  const queries = useQueries({
-    queries: visibleResources.map((r) => ({
-      queryKey: ['admin-resource-count', r.tableName],
-      queryFn: async () => {
-        const base = API_BASE || '';
-        const url = `${base}/admin/resources/${r.tableName}?page=1&pageSize=1`;
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return null;
-        const json = await res.json();
-        const total = json?.pagination?.totalItems;
-        return typeof total === 'number' ? total : null;
-      },
-      refetchInterval: 5000, // Actualizar cada 5s
-      staleTime: 4000,
-    })),
+  // Contadores unificados en una sola petición
+  const { data: countsData } = useQuery({
+    queryKey: ['admin-resource-batch-counts'],
+    queryFn: async () => {
+      const base = API_BASE || '';
+      const url = `${base}/admin/resources/stats/counts`;
+      const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
+      if (!res.ok) return null;
+      return res.json() as Promise<Record<string, number>>;
+    },
+    refetchInterval: 60000, // Actualizar cada 60s
+    staleTime: 55000,
+    refetchOnWindowFocus: false,
   });
 
-  const counts = useMemo(() => {
-    const map: Record<string, number | null> = {};
-    visibleResources.forEach((r, i) => {
-      const q = queries[i];
-      if (typeof q.data === 'number') {
-        map[r.tableName] = q.data;
-      } else {
-        map[r.tableName] = null;
-      }
-    });
-    return map;
-  }, [visibleResources, queries]);
-
   const renderCount = (tableName: string) => {
-    const value = counts[tableName];
+    const value = countsData?.[tableName];
     if (value == null) return '– ítems';
     return `${value.toLocaleString('es-AR')} ítems`;
   };

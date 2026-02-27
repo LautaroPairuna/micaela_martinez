@@ -15,6 +15,11 @@ import { AdminCrudService, AdminListQuery } from './admin-crud.service';
 export class AdminCrudController {
   constructor(private readonly crud: AdminCrudService) {}
 
+  @Get('stats/counts')
+  getBatchCounts() {
+    return this.crud.getBatchCounts();
+  }
+
   @Get(':resource')
   list(@Param('resource') resource: string, @Query() query: AdminListQuery) {
     return this.crud.list(resource, query);
