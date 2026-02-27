@@ -26,6 +26,20 @@ const IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const DOC_MAX_BYTES = 50 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 8 * 1024 * 1024 * 1024;
 
+function sanitizeUploadId(uploadId: unknown): string {
+  const raw = typeof uploadId === 'string' ? uploadId : '';
+  return raw.replace(/[^a-zA-Z0-9-]/g, '');
+}
+
+function isChunkMode(q: any): boolean {
+  return (
+    q?.chunkIndex !== undefined &&
+    q?.totalChunks !== undefined &&
+    typeof q?.uploadId === 'string' &&
+    typeof q?.originalName === 'string'
+  );
+}
+
 @Controller('admin/resources')
 export class AdminUploadController {
   constructor(
@@ -40,7 +54,36 @@ export class AdminUploadController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: (_req, _file, cb) => {
+        destination: (req, _file, cb) => {
+          const q = (req as any)?.query ?? {};
+
+          // ✅ CHUNK MODE: escribir directo al dir final del chunk (evita rename/copy)
+          if (isChunkMode(q)) {
+            const safeUploadId = sanitizeUploadId(q.uploadId);
+            if (!safeUploadId) {
+              return cb(
+                new Error('uploadId inválido'),
+                path.join(process.cwd(), 'public', 'tmp'),
+              );
+            }
+
+            const tmpDir = path.join(
+              process.cwd(),
+              'public',
+              'tmp',
+              'chunks',
+              safeUploadId,
+            );
+
+            try {
+              fs.mkdirSync(tmpDir, { recursive: true });
+              return cb(null, tmpDir);
+            } catch (err) {
+              return cb(err as any, tmpDir);
+            }
+          }
+
+          // ✅ NORMAL MODE: como antes
           const tmpDir = path.join(process.cwd(), 'public', 'tmp');
           try {
             fs.mkdirSync(tmpDir, { recursive: true });
@@ -49,7 +92,19 @@ export class AdminUploadController {
             cb(err as any, tmpDir);
           }
         },
-        filename: (_req, file, cb) => {
+        filename: (req, file, cb) => {
+          const q = (req as any)?.query ?? {};
+
+          // ✅ CHUNK MODE: guardar con nombre determinístico chunk-<idx>
+          if (isChunkMode(q)) {
+            const idx = Number(q.chunkIndex);
+            if (!Number.isFinite(idx) || idx < 0) {
+              return cb(new Error('chunkIndex inválido'), '');
+            }
+            return cb(null, `chunk-${idx}`);
+          }
+
+          // ✅ NORMAL MODE: como antes
           const ext = path.extname(file.originalname) || '';
           const name = randomBytes(8).toString('hex');
           cb(null, `${name}-raw${ext}`);
@@ -70,7 +125,7 @@ export class AdminUploadController {
     @Query('originalName') originalName?: string,
   ) {
     // ----------------------------------------------------------------------
-    // SOPORTE CHUNKED UPLOAD
+    // SOPORTE CHUNKED UPLOAD (OPTIMIZADO: sin rename/copy)
     // ----------------------------------------------------------------------
     if (
       chunkIndex !== undefined &&
@@ -78,15 +133,23 @@ export class AdminUploadController {
       uploadId &&
       originalName
     ) {
-      if (!file) {
+      if (!file?.path) {
         throw new BadRequestException('No chunk file received');
       }
 
       const idx = parseInt(chunkIndex, 10);
       const total = parseInt(totalChunks, 10);
 
-      // Sanitizar uploadId para evitar path traversal
-      const safeUploadId = uploadId.replace(/[^a-zA-Z0-9-]/g, '');
+      if (!Number.isFinite(idx) || idx < 0) {
+        throw new BadRequestException('chunkIndex inválido');
+      }
+      if (!Number.isFinite(total) || total <= 0) {
+        throw new BadRequestException('totalChunks inválido');
+      }
+
+      const safeUploadId = sanitizeUploadId(uploadId);
+      if (!safeUploadId) throw new BadRequestException('uploadId inválido');
+
       const tmpDir = path.join(
         process.cwd(),
         'public',
@@ -94,6 +157,7 @@ export class AdminUploadController {
         'chunks',
         safeUploadId,
       );
+
       const normalizedClientId =
         typeof clientId === 'string' ? clientId.trim() : '';
       const clientIdPath = path.join(tmpDir, '.client');
@@ -103,11 +167,13 @@ export class AdminUploadController {
 
       try {
         await fsp.mkdir(tmpDir, { recursive: true });
+
         try {
           storedClientId = (await fsp.readFile(clientIdPath, 'utf8')).trim();
         } catch {
           storedClientId = null;
         }
+
         if (!resolvedClientId && storedClientId) {
           resolvedClientId = storedClientId;
         }
@@ -124,43 +190,27 @@ export class AdminUploadController {
         if (!storedClientId) {
           await fsp.writeFile(clientIdPath, resolvedClientId);
         }
-        const chunkPath = path.join(tmpDir, `chunk-${idx}`);
 
-        // Mover (rename) puede fallar entre discos/particiones, copy+unlink es más seguro
-        try {
-          await fsp.rename(file.path, chunkPath);
-        } catch (e) {
-          await fsp.copyFile(file.path, chunkPath);
-          await fsp.unlink(file.path).catch(() => {});
-        }
-
-        // VERIFICACIÓN EXTRA: Asegurar que el archivo existe y tiene tamaño
-        try {
-          const stats = await fsp.stat(chunkPath);
-          if (stats.size === 0) {
-            throw new Error('File is empty after save');
-          }
-        } catch (verifyErr) {
-          console.error(
-            `[ChunkUpload] Error verifying chunk ${idx}:`,
-            verifyErr,
-          );
-          throw new BadRequestException(
-            `Error verificando chunk ${idx}: ${verifyErr}`,
-          );
+        // ✅ El chunk ya está guardado por multer como chunk-<idx>.
+        // Verificamos que exista y tenga tamaño.
+        const stats = await fsp.stat(file.path);
+        if (stats.size === 0) {
+          throw new Error('Chunk vacío');
         }
       } catch (err) {
         console.error('Error saving chunk:', err);
-        throw new BadRequestException(`Error guardando chunk ${idx}: ${err}`);
+        throw new BadRequestException(
+          `Error guardando chunk ${idx}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
 
-      // Verificación robusta: Contar chunks reales en disco para soportar uploads paralelos/desordenados
+      // Contar chunks reales (soporta uploads paralelos/desordenados)
       const files = await fsp.readdir(tmpDir);
       const chunkCount = files.filter((f) => f.startsWith('chunk-')).length;
 
       if (chunkCount === total) {
         this.assembleAndProcessVideo(
-          uploadId,
+          safeUploadId,
           originalName,
           total,
           tmpDir,
@@ -268,6 +318,7 @@ export class AdminUploadController {
       | null
       | undefined;
 
+    type MediaKindFolder = 'image' | 'video' | 'document' | 'generic';
     let folder: string;
     if (mediaKind === 'image')
       folder = path.join('uploads', resourceMeta.tableName);
@@ -321,8 +372,6 @@ export class AdminUploadController {
 
     try {
       if (mediaKind === 'image') {
-        // Optimización: pasar path directo para que sharp haga streaming
-        // sin cargar todo el archivo en memoria.
         const saved = await this.mediaStorage.saveImageWebp(
           { originalname: file.originalname, path: file.path },
           { folder, baseName },
@@ -353,7 +402,6 @@ export class AdminUploadController {
       data: { [fieldMeta.name]: filenameOnly },
     });
 
-    // Revalidar recurso asociado
     await this.revalidationService
       .revalidateResource(resourceMeta.name)
       .catch((err) => {
@@ -396,25 +444,22 @@ export class AdminUploadController {
     try {
       if (fs.existsSync(finalPath)) await fsp.unlink(finalPath);
 
-      // Usar WriteStream para evitar abrir/cerrar el archivo en cada chunk
       const writeStream = fs.createWriteStream(finalPath);
 
       for (let i = 0; i < totalChunks; i++) {
         const chunkPath = path.join(tmpDir, `chunk-${i}`);
 
         let retries = 0;
-        // Esperar un poco más agresivamente al principio, luego espaciar
         while (!fs.existsSync(chunkPath) && retries < 30) {
           await new Promise((r) => setTimeout(r, 250));
           retries++;
         }
 
         if (!fs.existsSync(chunkPath)) {
-          writeStream.destroy(); // Cerrar stream ante error
+          writeStream.destroy();
           throw new Error(`Chunk ${i} perdido durante el ensamblaje.`);
         }
 
-        // Pipe del chunk al archivo final
         await new Promise<void>((resolve, reject) => {
           const readStream = fs.createReadStream(chunkPath);
           readStream.pipe(writeStream, { end: false });
@@ -422,7 +467,6 @@ export class AdminUploadController {
           readStream.on('error', (err) => reject(err));
         });
 
-        // Borrar chunk procesado para liberar espacio
         await fsp.unlink(chunkPath).catch(() => {});
 
         if (clientId && i % 5 === 0) {
@@ -431,15 +475,13 @@ export class AdminUploadController {
         }
       }
 
-      writeStream.end(); // Finalizar escritura
+      writeStream.end();
 
-      // Asegurar que se haya cerrado el stream correctamente
       await new Promise<void>((resolve, reject) => {
         writeStream.on('finish', resolve);
         writeStream.on('error', reject);
       });
 
-      // Limpiar directorio temporal del upload
       await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
       const stats = await fsp.stat(finalPath);
@@ -518,6 +560,7 @@ export class AdminUploadController {
       await fsp.unlink(lockPath).catch(() => {});
     }
   }
+
   private async processVideoBackground(
     file: Express.Multer.File,
     folder: string,
@@ -531,7 +574,6 @@ export class AdminUploadController {
   ) {
     const processStart = Date.now();
     try {
-      // 1. Comprimir / Transcodificar
       const saved = await this.mediaStorage.saveCompressedVideoFromDisk(
         {
           path: file.path,
@@ -544,6 +586,7 @@ export class AdminUploadController {
 
       const filenameOnly = path.basename(saved.path);
       const absoluteVideoPath = path.join(process.cwd(), 'public', saved.path);
+
       let durationS: number | null = null;
       try {
         const duration =
@@ -555,7 +598,7 @@ export class AdminUploadController {
 
       let previewVttUrl: string | null = null;
       let thumbUrl: string | null = null;
-      // 2. VTT / Sprite (Best effort)
+
       try {
         const baseNameForVtt = path.basename(
           filenameOnly,
@@ -567,6 +610,7 @@ export class AdminUploadController {
           baseNameForVtt,
         );
         previewVttUrl = preview?.vttUrl ?? null;
+
         const thumb = await this.mediaStorage.generateVideoThumbnailWebp(
           absoluteVideoPath,
           'uploads/thumbnails',
@@ -577,12 +621,11 @@ export class AdminUploadController {
         console.error('Error generando VTT en admin upload:', e);
       }
 
-      // 2.5 Borrar video anterior si existe (Clean up)
+      // Borrar video anterior si existe
       try {
         const existingRecord = await client.findUnique({ where: { id } });
         if (existingRecord && existingRecord[fieldName]) {
           const oldFilename = existingRecord[fieldName];
-          // Solo borrar si es string y diferente al nuevo (por si acaso)
           if (
             typeof oldFilename === 'string' &&
             oldFilename &&
@@ -597,7 +640,6 @@ export class AdminUploadController {
         console.warn('[VideoCleanup] Error borrando video anterior:', e);
       }
 
-      // 3. Actualizar BD con el nombre final
       const updateData: Record<string, unknown> = {
         [fieldName]: filenameOnly,
       };
@@ -615,12 +657,10 @@ export class AdminUploadController {
         data: updateData,
       });
 
-      // 4. Notificar fin al Frontend INMEDIATAMENTE después de actualizar la BD
       if (clientId) {
         this.videoGateway.emitDone(clientId);
       }
 
-      // 5. Revalidar recurso en segundo plano (sin bloquear el emitDone)
       this.revalidationService
         .revalidateResource(resourceName)
         .catch((err) => {
@@ -651,8 +691,6 @@ export class AdminUploadController {
         );
       }
     } finally {
-      // Limpieza final de temporales (siempre intentar borrar el input original si quedó)
-      // saveCompressedVideoFromDisk debería haberlo borrado, pero por seguridad:
       await fsp.unlink(file.path).catch(() => {});
     }
   }
