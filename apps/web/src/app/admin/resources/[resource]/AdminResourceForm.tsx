@@ -1442,13 +1442,19 @@ export function AdminResourceForm({
               // Concurrencia parametrizada por env (default 3 para seguridad, 6 recomendado para HTTPS)
               const CONCURRENCY = Math.min(10, Math.max(1, Number.isFinite(UPLOAD_CONCURRENCY) ? UPLOAD_CONCURRENCY : 3));
               
-              const queue = Array.from({ length: totalChunks - startIndex }, (_, i) => startIndex + i);
+              // Usar un contador atómico para el índice actual
+              let currentIndex = startIndex;
               let completedChunks = startIndex;
-
+  
               const uploadNext = async (): Promise<void> => {
-                while (queue.length > 0) {
-                  const i = queue.shift();
-                  if (i === undefined) break;
+                while (true) {
+                  // Tomar el siguiente índice de forma segura
+                  let i: number;
+                  if (currentIndex < totalChunks) {
+                    i = currentIndex++;
+                  } else {
+                    break;
+                  }
 
                   const start = i * chunkSize;
                   const end = Math.min(start + chunkSize, file.size);
@@ -1542,7 +1548,8 @@ export function AdminResourceForm({
                 }
               };
 
-              const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => uploadNext());
+              const remainingCount = totalChunks - startIndex;
+              const workers = Array.from({ length: Math.min(CONCURRENCY, remainingCount) }, () => uploadNext());
               await Promise.all(workers);
               
               clearState();
