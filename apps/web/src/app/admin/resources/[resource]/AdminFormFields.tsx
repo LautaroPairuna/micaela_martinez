@@ -860,8 +860,8 @@ export function renderAdminField({
   }
 
   /* Default (texto / número) */
-  const inputType =
-    field.type === 'Int' || field.type === 'Decimal' ? 'number' : 'text';
+  const numericTypes = ['Int', 'Int?', 'BigInt', 'number', 'Float', 'Float?', 'Decimal'];
+  const inputType = numericTypes.includes(field.type) ? 'number' : 'text';
 
   return (
     <div key={field.name} className="space-y-1">

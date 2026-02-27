@@ -1147,9 +1147,13 @@ export function AdminResourceForm({
 
     switch (field.type) {
       case 'Int':
-        return Number.isNaN(Number(raw)) ? null : Number(raw);
+      case 'Int?':
+      case 'BigInt':
+      case 'number':
+      case 'Float':
+      case 'Float?':
       case 'Decimal':
-        return Number.isNaN(Number(raw)) ? null : raw.toString();
+        return Number.isNaN(Number(raw)) ? null : Number(raw);
       case 'Boolean':
         return Boolean(raw);
       case 'DateTime': {

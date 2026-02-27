@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCheckout } from '@/store/checkout';
 import { useCart, cartSelectors } from '@/store/cart';
+import { useSession } from '@/hooks/useSession';
 import { createOrder, TipoItemOrden } from '@/lib/sdk/ordersApi';
 import { Button } from '@/components/ui/Button';
 import { MercadoPagoBricks } from './MercadoPagoBricks';
@@ -156,6 +157,8 @@ export function PaymentStep() {
       setIsCreatingOrder(false);
     }
   };
+
+  const { me } = useSession();
 
   const handleBricksPaymentSuccess = (paymentData: BricksPaymentSuccess) => {
     console.log('=== FRONTEND: Pago exitoso con Bricks ===', paymentData);
@@ -318,6 +321,7 @@ export function PaymentStep() {
                               onPaymentStart={handleBricksPaymentStart}
                               onCreateOrder={createOrderIfNeeded}
                               isSubscription={hasCourses}
+                              payerEmail={me?.email}
                             />
                           </div>
                         </div>

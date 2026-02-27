@@ -36,7 +36,13 @@ type CardFormData = {
 };
 
 type PaymentBrickSettings = {
-  initialization: { amount: number; preferenceId?: string };
+  initialization: {
+    amount: number;
+    preferenceId?: string;
+    payer?: {
+      email?: string;
+    };
+  };
   customization?: {
     paymentMethods?: {
       creditCard?: 'all' | string[];
@@ -129,6 +135,8 @@ interface MercadoPagoBricksProps {
   subscriptionFrequencyType?: 'days' | 'months';
   /** Si usás preferencia creada en backend, pasala acá */
   preferenceId?: string | null;
+  /** Email del pagador para pre-completar el brick */
+  payerEmail?: string;
 }
 
 /* ─────────────────────────── Componente ─────────────────────────── */
@@ -144,6 +152,7 @@ export function MercadoPagoBricks({
   subscriptionFrequency = 1,
   subscriptionFrequencyType = 'months',
   preferenceId = null,
+  payerEmail,
 }: MercadoPagoBricksProps) {
   const publicKey = MERCADOPAGO_PUBLIC_KEY;
 
@@ -176,7 +185,10 @@ export function MercadoPagoBricks({
         const bricks = mp.bricks();
 
         // initialization (no enviar preferenceId null/undefined)
-        const init: PaymentBrickSettings['initialization'] = { amount };
+        const init: PaymentBrickSettings['initialization'] = {
+          amount,
+          payer: payerEmail ? { email: payerEmail } : undefined,
+        };
         const pref = asStringOrNull(preferenceId);
         if (pref) init.preferenceId = pref;
 
@@ -320,6 +332,7 @@ export function MercadoPagoBricks({
     subscriptionFrequency,
     subscriptionFrequencyType,
     preferenceId,
+    payerEmail,
   ]);
 
   if (!publicKey) {
