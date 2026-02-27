@@ -394,11 +394,12 @@ export function AdminResourceForm({
 
     const progressSocket = io('/video-progress', {
         path: '/socket.io',
-        transports: ['polling'], // 👈 FORZAR POLLING: más lento pero atraviesa todos los proxies/firewalls
+        addTrailingSlash: false, // 👈 Evitar redirect 308
+        transports: ['websocket', 'polling'], // 👈 MEJORA: Priorizar WebSocket sobre Polling
         withCredentials: true,
         query: { clientId },
         reconnectionAttempts: 10,
-        upgrade: false, // Evitar intentar upgrade a websocket si polling funciona (estabilidad > velocidad aquí)
+        upgrade: true, // Permitir upgrade a WebSocket si es posible
     });
 
     progressSocket.on('connect', () => {

@@ -325,11 +325,12 @@ export function AdminResourceClient({
 
     const progressSocket = io('/video-progress', {
       path: '/socket.io',
-      transports: ['polling'],
+      addTrailingSlash: false, // 👈 Evitar redirect 308
+      transports: ['websocket', 'polling'], // 👈 MEJORA: Priorizar WebSocket
       withCredentials: true,
       query: { clientId: storedClientId },
       reconnectionAttempts: 10,
-      upgrade: false,
+      upgrade: true,
     });
 
     progressSocket.on('video-stage', (payload: { clientId: string; stage: string }) => {
