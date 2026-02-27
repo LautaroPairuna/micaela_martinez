@@ -124,6 +124,7 @@ export class AdminUploadController {
     @Query('uploadId') uploadId?: string,
     @Query('originalName') originalName?: string,
   ) {
+    const startTime = Date.now();
     // ----------------------------------------------------------------------
     // SOPORTE CHUNKED UPLOAD (OPTIMIZADO: sin rename/copy)
     // ----------------------------------------------------------------------
@@ -133,75 +134,103 @@ export class AdminUploadController {
       uploadId &&
       originalName
     ) {
+      const idx = parseInt(chunkIndex, 10);
+      const total = parseInt(totalChunks, 10);
+
+      console.log(
+        `[BACKEND-UPLOAD-DEBUG] Recibiendo chunk ${idx + 1}/${total} para ${originalName} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
+      );
+
       if (!file?.path) {
         throw new BadRequestException('No chunk file received');
       }
 
-      const idx = parseInt(chunkIndex, 10);
-      const total = parseInt(totalChunks, 10);
-
-      if (!Number.isFinite(idx) || idx < 0) {
-        throw new BadRequestException('chunkIndex inválido');
-      }
-      if (!Number.isFinite(total) || total <= 0) {
-        throw new BadRequestException('totalChunks inválido');
-      }
-
-      const safeUploadId = sanitizeUploadId(uploadId);
-      if (!safeUploadId) throw new BadRequestException('uploadId inválido');
-
-      const tmpDir = path.join(
-        process.cwd(),
-        'public',
-        'tmp',
-        'chunks',
-        safeUploadId,
+      // ... resto de la lógica ...
+      const res = await this.executeChunkLogic(
+        resource,
+        id,
+        field,
+        file,
+        clientId,
+        idx,
+        total,
+        uploadId,
+        originalName,
+        startTime,
       );
 
-      const normalizedClientId =
-        typeof clientId === 'string' ? clientId.trim() : '';
-      const clientIdPath = path.join(tmpDir, '.client');
-      let resolvedClientId: string | undefined =
-        normalizedClientId || undefined;
-      let storedClientId: string | null = null;
+      return res;
+    }
 
-      try {
-        await fsp.mkdir(tmpDir, { recursive: true });
+    // ----------------------------------------------------------------------
+    // FLUJO NORMAL (NO CHUNKS)
+    // ----------------------------------------------------------------------
+    if (!file?.path)
+      throw new BadRequestException('No se recibió ningún archivo.');
 
-        try {
-          storedClientId = (await fsp.readFile(clientIdPath, 'utf8')).trim();
-        } catch {
-          storedClientId = null;
-        }
+    return this.handleFileSync(file, resource, id, field, clientId);
+  }
 
-        if (!resolvedClientId && storedClientId) {
-          resolvedClientId = storedClientId;
-        }
-        if (!resolvedClientId) {
-          throw new BadRequestException(
-            'clientId requerido para upload en chunks.',
-          );
-        }
-        if (storedClientId && storedClientId !== resolvedClientId) {
-          throw new BadRequestException(
-            'clientId no coincide con el upload en curso.',
-          );
-        }
-        if (!storedClientId) {
-          await fsp.writeFile(clientIdPath, resolvedClientId);
-        }
+  private async executeChunkLogic(
+    resource: string,
+    id: number,
+    field: string,
+    file: Express.Multer.File,
+    clientId: string | undefined,
+    idx: number,
+    total: number,
+    uploadId: string,
+    originalName: string,
+    startTime: number,
+  ) {
+    const safeUploadId = sanitizeUploadId(uploadId);
+    if (!safeUploadId) throw new BadRequestException('uploadId inválido');
 
-        // ✅ El chunk ya está guardado por multer como chunk-<idx>.
-        // Verificamos que exista y tenga tamaño.
-        const stats = await fsp.stat(file.path);
-        if (stats.size === 0) {
-          throw new Error('Chunk vacío');
-        }
-      } catch (err) {
-        console.error('Error saving chunk:', err);
-        throw new BadRequestException(
-          `Error guardando chunk ${idx}: ${err instanceof Error ? err.message : String(err)}`,
-        );
+    const tmpDir = path.join(
+      process.cwd(),
+      'public',
+      'tmp',
+      'chunks',
+      safeUploadId,
+    );
+
+    const normalizedClientId =
+      typeof clientId === 'string' ? clientId.trim() : '';
+    const clientIdPath = path.join(tmpDir, '.client');
+    let resolvedClientId: string | undefined = normalizedClientId || undefined;
+    let storedClientId: string | null = null;
+
+    await fsp.mkdir(tmpDir, { recursive: true });
+
+    try {
+      storedClientId = (await fsp.readFile(clientIdPath, 'utf8')).trim();
+    } catch {
+      storedClientId = null;
+    }
+
+    if (!resolvedClientId && storedClientId) {
+      resolvedClientId = storedClientId;
+    }
+    if (!resolvedClientId) {
+      throw new BadRequestException(
+        'clientId requerido para upload en chunks.',
+      );
+    }
+    if (storedClientId && storedClientId !== resolvedClientId) {
+      throw new BadRequestException(
+        'clientId no coincide con el upload en curso.',
+      );
+    }
+    if (!storedClientId) {
+      await fsp.writeFile(clientIdPath, resolvedClientId);
+    }
+
+    try {
+      // ✅ El chunk ya está guardado por multer como chunk-<idx>.
+      // Verificamos que exista y tenga tamaño.
+      const stats = await fsp.stat(file.path);
+      if (stats.size === 0) {
+        throw new Error('Chunk vacío');
       }
 
       // Contar chunks reales (soporta uploads paralelos/desordenados)
@@ -222,6 +251,11 @@ export class AdminUploadController {
           console.error('[BackgroundUpload] Error crítico no manejado:', err);
         });
 
+        const duration = Date.now() - startTime;
+        console.log(
+          `[BACKEND-UPLOAD-DEBUG] Último chunk (${idx + 1}/${total}) procesado en ${duration}ms. Iniciando ensamblado.`,
+        );
+
         return {
           status: 'processing',
           message:
@@ -229,16 +263,18 @@ export class AdminUploadController {
           chunkIndex: idx,
         };
       } else {
+        const duration = Date.now() - startTime;
+        console.log(
+          `[BACKEND-UPLOAD-DEBUG] Chunk ${idx + 1}/${total} procesado en ${duration}ms. (Total en disco: ${chunkCount})`,
+        );
         return { status: 'chunk_received', chunkIndex: idx };
       }
+    } catch (err) {
+      console.error('Error saving chunk:', err);
+      throw new BadRequestException(
+        `Error guardando chunk ${idx}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
-    // ----------------------------------------------------------------------
-
-    if (!file?.path)
-      throw new BadRequestException('No se recibió ningún archivo.');
-
-    // ... Resto del flujo síncrono para archivos pequeños ...
-    return this.handleFileSync(file, resource, id, field, clientId);
   }
 
   // Lógica extraída para manejo síncrono (reutilizable)
@@ -431,7 +467,7 @@ export class AdminUploadController {
 
     // Bloqueo para evitar procesamientos duplicados
     await fsp.writeFile(lockPath, '').catch(() => {});
-    
+
     // ✅ Medicion de rendimiento integrada
     const assembleStart = Date.now();
 
@@ -444,8 +480,8 @@ export class AdminUploadController {
     const finalPath = path.join(process.cwd(), 'public', 'tmp', finalName);
 
     // ✅ Buffer de 10MB ideal para tus chunks de 50MB en NVMe
-    const writeStream = fs.createWriteStream(finalPath, { 
-      highWaterMark: 1024 * 1024 * 10 
+    const writeStream = fs.createWriteStream(finalPath, {
+      highWaterMark: 1024 * 1024 * 10,
     });
 
     try {
@@ -456,13 +492,15 @@ export class AdminUploadController {
 
         // Verificación directa (sin waits artificiales gracias a Nginx buffering off)
         if (!fs.existsSync(chunkPath)) {
-          throw new Error(`Error crítico: El chunk ${i} no se encuentra en el disco.`);
+          throw new Error(
+            `Error crítico: El chunk ${i} no se encuentra en el disco.`,
+          );
         }
 
         // Pipe de alto rendimiento
         await new Promise<void>((resolve, reject) => {
-          const readStream = fs.createReadStream(chunkPath, { 
-            highWaterMark: 1024 * 1024 * 10 
+          const readStream = fs.createReadStream(chunkPath, {
+            highWaterMark: 1024 * 1024 * 10,
           });
           readStream.pipe(writeStream, { end: false });
           readStream.on('end', () => resolve());
@@ -473,7 +511,11 @@ export class AdminUploadController {
         await fsp.unlink(chunkPath).catch(() => {});
 
         // Notificar progreso cada 10% para optimizar el socket
-        if (clientId && (i % Math.max(1, Math.floor(totalChunks / 10)) === 0 || i === totalChunks - 1)) {
+        if (
+          clientId &&
+          (i % Math.max(1, Math.floor(totalChunks / 10)) === 0 ||
+            i === totalChunks - 1)
+        ) {
           const progress = Math.round(((i + 1) / totalChunks) * 100);
           this.videoGateway.emitProgress(clientId, progress);
         }
@@ -489,7 +531,7 @@ export class AdminUploadController {
 
       // Limpieza de carpeta temporal de chunks
       await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-      
+
       const stats = await fsp.stat(finalPath);
       const assembleDuration = (Date.now() - assembleStart) / 1000;
 
@@ -497,23 +539,31 @@ export class AdminUploadController {
       console.info(`✅ Ensamblado completado: ${finalName}`, {
         duration: `${assembleDuration}s`,
         size: `${(stats.size / (1024 * 1024)).toFixed(2)} MB`,
-        speed: `${(stats.size / (1024 * 1024) / assembleDuration).toFixed(2)} MB/s`
+        speed: `${(stats.size / (1024 * 1024) / assembleDuration).toFixed(
+          2,
+        )} MB/s`,
       });
 
       // --- Uso de resource, field e id para lógica de DB ---
       const resourceMeta = await this.adminMeta.getResourceMeta(resource);
       const fieldMeta = await this.adminMeta.getFieldMeta(resource, field);
-      const isLesson = resourceMeta.tableName === 'leccion' || resourceMeta.name === 'Leccion';
+      const isLesson =
+        resourceMeta.tableName === 'leccion' || resourceMeta.name === 'Leccion';
 
       // Acceso dinámico al modelo de Prisma
-      const prismaModelKey = resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
+      const prismaModelKey =
+        resourceMeta.name.charAt(0).toLowerCase() + resourceMeta.name.slice(1);
       const client = (this.prisma as any)[prismaModelKey];
-      
+
       const existing = await client.findUnique({ where: { id } });
-      if (!existing) throw new Error(`El registro ${id} ya no existe en la tabla ${resource}`);
+      if (!existing)
+        throw new Error(
+          `El registro ${id} ya no existe en la tabla ${resource}`,
+        );
 
       // Generación de nombre base para el archivo final comprimido
-      const baseName = existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
+      const baseName =
+        existing.slug ?? existing.titulo ?? `${resourceMeta.tableName}-${id}`;
       const folder = path.join('uploads', 'media');
 
       // Reconstrucción del objeto de archivo para Multer-like compatibility
@@ -547,13 +597,15 @@ export class AdminUploadController {
         isLesson,
         resourceMeta.name,
       );
-
     } catch (err) {
       console.error('❌ Error en assembleAndProcessVideo:', err);
       if (fs.existsSync(finalPath)) await fsp.unlink(finalPath).catch(() => {});
 
       if (clientId) {
-        this.videoGateway.emitError(clientId, `Error: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+        this.videoGateway.emitError(
+          clientId,
+          `Error: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+        );
       }
     } finally {
       // Liberar el lock siempre al final
@@ -597,18 +649,35 @@ export class AdminUploadController {
       let thumbUrl: string | null = null;
 
       try {
-        const baseNameForVtt = path.basename(filenameOnly, path.extname(filenameOnly));
+        const baseNameForVtt = path.basename(
+          filenameOnly,
+          path.extname(filenameOnly),
+        );
 
         // Ejecutamos la duración primero porque es instantánea (FFprobe)
-        const duration = await this.mediaStorage.getVideoDurationSeconds(absoluteVideoPath);
+        const duration = await this.mediaStorage.getVideoDurationSeconds(
+          absoluteVideoPath,
+        );
         durationS = Math.round(duration);
 
         // Generamos VTT y Thumbnail
         // Si notas que el VPS se calienta mucho, mantén estos en 'await' secuencial.
         // Si quieres velocidad, usa Promise.allSettled.
         const [preview, thumb] = await Promise.all([
-          this.mediaStorage.generateVttAndSprite(absoluteVideoPath, 'uploads/media', baseNameForVtt).catch(e => (console.error("VTT Error", e), null)),
-          this.mediaStorage.generateVideoThumbnailWebp(absoluteVideoPath, 'uploads/thumbnails', baseNameForVtt).catch(e => (console.error("Thumb Error", e), null))
+          this.mediaStorage
+            .generateVttAndSprite(
+              absoluteVideoPath,
+              'uploads/media',
+              baseNameForVtt,
+            )
+            .catch((e) => (console.error('VTT Error', e), null)),
+          this.mediaStorage
+            .generateVideoThumbnailWebp(
+              absoluteVideoPath,
+              'uploads/thumbnails',
+              baseNameForVtt,
+            )
+            .catch((e) => (console.error('Thumb Error', e), null)),
         ]);
 
         previewVttUrl = preview?.vttUrl ?? null;
@@ -619,18 +688,25 @@ export class AdminUploadController {
 
       // 3. LIMPIEZA DE VIDEO ANTERIOR
       // Optimizamos: Buscamos el registro actual para saber si hay que borrar algo.
-      const existingRecord = await client.findUnique({ 
+      const existingRecord = await client.findUnique({
         where: { id },
-        select: { [fieldName]: true } // Solo pedimos la columna del video
+        select: { [fieldName]: true }, // Solo pedimos la columna del video
       });
 
-      if (existingRecord?.[fieldName] && existingRecord[fieldName] !== filenameOnly) {
-        const oldPath = path.join(folder, existingRecord[fieldName]).replace(/\\/g, '/');
-        // No usamos await aquí para no retrasar la respuesta al usuario, 
+      if (
+        existingRecord?.[fieldName] &&
+        existingRecord[fieldName] !== filenameOnly
+      ) {
+        const oldPath = path
+          .join(folder, existingRecord[fieldName])
+          .replace(/\\/g, '/');
+        // No usamos await aquí para no retrasar la respuesta al usuario,
         // dejamos que se borre en "fire and forget" o con catch.
-        this.mediaStorage.deleteVideoResources(oldPath).catch(err => 
-          console.warn(`[VideoCleanup] No se pudo borrar ${oldPath}:`, err)
-        );
+        this.mediaStorage
+          .deleteVideoResources(oldPath)
+          .catch((err) =>
+            console.warn(`[VideoCleanup] No se pudo borrar ${oldPath}:`, err),
+          );
       }
 
       // 4. ACTUALIZACIÓN FINAL DE BASE DE DATOS
@@ -665,11 +741,13 @@ export class AdminUploadController {
         filename: filenameOnly,
         totalTime: `${(Date.now() - processStart) / 1000}s`,
       });
-
     } catch (err) {
       console.error('❌ video_process_error', { id, error: err });
       if (clientId) {
-        this.videoGateway.emitError(clientId, err instanceof Error ? err.message : String(err));
+        this.videoGateway.emitError(
+          clientId,
+          err instanceof Error ? err.message : String(err),
+        );
       }
     } finally {
       // SIEMPRE borrar el archivo temporal original de 50MB-XGB

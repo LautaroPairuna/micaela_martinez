@@ -1473,18 +1473,25 @@ export function AdminResourceForm({
 
                   while (attempts < 3 && !success) {
                     try {
+                      const startTime = performance.now();
                       const chunkRes = await fetch(chunkUrl, {
                         method: 'POST',
                         body: formData,
                         credentials: 'include',
                         // No añadimos Content-Type para que el navegador ponga el boundary correcto de FormData
                       });
+                      const endTime = performance.now();
+                      const duration = (endTime - startTime).toFixed(2);
+                      
                       if (!chunkRes.ok) {
                         const txt = await chunkRes.text();
+                        console.error(`[UPLOAD-DEBUG] Chunk ${i + 1}/${totalChunks} FALLÓ en ${duration}ms. Status: ${chunkRes.status}`, txt);
                         throw new Error(`Chunk error: ${chunkRes.status} ${txt}`);
                       }
                       
                       const json = await chunkRes.json();
+                      console.log(`[UPLOAD-DEBUG] Chunk ${i + 1}/${totalChunks} COMPLETADO en ${duration}ms.`);
+                      
                       if (i === totalChunks - 1) {
                         uploadJson = json;
                       }
