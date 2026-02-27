@@ -19,10 +19,11 @@ import {
 } from './AdminFormFields';
 import { useAdminToast } from '@/contexts/AdminToastContext';
 import { buildZodSchemaFromFields } from '@/lib/admin/validation';
-import { io, type Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { AdminRichTextEditor } from './AdminRichTextEditor';
 import { QuizBuilder, type QuizQuestion } from './QuizBuilder';
-import { Tooltip } from '@/components/ui/Tooltip'; // 👈 NUEVO
+import { Tooltip } from '@/components/ui/Tooltip';
+import { UPLOAD_CONCURRENCY } from '@/lib/env';
 
 const getApiBase = () => {
   // 1. Si hay una URL base explícita pública, usarla
@@ -1437,79 +1438,106 @@ export function AdminResourceForm({
               totalChunksOverride?: number,
             ) => {
               const totalChunks = totalChunksOverride ?? Math.ceil(file.size / chunkSize);
-              for (let i = startIndex; i < totalChunks; i++) {
-                const start = i * chunkSize;
-                const end = Math.min(start + chunkSize, file.size);
-                const chunk = file.slice(start, end);
+              
+              // Concurrencia parametrizada por env (default 3 para seguridad, 6 recomendado para HTTPS)
+              const CONCURRENCY = Math.min(10, Math.max(1, Number.isFinite(UPLOAD_CONCURRENCY) ? UPLOAD_CONCURRENCY : 3));
+              
+              const queue = Array.from({ length: totalChunks - startIndex }, (_, i) => startIndex + i);
+              let completedChunks = startIndex;
 
-                const formData = new FormData();
-                formData.append('file', chunk, file.name);
+              const uploadNext = async (): Promise<void> => {
+                while (queue.length > 0) {
+                  const i = queue.shift();
+                  if (i === undefined) break;
 
-                const query = new URLSearchParams({
-                  clientId,
-                  chunkIndex: i.toString(),
-                  totalChunks: totalChunks.toString(),
-                  uploadId,
-                  originalName: file.name,
-                });
+                  const start = i * chunkSize;
+                  const end = Math.min(start + chunkSize, file.size);
+                  const chunk = file.slice(start, end);
 
-                const chunkUrl = `${uploadUrlBase}?${query.toString()}`;
+                  const formData = new FormData();
+                  formData.append('file', chunk, file.name);
 
-                let attempts = 0;
-                let success = false;
-                let lastError: unknown;
+                  const query = new URLSearchParams({
+                    clientId,
+                    chunkIndex: i.toString(),
+                    totalChunks: totalChunks.toString(),
+                    uploadId,
+                    originalName: file.name,
+                  });
 
-                while (attempts < 3 && !success) {
-                  try {
-                    const chunkRes = await fetch(chunkUrl, {
-                      method: 'POST',
-                      body: formData,
-                      credentials: 'include',
-                    });
-                    if (!chunkRes.ok) {
-                      const txt = await chunkRes.text();
-                      throw new Error(`Chunk error: ${chunkRes.status} ${txt}`);
+                  const chunkUrl = `${uploadUrlBase}?${query.toString()}`;
+
+                  let attempts = 0;
+                  let success = false;
+                  let lastError: unknown;
+
+                  while (attempts < 3 && !success) {
+                    try {
+                      const chunkRes = await fetch(chunkUrl, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include',
+                        // No añadimos Content-Type para que el navegador ponga el boundary correcto de FormData
+                      });
+                      if (!chunkRes.ok) {
+                        const txt = await chunkRes.text();
+                        throw new Error(`Chunk error: ${chunkRes.status} ${txt}`);
+                      }
+                      
+                      const json = await chunkRes.json();
+                      if (i === totalChunks - 1) {
+                        uploadJson = json;
+                      }
+                      
+                      success = true;
+                      completedChunks++;
+
+                      const pct = Math.round((completedChunks / totalChunks) * 100);
+                      const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
+                      const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
+                      const progressMessage = `Subiendo parte ${completedChunks} de ${totalChunks} (${pct}%)`;
+                      
+                      setVideoProgress(pct);
+                      setVideoStatusMessage(progressMessage);
+                      persistUploadProgress({
+                        status: 'uploading',
+                        progress: pct,
+                        stage: null,
+                        message: progressMessage,
+                      });
+                      
+                      // Solo actualizamos el toast cada 5 chunks para no saturar el hilo de UI
+                      if (completedChunks % 5 === 0 || completedChunks === totalChunks) {
+                        showToast({
+                          id: toastId,
+                          variant: 'info',
+                          title: toastTitle,
+                          message: progressMessage,
+                          progress: pct,
+                          autoClose: false,
+                          onClick: handleToastClick,
+                        });
+                      }
+                      
+                      saveState(completedChunks, chunkSize, totalChunks);
+                    } catch (e) {
+                      lastError = e;
+                      attempts++;
+                      await new Promise((r) => setTimeout(r, 1000 * attempts));
                     }
-                    if (i === totalChunks - 1) {
-                      uploadJson = await chunkRes.json();
-                    }
-                    success = true;
+                  }
 
-                    const pct = Math.round(((i + 1) / totalChunks) * 100);
-                    const toastId = uploadToastIdRef.current ?? `admin_upload_${clientId}`;
-                    const toastTitle = uploadToastTitleRef.current ?? meta.displayName;
-                    const progressMessage = `Subiendo parte ${i + 1} de ${totalChunks} (${pct}%)`;
-                    setVideoProgress(pct);
-                    setVideoStatusMessage(progressMessage);
-                    persistUploadProgress({
-                      status: 'uploading',
-                      progress: pct,
-                      stage: null,
-                      message: progressMessage,
-                    });
-                    showToast({
-                      id: toastId,
-                      variant: 'info',
-                      title: toastTitle,
-                      message: progressMessage,
-                      progress: pct,
-                      autoClose: false,
-                      onClick: handleToastClick,
-                    });
-                    saveState(i + 1, chunkSize, totalChunks);
-                  } catch (e) {
-                    lastError = e;
-                    attempts++;
-                    await new Promise((r) => setTimeout(r, 1000 * attempts));
+                  if (!success) {
+                    throw new Error(
+                      `Falló chunk ${i + 1}/${totalChunks} (${field.name}): ${lastError}`,
+                    );
                   }
                 }
+              };
 
-                if (!success) {
-                  throw new Error(
-                    `Falló chunk ${i + 1}/${totalChunks} (${field.name}): ${lastError}`,
-                  );
-                }
-              }
+              const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => uploadNext());
+              await Promise.all(workers);
+              
               clearState();
             };
 
