@@ -64,8 +64,12 @@ const nextConfig: NextConfig = {
       { source: '/videos/:path*',               destination: `${U.origin}/videos/:path*` },
       { source: '/api/admin/uploads',           destination: `${U.origin}/api/admin/uploads` },
       { source: '/api/admin/uploads/:path*',    destination: `${U.origin}/api/admin/uploads/:path*` },
-      // WebSocket: Simplificado para evitar dobles slashes o redirects
-      { source: '/socket.io',                   destination: `${U.origin}/socket.io` },
+      // WebSocket: Forzar destino con barra final para evitar redirects
+      { source: '/socket.io',                   destination: `${U.origin}/socket.io/` },
+      { source: '/socket.io/',                  destination: `${U.origin}/socket.io/` },
+      // Importante: No capturar sub-rutas aquí si el cliente ya manda query params
+      // Socket.io cliente usa /socket.io/?EIO=4&transport=...
+      // La regla de abajo puede interferir si no se matchea bien.
       { source: '/socket.io/:path*',            destination: `${U.origin}/socket.io/:path*` },
       { source: '/_next/image',                 destination: '/_next/image' },
       { source: '/api/:path*',                  destination: `${U.origin}/api/:path*` },

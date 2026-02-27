@@ -19,8 +19,6 @@ export const initializeSocket = (userId: string): Socket => {
   const serverUrl = computeWsBase();
 
   socket = io(serverUrl, {
-    path: '/socket.io',
-    addTrailingSlash: false, // 👈 Evitar redirect 308 de Next.js/Nginx
     query: { userId },
     autoConnect: true,
     forceNew: true,
