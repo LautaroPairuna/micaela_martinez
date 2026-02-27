@@ -113,18 +113,10 @@ export class MediaController {
   // ✅ Ruta para assets genéricos (vtt, sprites) en uploads/media
   @Get('assets/:filename')
   streamAsset(@Param('filename') filename: string, @Res() res: Response) {
-    // Reutilizamos logic de getVideoStream para buscar en roots
-    // pero con mimetype más flexible
     try {
-      // Usamos getVideoStream internamente porque ya busca en 'media' y 'uploads/media'
-      // pero ojo que getVideoStream fuerza video/* content-type a veces.
-      // Mejor usamos una lógica simplificada similar a getPublicImageStream
-
-      // Asumimos que los assets están donde los videos (uploads/media)
-      const { stream, headers, status } = this.media.getAssetStream(filename);
-      res.status(status);
-      for (const [k, v] of Object.entries(headers)) res.setHeader(k, v as any);
-      stream.pipe(res);
+      const { headers, status } = this.media.getAccelRedirect(filename);
+      for (const [k, v] of Object.entries(headers)) res.setHeader(k, v);
+      return res.status(status).end();
     } catch {
       res.status(404).send('Asset no encontrado');
     }
@@ -133,21 +125,15 @@ export class MediaController {
   @Get('videos/:filename')
   streamVideo(
     @Param('filename') filename: string,
-    @Query('token') token: string | undefined,
-    @Req() req: Request,
     @Res() res: Response,
   ) {
-    const range = req.headers.range;
-
-    const { stream, headers, status } = this.media.getVideoStream(
-      filename,
-      range,
-      { token },
-    );
-
-    res.status(status);
-    for (const [k, v] of Object.entries(headers)) res.setHeader(k, v as any);
-    stream.pipe(res);
+    try {
+      const { headers, status } = this.media.getAccelRedirect(filename);
+      for (const [k, v] of Object.entries(headers)) res.setHeader(k, v);
+      return res.status(status).end();
+    } catch {
+      res.status(404).send('Video no encontrado');
+    }
   }
 
   @Get('documents/:filename')

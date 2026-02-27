@@ -275,6 +275,38 @@ export class MediaService {
 
   // ------------- API pública -------------
 
+  getAccelRedirect(filename: string): {
+    headers: Record<string, string>;
+    status: number;
+  } {
+    const fullPath = this.findVideoOr404(filename);
+    const ext = path.extname(filename).toLowerCase();
+
+    let contentType = 'application/octet-stream';
+    if (ext === '.mp4') contentType = 'video/mp4';
+    else if (ext === '.webm') contentType = 'video/webm';
+    else if (ext === '.vtt') contentType = 'text/vtt';
+    else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+    else if (ext === '.png') contentType = 'image/png';
+
+    // Construimos la ruta interna para Nginx.
+    // Nginx debe tener un location /_protected/ configurado como internal.
+    // El archivo físico está en public/uploads/media (usualmente).
+    // findVideoOr404 devuelve el path absoluto, necesitamos el relativo a /public/uploads/media
+    const relativePath = path.posix.join(
+      'media',
+      path.posix.basename(fullPath),
+    );
+
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'X-Accel-Redirect': `/_protected/${relativePath}`,
+      },
+    };
+  }
+
   getVideoStream(
     filename: string,
     rangeHeader?: string,
