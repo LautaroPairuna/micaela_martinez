@@ -13,6 +13,7 @@ type CursoLight = {
   id?: string | number | null;
   slug?: string | null;
   titulo?: string | null;
+  portada?: string | null;
   portadaUrl?: string | null;
   _count?: { modulos?: number | null } | null;
   modulos?: Array<{ id: string | number }> | null;
@@ -69,6 +70,8 @@ async function MiAprendizajePage() {
         id: course?.id,
         slug: course?.slug,
         titulo: course?.titulo,
+        portada: course?.portada,
+        portadaUrl: course?.portadaUrl,
         modulesCount: course?._count?.modulos ?? (Array.isArray(course?.modulos) ? course.modulos.length : undefined),
       },
       progress: prog,

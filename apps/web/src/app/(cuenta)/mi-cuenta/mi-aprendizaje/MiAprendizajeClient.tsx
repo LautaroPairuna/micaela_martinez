@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 type CursoLight = {
   slug?: string | null;
   titulo?: string | null;
+  portada?: string | null;
   portadaUrl?: string | null;
   _count?: { modulos?: number | null } | null;
 } | null;
@@ -37,6 +38,7 @@ type SubscriptionInfo = {
     id: string;
     slug?: string;
     titulo?: string;
+    portada?: string;
     portadaUrl?: string;
     [key: string]: unknown;
   }>;

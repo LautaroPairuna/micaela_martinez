@@ -275,39 +275,34 @@ export function EnrollmentCard({
       key={enrollment.id}
       className="group relative h-full flex flex-col overflow-hidden border border-white/10 bg-[#09090b] hover:border-[var(--gold)] hover:shadow-[0_0_30px_-5px_rgba(197,164,109,0.15)] transition-all duration-300 ease-out rounded-xl"
     >
-      {/* Botón de cancelación (flotante sobre la imagen) */}
-      {hasSubscription ? (
-        <div className="absolute top-3 right-3 z-20">
-          <SubscriptionCancelButton orderId={String(enrollment.id)} />
-        </div>
-      ) : null}
-
       {/* Imagen de Portada (Cabeza) */}
-      <div className="relative w-full aspect-video overflow-hidden bg-zinc-900">
+      <div className="relative w-full aspect-video overflow-hidden bg-[#09090b]">
         {/* Fondo borroso (efecto relleno) */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <SafeImage
-            src={courseImageUrl}
-            alt=""
-            ratio="auto"
-            className="h-full w-full opacity-80 blur-3xl scale-150"
-            imgClassName="object-cover"
-            fit="cover"
-            withBg={false}
-            skeleton={false}
-            hoverZoom={false}
-          />
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {courseImageUrl && (
+            <SafeImage
+              src={courseImageUrl}
+              alt=""
+              ratio="auto"
+              className="w-full h-full opacity-50 blur-2xl scale-110"
+              imgClassName="w-full h-full object-cover"
+              fit="cover"
+              withBg={false}
+              skeleton={false}
+              hoverZoom={false}
+            />
+          )}
         </div>
 
         {/* Imagen principal */}
-        <div className="relative z-10 w-full h-full flex items-center transition-transform duration-500 ease-out group-hover:scale-105">
+        <div className="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-500 ease-out group-hover:scale-[1.02]">
           {courseImageUrl ? (
             <SafeImage
               src={courseImageUrl}
               alt={course?.titulo || 'Curso'}
               ratio="auto"
-              className="w-full"
-              imgClassName="w-full h-auto object-contain"
+              className="w-full h-full"
+              imgClassName="w-full h-full object-contain drop-shadow-2xl"
               fit="contain"
               rounded="none"
               withBg={false}
@@ -321,8 +316,8 @@ export function EnrollmentCard({
           )}
         </div>
         
-        {/* Overlay degradado para legibilidad si fuera necesario */}
-        <div className="absolute inset-0 z-20 bg-gradient-to-t from-[#09090b] via-transparent to-transparent opacity-60" />
+        {/* Overlay sutil para profundidad */}
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-40 pointer-events-none" />
 
         {/* Badge de estado (Superpuesto en la imagen) */}
         <div className="absolute bottom-3 left-3 z-30">
@@ -345,53 +340,57 @@ export function EnrollmentCard({
         </div>
       </div>
 
-      {/* Contenido Principal */}
-      <CardBody className="flex-1 p-5 flex flex-col justify-between bg-transparent relative">
-        <div className="space-y-4">
-          {/* Título e Info */}
-          <div>
-            <h3 className="text-xl font-bold text-white group-hover:text-[var(--gold)] transition-colors line-clamp-2 font-serif tracking-tight leading-snug min-h-[3.5rem]">
-              {course?.titulo || 'Curso sin título'}
-            </h3>
+      {/* Contenido principal */}
+      <CardBody className="relative flex flex-col gap-3 flex-1 p-4 sm:p-5 lg:p-6">
+        {/* Botón de opciones (3 puntos) movido aquí para no tapar la imagen */}
+        {hasSubscription ? (
+          <div className="absolute top-4 right-4 z-30">
+            <SubscriptionCancelButton orderId={String(enrollment.id)} />
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-1 pr-8">
+          <h3 className="font-bold text-lg leading-tight line-clamp-2 uppercase tracking-wide text-white group-hover:text-[var(--gold)] transition-colors duration-300">
+            {course?.titulo || 'Curso sin título'}
+          </h3>
+        </div>
             
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 font-medium">
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-[var(--gold)]" />
-                <span>{course?._count?.modulos || 0} módulos</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <BookOpen className="h-3.5 w-3.5 text-[var(--gold)]" />
-                <span>Intermedio</span>
-              </div>
-              {hasSubscription && (
-                <div className="flex items-center gap-1.5 text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/20">
-                  <Clock className="h-3 w-3" />
-                  <span>{diasTotales} días</span>
-                </div>
-              )}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 font-medium">
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-[var(--gold)]" />
+            <span>{course?._count?.modulos || 0} módulos</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5 text-[var(--gold)]" />
+            <span>Intermedio</span>
+          </div>
+          {hasSubscription && (
+            <div className="flex items-center gap-1.5 text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/20">
+              <Clock className="h-3 w-3" />
+              <span>{diasTotales} días</span>
             </div>
+          )}
+        </div>
+
+        {/* Progreso */}
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center justify-between text-xs uppercase tracking-wider font-bold text-zinc-500">
+            <span>Avance</span>
+            <span className={isCompleted ? "text-green-400" : "text-white"}>
+              {isCompleted ? '100%' : `${Math.round(progressPct)}%`}
+            </span>
           </div>
 
-          {/* Progreso */}
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wider font-bold text-zinc-500">
-              <span>Avance</span>
-              <span className={isCompleted ? "text-green-400" : "text-white"}>
-                {isCompleted ? '100%' : `${Math.round(progressPct)}%`}
-              </span>
-            </div>
-
-            <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-              <div
-                className={`h-full shadow-[0_0_10px_rgba(var(--gold-rgb),0.3)] transition-all duration-700 ease-out ${isCompleted ? 'bg-green-500 shadow-green-500/30' : 'bg-gradient-to-r from-[var(--gold)] to-[#b88a44]'}`}
-                style={{ width: `${isCompleted ? 100 : progressPct}%` }}
-              />
-            </div>
+          <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+            <div
+              className={`h-full shadow-[0_0_10px_rgba(var(--gold-rgb),0.3)] transition-all duration-700 ease-out ${isCompleted ? 'bg-green-500 shadow-green-500/30' : 'bg-gradient-to-r from-[var(--gold)] to-[#b88a44]'}`}
+              style={{ width: `${isCompleted ? 100 : progressPct}%` }}
+            />
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-6 space-y-2">
+        <div className="mt-auto pt-6 space-y-2">
           {isCompleted ? (
             <>
               <button

@@ -147,6 +147,7 @@ export type Inscripcion = {
     id: string; 
     slug?: string; 
     titulo?: string; 
+    portada?: string | null;
     portadaUrl?: string | null;
     totalLessons?: number;
     _count?: { modulos: number };
@@ -583,6 +584,7 @@ type BackendEnrollment = {
     id: string; 
     slug?: string; 
     titulo?: string; 
+    portada?: string | null;
     portadaUrl?: string | null;
     instructor?: { nombre: string } | null;
     _count?: { modulos: number };
@@ -601,6 +603,7 @@ type BackendEnrollment = {
     id: string; 
     slug?: string; 
     titulo?: string; 
+    portada?: string | null;
     portadaUrl?: string | null;
     instructor?: { nombre: string } | null;
     _count?: { modulos: number };
@@ -634,6 +637,7 @@ export async function listEnrollments(opts?: NextOpts) {
         id: c.id, 
         slug: c.slug, 
         titulo: c.titulo, 
+        portada: c.portada,
         portadaUrl: c.portadaUrl,
         _count: c._count,
         // Incluimos los módulos y lecciones si vienen desde el backend
