@@ -267,6 +267,9 @@ export function EnrollmentCard({
     return `/cursos/player/${course.slug}/modulo-1/leccion-1`;
   }, [isCompleted, course?.slug, course?.modulos, courseModules, lessonProgress, serverProgress, getLessonProgressKey, enrollment.cursoId]);
 
+  // Resolver la imagen usando la misma lógica que CourseCard
+  const courseImageUrl = course?.portadaUrl || (course?.portada ? `/uploads/curso/${course.portada}` : null);
+
   return (
     <Card
       key={enrollment.id}
@@ -281,29 +284,48 @@ export function EnrollmentCard({
 
       {/* Imagen de Portada (Cabeza) */}
       <div className="relative w-full aspect-video overflow-hidden bg-zinc-900">
-        {course?.portadaUrl ? (
+        {/* Fondo borroso (efecto relleno) */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
           <SafeImage
-            src={course.portadaUrl}
-            alt={course?.titulo || 'Curso'}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            src={courseImageUrl}
+            alt=""
+            ratio="auto"
+            className="h-full w-full opacity-80 blur-3xl scale-150"
+            imgClassName="object-cover"
+            fit="cover"
+            withBg={false}
+            skeleton={false}
+            hoverZoom={false}
           />
-        ) : course?.portada ? (
-          <SafeImage
-            src={`/api/media/uploads/curso/${course.portada}`}
-            alt={course?.titulo || 'Curso'}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-            <BookOpen className="h-12 w-12 text-[var(--gold)]/20" strokeWidth={1.5} />
-          </div>
-        )}
+        </div>
+
+        {/* Imagen principal */}
+        <div className="relative z-10 w-full h-full flex items-center transition-transform duration-500 ease-out group-hover:scale-105">
+          {courseImageUrl ? (
+            <SafeImage
+              src={courseImageUrl}
+              alt={course?.titulo || 'Curso'}
+              ratio="auto"
+              className="w-full"
+              imgClassName="w-full h-auto object-contain"
+              fit="contain"
+              rounded="none"
+              withBg={false}
+              skeleton={false}
+              hoverZoom={false}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+              <BookOpen className="h-12 w-12 text-[var(--gold)]/20" strokeWidth={1.5} />
+            </div>
+          )}
+        </div>
         
         {/* Overlay degradado para legibilidad si fuera necesario */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 z-20 bg-gradient-to-t from-[#09090b] via-transparent to-transparent opacity-60" />
 
         {/* Badge de estado (Superpuesto en la imagen) */}
-        <div className="absolute bottom-3 left-3 z-10">
+        <div className="absolute bottom-3 left-3 z-30">
            {isCompleted ? (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/90 text-white text-[10px] font-bold backdrop-blur-md shadow-lg border border-green-400/20">
               <Award className="h-3 w-3" />

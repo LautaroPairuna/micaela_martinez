@@ -88,7 +88,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
             id: course.id,
             title: course.titulo || '',
             slug: course.slug || '',
-            image: course.portadaUrl
+            image: course.portadaUrl || (course.portada ? `/uploads/curso/${course.portada}` : undefined)
           }))} 
           className="mb-8" 
         />
