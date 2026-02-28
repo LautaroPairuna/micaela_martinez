@@ -19,6 +19,7 @@ type CursoLight = {
   slug?: string | null;
   titulo?: string | null;
   portadaUrl?: string | null;
+  portada?: string | null;
   _count?: { modulos?: number | null } | null;
   modulos?: Array<{
     id: string;
@@ -283,6 +284,12 @@ export function EnrollmentCard({
         {course?.portadaUrl ? (
           <SafeImage
             src={course.portadaUrl}
+            alt={course?.titulo || 'Curso'}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
+        ) : course?.portada ? (
+          <SafeImage
+            src={`/api/media/uploads/curso/${course.portada}`}
             alt={course?.titulo || 'Curso'}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />
