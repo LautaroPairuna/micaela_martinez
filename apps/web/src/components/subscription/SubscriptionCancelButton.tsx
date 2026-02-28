@@ -89,9 +89,9 @@ export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionC
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="rounded-full h-8 w-8 p-0 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all duration-300 group/options"
+          className="rounded-full h-8 w-8 p-0 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all duration-300 group/options border-zinc-800 border"
         >
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreHorizontal className="h-6 w-6" />
           <span className="sr-only">Opciones del curso</span>
         </Button>
         
@@ -104,7 +104,7 @@ export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionC
               transition={{ duration: 0.15 }}
               className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-gray-800/90 backdrop-blur-sm border border-gray-600 z-10"
             >
-              <div className="py-1" role="menu" aria-orientation="vertical">
+              <div role="menu" aria-orientation="vertical">
                 <button
                   className="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 rounded-md border border-transparent hover:border-gray-600 transition-all"
                   role="menuitem"
