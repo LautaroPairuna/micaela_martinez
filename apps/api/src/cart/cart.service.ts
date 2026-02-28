@@ -21,6 +21,7 @@ export class CartService {
                 descuento: true,
                 slug: true,
                 imagen: true,
+                imagenes: true, // Agregado para soportar fallback de imágenes
                 stock: true,
               },
             },
