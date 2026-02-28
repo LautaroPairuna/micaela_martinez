@@ -24,8 +24,9 @@ export function BuyCourseButton({ c, className }: { c: CourseForCartButton; clas
         image: c.portadaUrl ?? null,
       });
       toast.success('Curso agregado al carrito');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al agregar curso al carrito:', error);
+      toast.error(error.message || 'Error al agregar curso al carrito');
     }
   };
 

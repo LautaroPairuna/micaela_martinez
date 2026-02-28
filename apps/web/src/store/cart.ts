@@ -117,6 +117,13 @@ export const useCart = create<CartState>()(
 
       addProduct: async (line) => {
         const { items } = get();
+        
+        // Validación: No permitir productos si hay cursos (suscripciones)
+        const hasCourses = items.some(i => i.type === 'course');
+        if (hasCourses) {
+          throw new Error('No puedes mezclar productos con suscripciones a cursos. Por favor, finaliza tu compra de cursos primero o vacía tu carrito.');
+        }
+
         const existing = items.find(i => i.type === 'product' && i.id === line.id);
         
         if (existing) {
@@ -127,16 +134,20 @@ export const useCart = create<CartState>()(
           });
         }
         
-        // get().open(); // Eliminado para evitar apertura automática
-        
         const newItem: CartLineProduct = { ...line, type: 'product', quantity: line.quantity || 1, id: line.id, slug: line.slug, title: line.title, price: line.price }; 
         cartApi.syncCart([newItem]).catch(() => {});
       },
 
       addCourse: async (line) => {
         const { items } = get();
+
+        // Validación: No permitir cursos si hay productos
+        const hasProducts = items.some(i => i.type === 'product');
+        if (hasProducts) {
+          throw new Error('No puedes mezclar suscripciones a cursos con productos físicos. Por favor, finaliza tu compra de productos primero o vacía tu carrito.');
+        }
+
         if (items.some(i => i.type === 'course' && i.id === line.id)) {
-          // get().open(); // Eliminado
           return;
         }
 
@@ -145,7 +156,6 @@ export const useCart = create<CartState>()(
           items: [...items, newCourse]
         });
         
-        // get().open(); // Eliminado
         cartApi.syncCart([newCourse]).catch(() => {});
       },
     }),

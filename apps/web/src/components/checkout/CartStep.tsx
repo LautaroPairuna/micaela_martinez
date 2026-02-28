@@ -8,6 +8,7 @@ import { SafeImage } from '@/components/ui/SafeImage';
 import { Price } from '@/components/ui/Price';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 
 
@@ -17,6 +18,7 @@ export function CartStep() {
   
   const subtotal = cartSelectors.subtotal(items);
   const count = cartSelectors.count(items);
+  const hasCourses = items.some(i => i.type === 'course');
 
   const handleContinue = () => {
     markStepCompleted('cart');
@@ -187,10 +189,24 @@ export function CartStep() {
             <Button
               onClick={handleContinue}
               variant="ghost"
-              className="w-full sm:w-auto border !border-[var(--pink)] !text-[var(--pink)] font-bold text-base px-8 py-3 rounded-xl hover:!bg-[var(--pink)]/10 hover:!border-[var(--pink)] hover:!text-[var(--pink)] hover:shadow-[0_0_20px_-5px_var(--pink)] hover:scale-[1.02] transition-all duration-300 !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus-visible:!ring-0"
+              className={cn(
+                "w-full sm:w-auto border font-bold text-base px-8 py-3 rounded-xl transition-all duration-300 !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus-visible:!ring-0 group",
+                hasCourses 
+                  ? "!border-[var(--gold)] !text-[var(--gold)] hover:!bg-[var(--gold)]/10 hover:shadow-[0_0_20px_-5px_var(--gold)] hover:scale-[1.02]"
+                  : "!border-[var(--pink)] !text-[var(--pink)] hover:!bg-[var(--pink)]/10 hover:shadow-[0_0_20px_-5px_var(--pink)] hover:scale-[1.02]"
+              )}
             >
-              Continuar
-              <ArrowRight className="h-5 w-5 ml-2" />
+              <div className="flex flex-col items-end">
+                <span className="flex items-center">
+                  {hasCourses ? 'Suscribirse ahora' : 'Continuar'}
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </span>
+                {hasCourses && (
+                  <span className="text-[10px] font-medium opacity-70 -mt-1 uppercase tracking-tighter">
+                    Cobro mensual automático
+                  </span>
+                )}
+              </div>
             </Button>
           </div>
         </div>

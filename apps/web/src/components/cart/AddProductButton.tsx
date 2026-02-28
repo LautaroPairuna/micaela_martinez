@@ -54,9 +54,9 @@ export function AddProductButton({
         descuento: p.descuento || 0,
       });
       toast.success('Producto agregado al carrito');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al agregar al carrito:', error);
-      toast.error('No se pudo agregar al carrito');
+      toast.error(error.message || 'No se pudo agregar al carrito');
     }
   };
 

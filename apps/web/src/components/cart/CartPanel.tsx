@@ -11,6 +11,7 @@ import { useCart, cartSelectors, CartLineProduct } from '@/store/cart';
 import { useSession } from '@/hooks/useSession';
 import { useToast } from '@/contexts/ToastContext';
 import { PLACEHOLDER_IMAGE } from '@/lib/image-utils';
+import { cn } from '@/lib/utils';
 
 // Type-guard sin `any`
 function isCartLineProduct(it: unknown): it is CartLineProduct {
@@ -113,7 +114,19 @@ export function CartPanel() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">Tu carrito</h2>
-              <span className="text-sm text-zinc-400">{count} {count === 1 ? 'artículo' : 'artículos'}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-400">{count} {count === 1 ? 'artículo' : 'artículos'}</span>
+                {items.length > 0 && (
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border animate-pulse",
+                    items.some(i => i.type === 'course') 
+                      ? "bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/20 shadow-[0_0_10px_rgba(197,164,109,0.1)]"
+                      : "bg-[var(--pink)]/10 text-[var(--pink)] border-[var(--pink)]/20 shadow-[0_0_10px_rgba(236,90,143,0.1)]"
+                  )}>
+                    {items.some(i => i.type === 'course') ? 'Modo Suscripción' : 'Compra Única'}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <button

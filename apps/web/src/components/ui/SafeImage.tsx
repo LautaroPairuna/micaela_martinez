@@ -107,7 +107,7 @@ export function SafeImage({
     }
     
     return processedSrc;
-  }, [src, err, useBackendProxy]);
+  }, [currentSrc, err, useBackendProxy]);
 
   const Tag = ratio === 'auto' ? 'div' : 'div'; // wrapper siempre div
   
