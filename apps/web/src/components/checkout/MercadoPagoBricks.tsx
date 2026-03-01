@@ -192,12 +192,11 @@ export function MercadoPagoBricks({
         const pref = asStringOrNull(preferenceId);
         if (pref) init.preferenceId = pref;
 
-        // Configuración de medios: en suscripciones ocultamos débito y efectivo (MP requiere crédito en AR)
+        // Configuración de medios: restringir a lo permitido por la cuenta
         type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
         const paymentMethodsCfg: PaymentMethodsCfg = isSubscription
           ? { 
               creditCard: ['master', 'visa', 'amex', 'cabal', 'naranja'],
-              // Ocultamos explícitamente otros para suscripción
               debitCard: [],
               ticket: [],
               bankTransfer: [],
@@ -207,8 +206,8 @@ export function MercadoPagoBricks({
               creditCard: 'all',
               debitCard: 'all',
               ticket: 'all',
-              bankTransfer: 'all',
-              ...(pref ? { mercadoPago: 'all' as const } : {}), // Wallet sólo si hay preferenceId
+              bankTransfer: [], // Ocultar si la cuenta no lo permite
+              ...(pref ? { mercadoPago: 'all' as const } : { mercadoPago: [] }),
             };
 
         const settings: any = {
@@ -234,69 +233,76 @@ export function MercadoPagoBricks({
 
               console.log('=== FRONTEND: onSubmit de Bricks (Estructura Recibida) ===', cardFormData);
 
-              // 1. Extraer el token de forma ultra-flexible
-              // Bricks v2 envía { selectedPaymentMethod, formData: { token, ... } }
-              const formData = cardFormData.formData || cardFormData;
-              const finalToken = asStringOrNull(formData.token);
-              
-              // 2. Extraer el método de pago
-              const finalPaymentMethodId = asStringOrNull(formData.payment_method_id) || 
-                                          asStringOrNull(cardFormData.selectedPaymentMethod);
+                // 1. Extraer el token de forma ultra-flexible
+                const formData = cardFormData.formData || cardFormData;
+                const finalToken = asStringOrNull(formData.token);
+                
+                // 2. Extraer el método de pago e issuer
+                const finalPaymentMethodId = asStringOrNull(formData.payment_method_id) || 
+                                            asStringOrNull(cardFormData.selectedPaymentMethod);
+                const issuerId = asStringOrNull(formData.issuer_id) || undefined;
+                
+                // 3. Extraer cuotas (puede venir como string o number según la versión de MP)
+                const installmentsRaw = formData.installments || cardFormData.installments;
+                const installments = typeof installmentsRaw === 'number' 
+                  ? installmentsRaw 
+                  : (Number(installmentsRaw) || 1);
 
-              if (!finalToken || !finalPaymentMethodId) {
-                console.error('=== FRONTEND: Fallo en extracción de datos de Bricks ===', {
-                  recibido: cardFormData,
-                  tokenExtraido: finalToken,
-                  methodExtraido: finalPaymentMethodId
-                });
-                onPaymentError({ 
-                  message: 'Datos de tarjeta inválidos (token o método de pago ausente).',
-                  details: cardFormData 
-                });
-                return;
-              }
+                if (!finalToken || !finalPaymentMethodId) {
+                  console.error('=== FRONTEND: Fallo en extracción de datos de Bricks ===', {
+                    recibido: cardFormData,
+                    tokenExtraido: finalToken,
+                    methodExtraido: finalPaymentMethodId
+                  });
+                  onPaymentError({ 
+                    message: 'Datos de tarjeta inválidos (token o método de pago ausente).',
+                    details: cardFormData 
+                  });
+                  return;
+                }
 
-              // 3. Extraer datos del pagador
-              const payer = formData.payer || cardFormData.payer || {};
-              const email = asStringOrNull(payer.email) || payerEmail || undefined;
-              const identificationType = asStringOrNull(payer.identification?.type) || undefined;
-              const identificationNumber = asStringOrNull(payer.identification?.number) || undefined;
+                // 4. Extraer datos del pagador
+                const payer = formData.payer || cardFormData.payer || {};
+                const email = asStringOrNull(payer.email) || payerEmail || undefined;
+                const identificationType = asStringOrNull(payer.identification?.type) || undefined;
+                const identificationNumber = asStringOrNull(payer.identification?.number) || undefined;
 
-              onPaymentStart?.();
-              setIsProcessing(true);
+                onPaymentStart?.();
+                setIsProcessing(true);
 
-              try {
-                // Si es suscripción, MP recomienda crear la orden ANTES para tener el ID como external_reference
-                const currentOrderId = orderId ?? (await onCreateOrder());
+                try {
+                  const currentOrderId = orderId ?? (await onCreateOrder());
 
-                console.log('=== FRONTEND: Procesando suscripción/pago ===', {
-                  isSubscription,
-                  orderId: currentOrderId,
-                  tokenPrefix: finalToken.substring(0, 10),
-                  email
-                });
+                  console.log('=== FRONTEND: Procesando suscripción/pago ===', {
+                    isSubscription,
+                    orderId: currentOrderId,
+                    tokenPrefix: finalToken.substring(0, 10),
+                    email,
+                    issuerId,
+                    installments
+                  });
 
-                const rawResult = isSubscription
-                  ? await createSubscription(String(currentOrderId), {
-                      token: finalToken,
-                      paymentMethodId: finalPaymentMethodId,
-                      issuerId: asStringOrNull(formData.issuer_id) || undefined,
-                      installments: typeof formData.installments === 'number' ? formData.installments : 1,
-                      email: email || 'usuario@ejemplo.com', // Fallback si no hay email
-                      identificationType,
-                      identificationNumber,
-                      frequency: subscriptionFrequency,
-                      frequencyType: subscriptionFrequencyType,
-                    })
-                  : await processMercadoPagoPayment(String(currentOrderId), {
-                      token: finalToken,
-                      paymentMethodId: finalPaymentMethodId,
-                      issuerId: asStringOrNull(formData.issuer_id) || undefined,
-                      installments: typeof formData.installments === 'number' ? formData.installments : 1,
-                      email: email || 'usuario@ejemplo.com',
-                      identificationType,
-                      identificationNumber,
-                    });
+                  const rawResult = isSubscription
+                    ? await createSubscription(String(currentOrderId), {
+                        token: finalToken,
+                        paymentMethodId: finalPaymentMethodId,
+                        issuerId,
+                        installments,
+                        email: email || 'usuario@ejemplo.com',
+                        identificationType,
+                        identificationNumber,
+                        frequency: subscriptionFrequency,
+                        frequencyType: subscriptionFrequencyType,
+                      })
+                    : await processMercadoPagoPayment(String(currentOrderId), {
+                        token: finalToken,
+                        paymentMethodId: finalPaymentMethodId,
+                        issuerId,
+                        installments,
+                        email: email || 'usuario@ejemplo.com',
+                        identificationType,
+                        identificationNumber,
+                      });
 
                 onPaymentSuccess({
                   orderId: extractId(rawResult, String(currentOrderId)),
