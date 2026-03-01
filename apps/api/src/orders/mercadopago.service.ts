@@ -90,11 +90,12 @@ export class MercadoPagoService {
     try {
       // Suscripción SIN plan asociado, con pago autorizado
       // Docs: POST /preapproval con card_token_id y status="authorized"
+      // IMPORTANTE: Para suscripciones sin plan (Preapproval), MP requiere 'card_token_id'
       const preapprovalPayload = {
         reason: subscriptionData.description,
         external_reference: subscriptionData.external_reference,
         payer_email: subscriptionData.payer.email,
-        card_token_id: subscriptionData.token,
+        card_token_id: subscriptionData.token, // Token de la tarjeta generado por Bricks
         auto_recurring: {
           frequency: subscriptionData.frequency,
           frequency_type: subscriptionData.frequency_type,
@@ -106,6 +107,14 @@ export class MercadoPagoService {
           'http://localhost:3000',
         status: 'authorized',
       };
+
+      console.log('=== BACKEND: Creando suscripción en MercadoPago ===', {
+        reason: preapprovalPayload.reason,
+        email: preapprovalPayload.payer_email,
+        tokenPrefix: preapprovalPayload.card_token_id?.substring(0, 10),
+        amount: preapprovalPayload.auto_recurring.transaction_amount,
+        ref: preapprovalPayload.external_reference,
+      });
 
       // Configurar idempotency key único por request
       const idemKey = `subscription-${preapprovalPayload.external_reference}-${Date.now()}`;

@@ -211,11 +211,33 @@ export function MercadoPagoBricks({
               ...(pref ? { mercadoPago: 'all' as const } : {}), // Wallet sólo si hay preferenceId
             };
 
-        const settings: PaymentBrickSettings = {
+        const settings: any = {
           initialization: init,
           customization: {
             paymentMethods: paymentMethodsCfg,
-            visual: { style: { theme: 'dark' } }
+            visual: { 
+              style: { 
+                theme: 'dark',
+                customVariables: {
+                  formBackgroundColor: '#18181b',
+                  baseColor: '#ffffff',
+                  secondaryColor: '#a1a1aa',
+                  formInputsTextSize: '14px',
+                  formInputsTextColor: '#ffffff',
+                  formInputsLabelColor: '#ffffff',
+                  formInputsErrorColor: '#ef4444',
+                  formInputsPlaceholderColor: '#71717a',
+                  inputBackgroundColor: '#09090b',
+                  inputBorderColor: '#27272a',
+                  inputFocusedBorderColor: '#ec4899', // rosa mica
+                  secondaryFontColor: '#ffffff',
+                  fontSizeSmall: '12px',
+                  fontSizeMedium: '14px',
+                  fontSizeLarge: '16px',
+                  fontSizeExtraLarge: '18px',
+                }
+              } 
+            }
           },
           callbacks: {
             onReady: () => {},
@@ -228,7 +250,6 @@ export function MercadoPagoBricks({
 
               // 1. Extraer el token de forma ultra-flexible
               // Bricks v2 envía { selectedPaymentMethod, formData: { token, ... } }
-              // Otras versiones envían { token, ... } directamente
               const formData = cardFormData.formData || cardFormData;
               const finalToken = asStringOrNull(formData.token);
               
@@ -251,7 +272,7 @@ export function MercadoPagoBricks({
 
               // 3. Extraer datos del pagador
               const payer = formData.payer || cardFormData.payer || {};
-              const email = asStringOrNull(payer.email) || undefined;
+              const email = asStringOrNull(payer.email) || payerEmail || undefined;
               const identificationType = asStringOrNull(payer.identification?.type) || undefined;
               const identificationNumber = asStringOrNull(payer.identification?.number) || undefined;
 
@@ -259,22 +280,30 @@ export function MercadoPagoBricks({
               setIsProcessing(true);
 
               try {
+                // Si es suscripción, MP recomienda crear la orden ANTES para tener el ID como external_reference
                 const currentOrderId = orderId ?? (await onCreateOrder());
 
+                console.log('=== FRONTEND: Procesando suscripción/pago ===', {
+                  isSubscription,
+                  orderId: currentOrderId,
+                  tokenPrefix: finalToken.substring(0, 10),
+                  email
+                });
+
                 const rawResult = isSubscription
-                  ? await createSubscription(currentOrderId, {
+                  ? await createSubscription(String(currentOrderId), {
                       token: finalToken,
                       paymentMethodId: finalPaymentMethodId,
-                      email,
+                      email: email || 'usuario@ejemplo.com', // Fallback si no hay email
                       identificationType,
                       identificationNumber,
                       frequency: subscriptionFrequency,
                       frequencyType: subscriptionFrequencyType,
                     })
-                  : await processMercadoPagoPayment(currentOrderId, {
+                  : await processMercadoPagoPayment(String(currentOrderId), {
                       token: finalToken,
                       paymentMethodId: finalPaymentMethodId,
-                      email,
+                      email: email || 'usuario@ejemplo.com',
                       identificationType,
                       identificationNumber,
                     });
@@ -287,7 +316,8 @@ export function MercadoPagoBricks({
                   amount,
                   status: extractStatus(rawResult),
                 });
-              } catch (err) {
+              } catch (err: any) {
+                console.error('=== FRONTEND: Error en procesamiento de pago ===', err);
                 onPaymentError(normalizeError(err));
               } finally {
                 if (!cancelled) setIsProcessing(false);
