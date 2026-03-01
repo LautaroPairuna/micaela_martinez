@@ -27,9 +27,6 @@ type Props = {
   onError?: () => void;
 };
 
-const PIXEL =
-  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
-
 export function SafeImage({
   src,
   alt,

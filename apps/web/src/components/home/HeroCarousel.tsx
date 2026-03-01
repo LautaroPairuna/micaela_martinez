@@ -180,7 +180,6 @@ function HeroSlideImage({
           fit="contain"
           ratio="16/9" // ✅ cualquier valor != 'auto' para que use fill
           priority={loadingType === 'eager'}
-          fetchPriority={loadingType === 'eager' ? 'high' : 'auto'}
           skeleton={!loaded}
           hoverZoom={false}
           useBackendProxy={false}
