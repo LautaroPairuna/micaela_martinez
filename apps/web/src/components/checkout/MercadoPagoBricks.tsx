@@ -221,20 +221,6 @@ export function MercadoPagoBricks({
                 customVariables: {
                   formBackgroundColor: '#18181b',
                   baseColor: '#ffffff',
-                  secondaryColor: '#a1a1aa',
-                  formInputsTextSize: '14px',
-                  formInputsTextColor: '#ffffff',
-                  formInputsLabelColor: '#ffffff',
-                  formInputsErrorColor: '#ef4444',
-                  formInputsPlaceholderColor: '#71717a',
-                  inputBackgroundColor: '#09090b',
-                  inputBorderColor: '#27272a',
-                  inputFocusedBorderColor: '#ec4899', // rosa mica
-                  secondaryFontColor: '#ffffff',
-                  fontSizeSmall: '12px',
-                  fontSizeMedium: '14px',
-                  fontSizeLarge: '16px',
-                  fontSizeExtraLarge: '18px',
                 }
               } 
             }
