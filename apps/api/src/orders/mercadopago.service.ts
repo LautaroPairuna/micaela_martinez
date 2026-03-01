@@ -221,13 +221,47 @@ export class MercadoPagoService {
     paymentData: MercadoPagoPaymentData,
   ): Promise<MercadoPagoPaymentResponse> {
     try {
+      // 1. Sanitizar Email
+      const payerEmail = paymentData.payer.email?.trim();
+      if (!payerEmail || !payerEmail.includes('@')) {
+        throw new HttpException(
+          'Email inválido para MercadoPago',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // 2. Sanitizar Identificación
+      let identification: { type: string; number: string } | undefined;
+      if (
+        paymentData.payer.identification?.type &&
+        paymentData.payer.identification?.number
+      ) {
+        const idType = paymentData.payer.identification.type
+          .trim()
+          .toUpperCase();
+        const cleanNumber = String(
+          paymentData.payer.identification.number,
+        ).replace(/\D+/g, '');
+
+        // Solo permitir tipos válidos para Argentina en Sandbox para evitar internal_error
+        const allowedTypes = new Set(['DNI', 'CUIT', 'CUIL']);
+        if (allowedTypes.has(idType) && cleanNumber.length > 0) {
+          identification = { type: idType, number: cleanNumber };
+        }
+      }
+
       const paymentRequest = {
         token: paymentData.token,
-        issuer_id: paymentData.issuer_id ? Number(paymentData.issuer_id) : undefined,
+        issuer_id: paymentData.issuer_id
+          ? Number(paymentData.issuer_id)
+          : undefined,
         transaction_amount: paymentData.transaction_amount,
         description: paymentData.description,
         payment_method_id: paymentData.payment_method_id,
-        payer: paymentData.payer,
+        payer: {
+          email: payerEmail,
+          ...(identification ? { identification } : {}),
+        },
         external_reference: paymentData.external_reference,
         installments: paymentData.installments ?? 1,
         capture: true,
@@ -241,6 +275,7 @@ export class MercadoPagoService {
         installments: paymentRequest.installments,
         ref: paymentRequest.external_reference,
         tokenPrefix: paymentRequest.token?.substring(0, 10),
+        payer: paymentRequest.payer,
       });
 
       // Configurar idempotency key único
@@ -259,11 +294,23 @@ export class MercadoPagoService {
 
       return response as MercadoPagoPaymentResponse;
     } catch (error: any) {
-      console.error('=== BACKEND: Error detallado de MercadoPago ===', {
-        message: error.message,
-        cause: error.cause,
-        details: error.cause?.details || error.errors,
-      });
+      // Log crudo completo para debugging extremo
+      console.error('=== MP RAW ERROR ===');
+      console.error(
+        JSON.stringify(
+          {
+            message: error?.message,
+            name: error?.name,
+            status: error?.status,
+            cause: error?.cause,
+            response: error?.response,
+            error: error?.error,
+            // stack: (error?.stack || '').split('\n').slice(0, 8).join('\n'),
+          },
+          null,
+          2,
+        ),
+      );
 
       if (error?.cause) {
         // MercadoPago SDK v2 suele devolver un array en cause
