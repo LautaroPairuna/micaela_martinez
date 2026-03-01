@@ -12,9 +12,34 @@ import { auth } from '@/lib/server-auth';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ClientToastContainer } from '@/components/providers/ClientToastContainer';
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://micapestanas.com';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: { default: 'Micaela Pestañas', template: '%s | Micaela Pestañas' },
   description: 'Cursos y tienda de cosmética minimalista y elegante.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'es_AR',
+    url: baseUrl,
+    siteName: 'Micaela Pestañas',
+    title: 'Micaela Pestañas',
+    description: 'Cursos y tienda de cosmética minimalista y elegante.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {
