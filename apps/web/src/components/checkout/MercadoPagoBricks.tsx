@@ -233,9 +233,10 @@ export function MercadoPagoBricks({
 
               console.log('=== FRONTEND: onSubmit de Bricks (Estructura Recibida) ===', cardFormData);
 
-                // 1. Extraer el token de forma ultra-flexible
+                // 1. Extraer el token de forma ultra-flexible y limpiar espacios
                 const formData = cardFormData.formData || cardFormData;
-                const finalToken = asStringOrNull(formData.token);
+                const rawToken = asStringOrNull(formData.token);
+                const finalToken = rawToken ? rawToken.trim() : null;
                 
                 // 2. Extraer el método de pago e issuer
                 const finalPaymentMethodId = asStringOrNull(formData.payment_method_id) || 
