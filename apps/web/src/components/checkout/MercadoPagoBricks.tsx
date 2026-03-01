@@ -332,8 +332,9 @@ export function MercadoPagoBricks({
           },
         };
 
-        // ⬅️ IMPORTANTE: pasar **string id** (no HTMLElement) para evitar e.startsWith
-        const controller = await bricks.create('payment', containerIdRef.current, settings);
+        // ⬅️ IMPORTANTE: usar cardPayment para suscripciones y payment para pagos comunes
+        const brickType = isSubscription ? 'cardPayment' : 'payment';
+        const controller = await bricks.create(brickType as any, containerIdRef.current, settings);
         if (!cancelled) controllerRef.current = controller;
       } catch (e) {
         if (!cancelled) handlersRef.current.onPaymentError(normalizeError(e));

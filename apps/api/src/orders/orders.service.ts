@@ -477,6 +477,20 @@ export class OrdersService {
       );
     }
 
+    // Validación fuerte del token
+    if (!subscriptionData.token || typeof subscriptionData.token !== 'string') {
+      throw new HttpException(
+        'Token de tarjeta faltante',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (subscriptionData.token.length < 20) {
+      throw new HttpException(
+        'Token de tarjeta inválido o demasiado corto',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     try {
       const subscriptionResult =
         await this.mercadoPagoService.createSubscription({
