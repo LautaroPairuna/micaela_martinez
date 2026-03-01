@@ -50,9 +50,16 @@ function mapResponseToLines(data: CartResponse): CartLine[] {
     if (isProduct && item.producto) {
       // Handle images (legacy field vs array)
       let image = item.producto.imagen;
-      if (!image && Array.isArray(item.producto.imagenes) && item.producto.imagenes.length > 0) {
-          const imgs = item.producto.imagenes as any[];
-          image = typeof imgs[0] === 'string' ? imgs[0] : null;
+      if (Array.isArray(item.producto.imagenes) && item.producto.imagenes.length > 0) {
+          const firstImg = item.producto.imagenes[0] as any;
+          // Priorizamos 'url' si ya viene resuelta por el backend (/uploads/...)
+          // sobre 'archivo' que es solo el nombre pelado en la DB.
+          image = firstImg.url || firstImg.archivo || image;
+          
+          // Si es un nombre de archivo pelado (ej: foto.webp), inyectar /uploads/producto/
+          if (image && !image.startsWith('/') && !image.startsWith('http')) {
+              image = `/uploads/producto/${image}`;
+          }
       }
 
       const p = item.producto;

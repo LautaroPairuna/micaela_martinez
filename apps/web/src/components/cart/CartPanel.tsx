@@ -187,9 +187,9 @@ export function CartPanel() {
                    <div className="flex gap-3">
                      {/* Miniatura */}
                      <Link href={href} onClick={close} className="block focus:outline-none focus:ring-2 focus:ring-[var(--pink)]/40 rounded-lg flex-shrink-0">
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800 flex items-center justify-center">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-white/95 border border-zinc-800 flex items-center justify-center">
                         <SafeImage 
-                          src={img || PLACEHOLDER_IMAGE} 
+                          src={img} 
                           alt={it.title} 
                           ratio="1/1" 
                           className="w-full h-full" 
@@ -197,6 +197,7 @@ export function CartPanel() {
                           fit="contain"
                           hoverZoom={false}
                           useBackendProxy={false}
+                          rounded="none"
                         />
                       </div>
                     </Link>

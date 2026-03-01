@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CartItemDto } from './dto/sync-cart.dto';
 import { TipoItemOrden } from '@prisma/client';
+import { ImageUrlUtil } from '../common/utils/image-url.util';
 
 @Injectable()
 export class CartService {
@@ -259,8 +260,36 @@ export class CartService {
   }
 
   private mapCart(cart: any) {
-    // Mapear estructura plana para facilitar frontend si es necesario
-    // Pero por ahora devolveremos la estructura DB enriquecida
+    if (!cart || !cart.items) return cart;
+
+    // Mapear imágenes para que el frontend reciba rutas relativas válidas (/uploads/...)
+     cart.items = cart.items.map((item: any) => {
+       if (item.producto) {
+         // Asegurar que imagen tenga la ruta completa
+         if (item.producto.imagen && !item.producto.imagen.startsWith('/')) {
+           item.producto.imagen = ImageUrlUtil.getProductImageUrl(item.producto.imagen);
+         }
+         
+         if (Array.isArray(item.producto.imagenes)) {
+           item.producto.imagenes = item.producto.imagenes.map((img: any) => ({
+             ...img,
+             url: img.url || ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
+           }));
+         }
+
+         // Fallback: si 'imagen' es null pero hay 'imagenes', poblar 'imagen'
+         if (!item.producto.imagen && item.producto.imagenes?.length > 0) {
+           item.producto.imagen = item.producto.imagenes[0].url;
+         }
+       }
+       if (item.curso) {
+         if (item.curso.portada && !item.curso.portada.startsWith('/')) {
+           item.curso.portada = ImageUrlUtil.getCourseImageUrl(item.curso.portada);
+         }
+       }
+       return item;
+     });
+
     return cart;
   }
 }
