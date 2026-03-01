@@ -43,7 +43,34 @@ export class CartService {
     if (!cart) {
       cart = await this.prisma.carrito.create({
         data: { usuarioId: userId },
-        include: { items: { include: { producto: true, curso: true } } },
+        include: {
+          items: {
+            include: {
+              producto: {
+                select: {
+                  id: true,
+                  titulo: true,
+                  precio: true,
+                  descuento: true,
+                  slug: true,
+                  imagen: true,
+                  imagenes: true,
+                  stock: true,
+                },
+              },
+              curso: {
+                select: {
+                  id: true,
+                  titulo: true,
+                  precio: true,
+                  descuento: true,
+                  slug: true,
+                  portada: true,
+                },
+              },
+            },
+          },
+        },
       });
     }
 
