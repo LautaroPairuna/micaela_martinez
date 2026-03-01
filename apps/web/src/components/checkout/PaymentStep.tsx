@@ -105,7 +105,12 @@ export function PaymentStep() {
   };
 
   const createOrderIfNeeded = async () => {
-    if (orderId) return orderId;
+    // Si ya existe un orderId en el store, retornarlo directamente
+    // Esto evita crear duplicados si el usuario reintenta el pago
+    if (orderId) {
+      console.log('=== FRONTEND: Usando orden existente ===', orderId);
+      return orderId;
+    }
 
     if (!shippingAddress) {
       throw new Error('Dirección de envío requerida');
@@ -114,6 +119,7 @@ export function PaymentStep() {
     setIsCreatingOrder(true);
     try {
       const orderData = {
+        // ... (resto del payload)
         items: cartItems.map((item) => ({
           tipo: item.type === 'course' ? TipoItemOrden.CURSO : TipoItemOrden.PRODUCTO,
           refId: item.id,
@@ -151,11 +157,12 @@ export function PaymentStep() {
       };
 
       const newOrder = await createOrder(orderData);
+      console.log('=== FRONTEND: Nueva orden creada ===', newOrder.id);
       setOrderId(newOrder.id);
       return newOrder.id;
     } catch (error) {
       console.error('Error creating order:', error);
-      // Limpiar orderId del store si falla la creación para permitir reintento limpio
+      // Solo limpiamos si falló la CREACIÓN. Si falla el PAGO, el ID se mantiene.
       setOrderId(null);
       throw error;
     } finally {
@@ -200,11 +207,14 @@ export function PaymentStep() {
   const handleTransferPayment = async () => {
     try {
       setIsCreatingOrder(true);
-      await createOrderIfNeeded(); // no necesitamos capturar el id aquí
+      // Para transferencias, siempre creamos la orden (si no existe) y avanzamos
+      await createOrderIfNeeded(); 
       nextStep();
     } catch (error) {
       console.error('Error creating order for transfer:', error);
       showError('Error al crear la orden', 'Por favor, intentá nuevamente.');
+      // Si falla la transferencia, limpiamos el orderId para permitir reintento
+      setOrderId(null);
     } finally {
       setIsCreatingOrder(false);
     }

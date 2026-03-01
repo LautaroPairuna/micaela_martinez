@@ -269,9 +269,12 @@ async function main() {
   });
 
   // ───────────────── Direcciones (idempotente simple)
+  // IMPORTANTE: No usamos create() directo para evitar duplicados si el seed corre varias veces.
+  // Buscamos por etiqueta + usuarioId para garantizar unicidad lógica.
   const dirCasa = await prisma.direccion.findFirst({
-    where: { usuarioId: clienteId, calle: 'España', numero: '350' },
+    where: { usuarioId: clienteId, etiqueta: 'Casa' },
   });
+  
   if (!dirCasa) {
     await prisma.direccion.create({
       data: {
@@ -290,11 +293,26 @@ async function main() {
         creadoEn: new Date(),
       } as any,
     });
+  } else {
+    // Si existe, actualizamos para asegurar datos consistentes sin duplicar
+    await prisma.direccion.update({
+      where: { id: dirCasa.id },
+      data: {
+        calle: 'España',
+        numero: '350',
+        pisoDepto: '2° B',
+        ciudad: 'Salta',
+        provincia: 'Salta',
+        cp: '4400',
+        predeterminada: true,
+      } as any,
+    });
   }
 
   const dirTrabajo = await prisma.direccion.findFirst({
-    where: { usuarioId: clienteId, calle: 'Caseros', numero: '120' },
+    where: { usuarioId: clienteId, etiqueta: 'Trabajo' },
   });
+  
   if (!dirTrabajo) {
     await prisma.direccion.create({
       data: {
@@ -310,6 +328,17 @@ async function main() {
         pais: 'AR',
         predeterminada: false,
         creadoEn: new Date(),
+      } as any,
+    });
+  } else {
+    await prisma.direccion.update({
+      where: { id: dirTrabajo.id },
+      data: {
+        calle: 'Caseros',
+        numero: '120',
+        ciudad: 'Salta',
+        provincia: 'Salta',
+        cp: '4400',
       } as any,
     });
   }
