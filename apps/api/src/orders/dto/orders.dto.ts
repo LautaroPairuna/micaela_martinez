@@ -110,6 +110,14 @@ export class MercadoPagoPaymentDto {
 
   @IsOptional()
   @IsString()
+  issuerId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  installments?: number;
+
+  @IsOptional()
+  @IsString()
   email?: string;
 
   @IsOptional()

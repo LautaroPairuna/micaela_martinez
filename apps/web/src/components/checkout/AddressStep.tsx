@@ -38,9 +38,11 @@ export function AddressStep() {
 
   // Cargar direcciones del usuario
   useEffect(() => {
+    let isMounted = true;
     const loadAddresses = async () => {
       try {
         const result = await listAddresses();
+        if (!isMounted) return;
         setAddresses(result);
         
         // Si no hay dirección seleccionada, usar la predeterminada
@@ -53,12 +55,13 @@ export function AddressStep() {
       } catch (error) {
         console.error('Error loading addresses:', error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     loadAddresses();
-  }, [shippingAddress, setShippingAddress]);
+    return () => { isMounted = false; };
+  }, [setShippingAddress]); // Eliminado shippingAddress de las dependencias
 
   const handleContinue = () => {
     if (!shippingAddress) return;
@@ -183,7 +186,14 @@ export function AddressStep() {
       {showAddressForm && (
         <AddressForm
           onSave={(address) => {
-            setAddresses(prev => [...prev, address]);
+            // No agregamos manualmente al estado addresses para evitar duplicados si el useEffect recarga
+            // En su lugar, simplemente cerramos el formulario y dejamos que el useEffect recargue las direcciones
+            // Opcionalmente podemos actualizar el estado local de forma inteligente:
+            setAddresses(prev => {
+              const exists = prev.some(a => a.id === address.id);
+              if (exists) return prev.map(a => a.id === address.id ? address : a);
+              return [...prev, address];
+            });
             setShippingAddress(address);
             setShowAddressForm(false);
           }}

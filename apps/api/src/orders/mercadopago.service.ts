@@ -11,9 +11,11 @@ import {
 
 interface MercadoPagoPaymentData {
   token: string;
+  payment_method_id: string;
+  issuer_id?: string | number;
+  installments?: number;
   transaction_amount: number;
   description: string;
-  payment_method_id: string;
   payer: {
     email: string;
     identification?: {
@@ -118,9 +120,6 @@ export class MercadoPagoService {
 
       // Configurar idempotency key único por request
       const idemKey = `subscription-${preapprovalPayload.external_reference}-${Date.now()}`;
-      if (this.client.options) {
-        this.client.options.idempotencyKey = idemKey;
-      }
 
       // Usar la API de suscripciones de MercadoPago
       const response = await fetch('https://api.mercadopago.com/preapproval', {
@@ -224,18 +223,22 @@ export class MercadoPagoService {
     try {
       const paymentRequest = {
         token: paymentData.token,
+        issuer_id: paymentData.issuer_id ? Number(paymentData.issuer_id) : undefined,
         transaction_amount: paymentData.transaction_amount,
         description: paymentData.description,
         payment_method_id: paymentData.payment_method_id,
         payer: paymentData.payer,
         external_reference: paymentData.external_reference,
-        installments: 1,
+        installments: paymentData.installments ?? 1,
         capture: true,
+        binary_mode: true,
       };
 
       console.log('=== BACKEND: Enviando pago a MercadoPago ===', {
         amount: paymentRequest.transaction_amount,
         method: paymentRequest.payment_method_id,
+        issuer: paymentRequest.issuer_id,
+        installments: paymentRequest.installments,
         ref: paymentRequest.external_reference,
         tokenPrefix: paymentRequest.token?.substring(0, 10),
       });

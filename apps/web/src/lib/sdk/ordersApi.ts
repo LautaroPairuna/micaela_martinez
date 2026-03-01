@@ -63,6 +63,8 @@ export interface Order {
 export interface MercadoPagoPaymentData {
   token: string;
   paymentMethodId: string;
+  issuerId?: string;
+  installments?: number;
   email?: string;
   identificationType?: string;
   identificationNumber?: string;

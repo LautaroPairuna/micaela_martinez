@@ -294,6 +294,8 @@ export function MercadoPagoBricks({
                   ? await createSubscription(String(currentOrderId), {
                       token: finalToken,
                       paymentMethodId: finalPaymentMethodId,
+                      issuerId: asStringOrNull(formData.issuer_id) || undefined,
+                      installments: typeof formData.installments === 'number' ? formData.installments : 1,
                       email: email || 'usuario@ejemplo.com', // Fallback si no hay email
                       identificationType,
                       identificationNumber,
@@ -303,6 +305,8 @@ export function MercadoPagoBricks({
                   : await processMercadoPagoPayment(String(currentOrderId), {
                       token: finalToken,
                       paymentMethodId: finalPaymentMethodId,
+                      issuerId: asStringOrNull(formData.issuer_id) || undefined,
+                      installments: typeof formData.installments === 'number' ? formData.installments : 1,
                       email: email || 'usuario@ejemplo.com',
                       identificationType,
                       identificationNumber,

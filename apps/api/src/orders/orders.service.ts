@@ -415,10 +415,12 @@ export class OrdersService {
     try {
       const paymentResult = await this.mercadoPagoService.processPayment({
         token: paymentData.token,
+        issuer_id: paymentData.issuerId, // ← Pasar issuerId
+        installments: paymentData.installments, // ← Pasar installments
         payment_method_id: paymentData.paymentMethodId,
         transaction_amount: Number(order.total),
-        description: `Orden #${order.id}`,
-        external_reference: String(order.id), // ← string
+        description: `Pago Orden #${order.id}`,
+        external_reference: String(order.id),
         payer: {
           email: paymentData.email || 'default@example.com',
           ...(paymentData.identificationType &&
