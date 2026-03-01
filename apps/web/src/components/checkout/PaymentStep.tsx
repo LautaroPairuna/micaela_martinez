@@ -153,6 +153,11 @@ export function PaymentStep() {
       const newOrder = await createOrder(orderData);
       setOrderId(newOrder.id);
       return newOrder.id;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      // Limpiar orderId del store si falla la creación para permitir reintento limpio
+      setOrderId(null);
+      throw error;
     } finally {
       setIsCreatingOrder(false);
     }
@@ -165,6 +170,10 @@ export function PaymentStep() {
     setPaymentInProgress(false);
     setIsPaymentCompleted(true);
 
+    // Al tener éxito el pago, ya no necesitamos el orderId en el store de checkout
+    // ya que la orden está confirmada.
+    setOrderId(null);
+
     // Avanzar automáticamente tras éxito
     setTimeout(() => {
       nextStep();
@@ -175,6 +184,10 @@ export function PaymentStep() {
     console.error('=== FRONTEND: Error en pago con Bricks ===', error);
     setPaymentInProgress(false);
     setIsPaymentCompleted(false);
+
+    // IMPORTANTE: NO reseteamos orderId aquí para que el usuario pueda
+    // intentar pagar la MISMA orden nuevamente sin crear duplicados.
+    
     showError('Error al procesar el pago', `${error.message || 'Error desconocido'}. Por favor, intentá nuevamente.`);
   };
 

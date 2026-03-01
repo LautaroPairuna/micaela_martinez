@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 import type {
   DashboardSummary,
   OrdersByStatus,
@@ -1082,16 +1083,42 @@ function OrderDetailsDialog({
   const items = details?.items ?? [];
   const isSubscription = details?.isSubscription ?? null;
 
+  // Mapa de colores por estado para administración
+  const getStatusBadge = (s: string) => {
+    const k = s.toLowerCase();
+    if (k.includes('pag') || k.includes('paid')) 
+      return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400';
+    if (k.includes('pend') || k.includes('process')) 
+      return 'border-amber-500/30 bg-amber-500/10 text-amber-400';
+    if (k.includes('env') || k.includes('ship')) 
+      return 'border-sky-500/30 bg-sky-500/10 text-sky-400';
+    if (k.includes('cancel') || k.includes('rechaz') || k.includes('fail')) 
+      return 'border-red-500/30 bg-red-500/10 text-red-400';
+    if (k.includes('refund') || k.includes('reemb')) 
+      return 'border-slate-500/30 bg-slate-500/10 text-slate-400';
+    return 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[min(720px,calc(100vw-2rem))] max-w-none rounded-lg border border-[#252525] bg-[#141414] p-0 text-slate-100">
         <DialogHeader className="border-b border-[#252525] px-5 py-4">
-          <DialogTitle className="text-base font-semibold text-slate-50">
-            Detalle de orden #{id}
-          </DialogTitle>
-          <p className="mt-1 text-[11px] text-slate-400">
-            {customer ?? 'Cliente desconocido'} • {formatDateTime(createdAt)} • {status}
-          </p>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <DialogTitle className="text-base font-semibold text-slate-50">
+                Detalle de orden #{id}
+              </DialogTitle>
+              <p className="text-[11px] text-slate-400">
+                {customer ?? 'Cliente desconocido'} • {formatDateTime(createdAt)}
+              </p>
+            </div>
+            <span className={cn(
+              "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+              getStatusBadge(status)
+            )}>
+              {status}
+            </span>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 px-5 py-4 text-[11px]">
