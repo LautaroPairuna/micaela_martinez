@@ -23,6 +23,7 @@ type Props = {
   withBg?: boolean;            // bg neutro del wrapper
   skeleton?: boolean;          // shimmer de carga
   useBackendProxy?: boolean;   // usar proxy de backend para imágenes
+  fetchPriority?: 'high' | 'low' | 'auto';
   onLoad?: () => void;
   onError?: () => void;
 };
@@ -45,6 +46,7 @@ export function SafeImage({
   withBg = true,
   skeleton = true,
   useBackendProxy = true,
+  fetchPriority,
   onLoad,
   onError,
 }: Props) {
@@ -137,6 +139,7 @@ export function SafeImage({
         style={{ objectFit: fit, objectPosition }}
         sizes={sizes}
         priority={priority}
+        fetchPriority={fetchPriority}
         onError={() => {
           setErr(true);
           onError?.();

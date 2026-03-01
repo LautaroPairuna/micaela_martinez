@@ -169,6 +169,7 @@ export default async function HomePage() {
                 height={220}
                 className="h-auto w-[260px] sm:w-[320px] md:w-[380px]"
                 priority
+                fetchPriority="high"
               />
             }
             items={heroImages}

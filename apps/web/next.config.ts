@@ -81,6 +81,13 @@ const nextConfig: NextConfig = {
   // Optimización de memoria para VPS pequeños
   experimental: {
     serverSourceMaps: false,
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      'framer-motion',
+      'clsx',
+      'tailwind-merge'
+    ],
   },
 
   // Silenciar advertencia de root en workspaces monorepo

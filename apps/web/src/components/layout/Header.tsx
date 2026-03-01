@@ -136,6 +136,7 @@ function HeaderInner() {
               width={220}
               height={40}
               priority
+              fetchPriority="high"
               sizes="(min-width:1280px) 220px, 160px"
               className="h-20 w-auto my-auto"
             />
@@ -204,6 +205,7 @@ function HeaderInner() {
             width={220}
             height={40}
             priority
+            fetchPriority="high"
             sizes="(min-width:1200px) 220px, 160px"
             className="h-20 w-auto"
           />

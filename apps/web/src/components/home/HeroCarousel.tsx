@@ -180,6 +180,7 @@ function HeroSlideImage({
           fit="contain"
           ratio="16/9" // ✅ cualquier valor != 'auto' para que use fill
           priority={loadingType === 'eager'}
+          fetchPriority={loadingType === 'eager' ? 'high' : 'auto'}
           skeleton={!loaded}
           hoverZoom={false}
           useBackendProxy={false}
@@ -391,6 +392,7 @@ export function HeroCarousel({
                             alt="Micaela Martinez"
                             className="h-20 md:h-24 w-auto opacity-95"
                             draggable={false}
+                            {...(i === 0 ? { fetchPriority: 'high' } : {})}
                           />
                         )}
                       </div>
