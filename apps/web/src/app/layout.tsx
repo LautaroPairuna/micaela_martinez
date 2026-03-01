@@ -16,8 +16,8 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://micapestanas.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: { default: 'Micaela Pestañas', template: '%s | Micaela Pestañas' },
-  description: 'Cursos y tienda de cosmética minimalista y elegante.',
+  title: { default: 'Micaela Martinez - Extenciones de Pestañas', template: '%s | Micaela Martinez - Extenciones de Pestañas' },
+  description: 'Cursos y tienda de productos de extensiones de pestañas',
   alternates: {
     canonical: '/',
   },
@@ -25,9 +25,9 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_AR',
     url: baseUrl,
-    siteName: 'Micaela Pestañas',
-    title: 'Micaela Pestañas',
-    description: 'Cursos y tienda de cosmética minimalista y elegante.',
+    siteName: 'Micaela Martinez - Extenciones de Pestañas',
+    title: 'Micaela Martinez - Extenciones de Pestañas',
+    description: 'Cursos y tienda de productos de extensiones de pestañas',
   },
   robots: {
     index: true,
