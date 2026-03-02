@@ -177,6 +177,21 @@ export class MpPaymentService {
           error.message ||
           'Error desconocido';
 
+        // Si es un error del servidor de MP (5xx), devolver 502 Bad Gateway
+        // para distinguirlo de errores de cliente (400 Bad Request)
+        const mpStatus = error.status || 500;
+        if (mpStatus >= 500) {
+          throw new HttpException(
+            {
+              message: 'MercadoPago upstream error',
+              mpStatus: mpStatus,
+              mpRequestId: error.response?.headers?.['x-request-id'],
+              detail: errorMsg,
+            },
+            HttpStatus.BAD_GATEWAY,
+          );
+        }
+
         throw new HttpException(
           `Error de MercadoPago: ${errorMsg}`,
           HttpStatus.BAD_REQUEST,

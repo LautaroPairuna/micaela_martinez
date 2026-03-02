@@ -86,12 +86,26 @@ export class MpSubscriptionService {
 
       if (!response.ok) {
         let errorMsg = 'Error desconocido';
+        let errorData: any = {};
         try {
-          const errorData = await response.json();
+          errorData = await response.json();
           errorMsg =
             errorData?.message || errorData?.error || JSON.stringify(errorData);
           console.error('=== MP RAW ERROR (Subscription) ===', errorData);
         } catch {}
+
+        if (response.status >= 500) {
+          throw new HttpException(
+            {
+              message: 'MercadoPago upstream error',
+              mpStatus: response.status,
+              mpRequestId: response.headers.get('x-request-id'),
+              detail: errorMsg,
+            },
+            HttpStatus.BAD_GATEWAY,
+          );
+        }
+
         throw new HttpException(
           `Error al crear suscripción: ${errorMsg}`,
           HttpStatus.BAD_REQUEST,
