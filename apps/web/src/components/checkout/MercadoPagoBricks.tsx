@@ -26,7 +26,9 @@ type OnPaymentError = (e: PaymentErrorData) => void;
 // Validación estricta con Zod
 const BrickFormSchema = z.object({
   token: z.string().min(10),
-  payment_method_id: z.string().min(2),
+  payment_method_id: z.string().min(2).optional(),
+  paymentMethodId: z.string().min(2).optional(),
+  selectedPaymentMethod: z.string().min(2).optional(),
   issuer_id: z.union([z.string(), z.number()]).optional(),
   installments: z.union([z.string(), z.number()]).optional(),
   payer: z.object({
@@ -36,6 +38,8 @@ const BrickFormSchema = z.object({
       number: z.string().optional(),
     }).optional(),
   }).optional(),
+}).refine((d) => d.payment_method_id || d.paymentMethodId || d.selectedPaymentMethod, {
+  message: 'Falta payment_method_id',
 });
 
 function parseBrickData(cardFormData: unknown) {
@@ -55,12 +59,19 @@ function parseBrickData(cardFormData: unknown) {
     : (Number(d.installments) || 1);
 
   const issuerId = d.issuer_id != null ? String(d.issuer_id) : undefined;
+  
+  // Extraer paymentMethodId de cualquiera de los campos posibles
+  const paymentMethodId = d.payment_method_id || d.paymentMethodId || d.selectedPaymentMethod;
+
+  if (!paymentMethodId) {
+    return { ok: false as const, error: { fieldErrors: { payment_method_id: ['ID de método de pago no encontrado'] }, formErrors: [] }, raw };
+  }
 
   return {
     ok: true as const,
     data: {
       token: d.token.trim(),
-      paymentMethodId: d.payment_method_id,
+      paymentMethodId,
       issuerId,
       installments,
       payer: d.payer,
