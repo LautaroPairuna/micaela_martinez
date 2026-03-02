@@ -191,6 +191,7 @@ export function MercadoPagoBricks({
 
   const [isBrickReady, setIsBrickReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
 
@@ -227,6 +228,7 @@ export function MercadoPagoBricks({
       controllerRef.current = null;
       setIsBrickReady(false);
       setIsProcessing(false);
+      setInitError(null);
       inFlightRef.current = false;
     })();
     return () => { alive = false; };
@@ -256,17 +258,23 @@ export function MercadoPagoBricks({
           const pref = asStringOrNull(preferenceId);
           if (pref) init.preferenceId = pref;
 
-        // Configuración de medios: restringir a lo permitido por la cuenta
-        type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
+        // Configuración de medios: diferenciar entre Payment y Card Payment
+        let paymentMethodsCfg: any;
         
-        const paymentMethodsCfg: PaymentMethodsCfg = isSubscription
-          ? { creditCard: 'all' }
-          : {
-              // Dejamos que el Brick consulte a la API qué medios están habilitados
+        if (isSubscription) {
+           // Card Payment Brick: configuración simplificada (solo cuotas)
+           // No acepta 'creditCard', 'debitCard' como keys directas en paymentMethods
+           paymentMethodsCfg = {
+             maxInstallments: 1,
+           };
+        } else {
+           // Payment Brick: configuración completa
+           paymentMethodsCfg = {
               ticket: [], 
               bankTransfer: [],
-              ...(pref ? { mercadoPago: 'all' as const } : { mercadoPago: [] }),
-            };
+              ...(pref ? { mercadoPago: 'all' } : { mercadoPago: [] }),
+           };
+        }
 
         const settings: any = {
           initialization: init,
@@ -375,6 +383,12 @@ export function MercadoPagoBricks({
             onError: (error: any) => {
               console.error('=== FRONTEND: Error interno del Brick ===', error);
               if (!cancelled) {
+                // Si el error ocurre antes de onReady o interrumpe la carga
+                if (!isBrickReady) {
+                   setInitError('Hubo un problema al cargar el formulario. Intenta recargar.');
+                   setIsBrickReady(true); // Para quitar skeleton
+                }
+                
                 const { onPaymentError } = handlersRef.current;
                 onPaymentError(normalizeError(error));
               }
@@ -390,6 +404,8 @@ export function MercadoPagoBricks({
       } catch (err) {
         if (!cancelled) {
           console.error('Error mounting brick:', err);
+          setInitError('No se pudo iniciar la pasarela de pagos.');
+          setIsBrickReady(true); // Quitar skeleton
           onPaymentError(normalizeError(err));
         }
       }
@@ -425,7 +441,7 @@ export function MercadoPagoBricks({
 
   return (
     <div className="relative">
-      {!isBrickReady && (
+      {!isBrickReady && !initError && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 space-y-4 animate-pulse pointer-events-none">
           <div className="w-full h-12 bg-zinc-800 rounded-md" />
           <div className="w-full h-12 bg-zinc-800 rounded-md" />
@@ -433,6 +449,21 @@ export function MercadoPagoBricks({
           <p className="text-sm text-zinc-500">Cargando pasarela de pago segura...</p>
         </div>
       )}
+      
+      {initError && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-zinc-900 rounded-md border border-red-900/50 text-center">
+           <AlertCircle className="h-10 w-10 text-red-500 mb-3" />
+           <p className="text-red-400 font-medium mb-2">No se pudo cargar el pago</p>
+           <p className="text-sm text-zinc-400 mb-4">{initError}</p>
+           <button 
+             onClick={() => window.location.reload()} 
+             className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-sm transition-colors"
+           >
+             Recargar página
+           </button>
+        </div>
+      )}
+
       {/* 
         El contenedor del brick se renderiza siempre porque Bricks necesita encontrar el ID en el DOM
         antes de montarse. Lo ocultamos visualmente si no está listo, o mostramos el skeleton encima.
