@@ -37,13 +37,13 @@ export function ConfirmationStep() {
     <div className="text-center space-y-6">
       <div
         className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${
-          isTransferPayment ? 'bg-[var(--gold)]/10' : 'bg-green-900/20'
+          isTransferPayment ? 'bg-[var(--gold)]/10' : 'bg-[var(--pink)]/10'
         }`}
       >
         {isTransferPayment ? (
           <Clock className="h-10 w-10 text-[var(--gold)]" />
         ) : (
-          <CheckCircle className="h-10 w-10 text-green-400" />
+          <CheckCircle className="h-10 w-10 text-[var(--pink)]" />
         )}
       </div>
 
@@ -66,22 +66,22 @@ export function ConfirmationStep() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden text-left">
         <div className="p-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-blue-950/20 border border-blue-900/30 rounded-lg">
-              <Clock className="h-5 w-5 text-blue-400" />
+            <div className="flex items-center gap-3 p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-lg">
+              <Clock className="h-5 w-5 text-[var(--gold)]" />
               <div className="text-left">
-                <p className="font-medium text-blue-300">¿Qué sigue?</p>
-                <p className="text-sm text-blue-400/80">
+                <p className="font-medium text-white">¿Qué sigue?</p>
+                <p className="text-sm text-zinc-400">
                   Te enviaremos un email con los detalles de tu pedido.
                 </p>
               </div>
             </div>
 
             {isTransferPayment && (
-              <div className="flex items-center gap-3 p-4 bg-yellow-950/20 border border-yellow-900/30 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-500" />
+              <div className="flex items-center gap-3 p-4 bg-[var(--gold)]/5 border border-[var(--gold)]/20 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-[var(--gold)]" />
                 <div className="text-left">
-                  <p className="font-medium text-yellow-300">Transferencia pendiente</p>
-                  <p className="text-sm text-yellow-500/80">
+                  <p className="font-medium text-[var(--gold)]">Transferencia pendiente</p>
+                  <p className="text-sm text-[var(--gold)]/80">
                     Recordá enviar el comprobante de transferencia por WhatsApp para confirmar tu
                     pago.
                   </p>
@@ -92,29 +92,19 @@ export function ConfirmationStep() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
         <Button
-          onClick={handleViewOrder}
-          className="bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] text-black font-semibold px-6 py-2 hover:shadow-lg transition-all duration-200"
+          onClick={handleFinishOrder} // Unificar acción: limpiar estado e ir a pedidos
+          className="bg-gradient-to-r from-[var(--gold)] to-[var(--gold-dark)] text-black font-semibold px-8 py-3 hover:shadow-lg transition-all duration-200"
         >
-          Ver mis pedidos
+          Finalizar y ver mis pedidos
         </Button>
         <Button
           onClick={handleContinueShopping}
           variant="outline"
-          className="border-[var(--border)] text-[var(--fg)] hover:bg-[var(--subtle)] px-6 py-2"
+          className="border-[var(--border)] text-[var(--fg)] hover:bg-[var(--subtle)] px-8 py-3"
         >
           Seguir comprando
-        </Button>
-      </div>
-
-      {/* Botón para finalizar y limpiar estado */}
-      <div className="text-center">
-        <Button
-          onClick={handleFinishOrder}
-          className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold px-8 py-3 hover:shadow-lg transition-all duration-200"
-        >
-          Finalizar y ver mis pedidos
         </Button>
       </div>
     </div>

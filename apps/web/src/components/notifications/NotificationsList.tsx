@@ -243,142 +243,140 @@ export function NotificationsList({ className }: NotificationsListProps) {
     exit: { opacity: 0, x: 20, transition: { duration: 0.2 } }
   };
 
-  if (loading && notifications.length === 0) {
+  if (loading) {
     return (
-      <div className={cn("rounded-2xl border border-zinc-800 bg-zinc-950/50", className)}>
-        <div className="p-12">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
-          </div>
-        </div>
+      <div className={cn("flex items-center justify-center p-12 rounded-2xl border border-zinc-800 bg-zinc-950/50", className)}>
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--gold)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={cn("rounded-2xl border border-red-900/30 bg-red-950/10", className)}>
-        <div className="p-6">
-          <div className="text-center">
-            <p className="text-red-400 mb-4">{error}</p>
-            <Button onClick={() => setFilter(currentFilter)} variant="outline" className="border-red-800 text-red-400 hover:bg-red-950/30">
-              Reintentar
-            </Button>
-          </div>
-        </div>
+      <div className={cn("rounded-2xl border border-red-900/30 bg-red-950/10 p-6 text-center", className)}>
+        <p className="text-red-400 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()} variant="outline" className="border-red-800 text-red-400 hover:bg-red-950/30">
+          Reintentar
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className={cn("rounded-2xl border border-zinc-800 bg-zinc-950/50", className)}>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-white">Notificaciones</h3>
+    <div className={cn("space-y-6", className)}>
+      {/* Header de Filtros y Acciones en masa */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-1">
+        
+        {/* Tabs de Filtro (Diseño Moderno) */}
+        <div className="flex p-1 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-xl">
+          <button
+            onClick={() => handleFilterChange('all')}
+            className={cn(
+              "px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300",
+              currentFilter === 'all'
+                ? "bg-zinc-800 text-white shadow-lg shadow-black/20"
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+            )}
+          >
+            Todas
+          </button>
+          <button
+            onClick={() => handleFilterChange('unread')}
+            className={cn(
+              "px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative",
+              currentFilter === 'unread'
+                ? "bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20 shadow-[0_0_15px_-5px_var(--gold)]"
+                : "text-zinc-500 hover:text-[var(--gold)] hover:bg-[var(--gold)]/5"
+            )}
+          >
+            Sin leer
             {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20">
-                {unreadCount} sin leer
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--gold)] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--gold)]"></span>
               </span>
             )}
-          </div>
-          
-          <Tabs value={currentFilter} onValueChange={handleFilterChange}>
-            <TabsList className="bg-zinc-900 border border-zinc-800">
-              <TabsTrigger 
-                value="all" 
-                className="data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400"
-              >
-                Todas
-              </TabsTrigger>
-              <TabsTrigger 
-                value="unread"
-                className="data-[state=active]:bg-zinc-800 data-[state=active]:text-[var(--gold)] text-zinc-400"
-              >
-                Sin leer
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          </button>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
+        {/* Acciones en Masa */}
+        <div className="flex items-center gap-3">
           {selectedNotifications.size > 0 ? (
-            <div className="flex items-center gap-2">
-              <Button
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300">
+               <span className="text-xs text-zinc-500 font-medium mr-2">
+                 {selectedNotifications.size} seleccionada{selectedNotifications.size !== 1 && 's'}
+               </span>
+               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleSelectAll}
-                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+                onClick={() => handleDeleteSelected()}
+                className="h-9 px-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 rounded-lg"
               >
-                {selectedNotifications.size === notifications.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar
               </Button>
-              <Button
+               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleDeleteSelected}
-                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/30"
+                onClick={() => setSelectedNotifications(new Set())}
+                className="h-9 px-3 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 rounded-lg"
               >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Eliminar ({selectedNotifications.size})
+                Cancelar
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={markAllAsRead}
-                  className="text-[var(--gold)] hover:text-[var(--gold)] hover:bg-[var(--gold)]/10 border border-transparent hover:border-[var(--gold)]/30"
-                >
-                  <CheckCheck className="h-4 w-4 mr-1" />
-                  Marcar todas como leídas
-                </Button>
-              )}
-            </div>
+             unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="h-9 px-4 text-[var(--gold)] hover:text-[var(--gold)] hover:bg-[var(--gold)]/10 border border-[var(--gold)]/20 hover:border-[var(--gold)]/40 rounded-lg transition-all duration-300"
+              >
+                <CheckCheck className="h-4 w-4 mr-2" />
+                Marcar todas como leídas
+              </Button>
+            )
           )}
         </div>
+      </div>
 
+      {/* Lista de Notificaciones */}
+      <div className="space-y-3">
         {!Array.isArray(notifications) || notifications.length === 0 ? (
-          <div className="p-12 text-center border-t border-zinc-800/50 mt-4">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-              <Bell className="h-8 w-8 text-zinc-600" />
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-zinc-800 rounded-3xl bg-zinc-950/30">
+            <div className="w-20 h-20 mb-6 rounded-full bg-zinc-900/50 border border-zinc-800 flex items-center justify-center">
+              <Bell className="h-8 w-8 text-zinc-700" />
             </div>
-            <h3 className="text-lg font-medium text-zinc-300 mb-2">
-              No tienes notificaciones
+            <h3 className="text-xl font-medium text-white mb-2">
+              Estás al día
             </h3>
-            <p className="text-zinc-500 max-w-sm mx-auto">
-              Cuando recibas notificaciones de respuestas, likes o menciones, aparecerán aquí.
+            <p className="text-zinc-500 max-w-sm">
+              No tienes notificaciones pendientes. Te avisaremos cuando haya novedades importantes.
             </p>
           </div>
         ) : (
-          <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent"
-          >
-            <AnimatePresence mode="popLayout">
-              {Array.isArray(notifications) && notifications.map((notification) => (
-                <motion.div key={notification.id} variants={item} layout>
-                  <NotificationItem
-                    notification={notification}
-                    onMarkAsRead={markAsRead}
-                    onDelete={deleteNotification}
-                    isSelected={selectedNotifications.has(notification.id)}
-                    onToggleSelect={handleToggleSelect}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {pagination.page < pagination.totalPages && (
-              <div className="flex justify-center mt-6">
-                <Button onClick={loadMore} disabled={loading} variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}Cargar más
-                </Button>
-              </div>
-            )}
-          </motion.div>
+          <AnimatePresence mode="popLayout">
+            {notifications
+              .filter(n => currentFilter === 'all' || !n.leida)
+              .map((notification) => (
+              <motion.div
+                key={notification.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <NotificationItem
+                  notification={notification}
+                  onMarkAsRead={markAsRead}
+                  onDelete={deleteNotification}
+                  isSelected={selectedNotifications.has(notification.id)}
+                  onToggleSelect={handleToggleSelect}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </div>
     </div>

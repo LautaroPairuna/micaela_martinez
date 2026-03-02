@@ -45,7 +45,8 @@ export function PaymentStep() {
     setOrderId,
     shippingAddress,
     billingAddress,
-    useSameAddress
+    useSameAddress,
+    markStepCompleted
   } = useCheckout();
 
   const cartItems = useCart((state) => state.items);
@@ -181,6 +182,7 @@ export function PaymentStep() {
       // La orden ya se creó/pagó en el componente Bricks, solo necesitamos redirigir
       setOrderId(null);
       
+      markStepCompleted('payment');
       nextStep();
     } catch (error) {
       console.error('Error post-pago:', error);
@@ -210,6 +212,7 @@ export function PaymentStep() {
       setIsCreatingOrder(true);
       // Para transferencias, siempre creamos la orden (si no existe) y avanzamos
       await createOrderIfNeeded(); 
+      markStepCompleted('payment');
       nextStep();
     } catch (error) {
       console.error('Error creating order for transfer:', error);

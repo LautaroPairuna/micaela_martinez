@@ -33,7 +33,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
         pt-24 lg:pt-10
         bg-zinc-900
       ">
-        <div className="max-w-7xl mx-auto space-y-8 pb-20">
+        <div className="max-w-6xl mx-auto space-y-8 pb-20"> {/* Ancho máximo ajustado para simetría */}
           {children}
         </div>
       </main>

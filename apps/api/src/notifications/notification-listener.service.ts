@@ -91,6 +91,58 @@ export class NotificationListenerService {
         break;
     }
 
+    // Enriquecer mensaje según el recurso
+    let richMessage: string | undefined;
+    const data = (payload as any).data;
+    const prevData = (payload as any).previousData;
+
+    if (resourceType === 'Orden') {
+      if (action === 'created') {
+        const total = data?.total ? `$${data.total}` : '';
+        const items = data?.items?.length ? `(${data.items.length} items)` : '';
+        richMessage = `Orden #${resourceId} creada. Total: ${total} ${items}`;
+      } else if (action === 'updated') {
+        const estado = data?.estado;
+        if (estado && estado !== prevData?.estado) {
+           richMessage = `Orden #${resourceId} cambió a estado: ${estado}`;
+        }
+      }
+    } else if (resourceType === 'Usuario') {
+      if (action === 'created') {
+        richMessage = `Nuevo usuario registrado: ${data?.email || resourceId}`;
+      } else if (action === 'updated') {
+        // Detectar cambios de rol si es posible, o campos clave
+        if (data?.rol && data.rol !== prevData?.rol) {
+           richMessage = `Usuario ${resourceName || resourceId} cambió de rol a: ${data.rol}`;
+        }
+      }
+    } else if (resourceType === 'Producto') {
+      if (action === 'updated') {
+        if (data?.stock !== undefined && prevData?.stock !== undefined && data.stock !== prevData.stock) {
+           richMessage = `Producto "${resourceName}" stock actualizado: ${prevData.stock} ➝ ${data.stock}`;
+        } else if (data?.precio !== undefined && prevData?.precio !== undefined && data.precio !== prevData.precio) {
+           richMessage = `Producto "${resourceName}" precio actualizado: $${prevData.precio} ➝ $${data.precio}`;
+        }
+      }
+    } else if (resourceType === 'Curso') {
+      if (action === 'updated') {
+         if (data?.publicado !== undefined && data.publicado !== prevData?.publicado) {
+            const estado = data.publicado ? 'PUBLICADO' : 'OCULTO';
+            richMessage = `Curso "${resourceName}" ahora está ${estado}`;
+         }
+      }
+    }
+
+    // Fallback genérico para actualizaciones: detectar campos cambiados
+    if (!richMessage && action === 'updated' && data && prevData) {
+      const changedFields = this.detectChangedFields(data, prevData);
+      if (changedFields.length > 0) {
+        const fieldNames = changedFields.slice(0, 3).join(', ');
+        const more = changedFields.length > 3 ? ` y ${changedFields.length - 3} más` : '';
+        richMessage = `${resourceType} "${resourceName || resourceId}" actualizado: ${fieldNames}${more}`;
+      }
+    }
+
     // Obtener auditId correlacionado
     const auditId = this.getCorrelatedAuditId(payload, action);
 
@@ -119,6 +171,7 @@ export class NotificationListenerService {
       actorId,
       actorName,
       auditId, // Incluir auditId para correlación
+      richMessage, // Mensaje personalizado si existe
       meta: {
         action,
         resourceType,
@@ -128,6 +181,71 @@ export class NotificationListenerService {
         actorName,
       },
     });
+  }
+
+  private detectChangedFields(
+    newData: Record<string, any>,
+    oldData: Record<string, any>,
+  ): string[] {
+    const ignoredKeys = [
+      // Identificadores y Timestamps
+      'id',
+      'uuid',
+      'createdAt',
+      'updatedAt',
+      'creadoEn',
+      'actualizadoEn',
+      'emailVerificadoEn',
+      'deleted',
+      'eliminado',
+      
+      // Datos sensibles y técnicos
+      'password',
+      'passwordHash',
+      'hash',
+      'metadatos',
+      'metadata',
+      'token',
+      'refreshToken',
+      
+      // Claves foráneas (IDs de relaciones)
+      'usuarioId',
+      'roleId',
+      'productoId',
+      'cursoId',
+      'marcaId',
+      'categoriaId',
+      'moduloId',
+      'ordenId',
+      'carritoId',
+      'resenaId',
+      'parentId',
+      'direccionEnvioId',
+      'direccionFacturacionId',
+      'refId', // ItemOrden
+      'suscripcionId',
+      
+      // Campos de auditoría interna o conteos
+      'ratingProm',
+      'ratingConteo',
+      'orden', // Ordenamiento visual
+    ];
+    const changes: string[] = [];
+
+    for (const key in newData) {
+      if (ignoredKeys.includes(key)) continue;
+      // Comparación simple (no profunda para objetos anidados complejos)
+      // JSON.stringify para manejar arrays/objetos simples que cambiaron
+      if (JSON.stringify(newData[key]) !== JSON.stringify(oldData[key])) {
+        // Formatear nombre del campo (camelCase -> Title Case)
+        const formattedKey = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
+        changes.push(formattedKey);
+      }
+    }
+
+    return changes;
   }
 
   private getCorrelatedAuditId(
@@ -159,6 +277,7 @@ export class NotificationListenerService {
     actorName?: string;
     meta?: Record<string, any>;
     auditId?: number; // ID del log de auditoría para correlación
+    richMessage?: string; // Mensaje enriquecido opcional
   }) {
     const admins = await this.prisma.usuario.findMany({
       where: {
@@ -202,7 +321,8 @@ export class NotificationListenerService {
         ? toSpanishVerb(data.meta.action)
         : 'actualizó';
 
-      const message = `${displayActor} ${actionVerb} ${String(data.meta?.resourceType || 'recurso').toLowerCase()} ${resourceLabel}`;
+      // Usar mensaje enriquecido si existe, sino construir el genérico
+      const message = data.richMessage || `${displayActor} ${actionVerb} ${String(data.meta?.resourceType || 'recurso').toLowerCase()} ${resourceLabel}`;
 
       const notification = await this.prisma.notificacion.create({
         data: {
