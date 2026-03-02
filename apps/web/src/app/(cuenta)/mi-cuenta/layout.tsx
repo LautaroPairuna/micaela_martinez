@@ -14,7 +14,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
     <div className="w-full h-screen lg:flex lg:overflow-hidden bg-black">
       {/* Sidebar - Fijo a la izquierda con fondo distinto al negro puro */}
       <aside className="
-        hidden lg:block lg:w-80 lg:flex-shrink-0 
+        hidden lg:block lg:w-96 lg:flex-shrink-0 
         lg:h-full lg:overflow-y-auto lg:border-r lg:border-zinc-800 bg-zinc-950
       ">
         <AccountSidebar me={me} />

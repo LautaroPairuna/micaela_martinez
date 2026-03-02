@@ -102,9 +102,16 @@ export default function AccountSidebar({ me }: { me: Me }) {
               {initials}
             </span>
           </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-200 truncate">{displayName}</h2>
-            <p className="text-gray-400 text-xs lg:text-sm truncate">{email}</p>
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <h2 
+              className="text-lg lg:text-xl font-semibold text-gray-200 truncate pr-1" 
+              title={displayName}
+            >
+              {displayName}
+            </h2>
+            <p className="text-gray-400 text-xs lg:text-sm truncate pr-1" title={email}>
+              {email}
+            </p>
             <div className="mt-1">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--pink)]/10 text-[var(--pink)] text-xs font-medium">
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--pink)]"></div>
@@ -129,13 +136,13 @@ export default function AccountSidebar({ me }: { me: Me }) {
       </div>
 
       {/* Navigation */}
-      <nav className="p-3 lg:p-4 xl:p-6 overflow-y-auto">
+      <nav className="p-3 lg:p-4 xl:px-6 overflow-y-auto">
         {/* Botón de vuelta a la página principal */}
         <div className="mb-4">
           <Link
             href="/"
             className="
-              group relative flex items-center gap-3 px-4 py-3.5 rounded-xl
+              group relative flex items-center gap-3 px-3 py-3.5 rounded-xl
               transition-all duration-300 ease-out text-sm lg:text-base font-medium
               hover:scale-[1.02] active:scale-[0.98]
               text-zinc-400 hover:text-[var(--pink)] hover:bg-zinc-900
@@ -179,7 +186,7 @@ export default function AccountSidebar({ me }: { me: Me }) {
                   href={href}
                   aria-current={active ? 'page' : undefined}
                   className={[
-                    'group relative flex items-center gap-3 px-4 py-3.5 rounded-xl',
+                    'group relative flex items-center gap-3 px-3 py-3.5 rounded-xl',
                     'transition-all duration-300 ease-out text-sm lg:text-base font-medium',
                     'hover:scale-[1.02] active:scale-[0.98]',
                     active

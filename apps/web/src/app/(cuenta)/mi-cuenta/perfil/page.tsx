@@ -44,9 +44,23 @@ export default function PerfilPage() {
   }, [reset]);
 
   const handleFormSubmit = async (values: FormData) => {
-    await updateMe({ nombre: values.nombre });
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+    try {
+      await updateMe({ nombre: values.nombre });
+      
+      // Actualizar estado local
+      if (me) {
+        setMe({ ...me, nombre: values.nombre ?? null });
+      }
+      
+      // Forzar recarga completa para actualizar Sidebar y Layout
+      // Esto es necesario porque el sidebar usa datos de sesión/layout server
+      window.location.reload(); 
+      
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error actualizando perfil:', error);
+    }
   };
 
   const initials = (() => {

@@ -31,6 +31,30 @@ const getNotificationIcon = (tipo: AppNotification['tipo']) => {
 
 const getEnhancedMessage = (notification: AppNotification) => {
   const baseMessage = notification.mensaje;
+  
+  // Mejora Retroactiva: Si es mensaje genérico viejo y tiene metadata, intentar mejorarlo
+  if (notification.metadata && baseMessage.includes(':')) {
+    const meta = notification.metadata;
+    const resourceType = meta.resourceType as string;
+    const action = meta.action as string;
+    const resourceId = meta.resourceId as string;
+    
+    // Detectar si es el mensaje genérico viejo "Orden actualizado: 22" o "Nuevo Orden creado: 22"
+    // Patrón viejo: [Actor] [verbo] [Recurso] #[ID] o similar
+    // Si el mensaje actual NO parece enriquecido (ej: no tiene "Total:" o "cambió a estado:")
+    const isGeneric = !baseMessage.includes('Total:') && !baseMessage.includes('cambió a') && !baseMessage.includes('actualizado:');
+
+    if (isGeneric && resourceType && resourceId) {
+      if (resourceType === 'Orden') {
+        if (action === 'created') return `Orden #${resourceId} creada`;
+        if (action === 'updated') return `Orden #${resourceId} actualizada`;
+      }
+      if (resourceType === 'Producto') {
+        return `Producto actualizado: ${meta.resourceName || resourceId}`;
+      }
+    }
+  }
+
   const withSuffix = formatDistanceToNow(new Date(notification.creadoEn), {
     addSuffix: true,
     locale: es,
@@ -45,9 +69,9 @@ const getEnhancedMessage = (notification: AppNotification) => {
       return `${baseMessage} • Alguien quiere tu atención en esta conversación.`;
     case 'SISTEMA':
       // Notificaciones administrativas: mostrar tiempo explícitamente en el mensaje
-      return `${baseMessage} • ${withSuffix}`;
+      return `${baseMessage}`;
     default:
-      return `${baseMessage} • Mantente al día con las últimas actualizaciones.`;
+      return `${baseMessage}`;
   }
 };
 

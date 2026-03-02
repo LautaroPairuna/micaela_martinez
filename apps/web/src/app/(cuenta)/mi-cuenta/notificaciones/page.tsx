@@ -1,6 +1,6 @@
 // src/app/(cuenta)/mi-cuenta/notificaciones/page.tsx
 'use client';
-import { Bell, Info, MessageSquare, Package, UserCheck, BarChart, Lightbulb } from 'lucide-react';
+import { Bell, Info, MessageSquare, Package, UserCheck, BarChart, Lightbulb, Heart, AtSign, Tag } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NotificationsList } from '@/components/notifications/NotificationsList';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -109,7 +109,7 @@ export default function NotificationsAccountPage() {
                     </div>
                     <div>
                       <strong className="block text-zinc-200 mb-0.5">Respuestas</strong>
-                      <p className="text-xs">Avisos cuando instructores o alumnos respondan tus dudas.</p>
+                      <p className="text-xs">Avisos cuando Mica, la administracion o la comunidad respondan tus dudas.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-colors">
@@ -119,6 +119,33 @@ export default function NotificationsAccountPage() {
                     <div>
                       <strong className="block text-zinc-200 mb-0.5">Compras</strong>
                       <p className="text-xs">Estado de tus pedidos y confirmaciones de pago.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-colors">
+                    <div className="mt-0.5 text-[var(--gold)]">
+                      <Heart className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <strong className="block text-zinc-200 mb-0.5">Interacciones</strong>
+                      <p className="text-xs">Entérate cuando otros usuarios valoren tus aportes con un "Me gusta".</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-colors">
+                    <div className="mt-0.5 text-[var(--gold)]">
+                      <AtSign className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <strong className="block text-zinc-200 mb-0.5">Menciones</strong>
+                      <p className="text-xs">Te avisaremos cuando seas mencionado en una conversación.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-colors">
+                    <div className="mt-0.5 text-[var(--gold)]">
+                      <Tag className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <strong className="block text-zinc-200 mb-0.5">Ofertas en Favoritos</strong>
+                      <p className="text-xs">¡Alerta de oportunidad! Te notificamos si un producto que te gusta baja de precio.</p>
                     </div>
                   </div>
                 </>
