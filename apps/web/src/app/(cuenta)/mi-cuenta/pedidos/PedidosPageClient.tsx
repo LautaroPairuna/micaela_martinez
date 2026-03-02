@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation'; // Importar useSearchParams
 import { listOrdersSmart, Orden } from '@/lib/sdk/userApi';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Package, Calendar, Truck, CheckCircle, Clock, AlertCircle, ShoppingBag, RotateCcw } from 'lucide-react';
@@ -72,6 +73,9 @@ export const getStatusColor = (estado: string) => {
 };
 
 export default function PedidosPageClient() {
+  const searchParams = useSearchParams();
+  const orderIdFromUrl = searchParams.get('id');
+
   const [orders, setOrders] = useState<Orden[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Orden | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,14 +84,24 @@ export default function PedidosPageClient() {
     const fetchOrders = async () => {
       try {
         const { items } = await listOrdersSmart();
-        setOrders(Array.isArray(items) ? items : []);
+        const loadedOrders = Array.isArray(items) ? items : [];
+        setOrders(loadedOrders);
+
+        // Si hay ID en la URL, abrir el modal automáticamente
+        if (orderIdFromUrl) {
+          const order = loadedOrders.find(o => String(o.id) === String(orderIdFromUrl));
+          if (order) {
+            setSelectedOrder(order);
+            setIsModalOpen(true);
+          }
+        }
       } catch (error) {
         console.error("Error fetching orders:", error);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [orderIdFromUrl]);
 
   const handleOpenModal = (order: Orden) => {
     setSelectedOrder(order);

@@ -27,7 +27,7 @@ export function SubscriptionCoursesList({ courses, className = '' }: Subscriptio
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {courses.map((course) => (
-          <Link key={course.id} href={`/cursos/${course.slug}`}>
+          <Link key={course.id} href={`/cursos/detalle/${course.slug}`}>
             <Card className="h-full transition-all hover:shadow-md hover:-translate-y-1">
               <CardBody className="p-4 flex flex-col gap-3">
                 {course.image && (

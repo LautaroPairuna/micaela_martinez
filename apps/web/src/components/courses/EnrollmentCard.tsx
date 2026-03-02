@@ -242,7 +242,7 @@ export function EnrollmentCard({
     // Si está completado, redirigir al player para repasar
     if (isCompleted && course?.slug) return `/cursos/player/${course.slug}`;
     // Si falta el slug, redirigir a la ficha del curso (fallback)
-    if (!course?.slug) return `/cursos/${enrollment.cursoId}`;
+    if (!course?.slug) return `/cursos/detalle/${enrollment.cursoId}`;
     
     const modulesToUse = (course?.modulos && course.modulos.length > 0)
       ? course.modulos

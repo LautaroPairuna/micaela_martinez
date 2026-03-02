@@ -91,9 +91,33 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, isSelected, on
       onMarkAsRead(notification.id);
     }
     
-    // Navegar a la URL si existe
+    // Navegar a la URL si existe (con corrección retroactiva de rutas viejas)
     if (notification.url) {
-      router.push(notification.url);
+      let finalUrl = notification.url;
+      const meta = notification.metadata as any;
+
+      // Corregir rutas viejas de Productos
+      if (finalUrl.includes('/productos/')) {
+        const slug = meta?.productSlug || meta?.productoId;
+        if (slug) finalUrl = `/tienda/producto/${slug}`;
+      }
+
+      // Corregir rutas viejas de Cursos
+      if (finalUrl.includes('/cursos/') && !finalUrl.includes('/detalle/') && !finalUrl.includes('/player/')) {
+        // Asumimos que es /cursos/ID y lo pasamos a /cursos/detalle/ID (o slug si hay)
+        const slug = meta?.courseSlug || meta?.cursoId || finalUrl.split('/').pop();
+        if (slug) finalUrl = `/cursos/detalle/${slug}`;
+      }
+
+      // Corregir rutas viejas de Pedidos (Usuario)
+      if (finalUrl.includes('/mi-cuenta/pedidos/') && !finalUrl.includes('?id=')) {
+        const orderId = finalUrl.split('/').pop();
+        if (orderId && !isNaN(Number(orderId))) {
+           finalUrl = `/mi-cuenta/pedidos?id=${orderId}`;
+        }
+      }
+
+      router.push(finalUrl);
     }
   };
 

@@ -24,7 +24,12 @@ export function AuthView() {
   const [tab, setTab] = useState<Tab>(initial);
 
   // Si el guard nos mandó ?next=... o ?redirect=..., respetarlo
-  const nextUrl = search.get('next') || search.get('redirect') || '/mi-aprendizaje';
+  let nextUrl = search.get('next') || search.get('redirect') || '/mi-cuenta/mi-aprendizaje';
+
+  // Corrección específica para "mi-aprendizaje" sin prefijo
+  if (nextUrl === '/mi-aprendizaje' || nextUrl === 'mi-aprendizaje') {
+    nextUrl = '/mi-cuenta/mi-aprendizaje';
+  }
 
   const handleLoginSuccess = async () => {
     try {
