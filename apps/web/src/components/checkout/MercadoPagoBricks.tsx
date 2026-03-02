@@ -274,8 +274,7 @@ export function MercadoPagoBricks({
               creditCard: 'all',
               debitCard: 'all',
               ticket: [], 
-              bankTransfer: [],
-              ...(pref ? { mercadoPago: 'all' } : { mercadoPago: [] }),
+              bankTransfer: []
            };
         }
 
