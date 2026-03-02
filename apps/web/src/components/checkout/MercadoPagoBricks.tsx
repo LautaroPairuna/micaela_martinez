@@ -199,8 +199,7 @@ export function MercadoPagoBricks({
         // Configuración de medios: restringir a lo permitido por la cuenta
         type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
         
-        // Si no es suscripción, dejar que MP detecte automáticamente los medios disponibles
-        // enviando undefined o un objeto vacío para las propiedades que no queremos restringir.
+        // Si no es suscripción, configuramos explícitamente lo que queremos permitir
         const paymentMethodsCfg: PaymentMethodsCfg = isSubscription
           ? { 
               creditCard: ['master', 'visa', 'amex', 'cabal', 'naranja'],
@@ -210,9 +209,12 @@ export function MercadoPagoBricks({
               mercadoPago: [] 
             }
           : {
-              // Dejamos que el Brick muestre lo que la cuenta tenga habilitado
-              // Solo ocultamos explícitamente lo que NO queremos
-              bankTransfer: [], 
+              // Para pagos únicos, habilitamos explícitamente tarjetas y deshabilitamos el resto
+              // Esto evita ambigüedades sobre qué está permitido por defecto
+              creditCard: 'all',
+              debitCard: 'all',
+              ticket: [], // Deshabilitar tickets (PagoFácil/Rapipago) para evitar errores si la cuenta no lo soporta
+              bankTransfer: [],
               ...(pref ? { mercadoPago: 'all' as const } : { mercadoPago: [] }),
             };
 
