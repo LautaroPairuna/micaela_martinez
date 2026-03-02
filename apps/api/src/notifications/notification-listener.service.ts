@@ -11,6 +11,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 // Importación corregida del WebsocketGateway
 import { WebsocketGateway } from '../websockets/websocket.gateway';
+import { NotificationsService } from './notifications.service';
 
 const toStr = (v: string | number | null | undefined): string | undefined =>
   v === null || v === undefined ? undefined : String(v);
@@ -23,6 +24,7 @@ export class NotificationListenerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly websocketGateway: WebsocketGateway,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @OnEvent(EventTypes.RESOURCE_CREATED)
@@ -122,6 +124,18 @@ export class NotificationListenerService {
            richMessage = `Producto "${resourceName}" stock actualizado: ${prevData.stock} ➝ ${data.stock}`;
         } else if (data?.precio !== undefined && prevData?.precio !== undefined && data.precio !== prevData.precio) {
            richMessage = `Producto "${resourceName}" precio actualizado: $${prevData.precio} ➝ $${data.precio}`;
+           
+           // Detectar bajada de precio para notificar a favoritos
+           if (data.precio < prevData.precio) {
+             const discount = Math.round(((prevData.precio - data.precio) / prevData.precio) * 100);
+             // Ejecutar en segundo plano para no bloquear el listener
+             this.notificationsService.notifyProductDiscount(
+               String(resourceId),
+               resourceName || 'Producto',
+               data.precio,
+               discount
+             ).catch(err => this.logger.error(`Error notificando descuento: ${err.message}`));
+           }
         }
       }
     } else if (resourceType === 'Curso') {

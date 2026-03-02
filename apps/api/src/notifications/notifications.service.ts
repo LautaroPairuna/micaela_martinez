@@ -91,6 +91,14 @@ export class NotificationsService {
     discount: number,
   ) {
     try {
+      // Obtener el slug del producto para la URL
+      const product = await this.prisma.producto.findUnique({
+        where: { id: Number(productId) },
+        select: { slug: true },
+      });
+      
+      const slug = product?.slug || productId; // Fallback a ID si no hay slug (aunque debería haber)
+
       const favorites = await this.prisma.favorito.findMany({
         where: { productoId: Number(productId) },
         select: { usuarioId: true },
@@ -105,9 +113,10 @@ export class NotificationsService {
           tipo: TipoNotificacion.PROMOCION,
           titulo: '¡Descuento en tu Favorito!',
           mensaje: `El producto ${productName} está con un ${discount}% de descuento. Precio actual: $${newPrice}`,
-          url: `/productos/${productId}`,
+          url: `/tienda/producto/${slug}`,
           metadata: {
             productoId: productId,
+            productSlug: slug,
             isFavoriteDiscount: true,
           },
         });
@@ -131,22 +140,25 @@ export class NotificationsService {
         }),
         this.prisma.resena.findUnique({
           where: { id: Number(reviewId) },
-          include: { producto: { select: { titulo: true } } },
+          include: { producto: { select: { titulo: true, slug: true } } },
         }),
       ]);
 
       if (!likedByUser || !review) return;
+
+      const slug = review.producto?.slug || review.productoId;
 
       await this.createNotification({
         usuarioId: reviewAuthorId,
         tipo: TipoNotificacion.LIKE_RESENA,
         titulo: 'Le gustó tu reseña',
         mensaje: `A ${likedByUser.nombre} le gustó tu reseña de ${review.producto?.titulo}`,
-        url: `/productos/${review.productoId}#resena-${reviewId}`,
+        url: `/tienda/producto/${slug}#resena-${reviewId}`,
         metadata: {
           contextoId: reviewId,
           likedByUserId,
           productoId: review.productoId,
+          productSlug: slug,
         },
       });
     } catch (error) {
@@ -170,7 +182,7 @@ export class NotificationsService {
           where: { id: Number(responseId) },
           include: {
             resena: {
-              include: { producto: { select: { titulo: true } } },
+              include: { producto: { select: { titulo: true, slug: true } } },
             },
           },
         }),
@@ -178,18 +190,21 @@ export class NotificationsService {
 
       if (!respondedByUser || !response) return;
 
+      const slug = response.resena.producto?.slug || response.resena.productoId;
+
       // Notify Original Author
       await this.createNotification({
         usuarioId: originalReviewAuthorId,
         tipo: TipoNotificacion.RESPUESTA_RESENA,
         titulo: 'Nueva respuesta a tu reseña',
         mensaje: `${respondedByUser.nombre} respondió a tu reseña de ${response.resena.producto?.titulo}`,
-        url: `/productos/${response.resena.productoId}#respuesta-${responseId}`,
+        url: `/tienda/producto/${slug}#respuesta-${responseId}`,
         metadata: {
           contextoId: response.resenaId,
           respondedByUserId,
           responseId,
           productoId: response.resena.productoId,
+          productSlug: slug,
         },
       });
     } catch (error) {
