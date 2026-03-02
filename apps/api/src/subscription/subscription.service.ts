@@ -43,11 +43,29 @@ export class SubscriptionService {
 
       // NOTA: La lógica real depende de dónde guardes la fecha de fin.
       // Si usas MercadoPago, deberías chequear `proximoPago` o consultar la API.
-      // Aquí implemento un ejemplo genérico asumiendo que calculamos la fecha.
+      // Aquí implemento un cálculo basado en la fecha de actualización + frecuencia.
 
       for (const sub of subscriptions) {
-        // Simulación: Calcular días restantes (esto debería venir de tu lógica de negocio real)
-        const diasRestantes = 3; 
+        let diasRestantes = 0;
+        
+        // Intentar obtener fecha de vencimiento real de metadatos o calcularla
+        const meta = sub.metadatos as any;
+        let fechaVencimiento = meta?.subscription?.nextPaymentDate ? new Date(meta.subscription.nextPaymentDate) : null;
+        
+        // Si no hay fecha explicita, estimamos basada en la última actualización + 30 días (mensual por defecto)
+        if (!fechaVencimiento) {
+            const ultimaActualizacion = new Date(sub.actualizadoEn);
+            const frecuenciaMeses = sub.suscripcionFrecuencia || 1; // Default 1 mes
+            // Sumar meses
+            fechaVencimiento = new Date(ultimaActualizacion);
+            fechaVencimiento.setMonth(fechaVencimiento.getMonth() + frecuenciaMeses);
+        }
+
+        // Calcular días restantes
+        if (fechaVencimiento) {
+            const diffTime = fechaVencimiento.getTime() - now.getTime();
+            diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
 
         if (diasRestantes <= 3 && diasRestantes > 0) {
            await this.notificationsService.createNotification({
@@ -61,7 +79,7 @@ export class SubscriptionService {
                daysLeft: diasRestantes
              }
            });
-           this.logger.log(`Notificación de vencimiento enviada a usuario ${sub.usuarioId}`);
+           this.logger.log(`Notificación de vencimiento enviada a usuario ${sub.usuarioId} (vence en ${diasRestantes} días)`);
         }
       }
 
