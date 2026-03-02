@@ -269,7 +269,10 @@ export function MercadoPagoBricks({
            };
         } else {
            // Payment Brick: configuración completa
+           // IMPORTANTE: Habilitar explícitamente tarjetas si no se detectan solas
            paymentMethodsCfg = {
+              creditCard: 'all',
+              debitCard: 'all',
               ticket: [], 
               bankTransfer: [],
               ...(pref ? { mercadoPago: 'all' } : { mercadoPago: [] }),
