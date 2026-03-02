@@ -3,7 +3,8 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventTypes } from '../events/event.types';
 import { PrismaService } from '../prisma/prisma.service';
-import { MercadoPagoService } from './mercadopago.service';
+import { MpPaymentService } from './services/mp-payment.service';
+import { MpSubscriptionService } from './services/mp-subscription.service';
 import { parseMetadatos } from './interfaces/orden-metadata.interface';
 
 import {
@@ -36,8 +37,9 @@ const toInt = (v: string | number | null | undefined): number => {
 @Injectable()
 export class OrdersService {
   constructor(
-    private prisma: PrismaService,
-    private mercadoPagoService: MercadoPagoService,
+    private readonly prisma: PrismaService,
+    private readonly mpPaymentService: MpPaymentService,
+    private readonly mpSubscriptionService: MpSubscriptionService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -413,7 +415,7 @@ export class OrdersService {
     }
 
     try {
-      const paymentResult = await this.mercadoPagoService.processPayment({
+      const paymentResult = await this.mpPaymentService.processPayment({
         token: paymentData.token,
         issuer_id: paymentData.issuerId, // ← Pasar issuerId
         installments: paymentData.installments, // ← Pasar installments
@@ -495,7 +497,7 @@ export class OrdersService {
 
     try {
       const subscriptionResult =
-        await this.mercadoPagoService.createSubscription({
+        await this.mpSubscriptionService.createSubscription({
           token: subscriptionData.token,
           payment_method_id: subscriptionData.paymentMethodId,
           transaction_amount: Number(order.total),
@@ -597,7 +599,7 @@ export class OrdersService {
     }
 
     const cancelResult =
-      await this.mercadoPagoService.cancelSubscription(subscriptionId);
+      await this.mpSubscriptionService.cancelSubscription(subscriptionId);
 
     const nextMetaObj = {
       ...metadatos,
@@ -721,7 +723,7 @@ export class OrdersService {
   /** Confirma pago recurrente y registra en PagoSuscripcion */
   private async handleSubscriptionPayment(paymentId: string) {
     try {
-      const paymentDetails = await this.mercadoPagoService.getPayment(paymentId);
+      const paymentDetails = await this.mpPaymentService.getPayment(paymentId);
 
       if (paymentDetails.status !== 'approved') {
         console.warn(`Pago de suscripción rechazado: ${paymentId}`);
@@ -761,7 +763,7 @@ export class OrdersService {
           ordenId: order.id,
           usuarioId: order.usuarioId,
           referenciaPago: paymentId,
-          monto: paymentDetails.transaction_amount as any,
+          monto: new Prisma.Decimal(paymentDetails.transaction_amount),
           estado: 'APROBADO',
           metadatos: json({
             subscriptionId,
@@ -788,8 +790,7 @@ export class OrdersService {
     _data: Record<string, unknown>,
   ) {
     try {
-      const paymentDetails =
-        await this.mercadoPagoService.getPayment(paymentId);
+      const paymentDetails = await this.mpPaymentService.getPayment(paymentId);
       if (!paymentDetails || paymentDetails.status !== 'approved') {
         return {
           processed: false,
