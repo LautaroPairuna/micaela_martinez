@@ -184,13 +184,17 @@ export function MercadoPagoBricks({
         const mp = new MercadoPago(publicKey, { locale: 'es-AR' });
         const bricks = mp.bricks();
 
-        // initialization (no enviar preferenceId null/undefined)
-        const init: PaymentBrickSettings['initialization'] = {
-          amount,
-          payer: payerEmail ? { email: payerEmail } : undefined,
-        };
-        const pref = asStringOrNull(preferenceId);
-        if (pref) init.preferenceId = pref;
+        // Configuración de inicialización
+          const init: any = {
+            amount: amount,
+          };
+          
+          // IMPORTANTE: Si pasamos el email en initialization.payer, el Brick lo toma como dato confirmado
+          // y suele ocultar el campo. Si queremos que el usuario pueda editarlo o verlo, 
+          // debemos pasarlo en customization.payer en lugar de initialization.
+          
+          const pref = asStringOrNull(preferenceId);
+          if (pref) init.preferenceId = pref;
 
         // Configuración de medios: restringir a lo permitido por la cuenta
         type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
