@@ -1,18 +1,19 @@
 // apps/web/src/components/checkout/MercadoPagoBricks.tsx
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
-import { CreditCard, Shield, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { MERCADOPAGO_PUBLIC_KEY } from '@/lib/env';
 import { processMercadoPagoPayment, createSubscription } from '@/lib/sdk/ordersApi';
+import { z } from 'zod';
 
 /* ─────────────────────────── Tipos ─────────────────────────── */
 
 type PaymentSuccessData = {
   orderId: string;
   paymentMethodId: string;
-  token: string;
+  // token eliminado por seguridad
   installments?: number;
   amount: number;
   status: string;
@@ -22,18 +23,50 @@ type PaymentErrorData = { message: string; details?: unknown };
 type OnPaymentSuccess = (d: PaymentSuccessData) => void;
 type OnPaymentError = (e: PaymentErrorData) => void;
 
-type CardFormData = {
-  token: unknown; // validamos en runtime
-  payment_method_id: unknown; // validamos en runtime
-  installments?: number;
-  payer?: {
-    email?: unknown;
-    identification?: {
-      type?: unknown;
-      number?: unknown;
-    };
+// Validación estricta con Zod
+const BrickFormSchema = z.object({
+  token: z.string().min(10),
+  payment_method_id: z.string().min(2),
+  issuer_id: z.union([z.string(), z.number()]).optional(),
+  installments: z.union([z.string(), z.number()]).optional(),
+  payer: z.object({
+    email: z.string().email().optional(),
+    identification: z.object({
+      type: z.string().optional(),
+      number: z.string().optional(),
+    }).optional(),
+  }).optional(),
+});
+
+function parseBrickData(cardFormData: unknown) {
+  const raw = isRecord(cardFormData) 
+    ? (cardFormData.formData ?? cardFormData) 
+    : {};
+    
+  const parsed = BrickFormSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.flatten(), raw };
+  }
+
+  const d = parsed.data;
+  const installments = typeof d.installments === 'number'
+    ? d.installments
+    : (Number(d.installments) || 1);
+
+  const issuerId = d.issuer_id != null ? String(d.issuer_id) : undefined;
+
+  return {
+    ok: true as const,
+    data: {
+      token: d.token.trim(),
+      paymentMethodId: d.payment_method_id,
+      issuerId,
+      installments,
+      payer: d.payer,
+    },
   };
-};
+}
 
 type PaymentBrickSettings = {
   initialization: {
@@ -55,14 +88,14 @@ type PaymentBrickSettings = {
   };
   callbacks: {
     onReady?: () => void;
-    onSubmit: (cardFormData: CardFormData) => Promise<void> | void;
+    onSubmit: (cardFormData: any) => Promise<void> | void;
     onError?: (error: unknown) => void;
   };
 };
 
 type BrickController = { unmount: () => Promise<void> | void };
 type Bricks = {
-  create: (type: 'payment', container: string, settings: PaymentBrickSettings) => Promise<BrickController>;
+  create: (type: 'payment' | 'cardPayment', container: string, settings: PaymentBrickSettings) => Promise<BrickController>;
 };
 type MercadoPagoInstance = { bricks: () => Bricks };
 type MercadoPagoConstructor = new (publicKey: string, options?: { locale?: string }) => MercadoPagoInstance;
@@ -156,8 +189,10 @@ export function MercadoPagoBricks({
 }: MercadoPagoBricksProps) {
   const publicKey = MERCADOPAGO_PUBLIC_KEY;
 
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [isBrickReady, setIsBrickReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const inFlightRef = useRef(false);
+  const mountedRef = useRef(true);
 
   // Id estable del contenedor (string), requerido por Bricks (usa .startsWith internamente)
   const containerIdRef = useRef<string>(`mp-payment-brick-${Math.random().toString(36).slice(2, 8)}`);
@@ -165,6 +200,37 @@ export function MercadoPagoBricks({
   const controllerRef = useRef<BrickController | null>(null);
   const handlersRef = useRef({ onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder });
   handlersRef.current = { onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder };
+
+  // Control de montado seguro
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  // Signature para forzar remount si cambian props críticas
+  const signature = useMemo(() => JSON.stringify({
+    amount,
+    isSubscription,
+    preferenceId: preferenceId ?? null,
+    subscriptionFrequency,
+    subscriptionFrequencyType,
+    theme: 'dark',
+  }), [amount, isSubscription, preferenceId, subscriptionFrequency, subscriptionFrequencyType]);
+
+  // Efecto de limpieza cuando cambia la signature
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const c = controllerRef.current;
+      if (c?.unmount) await c.unmount();
+      if (!alive) return;
+      controllerRef.current = null;
+      setIsBrickReady(false);
+      setIsProcessing(false);
+      inFlightRef.current = false;
+    })();
+    return () => { alive = false; };
+  }, [signature]);
 
   useEffect((): (() => void) | void => {
     if (!publicKey) return;
@@ -175,8 +241,6 @@ export function MercadoPagoBricks({
       try {
         const MercadoPago = await loadMercadoPagoSDK();
         if (!MercadoPago || cancelled) return;
-
-        setIsSDKLoaded(true);
 
         // Evitar montar más de una vez por instancia
         if (controllerRef.current) return;
@@ -189,31 +253,17 @@ export function MercadoPagoBricks({
             amount: amount,
           };
           
-          // IMPORTANTE: Si pasamos el email en initialization.payer, el Brick lo toma como dato confirmado
-          // y suele ocultar el campo. Si queremos que el usuario pueda editarlo o verlo, 
-          // debemos pasarlo en customization.payer en lugar de initialization.
-          
           const pref = asStringOrNull(preferenceId);
           if (pref) init.preferenceId = pref;
 
         // Configuración de medios: restringir a lo permitido por la cuenta
         type PaymentMethodsCfg = NonNullable<NonNullable<PaymentBrickSettings['customization']>['paymentMethods']>;
         
-        // Si no es suscripción, configuramos explícitamente lo que queremos permitir
         const paymentMethodsCfg: PaymentMethodsCfg = isSubscription
-          ? { 
-              creditCard: ['master', 'visa', 'amex', 'cabal', 'naranja'],
-              debitCard: [],
-              ticket: [],
-              bankTransfer: [],
-              mercadoPago: [] 
-            }
+          ? { creditCard: 'all' }
           : {
-              // Para pagos únicos, habilitamos explícitamente tarjetas y deshabilitamos el resto
-              // Esto evita ambigüedades sobre qué está permitido por defecto
-              creditCard: 'all',
-              debitCard: 'all',
-              ticket: [], // Deshabilitar tickets (PagoFácil/Rapipago) para evitar errores si la cuenta no lo soporta
+              // Dejamos que el Brick consulte a la API qué medios están habilitados
+              ticket: [], 
               bankTransfer: [],
               ...(pref ? { mercadoPago: 'all' as const } : { mercadoPago: [] }),
             };
@@ -233,143 +283,129 @@ export function MercadoPagoBricks({
             }
           },
           callbacks: {
-            onReady: () => {},
+            onReady: () => {
+              if (!cancelled && mountedRef.current) setIsBrickReady(true);
+            },
             onSubmit: async (cardFormData: any): Promise<void> => {
               if (cancelled) return;
+              if (inFlightRef.current) return; // Evita doble submit
+              inFlightRef.current = true;
 
               const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
 
-              console.log('=== FRONTEND: onSubmit de Bricks (Estructura Recibida) ===', cardFormData);
+              const parsed = parseBrickData(cardFormData);
+              if (!parsed.ok) {
+                inFlightRef.current = false;
+                console.error('=== FRONTEND: Fallo validación Zod ===', parsed.error);
+                onPaymentError({ 
+                  message: 'Datos de tarjeta inválidos. Revisá los campos e intentá de nuevo.',
+                  details: parsed.error, 
+                });
+                return;
+              }
 
-                // 1. Extraer el token de forma ultra-flexible y limpiar espacios
-                const formData = cardFormData.formData || cardFormData;
-                const rawToken = asStringOrNull(formData.token);
-                const finalToken = rawToken ? rawToken.trim() : null;
-                
-                // 2. Extraer el método de pago e issuer
-                const finalPaymentMethodId = asStringOrNull(formData.payment_method_id) || 
-                                            asStringOrNull(cardFormData.selectedPaymentMethod);
-                const issuerId = asStringOrNull(formData.issuer_id) || undefined;
-                
-                // 3. Extraer cuotas (puede venir como string o number según la versión de MP)
-                const installmentsRaw = formData.installments || cardFormData.installments;
-                const installments = typeof installmentsRaw === 'number' 
-                  ? installmentsRaw 
-                  : (Number(installmentsRaw) || 1);
+              const { token, paymentMethodId, issuerId, installments, payer } = parsed.data;
 
-                if (!finalToken || !finalPaymentMethodId) {
-                  console.error('=== FRONTEND: Fallo en extracción de datos de Bricks ===', {
-                    recibido: cardFormData,
-                    tokenExtraido: finalToken,
-                    methodExtraido: finalPaymentMethodId
-                  });
-                  onPaymentError({ 
-                    message: 'Datos de tarjeta inválidos (token o método de pago ausente).',
-                    details: cardFormData 
-                  });
-                  return;
-                }
+              // Email fallback logic
+              const email = 
+                asStringOrNull(payer?.email) || 
+                payerEmail?.trim() || 
+                null;
 
-                // 4. Extraer datos del pagador
-                const payer = formData.payer || cardFormData.payer || {};
-                const email = asStringOrNull(payer.email) || payerEmail || undefined;
-                const identificationType = asStringOrNull(payer.identification?.type) || undefined;
-                const identificationNumber = asStringOrNull(payer.identification?.number) || undefined;
+              if (!email) {
+                inFlightRef.current = false;
+                onPaymentError({ 
+                  message: 'Necesitamos un email válido para continuar con el pago.',
+                });
+                return;
+              }
 
-                onPaymentStart?.();
-                setIsProcessing(true);
+              onPaymentStart?.();
+              if (!cancelled && mountedRef.current) setIsProcessing(true);
 
-                try {
-                  const currentOrderId = orderId ?? (await onCreateOrder());
+              try {
+                const currentOrderId = orderId ?? (await onCreateOrder());
 
-                  console.log('=== FRONTEND: Procesando suscripción/pago ===', {
-                    isSubscription,
-                    orderId: currentOrderId,
-                    tokenPrefix: finalToken.substring(0, 10),
-                    email,
-                    issuerId,
-                    installments
-                  });
+                console.log('=== FRONTEND: Procesando suscripción/pago ===', {
+                  isSubscription,
+                  orderId: currentOrderId,
+                  email,
+                  issuerId,
+                  installments
+                });
 
-                  const rawResult = isSubscription
-                    ? await createSubscription(String(currentOrderId), {
-                        token: finalToken,
-                        paymentMethodId: finalPaymentMethodId,
-                        issuerId,
-                        installments,
-                        email: email || 'usuario@ejemplo.com',
-                        identificationType,
-                        identificationNumber,
-                        frequency: subscriptionFrequency,
-                        frequencyType: subscriptionFrequencyType,
-                      })
-                    : await processMercadoPagoPayment(String(currentOrderId), {
-                        token: finalToken,
-                        paymentMethodId: finalPaymentMethodId,
-                        issuerId,
-                        installments,
-                        email: email || 'usuario@ejemplo.com',
-                        identificationType,
-                        identificationNumber,
-                      });
+                const rawResult = isSubscription
+                  ? await createSubscription(String(currentOrderId), {
+                      token,
+                      paymentMethodId,
+                      issuerId,
+                      installments,
+                      email,
+                      identificationType: asStringOrNull(payer?.identification?.type) || undefined,
+                      identificationNumber: asStringOrNull(payer?.identification?.number) || undefined,
+                      frequency: subscriptionFrequency,
+                      frequencyType: subscriptionFrequencyType,
+                    })
+                  : await processMercadoPagoPayment(String(currentOrderId), {
+                      token,
+                      paymentMethodId,
+                      issuerId,
+                      installments,
+                      email,
+                      identificationType: asStringOrNull(payer?.identification?.type) || undefined,
+                      identificationNumber: asStringOrNull(payer?.identification?.number) || undefined,
+                    });
 
                 onPaymentSuccess({
                   orderId: extractId(rawResult, String(currentOrderId)),
-                  paymentMethodId: finalPaymentMethodId,
-                  token: finalToken,
-                  installments: formData.installments || cardFormData.installments,
+                  paymentMethodId,
+                  // token eliminado por seguridad
+                  installments,
                   amount,
                   status: extractStatus(rawResult),
                 });
-              } catch (err: any) {
-                console.error('=== FRONTEND: Error en procesamiento de pago ===', err);
-                onPaymentError(normalizeError(err));
+              } catch (e) {
+                console.error('=== FRONTEND: Error en pago ===', e);
+                onPaymentError(normalizeError(e));
               } finally {
-                if (!cancelled) setIsProcessing(false);
+                if (!cancelled && mountedRef.current) setIsProcessing(false);
+                inFlightRef.current = false;
               }
             },
-            onError: (error: unknown) => {
+            onError: (error: any) => {
+              console.error('=== FRONTEND: Error interno del Brick ===', error);
               if (!cancelled) {
-                handlersRef.current.onPaymentError(normalizeError(error));
-                setIsProcessing(false);
+                const { onPaymentError } = handlersRef.current;
+                onPaymentError(normalizeError(error));
               }
             },
           },
         };
 
-        // ⬅️ IMPORTANTE: usar cardPayment para suscripciones y payment para pagos comunes
+        // ⬅️ Seleccionar el tipo correcto de Brick
         const brickType = isSubscription ? 'cardPayment' : 'payment';
-        const controller = await bricks.create(brickType as any, containerIdRef.current, settings);
+        const controller = await bricks.create(brickType, containerIdRef.current, settings);
         if (!cancelled) controllerRef.current = controller;
-      } catch (e) {
-        if (!cancelled) handlersRef.current.onPaymentError(normalizeError(e));
+
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Error mounting brick:', err);
+          onPaymentError(normalizeError(err));
+        }
       }
     }
 
-    void mountBrick();
+    mountBrick();
 
     return () => {
       cancelled = true;
       const c = controllerRef.current;
       controllerRef.current = null;
-      if (c) {
-        try {
-          c.unmount();
-        } catch {
-          // noop
-        }
-      }
+      void (async () => {
+        try { await c?.unmount?.(); } catch {}
+      })();
     };
-  }, [
-    publicKey,
-    amount,
-    orderId,
-    isSubscription,
-    subscriptionFrequency,
-    subscriptionFrequencyType,
-    preferenceId,
-    payerEmail,
-  ]);
+  }, [publicKey, signature]);
 
   if (!publicKey) {
     return (
@@ -378,8 +414,8 @@ export function MercadoPagoBricks({
           <div className="flex items-center gap-3 text-red-600">
             <AlertCircle className="h-5 w-5" />
             <div>
-              <h3 className="font-medium">Error de configuración</h3>
-              <p className="text-sm text-red-500">La clave pública de MercadoPago no está configurada.</p>
+              <p className="font-semibold">Error de configuración</p>
+              <p className="text-sm">Falta la clave pública de MercadoPago</p>
             </div>
           </div>
         </CardBody>
@@ -388,59 +424,29 @@ export function MercadoPagoBricks({
   }
 
   return (
-    <Card>
-      <CardBody className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-            <CreditCard className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="font-medium text-[var(--fg)]">Pagar con tarjeta</h3>
-            <p className="text-sm text-[var(--muted)]">Ingresá los datos de tu tarjeta de forma segura</p>
+    <div className="relative">
+      {!isBrickReady && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 space-y-4 animate-pulse pointer-events-none">
+          <div className="w-full h-12 bg-zinc-800 rounded-md" />
+          <div className="w-full h-12 bg-zinc-800 rounded-md" />
+          <div className="w-full h-12 bg-zinc-800 rounded-md" />
+          <p className="text-sm text-zinc-500">Cargando pasarela de pago segura...</p>
+        </div>
+      )}
+      {/* 
+        El contenedor del brick se renderiza siempre porque Bricks necesita encontrar el ID en el DOM
+        antes de montarse. Lo ocultamos visualmente si no está listo, o mostramos el skeleton encima.
+        Pero NO debemos usar un ternario que desmonte el div id={...}
+      */}
+      <div id={containerIdRef.current} className={isBrickReady ? '' : 'opacity-0'} />
+      {isProcessing && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-lg">
+          <div className="rounded-lg bg-zinc-900 px-4 py-3 text-sm text-zinc-100 flex items-center gap-3 shadow-xl border border-zinc-800">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+            <span>Procesando... No cierres esta ventana.</span>
           </div>
         </div>
-
-        {/* Contenedor del Brick: STRING ID (requerido por Bricks) */}
-        <div id={containerIdRef.current} className="mb-6" style={{ minHeight: 400 }}>
-          {!isSDKLoaded && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-              <span className="ml-3 text-[var(--muted)]">Cargando formulario de pago...</span>
-            </div>
-          )}
-        </div>
-
-        {/* Total a pagar */}
-        <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-[var(--muted)]">Total a pagar:</span>
-            <span className="font-semibold text-[var(--fg)] text-lg">
-              ${amount.toLocaleString('es-AR')}
-            </span>
-          </div>
-        </div>
-
-        {/* Estado de procesamiento */}
-        {isProcessing && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-              <p className="text-sm text-blue-800">Procesando tu pago... No cierres esta ventana.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Aviso de seguridad */}
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-green-600" />
-            <div>
-              <p className="text-sm font-medium text-green-800">Pago seguro con MercadoPago</p>
-              <p className="text-sm text-green-600">Tus datos están protegidos con la máxima seguridad</p>
-            </div>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
+      )}
+    </div>
   );
 }

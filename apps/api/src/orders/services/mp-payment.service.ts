@@ -40,6 +40,11 @@ export interface MercadoPagoPaymentResponse {
   payment_type_id: string;
 }
 
+export interface MercadoPagoPaymentOptions {
+  idempotencyKey?: string;
+  requestId?: string;
+}
+
 @Injectable()
 export class MpPaymentService {
   private readonly client: MercadoPagoConfig;
@@ -79,6 +84,7 @@ export class MpPaymentService {
 
   async processPayment(
     paymentData: MercadoPagoPaymentData,
+    options?: MercadoPagoPaymentOptions,
   ): Promise<MercadoPagoPaymentResponse> {
     try {
       // 1. Sanitizar Email
@@ -110,6 +116,10 @@ export class MpPaymentService {
         }
       }
 
+      // Configuración de binary_mode desde variables de entorno
+      // Por defecto false para maximizar compatibilidad con 3DS y validaciones de fraude
+      const binaryMode = this.configService.get<string>('MP_BINARY_MODE') === 'true';
+
       const paymentRequest = {
         token: paymentData.token,
         issuer_id: paymentData.issuer_id
@@ -125,7 +135,7 @@ export class MpPaymentService {
         external_reference: paymentData.external_reference,
         installments: paymentData.installments ?? 1,
         capture: true,
-        binary_mode: true,
+        binary_mode: binaryMode,
       };
 
       console.log('=== BACKEND: Enviando pago a MercadoPago (Service) ===', {
@@ -134,11 +144,11 @@ export class MpPaymentService {
         issuer: paymentRequest.issuer_id,
         installments: paymentRequest.installments,
         ref: paymentRequest.external_reference,
-        tokenPrefix: paymentRequest.token?.substring(0, 10),
-        payer: paymentRequest.payer,
+        // Sanitizado: no loguear token ni email completo
       });
 
-      const idempotencyKey = `${paymentData.external_reference}-${Date.now()}`;
+      // Idempotency Key: Usar la provista por el frontend o generar una estable basada en la referencia
+      const idempotencyKey = options?.idempotencyKey || `pay-${paymentData.external_reference}`;
 
       const response = await this.payment.create({
         body: paymentRequest,

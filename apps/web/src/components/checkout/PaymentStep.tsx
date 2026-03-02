@@ -22,14 +22,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* Tipos de integración con Bricks */
-type BricksPaymentSuccess = {
+interface BricksPaymentSuccess {
   orderId: string;
   paymentMethodId: string;
-  token: string;
   installments?: number;
   amount: number;
   status: string;
-};
+}
 
 type BricksPaymentError = {
   message: string;
@@ -172,19 +171,21 @@ export function PaymentStep() {
 
   const { me } = useSession();
 
-  const handleBricksPaymentSuccess = (paymentData: BricksPaymentSuccess) => {
-    console.log('=== FRONTEND: Pago exitoso con Bricks ===', paymentData);
-    setPaymentInProgress(false);
-    setIsPaymentCompleted(true);
-
-    // Al tener éxito el pago, ya no necesitamos el orderId en el store de checkout
-    // ya que la orden está confirmada.
-    setOrderId(null);
-
-    // Avanzar automáticamente tras éxito
-    setTimeout(() => {
+  // Handler para el éxito del Brick
+  const handleBricksPaymentSuccess = async (paymentData: BricksPaymentSuccess) => {
+    try {
+      console.log('=== FRONTEND: Pago exitoso con Bricks ===', paymentData);
+      setPaymentInProgress(false);
+      setIsPaymentCompleted(true);
+      
+      // La orden ya se creó/pagó en el componente Bricks, solo necesitamos redirigir
+      setOrderId(null);
+      
       nextStep();
-    }, 1500);
+    } catch (error) {
+      console.error('Error post-pago:', error);
+      showError('Error al finalizar', 'El pago se procesó pero hubo un error al redirigir.');
+    }
   };
 
   const handleBricksPaymentError = (error: BricksPaymentError) => {

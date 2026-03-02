@@ -28,6 +28,7 @@ type SubscriptionStatus =
   | string;
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
+
 const toInt = (v: string | number | null | undefined): number => {
   const n = typeof v === 'number' ? v : Number(v);
   if (!Number.isFinite(n)) throw new Error(`ID inválido: ${v}`);
@@ -57,14 +58,13 @@ export class OrdersService {
     let total = 0;
     const validatedItems: {
       tipo: TipoItemOrden;
-      refId: number; // ← ahora number
+      refId: number;
       titulo: string;
       cantidad: number;
       precioUnitario: number;
     }[] = [];
 
     for (const item of items) {
-      // normalizamos refId a number
       const refIdNum = toInt(item.refId);
 
       let itemData: { precio: Prisma.Decimal } | null = null;
@@ -93,7 +93,10 @@ export class OrdersService {
         }
       }
 
-      if (itemData && !itemData.precio.equals(new Prisma.Decimal(item.precioUnitario))) {
+      if (
+        itemData &&
+        !itemData.precio.equals(new Prisma.Decimal(item.precioUnitario))
+      ) {
         throw new HttpException(
           `El precio del ${item.tipo.toLowerCase()} ${item.titulo} ha cambiado`,
           HttpStatus.BAD_REQUEST,
@@ -154,7 +157,7 @@ export class OrdersService {
         },
       });
 
-      // Emitir evento de recurso creado para auditoría
+      // Auditoría
       try {
         this.eventEmitter.emit(EventTypes.RESOURCE_CREATED, {
           tableName: 'Orden',
@@ -169,9 +172,7 @@ export class OrdersService {
           },
           endpoint: '/orders',
         });
-      } catch (e) {
-        // No interrumpir el flujo de creación por errores de auditoría
-      }
+      } catch {}
 
       const orderItems = await Promise.all(
         validatedItems.map((vi) =>
@@ -179,7 +180,7 @@ export class OrdersService {
             data: {
               ordenId: order.id,
               tipo: vi.tipo,
-              refId: vi.refId, // number
+              refId: vi.refId,
               titulo: vi.titulo,
               cantidad: vi.cantidad,
               precioUnitario: new Prisma.Decimal(vi.precioUnitario) as any,
@@ -208,9 +209,7 @@ export class OrdersService {
   async getOrderItems(orderId: number) {
     const order = await this.prisma.orden.findUnique({
       where: { id: Number(orderId) },
-      include: {
-        items: true,
-      },
+      include: { items: true },
     });
     if (!order) return [];
     const enriched = await this.enrichOrdersWithImages([order]);
@@ -221,9 +220,7 @@ export class OrdersService {
     const orders = await this.prisma.orden.findMany({
       where: { usuarioId: Number(userId) },
       orderBy: { creadoEn: 'desc' },
-      include: {
-        items: true,
-      },
+      include: { items: true },
     });
     return this.enrichOrdersWithImages(orders);
   }
@@ -232,9 +229,7 @@ export class OrdersService {
     const orders = await this.prisma.orden.findMany({
       where: { usuarioId: Number(userId) },
       orderBy: { creadoEn: 'desc' },
-      include: {
-        items: true,
-      },
+      include: { items: true },
     });
     return this.enrichOrdersWithImages(orders);
   }
@@ -251,8 +246,10 @@ export class OrdersService {
         direccionFacturacion: true,
       },
     });
-    if (!order)
+
+    if (!order) {
       throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
+    }
 
     const [enriched] = await this.enrichOrdersWithImages([order]);
     return enriched;
@@ -261,9 +258,7 @@ export class OrdersService {
   async getOrderByReference(referencia: string) {
     const order = await this.prisma.orden.findFirst({
       where: { referenciaPago: referencia },
-      include: {
-        items: true,
-      },
+      include: { items: true },
     });
     if (!order) return null;
     const [enriched] = await this.enrichOrdersWithImages([order]);
@@ -276,22 +271,17 @@ export class OrdersService {
         id: Number(id),
         usuarioId: Number(userId),
       },
-      include: {
-        items: true,
-      },
+      include: { items: true },
     });
     if (!order) return null;
     const [enriched] = await this.enrichOrdersWithImages([order]);
     return enriched;
   }
 
-  /**
-   * Enriquece los items de la orden con la imagen/portada actual del producto/curso.
-   */
+  /** Enriquece items con imagen/portada actual */
   private async enrichOrdersWithImages(orders: any[]) {
     if (!orders.length) return orders;
 
-    // Recolectar IDs
     const productIds = new Set<number>();
     const courseIds = new Set<number>();
 
@@ -303,7 +293,6 @@ export class OrdersService {
       }
     }
 
-    // Consultar DB
     const [products, courses] = await Promise.all([
       productIds.size > 0
         ? this.prisma.producto.findMany({
@@ -319,11 +308,9 @@ export class OrdersService {
         : [],
     ]);
 
-    // Crear mapas
     const productMap = new Map(products.map((p) => [p.id, p.imagen]));
     const courseMap = new Map(courses.map((c) => [c.id, c.portada]));
 
-    // Asignar imágenes
     return orders.map((order) => {
       if (!order.items) return order;
       const enrichedItems = order.items.map((item: any) => {
@@ -351,20 +338,18 @@ export class OrdersService {
         usuarioId: Number(userId),
       },
     });
-    if (!order)
-      throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
 
-    // Si la orden ya está pagada y el nuevo estado también es PAGADO, no hacemos nada (Idempotencia)
+    if (!order) {
+      throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
+    }
+
     if (order.estado === EstadoOrden.PAGADO && estado === EstadoOrden.PAGADO) {
       return order;
     }
 
     const updated = await this.prisma.orden.update({
       where: { id: Number(orderId) },
-      data: {
-        estado,
-        referenciaPago,
-      },
+      data: { estado, referenciaPago },
       include: {
         items: true,
         direccionEnvio: true,
@@ -372,7 +357,6 @@ export class OrdersService {
       },
     });
 
-    // Emitir evento de recurso actualizado para auditoría
     try {
       this.eventEmitter.emit(EventTypes.RESOURCE_UPDATED, {
         tableName: 'Orden',
@@ -389,9 +373,7 @@ export class OrdersService {
         },
         endpoint: '/orders/update-status',
       });
-    } catch (e) {
-      // No interrumpir el flujo por errores de auditoría
-    }
+    } catch {}
 
     if (estado === EstadoOrden.PAGADO) {
       await this.createCourseEnrollments(Number(orderId), Number(userId));
@@ -405,6 +387,7 @@ export class OrdersService {
     orderId: number,
     userId: number,
     paymentData: MercadoPagoPaymentDto,
+    options?: { idempotencyKey?: string; requestId?: string },
   ) {
     const order = await this.getOrderById(orderId, userId);
     if (order.estado !== EstadoOrden.PENDIENTE) {
@@ -414,28 +397,112 @@ export class OrdersService {
       );
     }
 
+    const idemKey = options?.idempotencyKey || `pay-${order.id}`;
+
     try {
-      const paymentResult = await this.mpPaymentService.processPayment({
-        token: paymentData.token,
-        issuer_id: paymentData.issuerId, // ← Pasar issuerId
-        installments: paymentData.installments, // ← Pasar installments
-        payment_method_id: paymentData.paymentMethodId,
-        transaction_amount: Number(order.total),
-        description: `Pago Orden #${order.id}`,
-        external_reference: String(order.id),
-        payer: {
-          email: paymentData.email || 'default@example.com',
-          ...(paymentData.identificationType &&
-            paymentData.identificationNumber && {
-              identification: {
-                type: paymentData.identificationType,
-                number: paymentData.identificationNumber,
+      const metadatos = parseMetadatos(order.metadatos);
+      const prevAttempt = metadatos?.paymentAttempts?.[idemKey];
+
+      if (prevAttempt?.status === 'succeeded') {
+        return await this.getOrderById(orderId, userId);
+      }
+      if (prevAttempt?.status === 'started') {
+        const startedAt =
+          typeof prevAttempt?.createdAt === 'string'
+            ? Date.parse(prevAttempt.createdAt)
+            : NaN;
+
+        if (Number.isFinite(startedAt) && Date.now() - startedAt < 10000) {
+          throw new HttpException(
+            'Pago en progreso, reintentá en unos segundos',
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
+      await this.prisma.orden.update({
+        where: { id: order.id },
+        data: {
+          metadatos: json({
+            ...metadatos,
+            paymentAttempts: {
+              ...(metadatos?.paymentAttempts || {}),
+              [idemKey]: {
+                status: 'started',
+                createdAt: new Date().toISOString(),
               },
-            }),
+            },
+          }),
         },
       });
 
+      // Email
+      let payerEmail = paymentData.email;
+      if (!payerEmail) {
+        const user = await this.prisma.usuario.findUnique({
+          where: { id: userId },
+          select: { email: true },
+        });
+        payerEmail = user?.email;
+      }
+      if (!payerEmail) {
+        throw new HttpException(
+          'Email requerido para procesar el pago',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const paymentResult = await this.mpPaymentService.processPayment(
+        {
+          token: paymentData.token,
+          issuer_id: paymentData.issuerId,
+          installments: paymentData.installments,
+          payment_method_id: paymentData.paymentMethodId,
+          transaction_amount: Number(order.total),
+          description: `Pago Orden #${order.id}`,
+          external_reference: String(order.id),
+          payer: {
+            email: payerEmail,
+            ...(paymentData.identificationType &&
+              paymentData.identificationNumber && {
+                identification: {
+                  type: paymentData.identificationType,
+                  number: paymentData.identificationNumber,
+                },
+              }),
+          },
+        },
+        options,
+      );
+
       if (paymentResult.status === 'approved') {
+        const metaSuccess = parseMetadatos(
+          (
+            await this.prisma.orden.findUnique({
+              where: { id: order.id },
+              select: { metadatos: true },
+            })
+          )?.metadatos,
+        );
+
+        await this.prisma.orden.update({
+          where: { id: order.id },
+          data: {
+            metadatos: json({
+              ...metaSuccess,
+              paymentAttempts: {
+                ...(metaSuccess?.paymentAttempts || {}),
+                [idemKey]: {
+                  status: 'succeeded',
+                  mpPaymentId: String(paymentResult.id),
+                  statusDetail: paymentResult.status_detail,
+                  updatedAt: new Date().toISOString(),
+                },
+              },
+            }),
+          },
+        });
+
         return await this.updateOrderStatus(
           orderId,
           userId,
@@ -444,11 +511,69 @@ export class OrdersService {
         );
       }
 
+      // rejected -> failed
+      const metaRejected = parseMetadatos(
+        (
+          await this.prisma.orden.findUnique({
+            where: { id: order.id },
+            select: { metadatos: true },
+          })
+        )?.metadatos,
+      );
+
+      await this.prisma.orden.update({
+        where: { id: order.id },
+        data: {
+          metadatos: json({
+            ...metaRejected,
+            paymentAttempts: {
+              ...(metaRejected?.paymentAttempts || {}),
+              [idemKey]: {
+                status: 'failed',
+                error: `rejected:${paymentResult.status_detail ?? paymentResult.status}`,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }),
+        },
+      });
+
       throw new HttpException(
         `Pago rechazado: ${paymentResult.status_detail ?? paymentResult.status}`,
         HttpStatus.BAD_REQUEST,
       );
     } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      // failed
+      try {
+        const metaFail = parseMetadatos(
+          (
+            await this.prisma.orden.findUnique({
+              where: { id: orderId },
+              select: { metadatos: true },
+            })
+          )?.metadatos,
+        );
+
+        await this.prisma.orden.update({
+          where: { id: orderId },
+          data: {
+            metadatos: json({
+              ...metaFail,
+              paymentAttempts: {
+                ...(metaFail?.paymentAttempts || {}),
+                [idemKey]: {
+                  status: 'failed',
+                  error: error instanceof Error ? error.message : String(error),
+                  updatedAt: new Date().toISOString(),
+                },
+              },
+            }),
+          },
+        });
+      } catch {}
+
       const msg = error instanceof Error ? error.message : 'Error desconocido';
       throw new HttpException(
         `Error al procesar el pago: ${msg}`,
@@ -462,6 +587,7 @@ export class OrdersService {
     orderId: number,
     userId: number,
     subscriptionData: MercadoPagoSubscriptionDto,
+    options?: { idempotencyKey?: string; requestId?: string },
   ) {
     const order = await this.getOrderById(orderId, userId);
     if (order.estado !== EstadoOrden.PENDIENTE) {
@@ -481,12 +607,8 @@ export class OrdersService {
       );
     }
 
-    // Validación fuerte del token
     if (!subscriptionData.token || typeof subscriptionData.token !== 'string') {
-      throw new HttpException(
-        'Token de tarjeta faltante',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Token de tarjeta faltante', HttpStatus.BAD_REQUEST);
     }
     if (subscriptionData.token.length < 20) {
       throw new HttpException(
@@ -495,18 +617,72 @@ export class OrdersService {
       );
     }
 
+    const idemKey = options?.idempotencyKey || `sub-${order.id}`;
+
     try {
-      const subscriptionResult =
-        await this.mpSubscriptionService.createSubscription({
+      const metadatos = parseMetadatos(order.metadatos);
+      const prevAttempt = metadatos?.subscriptionAttempts?.[idemKey];
+
+      if (prevAttempt?.status === 'succeeded') {
+        return await this.getOrderById(orderId, userId);
+      }
+      if (prevAttempt?.status === 'started') {
+        const startedAt =
+          typeof prevAttempt?.createdAt === 'string'
+            ? Date.parse(prevAttempt.createdAt)
+            : NaN;
+
+        if (Number.isFinite(startedAt) && Date.now() - startedAt < 10000) {
+          throw new HttpException(
+            'Suscripción en progreso, reintentá en unos segundos',
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
+      await this.prisma.orden.update({
+        where: { id: order.id },
+        data: {
+          metadatos: json({
+            ...metadatos,
+            subscriptionAttempts: {
+              ...(metadatos?.subscriptionAttempts || {}),
+              [idemKey]: {
+                status: 'started',
+                createdAt: new Date().toISOString(),
+              },
+            },
+          }),
+        },
+      });
+
+      // Email
+      let payerEmail = subscriptionData.email;
+      if (!payerEmail) {
+        const user = await this.prisma.usuario.findUnique({
+          where: { id: userId },
+          select: { email: true },
+        });
+        payerEmail = user?.email;
+      }
+      if (!payerEmail) {
+        throw new HttpException(
+          'Email requerido para procesar la suscripción',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const subscriptionResult = await this.mpSubscriptionService.createSubscription(
+        {
           token: subscriptionData.token,
           payment_method_id: subscriptionData.paymentMethodId,
           transaction_amount: Number(order.total),
           description: `Suscripción mensual - Orden #${order.id}`,
-          external_reference: String(order.id), // ← string
+          external_reference: String(order.id),
           frequency: subscriptionData.frequency,
           frequency_type: subscriptionData.frequencyType,
           payer: {
-            email: subscriptionData.email || 'default@example.com',
+            email: payerEmail,
             ...(subscriptionData.identificationType &&
               subscriptionData.identificationNumber && {
                 identification: {
@@ -515,7 +691,9 @@ export class OrdersService {
                 },
               }),
           },
-        });
+        },
+        options,
+      );
 
       const subId = String(subscriptionResult.id);
 
@@ -528,6 +706,14 @@ export class OrdersService {
         const currentMeta = parseMetadatos(currentJson?.metadatos);
         const nextMetaObj = {
           ...currentMeta,
+          subscriptionAttempts: {
+            ...(currentMeta?.subscriptionAttempts || {}),
+            [idemKey]: {
+              status: 'succeeded',
+              mpPreapprovalId: subId,
+              updatedAt: new Date().toISOString(),
+            },
+          },
           subscription: {
             id: subId,
             frequency: subscriptionData.frequency,
@@ -557,25 +743,51 @@ export class OrdersService {
         });
 
         await this.createCourseEnrollments(Number(orderId), Number(userId));
-
         return updated;
       });
 
       return updatedOrder;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      // failed
+      try {
+        const metaFail = parseMetadatos(
+          (
+            await this.prisma.orden.findUnique({
+              where: { id: orderId },
+              select: { metadatos: true },
+            })
+          )?.metadatos,
+        );
+
+        await this.prisma.orden.update({
+          where: { id: orderId },
+          data: {
+            metadatos: json({
+              ...metaFail,
+              subscriptionAttempts: {
+                ...(metaFail?.subscriptionAttempts || {}),
+                [idemKey]: {
+                  status: 'failed',
+                  error: error instanceof Error ? error.message : String(error),
+                  updatedAt: new Date().toISOString(),
+                },
+              },
+            }),
+          },
+        });
+      } catch {}
+
       const msg = error instanceof Error ? error.message : 'Error desconocido';
       throw new HttpException(
-        `Error al crear la suscripción: ${msg}`,
+        `Error al procesar la suscripción: ${msg}`,
         HttpStatus.BAD_REQUEST,
       );
     }
   }
 
-  /**
-   * Cancela una suscripción existente
-   * @param orderId ID de la orden asociada a la suscripción
-   * @param userId ID del usuario que solicita la cancelación
-   */
+  /** Cancela una suscripción existente */
   async cancelSubscription(orderId: number, userId: number): Promise<any> {
     const order = await this.prisma.orden.findFirst({
       where: {
@@ -593,13 +805,12 @@ export class OrdersService {
     const subscriptionId = order.suscripcionId;
 
     if (!subscriptionId) {
-      throw new Error(
-        'No se encontró información de suscripción para esta orden',
-      );
+      throw new Error('No se encontró información de suscripción para esta orden');
     }
 
-    const cancelResult =
-      await this.mpSubscriptionService.cancelSubscription(subscriptionId);
+    const cancelResult = await this.mpSubscriptionService.cancelSubscription(
+      subscriptionId,
+    );
 
     const nextMetaObj = {
       ...metadatos,
@@ -622,40 +833,40 @@ export class OrdersService {
     return {
       message: 'Suscripción cancelada exitosamente',
       orderId: order.id,
-      subscriptionId: subscriptionId,
+      subscriptionId,
     };
   }
 
-  /** Webhook MP enruta por tipo de evento de suscripciones */
+  /** Webhook MP enruta por tipo de evento */
   async processMercadoPagoWebhook(
     eventType: string,
     dataId: number,
     webhookData: unknown,
   ) {
     if (!eventType || !dataId) {
-      throw new HttpException(
-        'Datos de webhook incompletos',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Datos de webhook incompletos', HttpStatus.BAD_REQUEST);
     }
 
     try {
       switch (eventType) {
-        case 'subscription_payment':
-          return await this.handleSubscriptionPayment(String(dataId));
+        case 'subscription_preapproval':
         case 'subscription_status_update':
           return await this.handleSubscriptionStatusUpdate(
             String(dataId),
             webhookData as Record<string, unknown>,
           );
-        case 'subscription_plan':
-          return { received: true, type: eventType };
+
+        case 'subscription_authorized_payment':
+        case 'subscription_payment':
         case 'payment':
-          // Procesar pagos recurrentes
           return await this.handleRecurringPayment(
             String(dataId),
             webhookData as Record<string, unknown>,
           );
+
+        case 'subscription_plan':
+          return { received: true, type: eventType };
+
         default:
           console.log(`Evento de webhook no manejado: ${eventType}`);
           return { received: true, type: eventType };
@@ -682,9 +893,7 @@ export class OrdersService {
     });
 
     if (!order) {
-      console.warn(
-        `No se encontró orden para la suscripción ${subscriptionId}`,
-      );
+      console.warn(`No se encontró orden para la suscripción ${subscriptionId}`);
       return { processed: false, reason: 'order_not_found' };
     }
 
@@ -707,12 +916,6 @@ export class OrdersService {
       },
     });
 
-    if (!isActive) {
-      console.log(
-        `Suscripción ${subscriptionId} cambió a estado: ${incomingStatus}`,
-      );
-    }
-
     return {
       processed: true,
       orderId: updatedOrder.id,
@@ -720,76 +923,20 @@ export class OrdersService {
     };
   }
 
-  /** Confirma pago recurrente y registra en PagoSuscripcion */
-  private async handleSubscriptionPayment(paymentId: string) {
-    try {
-      const paymentDetails = await this.mpPaymentService.getPayment(paymentId);
-
-      if (paymentDetails.status !== 'approved') {
-        console.warn(`Pago de suscripción rechazado: ${paymentId}`);
-        return { processed: false, status: paymentDetails.status };
-      }
-
-      // El campo subscription_id en el pago de MP asocia el pago con el preapproval
-      const subscriptionId = (paymentDetails as any).subscription_id;
-
-      if (!subscriptionId) {
-        console.warn(
-          `El pago ${paymentId} no tiene un subscription_id asociado`,
-        );
-        return { processed: false, reason: 'no_subscription_id' };
-      }
-
-      const order = await this.prisma.orden.findFirst({
-        where: { suscripcionId: subscriptionId },
-      });
-
-      if (!order) {
-        console.warn(`No se encontró orden para la suscripción ${subscriptionId}`);
-        return { processed: false, reason: 'order_not_found' };
-      }
-
-      // Evitar duplicados (Idempotencia)
-      const existingPayment = await this.prisma.pagoSuscripcion.findFirst({
-        where: { referenciaPago: paymentId },
-      });
-
-      if (existingPayment) {
-        return { processed: true, alreadyExists: true, orderId: order.id };
-      }
-
-      await this.prisma.pagoSuscripcion.create({
-        data: {
-          ordenId: order.id,
-          usuarioId: order.usuarioId,
-          referenciaPago: paymentId,
-          monto: new Prisma.Decimal(paymentDetails.transaction_amount),
-          estado: 'APROBADO',
-          metadatos: json({
-            subscriptionId,
-            paymentId,
-            status: paymentDetails.status,
-            dateApproved: paymentDetails.date_approved,
-          }),
-        },
-      });
-
-      // Renovar accesos
-      await this.renewCourseSubscriptions(order.usuarioId);
-
-      return { processed: true, orderId: order.id };
-    } catch (error) {
-      console.error(`Error en handleSubscriptionPayment:`, error);
-      throw error;
-    }
-  }
-
-  /** Maneja pagos recurrentes de suscripciones */
+  /** Maneja pagos recurrentes de suscripciones (única implementación) */
   private async handleRecurringPayment(
     paymentId: string,
     _data: Record<string, unknown>,
   ) {
     try {
+      // Idempotencia: check rápido
+      const existingPayment = await this.prisma.pagoSuscripcion.findFirst({
+        where: { referenciaPago: paymentId },
+      });
+      if (existingPayment) {
+        return { processed: true, alreadyExists: true };
+      }
+
       const paymentDetails = await this.mpPaymentService.getPayment(paymentId);
       if (!paymentDetails || paymentDetails.status !== 'approved') {
         return {
@@ -798,7 +945,6 @@ export class OrdersService {
         };
       }
 
-      // Verificar si es un pago de suscripción
       const subscriptionId = (paymentDetails as any).subscription_id;
       if (!subscriptionId) {
         return { processed: false, reason: 'not_subscription_payment' };
@@ -807,34 +953,38 @@ export class OrdersService {
       const order = await this.prisma.orden.findFirst({
         where: { suscripcionId: subscriptionId },
       });
-
       if (!order) {
         return { processed: false, reason: 'order_not_found' };
       }
 
-      await this.prisma.pagoSuscripcion.create({
-        data: {
-          ordenId: order.id, // number
-          usuarioId: order.usuarioId,
-          referenciaPago: paymentId,
-          monto: (paymentDetails as any).transaction_amount as any,
-          estado: 'APROBADO',
-          metadatos: json({
-            subscriptionId,
-            paymentId,
-          }),
-        },
-      });
+      try {
+        await this.prisma.pagoSuscripcion.create({
+          data: {
+            ordenId: order.id,
+            usuarioId: order.usuarioId,
+            referenciaPago: paymentId,
+            monto: new Prisma.Decimal(paymentDetails.transaction_amount),
+            estado: 'APROBADO',
+            metadatos: json({
+              subscriptionId,
+              paymentId,
+              status: paymentDetails.status,
+              dateApproved: paymentDetails.date_approved,
+            }),
+          },
+        });
+      } catch (e: any) {
+        if (e?.code === 'P2002') {
+          return { processed: true, alreadyExists: true };
+        }
+        throw e;
+      }
 
       await this.renewCourseSubscriptions(order.usuarioId);
-
       return { processed: true, orderId: order.id };
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(
-        `Error al procesar pago recurrente: ${msg}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      console.error(`Error en handleRecurringPayment:`, error);
+      throw error;
     }
   }
 
@@ -853,17 +1003,9 @@ export class OrdersService {
         const subscription = progreso.subscription;
 
         const endDate = new Date();
-        if (
-          subscription.durationType === 'mes' ||
-          subscription.durationType === 'meses'
-        ) {
-          endDate.setMonth(
-            endDate.getMonth() + parseInt(subscription.duration),
-          );
-        } else if (
-          subscription.durationType === 'día' ||
-          subscription.durationType === 'días'
-        ) {
+        if (subscription.durationType === 'mes' || subscription.durationType === 'meses') {
+          endDate.setMonth(endDate.getMonth() + parseInt(subscription.duration));
+        } else if (subscription.durationType === 'día' || subscription.durationType === 'días') {
           endDate.setDate(endDate.getDate() + parseInt(subscription.duration));
         }
 
@@ -893,9 +1035,7 @@ export class OrdersService {
 
     if (!order) return;
 
-    const courseItems = order.items.filter(
-      (i) => i.tipo === TipoItemOrden.CURSO,
-    );
+    const courseItems = order.items.filter((i) => i.tipo === TipoItemOrden.CURSO);
     if (!courseItems.length) return;
 
     const enrollmentResults = await Promise.all(
@@ -919,7 +1059,6 @@ export class OrdersService {
           },
         });
 
-        // Emitir evento para auditoría y notificaciones
         this.eventEmitter.emit(EventTypes.RESOURCE_CREATED, {
           tableName: 'Inscripcion',
           recordId: String(enrollment.id),
@@ -928,7 +1067,7 @@ export class OrdersService {
             usuarioId: enrollment.usuarioId,
             cursoId: enrollment.cursoId,
             estado: enrollment.estado,
-            orderId: orderId,
+            orderId,
           },
         });
 

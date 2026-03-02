@@ -21,6 +21,11 @@ export interface MercadoPagoSubscriptionData {
   };
 }
 
+export interface MercadoPagoSubscriptionOptions {
+  idempotencyKey?: string;
+  requestId?: string;
+}
+
 @Injectable()
 export class MpSubscriptionService {
   private readonly client: MercadoPagoConfig;
@@ -42,6 +47,7 @@ export class MpSubscriptionService {
 
   async createSubscription(
     subscriptionData: MercadoPagoSubscriptionData,
+    options?: MercadoPagoSubscriptionOptions,
   ): Promise<any> {
     try {
       // Suscripción SIN plan asociado, con pago autorizado
@@ -65,13 +71,12 @@ export class MpSubscriptionService {
 
       console.log('=== BACKEND: Creando suscripción en MercadoPago (Service) ===', {
         reason: preapprovalPayload.reason,
-        email: preapprovalPayload.payer_email,
-        tokenPrefix: preapprovalPayload.card_token_id?.substring(0, 10),
         amount: preapprovalPayload.auto_recurring.transaction_amount,
         ref: preapprovalPayload.external_reference,
+        // Sanitizado: no loguear token ni email
       });
 
-      const idemKey = `subscription-${preapprovalPayload.external_reference}-${Date.now()}`;
+      const idemKey = options?.idempotencyKey || `sub-${preapprovalPayload.external_reference}`;
 
       // Usar fetch directo ya que el SDK a veces tiene tipos incompletos para Preapproval complejo
       const response = await fetch('https://api.mercadopago.com/preapproval', {
@@ -80,6 +85,7 @@ export class MpSubscriptionService {
           Authorization: `Bearer ${this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN')}`,
           'Content-Type': 'application/json',
           'X-Idempotency-Key': idemKey,
+          ...(options?.requestId ? { 'X-Request-Id': options.requestId } : {}),
         },
         body: JSON.stringify(preapprovalPayload),
       });

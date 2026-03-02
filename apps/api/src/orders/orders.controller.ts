@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -100,14 +101,18 @@ export class OrdersController {
     @CurrentUser() user: JwtUser,
     @Param('id') orderId: number,
     @Body() paymentData: MercadoPagoPaymentDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string,
+    @Headers('x-request-id') requestId?: string,
   ) {
     try {
       return await this.ordersService.processMercadoPagoPayment(
         orderId,
         user.sub,
         paymentData,
+        { idempotencyKey, requestId },
       );
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
         (error as Error).message || 'Error al procesar el pago con MercadoPago',
         HttpStatus.BAD_REQUEST,
@@ -120,14 +125,18 @@ export class OrdersController {
     @CurrentUser() user: JwtUser,
     @Param('id') orderId: number,
     @Body() subscriptionData: MercadoPagoSubscriptionDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string,
+    @Headers('x-request-id') requestId?: string,
   ) {
     try {
       return await this.ordersService.createMercadoPagoSubscription(
         orderId,
         user.sub,
         subscriptionData,
+        { idempotencyKey, requestId },
       );
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
         (error as Error).message ||
           'Error al crear la suscripción con MercadoPago',
