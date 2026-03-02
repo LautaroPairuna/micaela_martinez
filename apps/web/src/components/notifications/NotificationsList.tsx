@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Bell, MessageCircle, Heart, AtSign, Trash2, Check, CheckCheck, Loader2, Clock } from 'lucide-react';
+import { Bell, MessageCircle, Heart, AtSign, Trash2, Check, CheckCheck, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
@@ -23,6 +23,9 @@ const getNotificationIcon = (tipo: AppNotification['tipo']) => {
       return <Heart className="h-4 w-4" />;
     case 'MENCION':
       return <AtSign className="h-4 w-4" />;
+    case 'SUSCRIPCION_POR_VENCER': // Nuevo tipo
+    case 'SISTEMA':
+      return <AlertTriangle className="h-4 w-4 text-[var(--gold)]" />;
     default:
       return <Bell className="h-4 w-4" />;
   }

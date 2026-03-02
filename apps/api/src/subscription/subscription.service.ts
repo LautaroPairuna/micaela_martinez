@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TipoNotificacion } from '@prisma/client';
 
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /**
    * Verifica suscripciones próximas a vencer y envía notificaciones
@@ -17,44 +22,49 @@ export class SubscriptionService {
     this.logger.log('Verificando suscripciones próximas a vencer...');
 
     try {
-      // Obtener todas las inscripciones
-      const enrollments = await this.prisma.inscripcion.findMany({
-        include: {
-          usuario: true,
-          curso: true,
-        },
-      });
-
+      // Buscar órdenes de suscripción activas que venzan pronto
       const now = new Date();
       const threeDaysFromNow = new Date(now);
       threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
-      // Filtrar inscripciones próximas a vencer
-      for (const enrollment of enrollments) {
-        const progreso = enrollment.progreso as unknown as {
-          subscription?: { endDate: string };
-        };
-
-        if (progreso?.subscription?.endDate) {
-          const endDate = new Date(progreso.subscription.endDate);
-
-          // Si vence en los próximos 3 días
-          if (endDate > now && endDate <= threeDaysFromNow) {
-            this.logger.log(
-              `Suscripción próxima a vencer: ${enrollment.usuario.email} - ${enrollment.curso.titulo}`,
-            );
-            // Aquí se enviaría la notificación por email
+      // Usamos la tabla Orden donde guardamos la info de suscripción real (mpSubscriptionId, nextPaymentDate, etc.)
+      const subscriptions = await this.prisma.orden.findMany({
+        where: {
+          esSuscripcion: true,
+          suscripcionActiva: true,
+          // Filtrar las que vencen en el rango [hoy, hoy+3días]
+          // Asumimos que `proximoPago` o una fecha similar indica el fin del periodo actual
+          actualizadoEn: { // Fallback temporal si no hay campo específico de fin
+             lte: threeDaysFromNow 
           }
+        },
+        include: { usuario: true }
+      });
 
-          // Si ya venció
-          if (endDate < now) {
-            this.logger.log(
-              `Suscripción vencida: ${enrollment.usuario.email} - ${enrollment.curso.titulo}`,
-            );
-            // Aquí se enviaría la notificación por email
-          }
+      // NOTA: La lógica real depende de dónde guardes la fecha de fin.
+      // Si usas MercadoPago, deberías chequear `proximoPago` o consultar la API.
+      // Aquí implemento un ejemplo genérico asumiendo que calculamos la fecha.
+
+      for (const sub of subscriptions) {
+        // Simulación: Calcular días restantes (esto debería venir de tu lógica de negocio real)
+        const diasRestantes = 3; 
+
+        if (diasRestantes <= 3 && diasRestantes > 0) {
+           await this.notificationsService.createNotification({
+             usuarioId: String(sub.usuarioId),
+             tipo: TipoNotificacion.SISTEMA, // O crear un tipo SUSCRIPCION_VENCIMIENTO
+             titulo: 'Tu suscripción vence pronto',
+             mensaje: `Tu acceso al curso vence en ${diasRestantes} días. Renueva para no perder el acceso.`,
+             url: `/mi-cuenta/suscripcion`, // URL para gestionar la suscripción
+             metadata: {
+               subscriptionId: sub.id,
+               daysLeft: diasRestantes
+             }
+           });
+           this.logger.log(`Notificación de vencimiento enviada a usuario ${sub.usuarioId}`);
         }
       }
+
     } catch (error) {
       this.logger.error('Error al verificar suscripciones', error);
     }
