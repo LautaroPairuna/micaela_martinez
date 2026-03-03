@@ -55,7 +55,7 @@ export class OrdersService {
     } = createOrderDto;
 
     // Validar items y calcular total
-    let total = 0;
+    let total = new Prisma.Decimal(0);
     const validatedItems: {
       tipo: TipoItemOrden;
       refId: number;
@@ -93,103 +93,72 @@ export class OrdersService {
         }
       }
 
-      if (
-        itemData &&
-        !itemData.precio.equals(new Prisma.Decimal(item.precioUnitario))
-      ) {
+      const dbPrice = itemData?.precio;
+      if (!dbPrice) {
+        throw new HttpException('Item inválido o sin precio', HttpStatus.BAD_REQUEST);
+      }
+
+      // Normalizar el precio que vino del FE
+      const fePrice = new Prisma.Decimal(
+        typeof item.precioUnitario === 'string'
+          ? String(item.precioUnitario).trim().replace(',', '.')
+          : item.precioUnitario ?? 0,
+      );
+
+      // Comparar con el precio de DB
+      if (!dbPrice.equals(fePrice)) {
+        console.error('PRICE_MISMATCH', {
+          tipo: item.tipo,
+          refId: refIdNum,
+          titulo: item.titulo,
+          db: dbPrice.toString(),
+          fe: fePrice.toString(),
+        });
+        
         throw new HttpException(
-          `El precio del ${item.tipo.toLowerCase()} ${item.titulo} ha cambiado`,
-          HttpStatus.BAD_REQUEST,
+          {
+            code: 'PRICE_CHANGED',
+            message: `El precio del ${item.tipo.toLowerCase()} "${item.titulo}" ha cambiado. Por favor actualiza tu carrito.`,
+            currentPrice: dbPrice.toString(),
+            receivedPrice: fePrice.toString(),
+          },
+          HttpStatus.CONFLICT,
         );
       }
 
-      total += Number(item.precioUnitario) * item.cantidad;
+      // Usar Decimal para sumar al total
+      total = total.add(dbPrice.mul(item.cantidad));
+
       validatedItems.push({
         tipo: item.tipo,
         refId: refIdNum,
         titulo: item.titulo,
         cantidad: item.cantidad,
-        precioUnitario: item.precioUnitario,
+        precioUnitario: dbPrice.toNumber(), // Guardamos el precio oficial de DB
       });
     }
 
-    return await this.prisma.$transaction(async (tx) => {
-      const shippingAddress = await tx.direccion.create({
-        data: {
-          usuarioId: Number(userId),
-          ...direccionEnvio,
-          pais: direccionEnvio.pais || 'AR',
+    // Crear orden en DB
+    return await this.prisma.orden.create({
+      data: {
+        usuarioId: userId,
+        total: total,
+        estado: EstadoOrden.PENDIENTE,
+        moneda: moneda || 'ARS',
+        referenciaPago,
+        items: {
+          create: validatedItems.map((item) => ({
+            tipo: item.tipo,
+            refId: item.refId,
+            titulo: item.titulo,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+          })),
         },
-      });
-
-      let billingAddressId = shippingAddress.id;
-      if (direccionFacturacion) {
-        const billingAddress = await tx.direccion.create({
-          data: {
-            usuarioId: Number(userId),
-            ...direccionFacturacion,
-            pais: direccionFacturacion.pais || 'AR',
-          },
-        });
-        billingAddressId = billingAddress.id;
-      }
-
-      const order = await tx.orden.create({
-        data: {
-          usuarioId: Number(userId),
-          estado: EstadoOrden.PENDIENTE,
-          total: new Prisma.Decimal(total) as any,
-          moneda: moneda || 'ARS',
-          referenciaPago,
-          direccionEnvioId: shippingAddress.id,
-          direccionFacturacionId: billingAddressId,
-          esSuscripcion: false,
-          suscripcionActiva: null,
-          suscripcionId: null,
-          suscripcionFrecuencia: null,
-          suscripcionTipoFrecuencia: null,
-          // metadatos: omitido
-        },
-        include: {
-          direccionEnvio: true,
-          direccionFacturacion: true,
-          items: true,
-        },
-      });
-
-      // Auditoría
-      try {
-        this.eventEmitter.emit(EventTypes.RESOURCE_CREATED, {
-          tableName: 'Orden',
-          action: 'create',
-          recordId: order.id,
-          userId: Number(userId),
-          data: {
-            estado: order.estado,
-            total: order.total,
-            moneda: order.moneda,
-            referenciaPago: order.referenciaPago,
-          },
-          endpoint: '/orders',
-        });
-      } catch {}
-
-      const orderItems = await Promise.all(
-        validatedItems.map((vi) =>
-          tx.itemOrden.create({
-            data: {
-              ordenId: order.id,
-              tipo: vi.tipo,
-              refId: vi.refId,
-              titulo: vi.titulo,
-              cantidad: vi.cantidad,
-              precioUnitario: new Prisma.Decimal(vi.precioUnitario) as any,
-            },
-          }),
-        ),
-      );
-
-      return { ...order, items: orderItems };
+      },
+      include: {
+        items: true,
+      },
     });
   }
 
