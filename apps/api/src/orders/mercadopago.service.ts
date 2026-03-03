@@ -90,6 +90,12 @@ export class MercadoPagoService {
     subscriptionData: MercadoPagoSubscriptionData,
   ): Promise<any> {
     try {
+      // Obtener y normalizar la URL de retorno
+      let backUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+      if (!backUrl.startsWith('http://') && !backUrl.startsWith('https://')) {
+        backUrl = `https://${backUrl}`;
+      }
+
       // Suscripción SIN plan asociado, con pago autorizado
       // Docs: POST /preapproval con card_token_id y status="authorized"
       // IMPORTANTE: Para suscripciones sin plan (Preapproval), MP requiere 'card_token_id'
@@ -104,9 +110,7 @@ export class MercadoPagoService {
           transaction_amount: subscriptionData.transaction_amount,
           currency_id: 'ARS',
         },
-        back_url:
-          this.configService.get<string>('FRONTEND_URL') ||
-          'http://localhost:3000',
+        back_url: backUrl,
         status: 'authorized',
       };
 

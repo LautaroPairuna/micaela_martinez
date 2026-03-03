@@ -50,24 +50,28 @@ export class MpSubscriptionService {
     options?: MercadoPagoSubscriptionOptions,
   ): Promise<any> {
     try {
-      // Suscripción SIN plan asociado, con pago autorizado
-      // Docs: POST /preapproval con card_token_id y status="authorized"
-      const preapprovalPayload = {
-        reason: subscriptionData.description,
-        external_reference: subscriptionData.external_reference,
-        payer_email: subscriptionData.payer.email,
-        card_token_id: subscriptionData.token, // Token de la tarjeta generado por Bricks (Card Payment Brick)
-        auto_recurring: {
-          frequency: subscriptionData.frequency,
-          frequency_type: subscriptionData.frequency_type,
-          transaction_amount: subscriptionData.transaction_amount,
-          currency_id: 'ARS',
-        },
-        back_url:
-          this.configService.get<string>('FRONTEND_URL') ||
-          'http://localhost:3000',
-        status: 'authorized',
-      };
+    // Obtener y normalizar la URL de retorno
+    let backUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    if (!backUrl.startsWith('http://') && !backUrl.startsWith('https://')) {
+      backUrl = `https://${backUrl}`;
+    }
+
+    // Suscripción SIN plan asociado, con pago autorizado
+    // Docs: POST /preapproval con card_token_id y status="authorized"
+    const preapprovalPayload = {
+      reason: subscriptionData.description,
+      external_reference: subscriptionData.external_reference,
+      payer_email: subscriptionData.payer.email,
+      card_token_id: subscriptionData.token, // Token de la tarjeta generado por Bricks (Card Payment Brick)
+      auto_recurring: {
+        frequency: subscriptionData.frequency,
+        frequency_type: subscriptionData.frequency_type,
+        transaction_amount: subscriptionData.transaction_amount,
+        currency_id: 'ARS',
+      },
+      back_url: backUrl,
+      status: 'authorized',
+    };
 
       console.log('=== BACKEND: Creando suscripción en MercadoPago (Service) ===', {
         reason: preapprovalPayload.reason,
