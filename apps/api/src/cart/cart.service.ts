@@ -263,32 +263,36 @@ export class CartService {
     if (!cart || !cart.items) return cart;
 
     // Mapear imágenes para que el frontend reciba rutas relativas válidas (/uploads/...)
-     cart.items = cart.items.map((item: any) => {
-       if (item.producto) {
-         // Asegurar que imagen tenga la ruta completa
-         if (item.producto.imagen && !item.producto.imagen.startsWith('/')) {
-           item.producto.imagen = ImageUrlUtil.getProductImageUrl(item.producto.imagen);
-         }
-         
-         if (Array.isArray(item.producto.imagenes)) {
-           item.producto.imagenes = item.producto.imagenes.map((img: any) => ({
-             ...img,
-             url: img.url || ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
-           }));
-         }
+    cart.items = cart.items.map((item: any) => {
+      if (item.producto) {
+        // Asegurar que imagen tenga la ruta completa
+        if (item.producto.imagen && !item.producto.imagen.startsWith('/')) {
+          item.producto.imagen = ImageUrlUtil.getProductImageUrl(
+            item.producto.imagen,
+          );
+        }
 
-         // Fallback: si 'imagen' es null pero hay 'imagenes', poblar 'imagen'
-         if (!item.producto.imagen && item.producto.imagenes?.length > 0) {
-           item.producto.imagen = item.producto.imagenes[0].url;
-         }
-       }
-       if (item.curso) {
-         if (item.curso.portada && !item.curso.portada.startsWith('/')) {
-           item.curso.portada = ImageUrlUtil.getCourseImageUrl(item.curso.portada);
-         }
-       }
-       return item;
-     });
+        if (Array.isArray(item.producto.imagenes)) {
+          item.producto.imagenes = item.producto.imagenes.map((img: any) => ({
+            ...img,
+            url: img.url || ImageUrlUtil.getProductGalleryImageUrl(img.archivo),
+          }));
+        }
+
+        // Fallback: si 'imagen' es null pero hay 'imagenes', poblar 'imagen'
+        if (!item.producto.imagen && item.producto.imagenes?.length > 0) {
+          item.producto.imagen = item.producto.imagenes[0].url;
+        }
+      }
+      if (item.curso) {
+        if (item.curso.portada && !item.curso.portada.startsWith('/')) {
+          item.curso.portada = ImageUrlUtil.getCourseImageUrl(
+            item.curso.portada,
+          );
+        }
+      }
+      return item;
+    });
 
     return cart;
   }

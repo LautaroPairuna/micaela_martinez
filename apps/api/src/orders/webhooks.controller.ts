@@ -23,11 +23,22 @@ export class WebhooksController {
   @HttpCode(HttpStatus.OK)
   async handleMercadoPagoWebhook(
     @Body() webhookData: any,
-    @Query('type') eventType: string,
-    @Query('data.id') dataId: number,
+    @Query('type') queryType: string,
+    @Query('data.id') queryDataId: string,
     @Headers('x-signature') signature: string,
     @Headers('x-request-id') requestId: string,
   ) {
+    // Normalizar ID y Tipo (MP puede mandarlos en Query o Body)
+    const dataId = Number(
+      queryDataId || webhookData?.data?.id || webhookData?.id,
+    );
+    const eventType = queryType || webhookData?.type;
+
+    if (!dataId || !eventType) {
+      console.warn('[Webhook MP] Datos incompletos:', { eventType, dataId });
+      return { status: 'ignored', message: 'Missing id or type' };
+    }
+
     // 1. Validar firma del webhook (Seguridad)
     this.validateSignature(signature, requestId, dataId);
 
@@ -37,8 +48,8 @@ export class WebhooksController {
 
     try {
       return await this.ordersService.processMercadoPagoWebhook(
-        eventType || webhookData.type,
-        dataId || webhookData.data?.id,
+        eventType,
+        dataId,
         webhookData,
       );
     } catch (error) {

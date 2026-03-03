@@ -38,6 +38,7 @@ export interface MercadoPagoPaymentResponse {
   date_approved?: string;
   payment_method_id: string;
   payment_type_id: string;
+  subscription_id?: string;
 }
 
 export interface MercadoPagoPaymentOptions {
@@ -118,7 +119,8 @@ export class MpPaymentService {
 
       // Configuración de binary_mode desde variables de entorno
       // Por defecto false para maximizar compatibilidad con 3DS y validaciones de fraude
-      const binaryMode = this.configService.get<string>('MP_BINARY_MODE') === 'true';
+      const binaryMode =
+        this.configService.get<string>('MP_BINARY_MODE') === 'true';
 
       const paymentRequest = {
         token: paymentData.token,
@@ -148,7 +150,8 @@ export class MpPaymentService {
       });
 
       // Idempotency Key: Usar la provista por el frontend o generar una estable basada en la referencia
-      const idempotencyKey = options?.idempotencyKey || `pay-${paymentData.external_reference}`;
+      const idempotencyKey =
+        options?.idempotencyKey || `pay-${paymentData.external_reference}`;
 
       const response = await this.payment.create({
         body: paymentRequest,

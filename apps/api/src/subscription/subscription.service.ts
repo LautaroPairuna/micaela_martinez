@@ -34,11 +34,12 @@ export class SubscriptionService {
           suscripcionActiva: true,
           // Filtrar las que vencen en el rango [hoy, hoy+3días]
           // Asumimos que `proximoPago` o una fecha similar indica el fin del periodo actual
-          actualizadoEn: { // Fallback temporal si no hay campo específico de fin
-             lte: threeDaysFromNow 
-          }
+          actualizadoEn: {
+            // Fallback temporal si no hay campo específico de fin
+            lte: threeDaysFromNow,
+          },
         },
-        include: { usuario: true }
+        include: { usuario: true },
       });
 
       // NOTA: La lógica real depende de dónde guardes la fecha de fin.
@@ -47,42 +48,47 @@ export class SubscriptionService {
 
       for (const sub of subscriptions) {
         let diasRestantes = 0;
-        
+
         // Intentar obtener fecha de vencimiento real de metadatos o calcularla
         const meta = sub.metadatos as any;
-        let fechaVencimiento = meta?.subscription?.nextPaymentDate ? new Date(meta.subscription.nextPaymentDate) : null;
-        
+        let fechaVencimiento = meta?.subscription?.nextPaymentDate
+          ? new Date(meta.subscription.nextPaymentDate)
+          : null;
+
         // Si no hay fecha explicita, estimamos basada en la última actualización + 30 días (mensual por defecto)
         if (!fechaVencimiento) {
-            const ultimaActualizacion = new Date(sub.actualizadoEn);
-            const frecuenciaMeses = sub.suscripcionFrecuencia || 1; // Default 1 mes
-            // Sumar meses
-            fechaVencimiento = new Date(ultimaActualizacion);
-            fechaVencimiento.setMonth(fechaVencimiento.getMonth() + frecuenciaMeses);
+          const ultimaActualizacion = new Date(sub.actualizadoEn);
+          const frecuenciaMeses = sub.suscripcionFrecuencia || 1; // Default 1 mes
+          // Sumar meses
+          fechaVencimiento = new Date(ultimaActualizacion);
+          fechaVencimiento.setMonth(
+            fechaVencimiento.getMonth() + frecuenciaMeses,
+          );
         }
 
         // Calcular días restantes
         if (fechaVencimiento) {
-            const diffTime = fechaVencimiento.getTime() - now.getTime();
-            diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const diffTime = fechaVencimiento.getTime() - now.getTime();
+          diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         }
 
         if (diasRestantes <= 3 && diasRestantes > 0) {
-           await this.notificationsService.createNotification({
-             usuarioId: String(sub.usuarioId),
-             tipo: TipoNotificacion.SISTEMA, // O crear un tipo SUSCRIPCION_VENCIMIENTO
-             titulo: 'Tu suscripción vence pronto',
-             mensaje: `Tu acceso al curso vence en ${diasRestantes} días. Renueva para no perder el acceso.`,
-             url: `/mi-cuenta/suscripcion`, // URL para gestionar la suscripción
-             metadata: {
-               subscriptionId: sub.id,
-               daysLeft: diasRestantes
-             }
-           });
-           this.logger.log(`Notificación de vencimiento enviada a usuario ${sub.usuarioId} (vence en ${diasRestantes} días)`);
+          await this.notificationsService.createNotification({
+            usuarioId: String(sub.usuarioId),
+            tipo: TipoNotificacion.SISTEMA, // O crear un tipo SUSCRIPCION_VENCIMIENTO
+            titulo: 'Tu suscripción vence pronto',
+            mensaje: `Tu acceso al curso vence en ${diasRestantes} días. Renueva para no perder el acceso.`,
+            url: `/mi-cuenta/suscripcion`, // URL para gestionar la suscripción
+            metadata: {
+              subscriptionId: sub.id,
+              daysLeft: diasRestantes,
+            },
+          });
+          this.logger.log(
+            `Notificación de vencimiento enviada a usuario ${sub.usuarioId} (vence en ${diasRestantes} días)`,
+          );
         }
       }
-
     } catch (error) {
       this.logger.error('Error al verificar suscripciones', error);
     }
@@ -168,11 +174,11 @@ export class SubscriptionService {
         };
       };
       const subscriptionMeta = metadatos.subscription || {};
-      
-      const nextPaymentDate = subscriptionMeta.nextPaymentDate 
-        ? new Date(subscriptionMeta.nextPaymentDate) 
+
+      const nextPaymentDate = subscriptionMeta.nextPaymentDate
+        ? new Date(subscriptionMeta.nextPaymentDate)
         : null;
-      
+
       let daysLeft = null;
       let hoursLeft = null;
 

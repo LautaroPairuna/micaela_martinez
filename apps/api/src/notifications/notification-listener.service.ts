@@ -106,7 +106,7 @@ export class NotificationListenerService {
       } else if (action === 'updated') {
         const estado = data?.estado;
         if (estado && estado !== prevData?.estado) {
-           richMessage = `Orden #${resourceId} cambió a estado: ${estado}`;
+          richMessage = `Orden #${resourceId} cambió a estado: ${estado}`;
         }
       }
     } else if (resourceType === 'Usuario') {
@@ -115,35 +115,54 @@ export class NotificationListenerService {
       } else if (action === 'updated') {
         // Detectar cambios de rol si es posible, o campos clave
         if (data?.rol && data.rol !== prevData?.rol) {
-           richMessage = `Usuario ${resourceName || resourceId} cambió de rol a: ${data.rol}`;
+          richMessage = `Usuario ${resourceName || resourceId} cambió de rol a: ${data.rol}`;
         }
       }
     } else if (resourceType === 'Producto') {
       if (action === 'updated') {
-        if (data?.stock !== undefined && prevData?.stock !== undefined && data.stock !== prevData.stock) {
-           richMessage = `Producto "${resourceName}" stock actualizado: ${prevData.stock} ➝ ${data.stock}`;
-        } else if (data?.precio !== undefined && prevData?.precio !== undefined && data.precio !== prevData.precio) {
-           richMessage = `Producto "${resourceName}" precio actualizado: $${prevData.precio} ➝ $${data.precio}`;
-           
-           // Detectar bajada de precio para notificar a favoritos
-           if (data.precio < prevData.precio) {
-             const discount = Math.round(((prevData.precio - data.precio) / prevData.precio) * 100);
-             // Ejecutar en segundo plano para no bloquear el listener
-             this.notificationsService.notifyProductDiscount(
-               String(resourceId),
-               resourceName || 'Producto',
-               data.precio,
-               discount
-             ).catch(err => this.logger.error(`Error notificando descuento: ${err.message}`));
-           }
+        if (
+          data?.stock !== undefined &&
+          prevData?.stock !== undefined &&
+          data.stock !== prevData.stock
+        ) {
+          richMessage = `Producto "${resourceName}" stock actualizado: ${prevData.stock} ➝ ${data.stock}`;
+        } else if (
+          data?.precio !== undefined &&
+          prevData?.precio !== undefined &&
+          data.precio !== prevData.precio
+        ) {
+          richMessage = `Producto "${resourceName}" precio actualizado: $${prevData.precio} ➝ $${data.precio}`;
+
+          // Detectar bajada de precio para notificar a favoritos
+          if (data.precio < prevData.precio) {
+            const discount = Math.round(
+              ((prevData.precio - data.precio) / prevData.precio) * 100,
+            );
+            // Ejecutar en segundo plano para no bloquear el listener
+            this.notificationsService
+              .notifyProductDiscount(
+                String(resourceId),
+                resourceName || 'Producto',
+                data.precio,
+                discount,
+              )
+              .catch((err) =>
+                this.logger.error(
+                  `Error notificando descuento: ${err.message}`,
+                ),
+              );
+          }
         }
       }
     } else if (resourceType === 'Curso') {
       if (action === 'updated') {
-         if (data?.publicado !== undefined && data.publicado !== prevData?.publicado) {
-            const estado = data.publicado ? 'PUBLICADO' : 'OCULTO';
-            richMessage = `Curso "${resourceName}" ahora está ${estado}`;
-         }
+        if (
+          data?.publicado !== undefined &&
+          data.publicado !== prevData?.publicado
+        ) {
+          const estado = data.publicado ? 'PUBLICADO' : 'OCULTO';
+          richMessage = `Curso "${resourceName}" ahora está ${estado}`;
+        }
       }
     }
 
@@ -152,7 +171,8 @@ export class NotificationListenerService {
       const changedFields = this.detectChangedFields(data, prevData);
       if (changedFields.length > 0) {
         const fieldNames = changedFields.slice(0, 3).join(', ');
-        const more = changedFields.length > 3 ? ` y ${changedFields.length - 3} más` : '';
+        const more =
+          changedFields.length > 3 ? ` y ${changedFields.length - 3} más` : '';
         richMessage = `${resourceType} "${resourceName || resourceId}" actualizado: ${fieldNames}${more}`;
       }
     }
@@ -212,7 +232,7 @@ export class NotificationListenerService {
       'emailVerificadoEn',
       'deleted',
       'eliminado',
-      
+
       // Datos sensibles y técnicos
       'password',
       'passwordHash',
@@ -221,7 +241,7 @@ export class NotificationListenerService {
       'metadata',
       'token',
       'refreshToken',
-      
+
       // Claves foráneas (IDs de relaciones)
       'usuarioId',
       'roleId',
@@ -238,7 +258,7 @@ export class NotificationListenerService {
       'direccionFacturacionId',
       'refId', // ItemOrden
       'suscripcionId',
-      
+
       // Campos de auditoría interna o conteos
       'ratingProm',
       'ratingConteo',
@@ -336,7 +356,9 @@ export class NotificationListenerService {
         : 'actualizó';
 
       // Usar mensaje enriquecido si existe, sino construir el genérico
-      const message = data.richMessage || `${displayActor} ${actionVerb} ${String(data.meta?.resourceType || 'recurso').toLowerCase()} ${resourceLabel}`;
+      const message =
+        data.richMessage ||
+        `${displayActor} ${actionVerb} ${String(data.meta?.resourceType || 'recurso').toLowerCase()} ${resourceLabel}`;
 
       const notification = await this.prisma.notificacion.create({
         data: {

@@ -123,10 +123,7 @@ export class MediaController {
   }
 
   @Get('videos/:filename')
-  streamVideo(
-    @Param('filename') filename: string,
-    @Res() res: Response,
-  ) {
+  streamVideo(@Param('filename') filename: string, @Res() res: Response) {
     try {
       const { headers, status } = this.media.getAccelRedirect(filename);
       for (const [k, v] of Object.entries(headers)) res.setHeader(k, v);

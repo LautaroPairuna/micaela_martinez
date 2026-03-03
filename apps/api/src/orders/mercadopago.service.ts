@@ -42,6 +42,7 @@ interface MercadoPagoPaymentResponse {
   date_approved?: string;
   payment_method_id: string;
   payment_type_id: string;
+  subscription_id?: string;
 }
 
 @Injectable()
@@ -91,7 +92,9 @@ export class MercadoPagoService {
   ): Promise<any> {
     try {
       // Obtener y normalizar la URL de retorno
-      let backUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+      let backUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:3000';
       if (!backUrl.startsWith('http://') && !backUrl.startsWith('https://')) {
         backUrl = `https://${backUrl}`;
       }

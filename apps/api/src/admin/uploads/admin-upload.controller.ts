@@ -655,9 +655,8 @@ export class AdminUploadController {
         );
 
         // Ejecutamos la duración primero porque es instantánea (FFprobe)
-        const duration = await this.mediaStorage.getVideoDurationSeconds(
-          absoluteVideoPath,
-        );
+        const duration =
+          await this.mediaStorage.getVideoDurationSeconds(absoluteVideoPath);
         durationS = Math.round(duration);
 
         // Generamos VTT y Thumbnail

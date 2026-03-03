@@ -12,7 +12,9 @@ export function ConfirmationStep() {
 
   const { selectedPayment, reset, orderId } = useCheckout();
 
-  const { clear } = useCart();
+  const { clear, items } = useCart();
+
+  const hasCourses = items.some((i) => i.type === 'course');
 
   // El pedido ya fue procesado y pagado en el PaymentStep
   // Solo necesitamos mostrar la confirmación y limpiar el estado
@@ -84,6 +86,18 @@ export function ConfirmationStep() {
                   <p className="text-sm text-[var(--gold)]/80">
                     Recordá enviar el comprobante de transferencia por WhatsApp para confirmar tu
                     pago.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {hasCourses && !isTransferPayment && (
+              <div className="flex items-start gap-3 p-4 bg-blue-900/10 border border-blue-800/30 rounded-lg">
+                <Clock className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-left">
+                  <p className="font-medium text-blue-200">Activación de cursos</p>
+                  <p className="text-sm text-zinc-400 leading-relaxed">
+                    Tu suscripción está siendo procesada. La activación de tus cursos puede demorar entre <strong>2 a 5 horas</strong>. Te enviaremos una notificación en cuanto esté lista.
                   </p>
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { EventTypes } from '../events/event.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { MpPaymentService } from './services/mp-payment.service';
 import { MpSubscriptionService } from './services/mp-subscription.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { parseMetadatos } from './interfaces/orden-metadata.interface';
 
 import {
@@ -18,6 +19,7 @@ import {
   TipoItemOrden,
   EstadoInscripcion,
   ItemOrden,
+  TipoNotificacion,
 } from '@prisma/client';
 
 type SubscriptionStatus =
@@ -42,6 +44,7 @@ export class OrdersService {
     private readonly mpPaymentService: MpPaymentService,
     private readonly mpSubscriptionService: MpSubscriptionService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Crea una orden one-off (no suscripción) */
@@ -95,14 +98,17 @@ export class OrdersService {
 
       const dbPrice = itemData?.precio;
       if (!dbPrice) {
-        throw new HttpException('Item inválido o sin precio', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Item inválido o sin precio',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       // Normalizar el precio que vino del FE
       const fePrice = new Prisma.Decimal(
         typeof item.precioUnitario === 'string'
           ? String(item.precioUnitario).trim().replace(',', '.')
-          : item.precioUnitario ?? 0,
+          : (item.precioUnitario ?? 0),
       );
 
       // Comparar con el precio de DB
@@ -114,7 +120,7 @@ export class OrdersService {
           db: dbPrice.toString(),
           fe: fePrice.toString(),
         });
-        
+
         throw new HttpException(
           {
             code: 'PRICE_CHANGED',
@@ -577,7 +583,10 @@ export class OrdersService {
     }
 
     if (!subscriptionData.token || typeof subscriptionData.token !== 'string') {
-      throw new HttpException('Token de tarjeta faltante', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Token de tarjeta faltante',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     if (subscriptionData.token.length < 20) {
       throw new HttpException(
@@ -641,79 +650,90 @@ export class OrdersService {
         );
       }
 
-      const subscriptionResult = await this.mpSubscriptionService.createSubscription(
-        {
-          token: subscriptionData.token,
-          payment_method_id: subscriptionData.paymentMethodId,
-          transaction_amount: Number(order.total),
-          description: `Suscripción mensual - Orden #${order.id}`,
-          external_reference: String(order.id),
-          frequency: subscriptionData.frequency,
-          frequency_type: subscriptionData.frequencyType,
-          payer: {
-            email: payerEmail,
-            ...(subscriptionData.identificationType &&
-              subscriptionData.identificationNumber && {
-                identification: {
-                  type: subscriptionData.identificationType,
-                  number: subscriptionData.identificationNumber,
-                },
-              }),
+      const subscriptionResult =
+        await this.mpSubscriptionService.createSubscription(
+          {
+            token: subscriptionData.token,
+            payment_method_id: subscriptionData.paymentMethodId,
+            transaction_amount: Number(order.total),
+            description: `Suscripción mensual - Orden #${order.id}`,
+            external_reference: String(order.id),
+            frequency: subscriptionData.frequency,
+            frequency_type: subscriptionData.frequencyType,
+            payer: {
+              email: payerEmail,
+              ...(subscriptionData.identificationType &&
+                subscriptionData.identificationNumber && {
+                  identification: {
+                    type: subscriptionData.identificationType,
+                    number: subscriptionData.identificationNumber,
+                  },
+                }),
+            },
           },
-        },
-        options,
-      );
+          options,
+        );
 
       const subId = String(subscriptionResult.id);
 
-      const updatedOrder = await this.prisma.$transaction(async (tx) => {
-        const currentJson = await tx.orden.findUnique({
-          where: { id: Number(orderId) },
-          select: { metadatos: true },
-        });
-
-        const currentMeta = parseMetadatos(currentJson?.metadatos);
-        const nextMetaObj = {
-          ...currentMeta,
-          subscriptionAttempts: {
-            ...(currentMeta?.subscriptionAttempts || {}),
-            [idemKey]: {
-              status: 'succeeded',
-              mpPreapprovalId: subId,
-              updatedAt: new Date().toISOString(),
+      const updatedOrder = await this.prisma.orden.update({
+        where: { id: Number(orderId) },
+        data: {
+          estado: EstadoOrden.PENDIENTE, // Mantenemos PENDIENTE hasta el primer pago approved
+          referenciaPago: String(order.id), // Usamos la orden como referencia externa
+          esSuscripcion: true,
+          suscripcionActiva: false, // No activa hasta el primer pago
+          suscripcionId: subId,
+          suscripcionFrecuencia: subscriptionData.frequency,
+          suscripcionTipoFrecuencia: subscriptionData.frequencyType,
+          metadatos: json({
+            ...metadatos,
+            subscriptionAttempts: {
+              ...(metadatos?.subscriptionAttempts || {}),
+              [idemKey]: {
+                status: 'succeeded',
+                mpPreapprovalId: subId,
+                updatedAt: new Date().toISOString(),
+              },
             },
-          },
-          subscription: {
-            id: subId,
-            frequency: subscriptionData.frequency,
-            frequencyType: subscriptionData.frequencyType,
-            status: 'active',
-            createdAt: new Date().toISOString(),
-          },
-        };
+            subscription: {
+              id: subId,
+              frequency: subscriptionData.frequency,
+              frequencyType: subscriptionData.frequencyType,
+              status: subscriptionResult.status || 'authorized',
+              createdAt: new Date().toISOString(),
+            },
+          }),
+        },
+        include: {
+          items: true,
+          direccionEnvio: true,
+          direccionFacturacion: true,
+        },
+      });
 
-        const updated = await tx.orden.update({
-          where: { id: Number(orderId) },
-          data: {
-            estado: EstadoOrden.PAGADO,
-            referenciaPago: subId,
-            esSuscripcion: true,
-            suscripcionActiva: true,
-            suscripcionId: subId,
-            suscripcionFrecuencia: subscriptionData.frequency,
-            suscripcionTipoFrecuencia: subscriptionData.frequencyType,
-            metadatos: json(nextMetaObj),
-          },
-          include: {
-            items: true,
-            direccionEnvio: true,
-            direccionFacturacion: true,
+      // NO creamos inscripciones aquí. Esperamos al webhook de payment.status === 'approved'
+
+      // Notificar al usuario que la suscripción está siendo procesada
+      try {
+        await this.notificationsService.createNotification({
+          usuarioId: String(userId),
+          tipo: TipoNotificacion.SISTEMA,
+          titulo: 'Suscripción en proceso',
+          mensaje: `Hemos recibido tu solicitud de suscripción para la orden #${orderId}. El proceso de activación puede demorar entre 2 a 5 horas. Te notificaremos en cuanto esté lista.`,
+          url: `/perfil/ordenes/${orderId}`,
+          metadata: {
+            orderId: Number(orderId),
+            subscriptionId: subId,
+            type: 'subscription_processing',
           },
         });
-
-        await this.createCourseEnrollments(Number(orderId), Number(userId));
-        return updated;
-      });
+      } catch (error) {
+        console.error(
+          `[Subscription ${subId}] Error al enviar notificación de proceso:`,
+          error,
+        );
+      }
 
       return updatedOrder;
     } catch (error) {
@@ -774,12 +794,13 @@ export class OrdersService {
     const subscriptionId = order.suscripcionId;
 
     if (!subscriptionId) {
-      throw new Error('No se encontró información de suscripción para esta orden');
+      throw new Error(
+        'No se encontró información de suscripción para esta orden',
+      );
     }
 
-    const cancelResult = await this.mpSubscriptionService.cancelSubscription(
-      subscriptionId,
-    );
+    const cancelResult =
+      await this.mpSubscriptionService.cancelSubscription(subscriptionId);
 
     const nextMetaObj = {
       ...metadatos,
@@ -813,7 +834,10 @@ export class OrdersService {
     webhookData: unknown,
   ) {
     if (!eventType || !dataId) {
-      throw new HttpException('Datos de webhook incompletos', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Datos de webhook incompletos',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
@@ -828,8 +852,8 @@ export class OrdersService {
         case 'subscription_authorized_payment':
         case 'subscription_payment':
         case 'payment':
-          return await this.handleRecurringPayment(
-            String(dataId),
+          return await this.handlePaymentWebhook(
+            Number(dataId),
             webhookData as Record<string, unknown>,
           );
 
@@ -849,20 +873,164 @@ export class OrdersService {
     }
   }
 
-  /** Actualiza estado de suscripción y metadatos */
+  /**
+   * Maneja webhooks de tipo payment (pagos individuales o de suscripciones)
+   * Única fuente de verdad para habilitar acceso a cursos.
+   */
+  private async handlePaymentWebhook(
+    paymentId: number,
+    _data: Record<string, unknown>,
+  ) {
+    try {
+      // 1. Obtener detalles del pago desde MP (fuente confiable)
+      const paymentDetails = await this.mpPaymentService.getPayment(
+        String(paymentId),
+      );
+      if (!paymentDetails) {
+        console.warn(`[MP payment ${paymentId}] No se encontraron detalles`);
+        return { processed: false, reason: 'payment_not_found' };
+      }
+
+      // 2. Resolver la orden por external_reference
+      const ref = paymentDetails.external_reference;
+      if (!ref) {
+        console.warn(`[MP payment ${paymentId}] Sin external_reference`);
+        return { processed: true, reason: 'missing_external_reference' };
+      }
+
+      const orderId = Number(ref);
+      if (isNaN(orderId)) {
+        console.warn(
+          `[MP payment ${paymentId}] external_reference inválido: ${ref}`,
+        );
+        return { processed: true, reason: 'invalid_external_reference' };
+      }
+
+      const order = await this.prisma.orden.findUnique({
+        where: { id: orderId },
+        include: { items: true },
+      });
+
+      if (!order) {
+        console.warn(
+          `[MP payment ${paymentId}] Orden no encontrada: ${orderId}`,
+        );
+        return { processed: true, reason: 'order_not_found' };
+      }
+
+      // 3. Registrar o actualizar el pago (Idempotente)
+      const referenciaPago = String(paymentDetails.id);
+
+      await this.prisma.pagoSuscripcion.upsert({
+        where: { referenciaPago },
+        create: {
+          ordenId: order.id,
+          usuarioId: order.usuarioId,
+          referenciaPago,
+          monto: new Prisma.Decimal(paymentDetails.transaction_amount),
+          estado: paymentDetails.status,
+          metadatos: json({
+            paymentId: String(paymentDetails.id),
+            status: paymentDetails.status,
+            statusDetail: paymentDetails.status_detail,
+            dateApproved: paymentDetails.date_approved,
+            subscriptionId: paymentDetails.subscription_id,
+          }),
+        },
+        update: {
+          estado: paymentDetails.status,
+          metadatos: json({
+            paymentId: String(paymentDetails.id),
+            status: paymentDetails.status,
+            statusDetail: paymentDetails.status_detail,
+            dateApproved: paymentDetails.date_approved,
+            subscriptionId: paymentDetails.subscription_id,
+          }),
+        },
+      });
+
+      // 4. Si el pago NO está aprobado, no habilitamos nada
+      if (paymentDetails.status !== 'approved') {
+        console.log(
+          `[MP payment ${paymentId}] Estado ${paymentDetails.status}, no habilita acceso.`,
+        );
+        return { processed: true, status: paymentDetails.status };
+      }
+
+      // 5. Pago APROBADO: Actualizar orden y habilitar acceso
+      await this.prisma.orden.update({
+        where: { id: order.id },
+        data: {
+          estado: EstadoOrden.PAGADO,
+          suscripcionActiva: order.esSuscripcion ? true : null,
+          referenciaPago: referenciaPago,
+        },
+      });
+
+      // 6. Activar inscripciones de cursos
+      await this.createCourseEnrollments(order.id, order.usuarioId);
+
+      // 7. Si es suscripción, renovar fechas de expiración y notificar
+      if (order.esSuscripcion) {
+        await this.renewCourseSubscriptions(order.usuarioId);
+
+        // Notificar al usuario que su suscripción fue aprobada
+        try {
+          await this.notificationsService.createNotification({
+            usuarioId: String(order.usuarioId),
+            tipo: TipoNotificacion.SISTEMA,
+            titulo: 'Suscripción Aprobada',
+            mensaje: `¡Tu suscripción para la orden #${order.id} ha sido aprobada! Ya tienes acceso a tus cursos.`,
+            url: '/perfil/cursos', // URL sugerida para ver sus cursos
+            metadata: {
+              orderId: order.id,
+              subscriptionId: paymentDetails.subscription_id,
+              type: 'subscription_approved',
+            },
+          });
+        } catch (error) {
+          console.error(
+            `[MP payment ${paymentId}] Error al enviar notificación:`,
+            error,
+          );
+        }
+      }
+
+      console.log(
+        `[MP payment ${paymentId}] APPROVED -> Acceso habilitado para orden ${order.id}`,
+      );
+      return { processed: true, orderId: order.id, status: 'approved' };
+    } catch (error) {
+      console.error(`Error en handlePaymentWebhook:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza el estado de la suscripción (preapproval) en la orden.
+   * NOTA: No otorga acceso por sí solo. El acceso depende de PagoSuscripcion.estado = approved.
+   */
   private async handleSubscriptionStatusUpdate(
     subscriptionId: string,
     data: Record<string, unknown>,
   ) {
     const incomingStatus = (data?.['status'] as SubscriptionStatus) ?? 'active';
-    const isActive = incomingStatus === 'active';
+
+    // Solo marcamos como inactiva si explícitamente está pausada o cancelada.
+    // Si está 'active' o 'authorized', la suscripción está 'viva' pero el ACCESO
+    // real lo determina el último pago aprobado.
+    const shouldBeInactive = ['paused', 'cancelled', 'expired'].includes(
+      incomingStatus,
+    );
 
     const order = await this.prisma.orden.findFirst({
       where: { suscripcionId: subscriptionId },
     });
 
     if (!order) {
-      console.warn(`No se encontró orden para la suscripción ${subscriptionId}`);
+      console.warn(
+        `No se encontró orden para la suscripción ${subscriptionId}`,
+      );
       return { processed: false, reason: 'order_not_found' };
     }
 
@@ -880,7 +1048,9 @@ export class OrdersService {
     const updatedOrder = await this.prisma.orden.update({
       where: { id: order.id },
       data: {
-        suscripcionActiva: isActive,
+        // Si se cancela/pausa, desactivamos. Si se activa/autoriza, NO activamos
+        // automáticamente (esperamos al pago), a menos que ya estuviera activa.
+        suscripcionActiva: shouldBeInactive ? false : order.suscripcionActiva,
         metadatos: json(nextMetaObj),
       },
     });
@@ -890,71 +1060,6 @@ export class OrdersService {
       orderId: updatedOrder.id,
       status: incomingStatus,
     };
-  }
-
-  /** Maneja pagos recurrentes de suscripciones (única implementación) */
-  private async handleRecurringPayment(
-    paymentId: string,
-    _data: Record<string, unknown>,
-  ) {
-    try {
-      // Idempotencia: check rápido
-      const existingPayment = await this.prisma.pagoSuscripcion.findFirst({
-        where: { referenciaPago: paymentId },
-      });
-      if (existingPayment) {
-        return { processed: true, alreadyExists: true };
-      }
-
-      const paymentDetails = await this.mpPaymentService.getPayment(paymentId);
-      if (!paymentDetails || paymentDetails.status !== 'approved') {
-        return {
-          processed: false,
-          status: paymentDetails?.status || 'unknown',
-        };
-      }
-
-      const subscriptionId = (paymentDetails as any).subscription_id;
-      if (!subscriptionId) {
-        return { processed: false, reason: 'not_subscription_payment' };
-      }
-
-      const order = await this.prisma.orden.findFirst({
-        where: { suscripcionId: subscriptionId },
-      });
-      if (!order) {
-        return { processed: false, reason: 'order_not_found' };
-      }
-
-      try {
-        await this.prisma.pagoSuscripcion.create({
-          data: {
-            ordenId: order.id,
-            usuarioId: order.usuarioId,
-            referenciaPago: paymentId,
-            monto: new Prisma.Decimal(paymentDetails.transaction_amount),
-            estado: 'APROBADO',
-            metadatos: json({
-              subscriptionId,
-              paymentId,
-              status: paymentDetails.status,
-              dateApproved: paymentDetails.date_approved,
-            }),
-          },
-        });
-      } catch (e: any) {
-        if (e?.code === 'P2002') {
-          return { processed: true, alreadyExists: true };
-        }
-        throw e;
-      }
-
-      await this.renewCourseSubscriptions(order.usuarioId);
-      return { processed: true, orderId: order.id };
-    } catch (error) {
-      console.error(`Error en handleRecurringPayment:`, error);
-      throw error;
-    }
   }
 
   /** Renueva las suscripciones a cursos para un usuario */
@@ -972,9 +1077,17 @@ export class OrdersService {
         const subscription = progreso.subscription;
 
         const endDate = new Date();
-        if (subscription.durationType === 'mes' || subscription.durationType === 'meses') {
-          endDate.setMonth(endDate.getMonth() + parseInt(subscription.duration));
-        } else if (subscription.durationType === 'día' || subscription.durationType === 'días') {
+        if (
+          subscription.durationType === 'mes' ||
+          subscription.durationType === 'meses'
+        ) {
+          endDate.setMonth(
+            endDate.getMonth() + parseInt(subscription.duration),
+          );
+        } else if (
+          subscription.durationType === 'día' ||
+          subscription.durationType === 'días'
+        ) {
           endDate.setDate(endDate.getDate() + parseInt(subscription.duration));
         }
 
@@ -1004,7 +1117,9 @@ export class OrdersService {
 
     if (!order) return;
 
-    const courseItems = order.items.filter((i) => i.tipo === TipoItemOrden.CURSO);
+    const courseItems = order.items.filter(
+      (i) => i.tipo === TipoItemOrden.CURSO,
+    );
     if (!courseItems.length) return;
 
     const enrollmentResults = await Promise.all(

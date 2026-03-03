@@ -1561,7 +1561,8 @@ declare type ErrorCapturingInterface<T> = {
   [K in keyof T]: ErrorCapturingFunction<T[K]>;
 };
 
-declare interface ErrorCapturingSqlDriverAdapter extends ErrorCapturingInterface<SqlDriverAdapter> {
+declare interface ErrorCapturingSqlDriverAdapter
+  extends ErrorCapturingInterface<SqlDriverAdapter> {
   readonly errorRegistry: ErrorRegistry;
 }
 
@@ -2472,7 +2473,8 @@ declare type InMemoryOps = {
  * Matches a JSON array.
  * Unlike \`JsonArray\`, readonly arrays are assignable to this type.
  */
-export declare interface InputJsonArray extends ReadonlyArray<InputJsonValue | null> {}
+export declare interface InputJsonArray
+  extends ReadonlyArray<InputJsonValue | null> {}
 
 /**
  * Matches a JSON object.
@@ -4704,10 +4706,8 @@ declare interface SqlDriverAdapter extends SqlQueryable {
   dispose(): Promise<void>;
 }
 
-export declare interface SqlDriverAdapterFactory extends DriverAdapterFactory<
-  SqlQuery,
-  SqlResultSet
-> {
+export declare interface SqlDriverAdapterFactory
+  extends DriverAdapterFactory<SqlQuery, SqlResultSet> {
   connect(): Promise<SqlDriverAdapter>;
 }
 

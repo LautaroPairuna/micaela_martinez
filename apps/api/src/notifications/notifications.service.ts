@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TipoNotificacion } from '@prisma/client';
 import { UpdateNotificationPreferencesDto } from './dto/user-preferences.dto';
+import { WebsocketGateway } from '../websockets/websocket.gateway';
 
 export interface CreateNotificationDto {
   usuarioId: string;
@@ -21,7 +22,10 @@ export class NotificationsService {
   private readonly RATE_LIMIT_WINDOW = 60 * 1000;
   private readonly MAX_NOTIFICATIONS_PER_MINUTE = 10;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private websocketGateway: WebsocketGateway,
+  ) {
     setInterval(() => this.cleanupRateLimitCache(), 5 * 60 * 1000);
   }
 
@@ -96,7 +100,7 @@ export class NotificationsService {
         where: { id: Number(productId) },
         select: { slug: true },
       });
-      
+
       const slug = product?.slug || productId; // Fallback a ID si no hay slug (aunque debería haber)
 
       const favorites = await this.prisma.favorito.findMany({
@@ -249,10 +253,18 @@ export class NotificationsService {
     });
 
     if (recentSimilar) {
-      return this.updateGroupedNotification(Number(recentSimilar.id), data);
+      const updated = await this.updateGroupedNotification(Number(recentSimilar.id), data);
+      if (updated) {
+        this.websocketGateway.emitToUser(
+          data.usuarioId,
+          'nueva-notificacion',
+          updated,
+        );
+      }
+      return updated;
     }
 
-    return this.prisma.notificacion.create({
+    const notification = await this.prisma.notificacion.create({
       data: {
         usuarioId: Number(data.usuarioId),
         tipo: data.tipo,
@@ -266,6 +278,14 @@ export class NotificationsService {
         usuario: { select: { id: true, nombre: true, email: true } },
       },
     });
+
+    this.websocketGateway.emitToUser(
+      data.usuarioId,
+      'nueva-notificacion',
+      notification,
+    );
+
+    return notification;
   }
 
   async getUserNotifications(

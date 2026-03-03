@@ -50,37 +50,44 @@ export class MpSubscriptionService {
     options?: MercadoPagoSubscriptionOptions,
   ): Promise<any> {
     try {
-    // Obtener y normalizar la URL de retorno
-    let backUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    if (!backUrl.startsWith('http://') && !backUrl.startsWith('https://')) {
-      backUrl = `https://${backUrl}`;
-    }
+      // Obtener y normalizar la URL de retorno
+      let backUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:3000';
+      if (!backUrl.startsWith('http://') && !backUrl.startsWith('https://')) {
+        backUrl = `https://${backUrl}`;
+      }
 
-    // Suscripción SIN plan asociado, con pago autorizado
-    // Docs: POST /preapproval con card_token_id y status="authorized"
-    const preapprovalPayload = {
-      reason: subscriptionData.description,
-      external_reference: subscriptionData.external_reference,
-      payer_email: subscriptionData.payer.email,
-      card_token_id: subscriptionData.token, // Token de la tarjeta generado por Bricks (Card Payment Brick)
-      auto_recurring: {
-        frequency: subscriptionData.frequency,
-        frequency_type: subscriptionData.frequency_type,
-        transaction_amount: subscriptionData.transaction_amount,
-        currency_id: 'ARS',
-      },
-      back_url: backUrl,
-      status: 'authorized',
-    };
+      // Suscripción SIN plan asociado, con pago autorizado
+      // Docs: POST /preapproval con card_token_id y status="authorized"
+      const preapprovalPayload = {
+        reason: subscriptionData.description,
+        external_reference: subscriptionData.external_reference,
+        payer_email: subscriptionData.payer.email,
+        card_token_id: subscriptionData.token, // Token de la tarjeta generado por Bricks (Card Payment Brick)
+        auto_recurring: {
+          frequency: subscriptionData.frequency,
+          frequency_type: subscriptionData.frequency_type,
+          transaction_amount: subscriptionData.transaction_amount,
+          currency_id: 'ARS',
+        },
+        back_url: backUrl,
+        status: 'authorized',
+      };
 
-      console.log('=== BACKEND: Creando suscripción en MercadoPago (Service) ===', {
-        reason: preapprovalPayload.reason,
-        amount: preapprovalPayload.auto_recurring.transaction_amount,
-        ref: preapprovalPayload.external_reference,
-        // Sanitizado: no loguear token ni email
-      });
+      console.log(
+        '=== BACKEND: Creando suscripción en MercadoPago (Service) ===',
+        {
+          reason: preapprovalPayload.reason,
+          amount: preapprovalPayload.auto_recurring.transaction_amount,
+          ref: preapprovalPayload.external_reference,
+          // Sanitizado: no loguear token ni email
+        },
+      );
 
-      const idemKey = options?.idempotencyKey || `sub-${preapprovalPayload.external_reference}`;
+      const idemKey =
+        options?.idempotencyKey ||
+        `sub-${preapprovalPayload.external_reference}`;
 
       // Usar fetch directo ya que el SDK a veces tiene tipos incompletos para Preapproval complejo
       const response = await fetch('https://api.mercadopago.com/preapproval', {
@@ -145,7 +152,7 @@ export class MpSubscriptionService {
   async cancelSubscription(subscriptionId: string): Promise<any> {
     try {
       const idemKey = `cancel-subscription-${subscriptionId}-${Date.now()}`;
-      
+
       const response = await fetch(
         `https://api.mercadopago.com/preapproval/${subscriptionId}`,
         {
