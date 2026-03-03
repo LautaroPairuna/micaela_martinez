@@ -4,14 +4,16 @@ import Link from 'next/link';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { SubscriptionCancelButton } from '@/components/subscription/SubscriptionCancelButton';
-import { Clock, PlayCircle, BookOpen, Award, Loader2 } from 'lucide-react';
+import { Clock, PlayCircle, BookOpen, Award, Loader2, Info } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+import { SubscriptionInfoCard } from '@/components/subscription/SubscriptionInfoCard';
 
 type EnrollmentProgreso = {
   porcentaje?: number | null;
   subscription?: {
     duration?: string | number | null;
+    orderId?: string | number | null;
   } | null;
 } | null;
 
@@ -42,6 +44,18 @@ type EnrollmentRow = {
   progreso?: unknown;
 };
 
+type SubscriptionItem = {
+  isActive: boolean;
+  orderId: string | number;
+  subscriptionId: string | null;
+  startDate: string;
+  nextPaymentDate: string | null;
+  frequency: number;
+  frequencyType: string;
+  daysLeft: number | null;
+  hoursLeft: number | null;
+};
+
 type EnrollmentCardProps = {
   enrollment: EnrollmentRow;
   lessonProgress?: Record<string, boolean>;
@@ -50,6 +64,7 @@ type EnrollmentCardProps = {
     id: string;
     lecciones?: Array<{ id: string }>;
   }>;
+  subscriptionInfo?: SubscriptionItem;
 };
 
 // Función para procesar el progreso del servidor (igual que en ProgressContext)
@@ -76,7 +91,8 @@ export function EnrollmentCard({
   enrollment, 
   lessonProgress = {}, 
   getLessonProgressKey,
-  courseModules = []
+  courseModules = [],
+  subscriptionInfo
 }: EnrollmentCardProps) {
   const course = enrollment.curso ?? null;
   const [isDownloading, setIsDownloading] = useState(false);
@@ -155,9 +171,9 @@ export function EnrollmentCard({
     let totalLessons = 0;
     let completedLessons = 0;
 
-    modulesToUse.forEach((module) => {
+    modulesToUse.forEach((module: any) => {
       if (module.lecciones?.length) {
-        module.lecciones.forEach((lesson) => {
+        module.lecciones.forEach((lesson: any) => {
           totalLessons++;
           const progressKey = getLessonProgressKey ? getLessonProgressKey(String(module.id), String(lesson.id)) : `${module.id}-${lesson.id}`;
           
@@ -350,9 +366,17 @@ export function EnrollmentCard({
         ) : null}
 
         <div className="flex flex-col gap-1 pr-8">
-          <h3 className="font-bold text-lg leading-tight line-clamp-2 uppercase tracking-wide text-white group-hover:text-[var(--gold)] transition-colors duration-300">
-            {course?.titulo || 'Curso sin título'}
-          </h3>
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="font-bold text-lg leading-tight line-clamp-2 uppercase tracking-wide text-white group-hover:text-[var(--gold)] transition-colors duration-300">
+              {course?.titulo || 'Curso sin título'}
+            </h3>
+            {subscriptionInfo && (
+              <SubscriptionInfoCard 
+                subscriptionInfo={subscriptionInfo} 
+                variant="button"
+              />
+            )}
+          </div>
         </div>
             
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 font-medium">

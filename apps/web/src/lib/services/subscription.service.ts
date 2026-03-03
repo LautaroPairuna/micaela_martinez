@@ -1,18 +1,25 @@
 import { apiProxy } from '@/lib/api-proxy';
 
+export interface SubscriptionItem {
+  isActive: boolean;
+  orderId: string | number;
+  subscriptionId: string | null;
+  startDate: string;
+  nextPaymentDate: string | null;
+  frequency: number;
+  frequencyType: string;
+  daysLeft: number | null;
+  hoursLeft: number | null;
+}
+
 export interface SubscriptionInfo {
   isActive: boolean;
-  nextPaymentDate: string | null;
-  subscriptionId: string | null;
-  orderId: string | null;
-  frequency: string | null;
-  frequencyType: string | null;
-  duration: string | null;
-  durationType: string | null;
+  subscriptions: SubscriptionItem[];
   includedCourses: {
     id: string;
     title: string;
     slug: string;
+    portadaUrl?: string;
   }[];
 }
 
@@ -30,13 +37,7 @@ export async function getUserSubscriptionInfo(): Promise<SubscriptionInfo> {
     console.error('Error al obtener información de suscripción:', error);
     return {
       isActive: false,
-      nextPaymentDate: null,
-      subscriptionId: null,
-      orderId: null,
-      frequency: null,
-      frequencyType: null,
-      duration: null,
-      durationType: null,
+      subscriptions: [],
       includedCourses: []
     };
   }

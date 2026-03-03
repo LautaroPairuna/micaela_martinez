@@ -27,13 +27,21 @@ type EnrollmentRow = {
   progreso?: unknown;
 };
 
+type SubscriptionItem = {
+  isActive: boolean;
+  orderId: string | number;
+  subscriptionId: string | null;
+  startDate: string;
+  nextPaymentDate: string | null;
+  frequency: number;
+  frequencyType: string;
+  daysLeft: number | null;
+  hoursLeft: number | null;
+};
+
 type SubscriptionInfo = {
   isActive: boolean;
-  nextPaymentDate: string | null;
-  subscriptionId: string | null;
-  frequency: string | null;
-  frequencyType: string | null;
-  orderId?: string | null;
+  subscriptions: SubscriptionItem[];
   includedCourses: Array<{
     id: string;
     slug?: string;
@@ -52,9 +60,6 @@ type MiAprendizajeClientProps = {
 function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeClientProps) {
   const { lessonProgress, courseModules, getLessonProgressKey } = useEnrollmentProgress();
 
-  // Obtener el ID de la orden asociada a la suscripción (desde el backend)
-  const orderId = subscriptionInfo.orderId || null;
-
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -72,29 +77,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
 
   return (
     <div className="space-y-8">
-      {/* Mostrar información de suscripción si está activa */}
-      {subscriptionInfo.isActive && (
-        <div className="mb-8">
-          <SubscriptionInfoCard
-            subscriptionInfo={{
-              ...subscriptionInfo,
-              orderId,
-            }}
-          />
-        </div>
-      )}
-
-      {subscriptionInfo.isActive && subscriptionInfo.includedCourses.length > 0 && (
-        <SubscriptionCoursesList 
-          courses={subscriptionInfo.includedCourses.map(course => ({
-            id: course.id,
-            title: course.titulo || '',
-            slug: course.slug || '',
-            image: course.portadaUrl || (course.portada ? `/uploads/curso/${course.portada}` : undefined)
-          }))} 
-          className="mb-8" 
-        />
-      )}
+      {/* Información global de suscripciones eliminada de aquí */}
 
       <PageHeader
         icon={GraduationCap}
@@ -157,6 +140,13 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
             const courseId = String(enrollment.cursoId || '');
             const modules = courseModules[courseId] || [];
             
+            // Buscar la suscripción correspondiente a este curso
+            const subscription = subscriptionInfo.subscriptions.find(sub => {
+              // Si la suscripción tiene el ID de la orden en los metadatos del enrollment
+              const prog = enrollment.progreso as any;
+              return String(sub.orderId) === String(prog?.subscription?.orderId);
+            });
+
             return (
               <motion.div key={enrollment.id} variants={item} className="h-full transform transition-all duration-200 hover:-translate-y-1">
                 <EnrollmentCard
@@ -164,6 +154,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
                   lessonProgress={lessonProgress}
                   getLessonProgressKey={getLessonProgressKey}
                   courseModules={modules}
+                  subscriptionInfo={subscription}
                 />
               </motion.div>
             );

@@ -119,8 +119,8 @@ export class SubscriptionService {
    * Obtiene información general de la suscripción del usuario
    */
   async getUserInfo(userId: string) {
-    // Buscar órdenes de suscripción activas del usuario
-    const orden = await this.prisma.orden.findFirst({
+    // Buscar todas las órdenes de suscripción activas del usuario
+    const ordenes = await this.prisma.orden.findMany({
       where: {
         usuarioId: Number(userId),
         esSuscripcion: true,
@@ -131,21 +131,15 @@ export class SubscriptionService {
       },
     });
 
-    if (!orden) {
+    if (ordenes.length === 0) {
       return {
         isActive: false,
-        nextPaymentDate: null,
-        subscriptionId: null,
-        orderId: null,
-        frequency: null,
-        frequencyType: null,
-        duration: null,
-        durationType: null,
+        subscriptions: [],
         includedCourses: [],
       };
     }
 
-    // Obtener cursos incluidos en la suscripción
+    // Obtener cursos incluidos (globalmente para la academia)
     const cursos = await this.prisma.curso.findMany({
       where: {
         destacado: true,
@@ -159,29 +153,53 @@ export class SubscriptionService {
       },
     });
 
-    // Extraer información de la suscripción desde los metadatos
-    const metadatos = (
-      orden.metadatos ? JSON.parse(JSON.stringify(orden.metadatos)) : {}
-    ) as {
-      subscription?: {
-        nextPaymentDate?: string;
-        frequency?: number;
-        frequencyType?: string;
-        duration?: number;
-        durationType?: string;
+    const now = new Date();
+    const subscriptions = ordenes.map((orden) => {
+      // Extraer información de la suscripción desde los metadatos
+      const metadatos = (
+        orden.metadatos ? JSON.parse(JSON.stringify(orden.metadatos)) : {}
+      ) as {
+        subscription?: {
+          nextPaymentDate?: string;
+          frequency?: number;
+          frequencyType?: string;
+          duration?: number;
+          durationType?: string;
+        };
       };
-    };
-    const subscription = metadatos.subscription || {};
+      const subscriptionMeta = metadatos.subscription || {};
+      
+      const nextPaymentDate = subscriptionMeta.nextPaymentDate 
+        ? new Date(subscriptionMeta.nextPaymentDate) 
+        : null;
+      
+      let daysLeft = null;
+      let hoursLeft = null;
+
+      if (nextPaymentDate) {
+        const diffMs = nextPaymentDate.getTime() - now.getTime();
+        daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (daysLeft < 1) {
+          hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+        }
+      }
+
+      return {
+        isActive: true,
+        orderId: orden.id,
+        subscriptionId: orden.suscripcionId,
+        startDate: orden.creadoEn,
+        nextPaymentDate: subscriptionMeta.nextPaymentDate || null,
+        frequency: subscriptionMeta.frequency || 1,
+        frequencyType: subscriptionMeta.frequencyType || 'month',
+        daysLeft,
+        hoursLeft,
+      };
+    });
 
     return {
       isActive: true,
-      orderId: orden.id,
-      subscriptionId: orden.suscripcionId,
-      nextPaymentDate: subscription.nextPaymentDate || null,
-      frequency: subscription.frequency || 1,
-      frequencyType: subscription.frequencyType || 'month',
-      duration: subscription.duration || null,
-      durationType: subscription.durationType || null,
+      subscriptions,
       includedCourses: cursos,
     };
   }
