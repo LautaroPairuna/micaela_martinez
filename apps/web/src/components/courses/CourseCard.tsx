@@ -66,7 +66,7 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[linear-gradient(120deg,transparent,rgba(197,164,109,0.12),transparent)] bg-[length:200%_200%] animate-shine" />
         <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[var(--gold)]/10" />
         {/* Imagen */}
-        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-4/12 lg:self-stretch flex items-center justify-center min-h-[200px] lg:min-h-0">
+        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-5/12 lg:self-stretch">
           {/* Fondo borroso (efecto relleno) */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <SafeImage
@@ -86,10 +86,10 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
             <SafeImage
               src={c.portadaUrl || null}
               alt={c.titulo || 'Curso'}
-              ratio="auto"
-              className="w-full"
-              imgClassName="w-full h-auto object-contain"
-              fit="contain"
+              ratio="4/3"
+              className="w-full h-full"
+              imgClassName="w-full h-full object-cover aspect-[4/3]"
+              fit="cover"
               rounded="none"
               withBg={false}
               skeleton={false}
@@ -117,20 +117,28 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         </div>
 
         {/* Contenido principal */}
-        <div className="relative flex flex-col gap-3 flex-1 lg:w-8/12 p-4 sm:p-5 lg:p-6">
+        <div className="relative flex flex-col gap-3 flex-1 lg:w-7/12 p-4 sm:p-5 lg:p-6">
               <h3 className="relative font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem] uppercase tracking-wide transition-all duration-300 text-white group-hover:text-[var(--gold)] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">{c.titulo}</h3>
 
               <div className="flex flex-wrap gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
-                  <BookOpen className="h-3 w-3" />
-                  {c.totalLessons ? `${c.totalLessons} lecciones` : '0 lecciones'}
-                </span>
-
-                {c.totalDuration && c.totalDuration > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
-                    <Clock className="h-3 w-3" />
-                    {formatDuration(c.totalDuration)}
+                {(!c.totalLessons && !c.totalDuration) ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-400 italic">
+                    Próximamente: Contenido en preparación
                   </span>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
+                      <BookOpen className="h-3 w-3" />
+                      {c.totalLessons ? `${c.totalLessons} lecciones` : '0 lecciones'}
+                    </span>
+
+                    {c.totalDuration && c.totalDuration > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-200">
+                        <Clock className="h-3 w-3" />
+                        {formatDuration(c.totalDuration)}
+                      </span>
+                    )}
+                  </>
                 )}
 
                 {c.ratingProm && c.ratingConteo && c.ratingConteo > 0 && (
