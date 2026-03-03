@@ -196,7 +196,7 @@ export default async function HomePage() {
         <FadeIn delay={0.2}>
           {courseCount > 0 ? (
             <HydrationBoundary state={dehydrate(qc)}>
-              <div className={compactWrap(courseCount, "max-w-6xl")}>
+              <div className={compactWrap(courseCount, "max-w-7xl")}>
                 <CoursesGridClient courses={featuredCourses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
               </div>
             </HydrationBoundary>
@@ -230,7 +230,7 @@ export default async function HomePage() {
       >
         <FadeIn delay={0.2}>
           {productCount > 0 ? (
-            <div className={`${compactWrap(productCount, "max-w-6xl")} grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 [&>*:last-child:nth-child(odd)]:md:col-span-2 [&>*:last-child:nth-child(odd)]:lg:col-span-1`}>
+            <div className={`${compactWrap(productCount, "max-w-7xl")} grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 [&>*:last-child:nth-child(odd)]:md:col-span-2 [&>*:last-child:nth-child(odd)]:lg:col-span-1`}>
               {featuredProducts.slice(0, productCount).map((p, i) => (
                 <ProductCard key={productKey(p, i)} p={p} />
               ))}
