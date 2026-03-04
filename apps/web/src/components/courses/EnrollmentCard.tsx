@@ -210,11 +210,13 @@ export function EnrollmentCard({
   // Estado completado: explícito o 100% (o todas las lecciones completadas)
   const isCompleted = enrollment.estado === 'DESACTIVADA' || progressPct >= 100 || (realTimeProgress.totalLessons > 0 && realTimeProgress.completedLessons >= realTimeProgress.totalLessons);
 
-  // Datos de suscripción (cuando viene desde progreso.subscription)
+  // Datos de suscripción (cuando viene desde progreso.subscription o desde el prop subscriptionInfo)
   const progreso = enrollment.progreso as EnrollmentProgreso;
   const subscription = progreso?.subscription ?? null;
-  const hasSubscription = Boolean(subscription);
-  const subscriptionOrderId = subscription?.orderId ? String(subscription.orderId) : null;
+  const hasSubscription = Boolean(subscription) || Boolean(subscriptionInfo);
+  const subscriptionOrderId = (subscription?.orderId || subscriptionInfo?.orderId) 
+    ? String(subscription?.orderId || subscriptionInfo?.orderId) 
+    : null;
   const durationMonths = Number(subscription?.duration ?? 3);
   const diasTotales = Number.isFinite(durationMonths) ? durationMonths * 30 : 90; // fallback
 
@@ -337,16 +339,20 @@ export function EnrollmentCard({
         <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-40 pointer-events-none" />
 
         {/* Botón de opciones (3 puntos) para suscripción */}
-        {(hasSubscription || subscriptionInfo) && (
+        {(hasSubscription) && (
           <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
             {subscriptionOrderId && (
-              <SubscriptionCancelButton orderId={subscriptionOrderId} />
+              <div className="shadow-lg rounded-full">
+                <SubscriptionCancelButton orderId={subscriptionOrderId} />
+              </div>
             )}
             {subscriptionInfo && (
-              <SubscriptionInfoCard 
-                subscriptionInfo={subscriptionInfo} 
-                variant="button"
-              />
+              <div className="shadow-lg rounded-xl">
+                <SubscriptionInfoCard 
+                  subscriptionInfo={subscriptionInfo} 
+                  variant="button"
+                />
+              </div>
             )}
           </div>
         )}
