@@ -152,13 +152,17 @@ export function SubscriptionInfoCard({
     return (
       <>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          onClick={() => setIsModalOpen(true)}
-          className="bg-white/5 border-white/10 hover:bg-white/10 text-zinc-400 hover:text-white transition-all duration-300 gap-2 h-8"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsModalOpen(true);
+          }}
+          className="bg-black/60 hover:bg-black/80 border border-white/30 backdrop-blur-md text-white transition-all duration-300 gap-2 h-9 rounded-xl shadow-xl px-4"
         >
-          <Info className="h-3.5 w-3.5" />
-          Info Suscripción
+          <Info className="h-4 w-4 text-[var(--gold)]" />
+          <span className="text-xs font-bold tracking-wide uppercase">Info</span>
         </Button>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

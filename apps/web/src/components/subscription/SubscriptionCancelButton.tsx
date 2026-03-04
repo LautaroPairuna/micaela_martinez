@@ -123,29 +123,15 @@ export function SubscriptionCancelButton({
               className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-gray-800/90 backdrop-blur-sm border border-gray-600 z-10"
             >
               <div role="menu" aria-orientation="vertical" className="p-1 space-y-1">
-                {subscriptionInfo && (
-                  <button
-                    className="flex items-center w-full px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 rounded-md transition-all group"
-                    role="menuitem"
-                    onClick={() => {
-                      setShowOptions(false);
-                      setIsInfoOpen(true);
-                    }}
-                  >
-                    <Info className="mr-2 h-4 w-4 text-[var(--gold)]" />
-                    <span>Ver información</span>
-                  </button>
-                )}
-                
                 <button
-                  className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-md transition-all group"
+                  className="flex items-center w-full px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 rounded-md transition-all group"
                   role="menuitem"
                   onClick={() => {
                     setShowOptions(false);
                     setIsOpen(true);
                   }}
                 >
-                  <AlertCircle className="mr-2 h-4 w-4" />
+                  <AlertCircle className="mr-2 h-4 w-4 text-zinc-500 group-hover:text-red-400 transition-colors" />
                   <span>Gestionar suscripción</span>
                 </button>
               </div>

@@ -13,6 +13,7 @@ type EnrollmentProgreso = {
   porcentaje?: number | null;
   subscription?: {
     duration?: string | number | null;
+    durationType?: string | null;
     orderId?: string | number | null;
   } | null;
 } | null;
@@ -111,16 +112,44 @@ export function EnrollmentCard({
   const progreso = enrollment.progreso as EnrollmentProgreso;
   const subscription = progreso?.subscription ?? null;
 
+  // ✅ Resolver SubscriptionItem completo o light (usando metadata del progreso como fallback)
+  const resolvedSubscriptionInfo = useMemo<SubscriptionItem | null>(() => {
+    if (subscriptionInfo) return subscriptionInfo;
+    
+    // Si no viene por prop, intentamos reconstruir un item "light" 
+    // basándonos en la metadata que guardamos en createCourseEnrollments(AsPending)
+    if (subscription?.orderId) {
+      const orderId = Number(subscription.orderId);
+      const frequency = Number(subscription.duration || 1);
+      const frequencyType = String(subscription.durationType || 'month');
+      
+      return {
+        isActive: true, // Si tiene metadata de sub, para la UI la tratamos como activa/pendiente
+        orderId,
+        subscriptionId: null,
+        startDate: new Date().toISOString(), // Fallback (el backend nos lo debería haber dado)
+        nextPaymentDate: null,
+        frequency,
+        frequencyType,
+        daysLeft: null,
+        hoursLeft: null,
+      };
+    }
+    
+    return null;
+  }, [subscriptionInfo, subscription]);
+
   // ✅ Calcular primero el orderId usable (para evitar contenedores vacíos)
-  const subscriptionOrderId = (subscription?.orderId ?? subscriptionInfo?.orderId)
-    ? String(subscription?.orderId ?? subscriptionInfo?.orderId)
-    : null;
+  const subscriptionOrderId = resolvedSubscriptionInfo?.orderId ? String(resolvedSubscriptionInfo.orderId) : null;
 
   // ✅ Mostrar UI de suscripción solo si realmente hay algo para renderizar
-  const hasSubscriptionUI = Boolean(subscriptionOrderId) || Boolean(subscriptionInfo);
+  const hasSubscriptionUI = Boolean(subscriptionOrderId) || Boolean(resolvedSubscriptionInfo);
 
   const durationMonths = Number(subscription?.duration ?? 3);
   const diasTotales = Number.isFinite(durationMonths) ? durationMonths * 30 : 90; // fallback
+
+  // Usamos el item resuelto para todo el renderizado posterior
+  const subToUse = resolvedSubscriptionInfo;
 
   // =======================
   // DEBUG SUBSCRIPTION UI
@@ -378,11 +407,19 @@ export function EnrollmentCard({
         {/* ✅ Acciones de suscripción (arriba a la derecha) */}
         {hasSubscriptionUI && (
           <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+            {subToUse && (
+              <div className="shadow-lg rounded-xl">
+                <SubscriptionInfoCard 
+                  subscriptionInfo={subToUse} 
+                  variant="button"
+                />
+              </div>
+            )}
             {subscriptionOrderId && (
               <div className="shadow-lg rounded-full">
                 <SubscriptionCancelButton 
                   orderId={subscriptionOrderId} 
-                  subscriptionInfo={subscriptionInfo}
+                  subscriptionInfo={subToUse}
                 />
               </div>
             )}
