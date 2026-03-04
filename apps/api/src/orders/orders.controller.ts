@@ -180,15 +180,26 @@ export class OrdersController {
     @Query('data.id') dataIdFromQuery: string,
     @Query('id') idFallback: string,
   ) {
-    const dataId = Number(dataIdFromQuery || idFallback || webhookData?.data?.id || webhookData?.id);
-    if (!eventType || !Number.isFinite(dataId)) {
+    const safeType = String(eventType || webhookData?.type || webhookData?.action || webhookData?.topic || '').trim();
+
+    const rawId =
+      dataIdFromQuery ||
+      idFallback ||
+      webhookData?.data?.id ||
+      webhookData?.id ||
+      webhookData?.resource?.id;
+
+    // ✅ SIEMPRE string (pago = numérico; suscripción = alfanumérico)
+    const dataIdRaw = String(rawId ?? '').trim().toLowerCase();
+
+    if (!safeType || !dataIdRaw) {
       return { received: true, ignored: true, reason: 'missing_type_or_id' };
     }
 
     try {
       return await this.ordersService.processMercadoPagoWebhook(
-        eventType,
-        dataId,
+        safeType,
+        dataIdRaw, // ✅ string
         webhookData,
       );
     } catch (error) {

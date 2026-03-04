@@ -1044,48 +1044,61 @@ export class OrdersService {
   }
 
   /** Webhook MP enruta por tipo de evento */
-  async processMercadoPagoWebhook(
-    eventType: string,
-    dataId: number,
-    webhookData: unknown,
-  ) {
-    if (!eventType || !dataId) {
-      throw new HttpException(
-        'Datos de webhook incompletos',
-        HttpStatus.BAD_REQUEST,
-      );
+  async processMercadoPagoWebhook(eventType: string, dataIdRaw: string, webhookData: unknown) {
+    const type = String(eventType || '').trim().toLowerCase();
+    const idRaw = String(dataIdRaw || '').trim(); // 👈 NO lowercase acá
+
+    if (!type || !idRaw) {
+      throw new HttpException('Datos de webhook incompletos', HttpStatus.BAD_REQUEST);
     }
 
+    // Normalizamos el "tipo" (type/action/topic) a un set pequeño
+    const normalizedType =
+      type.startsWith('payment') ? 'payment'
+      : type.startsWith('subscription_preapproval') ? 'subscription_preapproval'
+      : type.startsWith('subscription_authorized_payment') ? 'subscription_authorized_payment'
+      : type.startsWith('subscription_payment') ? 'subscription_payment'
+      : type.startsWith('subscription_status_update') ? 'subscription_status_update'
+      : type;
+
     try {
-      switch (eventType) {
+      switch (normalizedType) {
         case 'subscription_preapproval':
-        case 'subscription_status_update':
+        case 'subscription_status_update': {
+          // ✅ Para preapproval el id puede ser alfanumérico
+          // Si querés estandarizar para DB lookups, podés usar lowercase SOLO acá:
+          const subId = /[a-z]/i.test(idRaw) ? idRaw.toLowerCase() : idRaw;
           return await this.handleSubscriptionStatusUpdate(
-            String(dataId),
+            subId,
             webhookData as Record<string, unknown>,
           );
+        }
 
         case 'subscription_authorized_payment':
         case 'subscription_payment':
-        case 'payment':
+        case 'payment': {
+          // ✅ Acá el ID debe ser numérico (payment id)
+          const paymentId = Number(idRaw);
+          if (!Number.isFinite(paymentId)) {
+            return { processed: true, ignored: true, reason: 'invalid_payment_id', idRaw };
+          }
+
           return await this.handlePaymentWebhook(
-            Number(dataId),
+            paymentId,
             webhookData as Record<string, unknown>,
           );
+        }
 
         case 'subscription_plan':
-          return { received: true, type: eventType };
+          return { received: true, type: normalizedType };
 
         default:
-          console.log(`Evento de webhook no manejado: ${eventType}`);
-          return { received: true, type: eventType };
+          console.log(`Evento de webhook no manejado: ${normalizedType}`, { type, idRaw });
+          return { received: true, type: normalizedType };
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(
-        `Error al procesar el webhook: ${msg}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException(`Error al procesar el webhook: ${msg}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
