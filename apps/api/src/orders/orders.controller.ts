@@ -10,6 +10,7 @@ import {
   HttpException,
   HttpStatus,
   Headers,
+  Ip,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -99,13 +100,14 @@ export class OrdersController {
     @Param('id') orderId: number,
     @Body() paymentData: MercadoPagoPaymentDto,
     @Headers('x-attempt-id') attemptId?: string,
+    @Ip() ip?: string,
   ) {
     try {
       return await this.ordersService.processMercadoPagoPayment(
         orderId,
         user.sub,
         paymentData,
-        { attemptId },
+        { attemptId, ip },
       );
     } catch (error) {
       if (error instanceof HttpException) throw error;

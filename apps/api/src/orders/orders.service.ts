@@ -75,6 +75,18 @@ const toInt = (v: string | number | null | undefined): number => {
   return n;
 };
 
+// ✅ Helper para validar IP pública
+function isPublicIp(ip?: string) {
+  if (!ip) return false;
+  const v = ip.trim();
+  if (!v) return false;
+  if (v === '::1' || v.startsWith('127.')) return false;
+  if (v.startsWith('10.')) return false;
+  if (v.startsWith('192.168.')) return false;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(v)) return false;
+  return true;
+}
+
 import { CartService } from '../cart/cart.service';
 
 @Injectable()
@@ -540,7 +552,7 @@ export class OrdersService {
     orderId: number,
     userId: number,
     paymentData: MercadoPagoPaymentDto,
-    options?: AttemptOptions,
+    options?: AttemptOptions & { ip?: string },
   ) {
     const order = await this.getOrderById(orderId, userId);
 
@@ -685,7 +697,10 @@ export class OrdersService {
           description: `Pago Orden #${order.id}`,
           external_reference: String(order.id),
           statement_descriptor: statementDescriptor,
-          additional_info: { items: mpItems },
+          additional_info: { 
+            items: mpItems,
+            ...(isPublicIp(options?.ip) ? { ip_address: options!.ip!.trim() } : {}), // ✅ Solo IP pública
+          },
           payer: {
             email: payerEmail,
             ...(paymentData.identificationType &&

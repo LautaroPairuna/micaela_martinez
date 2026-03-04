@@ -158,7 +158,10 @@ export class MpPaymentService {
         capture: true,
         binary_mode: binaryMode,
         statement_descriptor: paymentData.statement_descriptor,
-        additional_info: paymentData.additional_info,
+        additional_info: {
+          ...paymentData.additional_info,
+          ...(paymentData.additional_info?.ip_address ? { ip_address: paymentData.additional_info.ip_address } : {}),
+        },
         ...(notif ? { notification_url: notif } : {}),
       };
 
