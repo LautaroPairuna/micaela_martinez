@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
-import { SubscriptionCoursesList } from '@/components/subscription/SubscriptionCoursesList';
-import { SubscriptionInfoCard } from '@/components/subscription/SubscriptionInfoCard';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GraduationCap, BookOpen } from 'lucide-react';
-import { EnrollmentProgressProvider, useEnrollmentProgress } from '@/components/courses/EnrollmentProgressProvider';
+import {
+  EnrollmentProgressProvider,
+  useEnrollmentProgress,
+} from '@/components/courses/EnrollmentProgressProvider';
 import { EnrollmentCard } from '@/components/courses/EnrollmentCard';
 import { motion } from 'framer-motion';
 
@@ -25,6 +27,12 @@ type EnrollmentRow = {
   estado: 'ACTIVADA' | 'DESACTIVADA' | string;
   curso?: CursoLight;
   progreso?: unknown;
+
+  // ✅ si tu API ya los envía, los aprovechamos (no rompe si no existen)
+  subscriptionOrderId?: string | number | null;
+  subscriptionId?: string | null;
+  subscriptionEndDate?: string | Date | null;
+  subscriptionActive?: boolean | null;
 };
 
 type SubscriptionItem = {
@@ -57,28 +65,29 @@ type MiAprendizajeClientProps = {
   subscriptionInfo: SubscriptionInfo;
 };
 
-function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeClientProps) {
-  const { lessonProgress, courseModules, getLessonProgressKey } = useEnrollmentProgress();
+function MiAprendizajeContent({
+  initialRows,
+  subscriptionInfo,
+}: MiAprendizajeClientProps) {
+  const { lessonProgress, courseModules, getLessonProgressKey } =
+    useEnrollmentProgress();
+
+  useEffect(() => {
+    console.log('📦 MiAprendizajeContent - subscriptionInfo:', subscriptionInfo);
+  }, [subscriptionInfo]);
 
   const container = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+    show: { opacity: 1, y: 0 },
   };
 
   return (
     <div className="space-y-8">
-      {/* Información global de suscripciones eliminada de aquí */}
-
       <PageHeader
         icon={GraduationCap}
         iconBg="bg-transparent border border-[var(--pink)]/40"
@@ -86,7 +95,9 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
         title="Mi Aprendizaje"
         description={
           initialRows.length > 0
-            ? `${initialRows.length} curso${initialRows.length !== 1 ? 's' : ''} en tu biblioteca de aprendizaje`
+            ? `${initialRows.length} curso${
+                initialRows.length !== 1 ? 's' : ''
+              } en tu biblioteca de aprendizaje`
             : 'Continuá desarrollando tus habilidades profesionales'
         }
         stats={
@@ -113,10 +124,13 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
                 <GraduationCap className="h-10 w-10 text-[var(--gold)]" />
               </div>
               <div className="space-y-3">
-                <h3 className="text-xl font-bold text-[var(--fg)]">¡Comenzá tu viaje de aprendizaje!</h3>
+                <h3 className="text-xl font-bold text-[var(--fg)]">
+                  ¡Comenzá tu viaje de aprendizaje!
+                </h3>
                 <p className="text-[var(--muted)] leading-relaxed">
-                  Aún no tenés cursos en tu biblioteca. Explorá nuestra selección de cursos profesionales y
-                  comenzá a desarrollar nuevas habilidades hoy mismo.
+                  Aún no tenés cursos en tu biblioteca. Explorá nuestra selección
+                  de cursos profesionales y comenzá a desarrollar nuevas
+                  habilidades hoy mismo.
                 </p>
               </div>
               <Link
@@ -130,7 +144,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
           </CardBody>
         </Card>
       ) : (
-        <motion.div 
+        <motion.div
           variants={container}
           initial="hidden"
           animate="show"
@@ -139,16 +153,35 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
           {initialRows.map((enrollment) => {
             const courseId = String(enrollment.cursoId || '');
             const modules = courseModules[courseId] || [];
-            
-            // Buscar la suscripción correspondiente a este curso
-            const subscription = subscriptionInfo.subscriptions.find(sub => {
-              // Si la suscripción tiene el ID de la orden en los metadatos del enrollment
-              const prog = enrollment.progreso as any;
-              return String(sub.orderId) === String(prog?.subscription?.orderId);
-            });
+
+            // ✅ 1) Preferir columna nueva si existe (más confiable)
+            const colOrderId = String(enrollment.subscriptionOrderId ?? '').trim();
+
+            // ✅ 2) Fallback legacy: progreso.subscription.orderId
+            const prog = enrollment.progreso as any;
+            const progOrderId = String(prog?.subscription?.orderId ?? '').trim();
+
+            const matchOrderId = colOrderId || progOrderId;
+
+            // ✅ Buscar suscripción SOLO si tenemos orderId (SIN fallback peligroso)
+            const subscription = matchOrderId
+              ? subscriptionInfo.subscriptions.find(
+                  (sub) => String(sub.orderId).trim() === matchOrderId,
+                )
+              : undefined;
+
+            if (!matchOrderId) {
+              console.log(
+                `⚠️ Inscripcion ${enrollment.id} no tiene orderId (ni columna ni progreso). No se asigna suscripción.`,
+              );
+            }
 
             return (
-              <motion.div key={enrollment.id} variants={item} className="h-full transform transition-all duration-200 hover:-translate-y-1">
+              <motion.div
+                key={enrollment.id}
+                variants={item}
+                className="h-full transform transition-all duration-200 hover:-translate-y-1"
+              >
                 <EnrollmentCard
                   enrollment={enrollment}
                   lessonProgress={lessonProgress}
@@ -165,10 +198,16 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
   );
 }
 
-export function MiAprendizajeClient({ initialRows, subscriptionInfo }: MiAprendizajeClientProps) {
+export function MiAprendizajeClient({
+  initialRows,
+  subscriptionInfo,
+}: MiAprendizajeClientProps) {
   return (
     <EnrollmentProgressProvider>
-      <MiAprendizajeContent initialRows={initialRows} subscriptionInfo={subscriptionInfo} />
+      <MiAprendizajeContent
+        initialRows={initialRows}
+        subscriptionInfo={subscriptionInfo}
+      />
     </EnrollmentProgressProvider>
   );
 }
