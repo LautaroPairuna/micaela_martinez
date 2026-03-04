@@ -394,6 +394,31 @@
             "null"
           ]
         },
+        "subscriptionOrderId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "subscriptionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "subscriptionEndDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "subscriptionActive": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "creadoEn": {
           "type": "string",
           "format": "date-time"
@@ -869,6 +894,13 @@
             "string",
             "null"
           ]
+        },
+        "suscripcionProximoPago": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         },
         "metadatos": {
           "type": [

@@ -21,6 +21,7 @@ import {
   ItemOrden,
   TipoNotificacion,
 } from '@prisma/client';
+import { parseJson } from './interfaces/orden-metadata.interface';
 
 type SubscriptionStatus =
   | 'active'
@@ -28,6 +29,31 @@ type SubscriptionStatus =
   | 'cancelled'
   | 'expired'
   | string;
+
+type FrequencyType = 'months' | 'days';
+
+function normalizeFrequencyType(v?: string | null): FrequencyType {
+  const s = (v ?? '').toLowerCase();
+  if (s.includes('day') || s === 'dia' || s === 'días' || s === 'dias') return 'days';
+  return 'months';
+}
+
+function addFrequency(base: Date, freq: number, type: FrequencyType): Date {
+  const d = new Date(base);
+  if (type === 'months') d.setMonth(d.getMonth() + freq);
+  else d.setDate(d.getDate() + freq);
+  return d;
+}
+
+function mergeSubscriptionMeta(current: any, patch: any) {
+  return {
+    ...(current || {}),
+    subscription: {
+      ...((current?.subscription) || {}),
+      ...(patch || {}),
+    },
+  };
+}
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
@@ -1000,168 +1026,119 @@ export class OrdersService {
     paymentId: number,
     _data: Record<string, unknown>,
   ) {
-    try {
-      // 1. Obtener detalles del pago desde MP (fuente confiable)
-      const paymentDetails = await this.mpPaymentService.getPayment(
-        String(paymentId),
-      );
-      if (!paymentDetails) {
-        console.warn(`[MP payment ${paymentId}] No se encontraron detalles`);
-        return { processed: false, reason: 'payment_not_found' };
-      }
+    // 1) Obtener pago desde MP
+    const paymentDetails = await this.mpPaymentService.getPayment(String(paymentId));
+    if (!paymentDetails) return { processed: false, reason: 'payment_not_found' };
 
-      // 2. Resolver la orden por external_reference
-      const ref = paymentDetails.external_reference;
-      if (!ref) {
-        console.warn(`[MP payment ${paymentId}] Sin external_reference`);
-        return { processed: true, reason: 'missing_external_reference' };
-      }
+    const ref = paymentDetails.external_reference;
+    if (!ref) return { processed: true, reason: 'missing_external_reference' };
 
-      const orderId = Number(ref);
-      if (isNaN(orderId)) {
-        console.warn(
-          `[MP payment ${paymentId}] external_reference inválido: ${ref}`,
-        );
-        return { processed: true, reason: 'invalid_external_reference' };
-      }
+    const orderId = Number(ref);
+    if (!Number.isFinite(orderId)) return { processed: true, reason: 'invalid_external_reference' };
 
-      const order = await this.prisma.orden.findUnique({
-        where: { id: orderId },
-        include: { items: true },
-      });
+    const order = await this.prisma.orden.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+    if (!order) return { processed: true, reason: 'order_not_found' };
 
-      if (!order) {
-        console.warn(
-          `[MP payment ${paymentId}] Orden no encontrada: ${orderId}`,
-        );
-        return { processed: true, reason: 'order_not_found' };
-      }
+    // 2) Upsert pago
+    const referenciaPago = String(paymentDetails.id);
 
-      console.log(`[MP payment ${paymentId}] Order ${order.id} esSuscripcion=${order.esSuscripcion}`);
+    await this.prisma.pagoSuscripcion.upsert({
+      where: { referenciaPago },
+      create: {
+        ordenId: order.id,
+        usuarioId: order.usuarioId,
+        referenciaPago,
+        monto: new Prisma.Decimal(paymentDetails.transaction_amount),
+        estado: paymentDetails.status,
+        metadatos: json({
+          paymentId: String(paymentDetails.id),
+          status: paymentDetails.status,
+          statusDetail: paymentDetails.status_detail,
+          dateApproved: paymentDetails.date_approved,
+          subscriptionId: paymentDetails.subscription_id,
+        }),
+      },
+      update: {
+        estado: paymentDetails.status,
+        metadatos: json({
+          paymentId: String(paymentDetails.id),
+          status: paymentDetails.status,
+          statusDetail: paymentDetails.status_detail,
+          dateApproved: paymentDetails.date_approved,
+          subscriptionId: paymentDetails.subscription_id,
+        }),
+      },
+    });
 
-      // 3. Registrar o actualizar el pago (Idempotente)
-      const referenciaPago = String(paymentDetails.id);
-
-      await this.prisma.pagoSuscripcion.upsert({
-        where: { referenciaPago },
-        create: {
-          ordenId: order.id,
-          usuarioId: order.usuarioId,
-          referenciaPago,
-          monto: new Prisma.Decimal(paymentDetails.transaction_amount),
-          estado: paymentDetails.status,
-          metadatos: json({
-            paymentId: String(paymentDetails.id),
-            status: paymentDetails.status,
-            statusDetail: paymentDetails.status_detail,
-            dateApproved: paymentDetails.date_approved,
-            subscriptionId: paymentDetails.subscription_id,
-          }),
-        },
-        update: {
-          estado: paymentDetails.status,
-          metadatos: json({
-            paymentId: String(paymentDetails.id),
-            status: paymentDetails.status,
-            statusDetail: paymentDetails.status_detail,
-            dateApproved: paymentDetails.date_approved,
-            subscriptionId: paymentDetails.subscription_id,
-          }),
-        },
-      });
-
-      // 4. Si el pago NO está aprobado, no habilitamos nada
-      if (paymentDetails.status !== 'approved') {
-        console.log(
-          `[MP payment ${paymentId}] Estado ${paymentDetails.status}, no habilita acceso.`,
-        );
-        return { processed: true, status: paymentDetails.status };
-      }
-
-      // 5. Pago APROBADO: Actualizar orden y habilitar acceso
-      // Re-fetch para asegurar que tenemos los datos más recientes (esSuscripcion, etc)
-      const freshOrder = await this.prisma.orden.findUnique({
-        where: { id: order.id },
-      });
-
-      const isSub = freshOrder?.esSuscripcion || order.esSuscripcion;
-      
-      // Calcular fecha de próximo cobro para suscripciones
-      let nextPaymentDate: Date | null = null;
-      if (isSub) {
-        const frequency = freshOrder?.suscripcionFrecuencia || order.suscripcionFrecuencia || 1;
-        const frequencyType = freshOrder?.suscripcionTipoFrecuencia || order.suscripcionTipoFrecuencia || 'months';
-        
-        nextPaymentDate = new Date();
-        if (frequencyType.includes('month')) {
-          nextPaymentDate.setMonth(nextPaymentDate.getMonth() + frequency);
-        } else if (frequencyType.includes('day')) {
-          nextPaymentDate.setDate(nextPaymentDate.getDate() + frequency);
-        }
-      }
-
-      const currentMeta = parseMetadatos(freshOrder?.metadatos || order.metadatos);
-      const updatedMeta = {
-        ...currentMeta,
-        subscription: isSub ? {
-          ...(currentMeta?.subscription || {}),
-          nextPaymentDate: nextPaymentDate?.toISOString(),
-          lastPaymentDate: new Date().toISOString(),
-        } : currentMeta?.subscription
-      };
-
-      // 5.1 Actualizar la orden
-      await this.prisma.orden.update({
-        where: { id: order.id },
-        data: {
-          estado: EstadoOrden.PAGADO,
-          suscripcionActiva: isSub ? true : null,
-          referenciaPago: referenciaPago,
-          metadatos: json(updatedMeta),
-          // Sincronizar campos directos si es necesario
-          ...(isSub ? {
-            suscripcionProximoPago: nextPaymentDate,
-          } : {})
-        },
-      });
-
-      // 6. Activar inscripciones de cursos
-      await this.createCourseEnrollments(order.id, order.usuarioId, nextPaymentDate);
-
-      // 7. Si es suscripción, renovar fechas de expiración y notificar
-      if (isSub) {
-        await this.renewCourseSubscriptions(order.usuarioId, nextPaymentDate);
-
-        // Notificar al usuario que su suscripción fue aprobada
-        try {
-          await this.notificationsService.createNotification({
-            usuarioId: String(order.usuarioId),
-            tipo: TipoNotificacion.SISTEMA,
-            titulo: 'Suscripción Aprobada',
-            mensaje: `¡Tu suscripción para la orden #${order.id} ha sido aprobada! Ya tienes acceso a tus cursos.`,
-            url: '/perfil/cursos', // URL sugerida para ver sus cursos
-            metadata: {
-              orderId: order.id,
-              subscriptionId: paymentDetails.subscription_id,
-              type: 'subscription_approved',
-            },
-          });
-        } catch (error) {
-          console.error(
-            `[MP payment ${paymentId}] Error al enviar notificación:`,
-            error,
-          );
-        }
-      }
-
-      console.log(
-        `[MP payment ${paymentId}] APPROVED -> Acceso habilitado para orden ${order.id}`,
-      );
-      return { processed: true, orderId: order.id, status: 'approved' };
-    } catch (error) {
-      console.error(`Error en handlePaymentWebhook:`, error);
-      throw error;
+    // 3) Si no aprobado, listo (no habilita acceso)
+    if (paymentDetails.status !== 'approved') {
+      return { processed: true, status: paymentDetails.status };
     }
+
+    // 4) Pago aprobado -> actualizar Orden / metadatos
+    const freshOrder = await this.prisma.orden.findUnique({ where: { id: order.id } });
+
+    const isSub = Boolean(freshOrder?.esSuscripcion ?? order.esSuscripcion);
+
+    const freq = freshOrder?.suscripcionFrecuencia ?? order.suscripcionFrecuencia ?? 1;
+    const freqType = normalizeFrequencyType(
+      freshOrder?.suscripcionTipoFrecuencia ?? order.suscripcionTipoFrecuencia ?? 'months',
+    );
+
+    const now = new Date();
+    const nextPaymentDate = isSub ? addFrequency(now, freq, freqType) : null;
+
+    const currentMeta = parseJson<any>(freshOrder?.metadatos ?? order.metadatos);
+    const nextMeta = isSub
+      ? mergeSubscriptionMeta(currentMeta, {
+          id: freshOrder?.suscripcionId ?? order.suscripcionId ?? paymentDetails.subscription_id ?? undefined,
+          frequency: freq,
+          frequencyType: freqType,
+          status: currentMeta?.subscription?.status ?? 'active',
+          lastPaymentDate: now.toISOString(),
+          nextPaymentDate: nextPaymentDate?.toISOString(),
+          updatedAt: now.toISOString(),
+        })
+      : currentMeta;
+
+    await this.prisma.orden.update({
+      where: { id: order.id },
+      data: {
+        estado: EstadoOrden.PAGADO,
+        referenciaPago,
+        suscripcionActiva: isSub ? true : null,
+        suscripcionProximoPago: isSub ? nextPaymentDate : null,
+        metadatos: json(nextMeta),
+      },
+    });
+
+    // 5) Activar inscripciones
+    await this.createCourseEnrollments(order.id, order.usuarioId, nextPaymentDate);
+
+    // 6) Si es sub, renovar otras inscripciones del usuario (opcional)
+    if (isSub) {
+      await this.renewCourseSubscriptions(order.usuarioId, nextPaymentDate);
+
+      try {
+        await this.notificationsService.createNotification({
+          usuarioId: String(order.usuarioId),
+          tipo: TipoNotificacion.SISTEMA,
+          titulo: 'Suscripción aprobada',
+          mensaje: `¡Tu suscripción para la orden #${order.id} fue aprobada! Ya tienes acceso a tus cursos.`,
+          url: '/perfil/cursos',
+          metadata: {
+            orderId: order.id,
+            subscriptionId: paymentDetails.subscription_id,
+            type: 'subscription_approved',
+          },
+        });
+      } catch {}
+    }
+
+    return { processed: true, orderId: order.id, status: 'approved' };
   }
 
   /**
@@ -1220,75 +1197,74 @@ export class OrdersService {
     };
   }
 
-  /** Renueva las suscripciones a cursos para un usuario */
+  /**
+   * Renueva las suscripciones de los cursos de un usuario.
+   * Ahora renueva columnas y también mantiene el JSON en sync (sin pisar).
+   */
   private async renewCourseSubscriptions(userId: number, nextPaymentDate?: Date | null) {
+    if (!nextPaymentDate) return;
+
     const enrollments = await this.prisma.inscripcion.findMany({
       where: { usuarioId: Number(userId) },
     });
 
     const now = new Date();
+    const end = new Date(nextPaymentDate);
 
     for (const enrollment of enrollments) {
-      const progreso = (enrollment.progreso ?? {}) as Record<string, any>;
+      // Solo renovar si está bajo una suscripción activa (por columnas o por JSON)
+      const currentProgreso = parseJson<Record<string, any>>(enrollment.progreso);
 
-      if (progreso?.subscription) {
-        const subscription = progreso.subscription;
+      const hasSub =
+        enrollment.subscriptionActive === true ||
+        Boolean(currentProgreso?.subscription);
 
-        let endDate: Date;
-        
-        if (nextPaymentDate) {
-          endDate = new Date(nextPaymentDate);
-        } else {
-          endDate = new Date();
-          if (
-            subscription.durationType === 'mes' ||
-            subscription.durationType === 'meses'
-          ) {
-            endDate.setMonth(
-              endDate.getMonth() + parseInt(subscription.duration),
-            );
-          } else if (
-            subscription.durationType === 'día' ||
-            subscription.durationType === 'días'
-          ) {
-            endDate.setDate(endDate.getDate() + parseInt(subscription.duration));
-          }
-        }
+      if (!hasSub) continue;
 
-        await this.prisma.inscripcion.update({
-          where: { id: enrollment.id },
-          data: {
-            progreso: json({
-              ...progreso,
-              subscription: {
-                ...subscription,
-                startDate: now.toISOString(),
-                endDate: endDate.toISOString(),
-              },
-            }),
-          },
-        });
-      }
+      const nextProgreso = {
+        ...currentProgreso,
+        subscription: {
+          ...(currentProgreso.subscription || {}),
+          startDate: now.toISOString(),
+          endDate: end.toISOString(),
+          isActive: true,
+        },
+      };
+
+      await this.prisma.inscripcion.update({
+        where: { id: enrollment.id },
+        data: {
+          subscriptionEndDate: end,
+          subscriptionActive: true,
+          progreso: json(nextProgreso),
+        },
+      });
     }
   }
 
-  /** Crea inscripciones a cursos en una orden pagada */
-  private async createCourseEnrollments(orderId: number, userId: number, nextPaymentDate?: Date | null) {
+  /**
+   * Crea inscripciones para los cursos de una orden (pago aprobado).
+   * Clave: merge profundo de subscription y además setea columnas.
+   */
+  private async createCourseEnrollments(
+    orderId: number,
+    userId: number,
+    nextPaymentDate?: Date | null,
+  ) {
     const order = await this.prisma.orden.findUnique({
       where: { id: Number(orderId) },
       include: { items: true },
     });
-
     if (!order) return;
 
-    const courseItems = order.items.filter(
-      (i) => i.tipo === TipoItemOrden.CURSO,
-    );
+    const courseItems = order.items.filter((i) => i.tipo === TipoItemOrden.CURSO);
     if (!courseItems.length) return;
 
-    const enrollmentResults = await Promise.all(
+    const now = new Date();
+    const isSub = Boolean(order.esSuscripcion);
+
+    await Promise.all(
       courseItems.map(async (i) => {
-        // 1. Buscar inscripcion existente para no perder progreso (lecciones completadas)
         const existing = await this.prisma.inscripcion.findUnique({
           where: {
             usuarioId_cursoId: {
@@ -1298,22 +1274,27 @@ export class OrdersService {
           },
         });
 
-        const currentProgreso = parseMetadatos(existing?.progreso) || {};
-
+        const currentProgreso = parseJson<Record<string, any>>(existing?.progreso);
         let nextProgreso = { ...currentProgreso };
-        if (order.esSuscripcion) {
-          const endDate = nextPaymentDate ? new Date(nextPaymentDate) : null;
-          
+
+        const endDateColumn = isSub && nextPaymentDate ? new Date(nextPaymentDate) : null;
+
+        if (isSub) {
+          const freq = order.suscripcionFrecuencia ?? 1;
+          const freqType = normalizeFrequencyType(order.suscripcionTipoFrecuencia ?? 'months');
+
           nextProgreso = {
             ...nextProgreso,
             subscription: {
+              ...(nextProgreso.subscription || {}),
               orderId: order.id,
+              subscriptionId: order.suscripcionId ?? undefined,
               isActive: true,
-              startDate: new Date().toISOString(),
-              endDate: endDate?.toISOString(),
-              duration: order.suscripcionFrecuencia || 1,
-              durationType: order.suscripcionTipoFrecuencia || 'mes',
-            } as any,
+              startDate: now.toISOString(),
+              endDate: endDateColumn ? endDateColumn.toISOString() : undefined,
+              frequency: freq,
+              frequencyType: freqType,
+            },
           };
         }
 
@@ -1327,15 +1308,26 @@ export class OrdersService {
           update: {
             estado: EstadoInscripcion.ACTIVADA,
             actualizadoEn: new Date(),
-            // ✅ si no es sub, NO toques progreso (o solo si es necesario)
-            ...(order.esSuscripcion ? { progreso: json(nextProgreso) } : {}),
+            ...(isSub
+              ? {
+                  progreso: json(nextProgreso),
+                  subscriptionOrderId: order.id,
+                  subscriptionId: order.suscripcionId,
+                  subscriptionEndDate: endDateColumn,
+                  subscriptionActive: true,
+                }
+              : {}),
           },
           create: {
             usuarioId: Number(userId),
             cursoId: Number(i.refId),
             estado: EstadoInscripcion.ACTIVADA,
-            // ✅ si no es sub, guardá null o {} en lugar de metadata vacía
-            progreso: order.esSuscripcion ? json(nextProgreso) : json(null),
+            progreso: isSub ? json(nextProgreso) : json(nextProgreso ?? {}),
+
+            subscriptionOrderId: isSub ? order.id : null,
+            subscriptionId: isSub ? order.suscripcionId : null,
+            subscriptionEndDate: isSub ? endDateColumn : null,
+            subscriptionActive: isSub ? true : null,
           },
         });
 
@@ -1354,37 +1346,49 @@ export class OrdersService {
         return enrollment;
       }),
     );
-
-    return enrollmentResults;
   }
 
-  /** Crea inscripciones "pendientes" con orderId (para que el FE tenga data y menú) */
-  private async createCourseEnrollmentsAsPending(
-    orderId: number,
-    userId: number,
-  ) {
+  /**
+   * Crea inscripciones PENDIENTES (isActive: false) apenas se crea la suscripción.
+   * Esto es exactamente donde te faltaba orderId en algunos casos: ahora lo aseguramos por merge y además en columnas.
+   */
+  private async createCourseEnrollmentsAsPending(orderId: number, userId: number) {
     const order = await this.prisma.orden.findUnique({
       where: { id: Number(orderId) },
       include: { items: true },
     });
     if (!order) return;
 
-    const courseItems = order.items.filter(
-      (i) => i.tipo === TipoItemOrden.CURSO,
-    );
+    const courseItems = order.items.filter((i) => i.tipo === TipoItemOrden.CURSO);
     if (!courseItems.length) return;
 
     const now = new Date();
+    const freq = order.suscripcionFrecuencia ?? 1;
+    const freqType = normalizeFrequencyType(order.suscripcionTipoFrecuencia ?? 'months');
 
     await Promise.all(
       courseItems.map(async (i) => {
-        const progreso = {
+        const existing = await this.prisma.inscripcion.findUnique({
+          where: {
+            usuarioId_cursoId: {
+              usuarioId: Number(userId),
+              cursoId: Number(i.refId),
+            },
+          },
+        });
+
+        const currentProgreso = parseJson<Record<string, any>>(existing?.progreso);
+
+        const nextProgreso = {
+          ...currentProgreso,
           subscription: {
-            orderId: order.id, // ✅ clave para el menú de los 3 puntitos
-            isActive: false, // ✅ todavía no activa (en proceso)
+            ...(currentProgreso.subscription || {}),
+            orderId: order.id,                // ✅ siempre presente
+            subscriptionId: order.suscripcionId ?? undefined,
+            isActive: false,                  // ✅ en proceso
             startDate: now.toISOString(),
-            duration: order.suscripcionFrecuencia || 1,
-            durationType: order.suscripcionTipoFrecuencia || 'mes',
+            frequency: freq,
+            frequencyType: freqType,
           },
         };
 
@@ -1398,13 +1402,26 @@ export class OrdersService {
           update: {
             estado: EstadoInscripcion.ACTIVADA,
             actualizadoEn: new Date(),
-            progreso: json(progreso),
+            progreso: json(nextProgreso),
+
+            // ✅ columnas
+            subscriptionOrderId: order.id,
+            subscriptionId: order.suscripcionId,
+            subscriptionActive: false,
+            // endDate todavía no existe (hasta el primer approved)
+            subscriptionEndDate: null,
           },
           create: {
             usuarioId: Number(userId),
             cursoId: Number(i.refId),
             estado: EstadoInscripcion.ACTIVADA,
-            progreso: json(progreso),
+            progreso: json(nextProgreso),
+
+            // ✅ columnas
+            subscriptionOrderId: order.id,
+            subscriptionId: order.suscripcionId,
+            subscriptionActive: false,
+            subscriptionEndDate: null,
           },
         });
       }),

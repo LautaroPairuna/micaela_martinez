@@ -119,7 +119,16 @@ model Inscripcion {
   usuarioId     Int               @map("usuario_id")
   cursoId       Int               @map("curso_id")
   estado        EstadoInscripcion @default(ACTIVADA)
+
+  // ✅ sigue existiendo para progreso/lecciones/etc.
   progreso      Json
+
+  // ✅ NUEVOS: campos de suscripción “queryables”
+  subscriptionOrderId Int?       @map("subscription_order_id")
+  subscriptionId      String?    @map("subscription_id")
+  subscriptionEndDate DateTime?  @map("subscription_end_date")
+  subscriptionActive  Boolean?   @map("subscription_active")
+
   creadoEn      DateTime          @default(now()) @map("creado_en")
   actualizadoEn DateTime          @updatedAt @map("actualizado_en")
 
@@ -128,6 +137,10 @@ model Inscripcion {
 
   @@unique([usuarioId, cursoId])
   @@index([cursoId], map: "inscripcion_curso_id_fkey")
+  @@index([subscriptionOrderId])
+  @@index([subscriptionId])
+  @@index([subscriptionEndDate])
+  @@index([subscriptionActive])
   @@map("inscripcion")
 }
 
@@ -265,6 +278,10 @@ model Orden {
   suscripcionId             String?     @unique @map("suscripcion_id")
   suscripcionFrecuencia     Int?        @map("suscripcion_frecuencia")
   suscripcionTipoFrecuencia String?     @map("suscripcion_tipo_frecuencia")
+
+  // ✅ NUEVO: próxima fecha de cobro/fin de período (fuente de verdad para cron/notifs)
+  suscripcionProximoPago    DateTime?   @map("suscripcion_proximo_pago")
+
   metadatos                 Json?
   direccionEnvioId          Int?        @map("direccion_envio_id")
   direccionFacturacionId    Int?        @map("direccion_facturacion_id")
@@ -279,6 +296,7 @@ model Orden {
   @@index([esSuscripcion])
   @@index([suscripcionActiva])
   @@index([referenciaPago])
+  @@index([suscripcionProximoPago])
   @@index([direccionEnvioId], map: "orden_direccion_envio_id_fkey")
   @@index([direccionFacturacionId], map: "orden_direccion_facturacion_id_fkey")
   @@map("orden")
