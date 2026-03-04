@@ -357,6 +357,121 @@ export class OrdersService {
     return updated;
   }
 
+  /**
+   * Sincroniza suscripciones históricas que puedan tener metadatos incompletos.
+   * Útil para órdenes pagadas antes de las actualizaciones de lógica de fechas.
+   */
+  async syncHistoricalSubscriptions() {
+    const historicalOrders = await this.prisma.orden.findMany({
+      where: {
+        esSuscripcion: true,
+        estado: EstadoOrden.PAGADO,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    const results = {
+      total: historicalOrders.length,
+      updated: 0,
+      errors: 0,
+    };
+
+    for (const order of historicalOrders) {
+      try {
+        const metadatos = parseMetadatos(order.metadatos);
+        let nextPaymentDate = metadatos?.subscription?.nextPaymentDate;
+
+        // 1. Si falta la fecha de próximo pago, calcularla
+        if (!nextPaymentDate) {
+          const frequency = order.suscripcionFrecuencia || 1;
+          const frequencyType = order.suscripcionTipoFrecuencia || 'months';
+          const date = new Date(order.actualizadoEn || order.creadoEn);
+
+          if (frequencyType.includes('month')) {
+            date.setMonth(date.getMonth() + frequency);
+          } else if (frequencyType.includes('day')) {
+            date.setDate(date.getDate() + frequency);
+          }
+          nextPaymentDate = date.toISOString();
+        }
+
+        // 2. Actualizar metadatos de la orden
+        const updatedMeta = {
+          ...metadatos,
+          subscription: {
+            ...(metadatos?.subscription || {}),
+            nextPaymentDate,
+            isActive: order.suscripcionActiva !== false,
+            orderId: order.id,
+            subscriptionId: order.suscripcionId,
+          },
+        };
+
+        await this.prisma.orden.update({
+          where: { id: order.id },
+          data: {
+            suscripcionActiva: true,
+            metadatos: json(updatedMeta),
+          },
+        });
+
+        // 3. Asegurar inscripciones y sus metadatos
+        const courseItems = order.items.filter(
+          (i) => i.tipo === TipoItemOrden.CURSO,
+        );
+        for (const item of courseItems) {
+          const enrollment = await this.prisma.inscripcion.findUnique({
+            where: {
+              usuarioId_cursoId: {
+                usuarioId: order.usuarioId,
+                cursoId: item.refId,
+              },
+            },
+          });
+
+          const subMeta = {
+            orderId: order.id,
+            subscriptionId: order.suscripcionId,
+            endDate: nextPaymentDate,
+            isActive: true,
+          };
+
+          if (!enrollment) {
+            await this.prisma.inscripcion.create({
+              data: {
+                usuarioId: order.usuarioId,
+                cursoId: item.refId,
+                estado: EstadoInscripcion.ACTIVADA,
+                progreso: json({ subscription: subMeta }),
+              },
+            });
+          } else {
+            const currentProgreso = (enrollment.progreso as any) || {};
+            await this.prisma.inscripcion.update({
+              where: { id: enrollment.id },
+              data: {
+                estado: EstadoInscripcion.ACTIVADA,
+                progreso: json({
+                  ...currentProgreso,
+                  subscription: subMeta,
+                }),
+              },
+            });
+          }
+        }
+
+        results.updated++;
+      } catch (error) {
+        console.error(`Error syncing order ${order.id}:`, error);
+        results.errors++;
+      }
+    }
+
+    return results;
+  }
+
   /** Pago one-off (no suscripción) */
   async processMercadoPagoPayment(
     orderId: number,
@@ -970,22 +1085,52 @@ export class OrdersService {
       });
 
       const isSub = freshOrder?.esSuscripcion || order.esSuscripcion;
+      
+      // Calcular fecha de próximo cobro para suscripciones
+      let nextPaymentDate: Date | null = null;
+      if (isSub) {
+        const frequency = freshOrder?.suscripcionFrecuencia || order.suscripcionFrecuencia || 1;
+        const frequencyType = freshOrder?.suscripcionTipoFrecuencia || order.suscripcionTipoFrecuencia || 'months';
+        
+        nextPaymentDate = new Date();
+        if (frequencyType.includes('month')) {
+          nextPaymentDate.setMonth(nextPaymentDate.getMonth() + frequency);
+        } else if (frequencyType.includes('day')) {
+          nextPaymentDate.setDate(nextPaymentDate.getDate() + frequency);
+        }
+      }
 
+      const currentMeta = parseMetadatos(freshOrder?.metadatos || order.metadatos);
+      const updatedMeta = {
+        ...currentMeta,
+        subscription: isSub ? {
+          ...(currentMeta?.subscription || {}),
+          nextPaymentDate: nextPaymentDate?.toISOString(),
+          lastPaymentDate: new Date().toISOString(),
+        } : currentMeta?.subscription
+      };
+
+      // 5.1 Actualizar la orden
       await this.prisma.orden.update({
         where: { id: order.id },
         data: {
           estado: EstadoOrden.PAGADO,
           suscripcionActiva: isSub ? true : null,
           referenciaPago: referenciaPago,
+          metadatos: json(updatedMeta),
+          // Sincronizar campos directos si es necesario
+          ...(isSub ? {
+            suscripcionProximoPago: nextPaymentDate,
+          } : {})
         },
       });
 
       // 6. Activar inscripciones de cursos
-      await this.createCourseEnrollments(order.id, order.usuarioId);
+      await this.createCourseEnrollments(order.id, order.usuarioId, nextPaymentDate);
 
       // 7. Si es suscripción, renovar fechas de expiración y notificar
       if (isSub) {
-        await this.renewCourseSubscriptions(order.usuarioId);
+        await this.renewCourseSubscriptions(order.usuarioId, nextPaymentDate);
 
         // Notificar al usuario que su suscripción fue aprobada
         try {
@@ -1076,7 +1221,7 @@ export class OrdersService {
   }
 
   /** Renueva las suscripciones a cursos para un usuario */
-  private async renewCourseSubscriptions(userId: number) {
+  private async renewCourseSubscriptions(userId: number, nextPaymentDate?: Date | null) {
     const enrollments = await this.prisma.inscripcion.findMany({
       where: { usuarioId: Number(userId) },
     });
@@ -1089,19 +1234,25 @@ export class OrdersService {
       if (progreso?.subscription) {
         const subscription = progreso.subscription;
 
-        const endDate = new Date();
-        if (
-          subscription.durationType === 'mes' ||
-          subscription.durationType === 'meses'
-        ) {
-          endDate.setMonth(
-            endDate.getMonth() + parseInt(subscription.duration),
-          );
-        } else if (
-          subscription.durationType === 'día' ||
-          subscription.durationType === 'días'
-        ) {
-          endDate.setDate(endDate.getDate() + parseInt(subscription.duration));
+        let endDate: Date;
+        
+        if (nextPaymentDate) {
+          endDate = new Date(nextPaymentDate);
+        } else {
+          endDate = new Date();
+          if (
+            subscription.durationType === 'mes' ||
+            subscription.durationType === 'meses'
+          ) {
+            endDate.setMonth(
+              endDate.getMonth() + parseInt(subscription.duration),
+            );
+          } else if (
+            subscription.durationType === 'día' ||
+            subscription.durationType === 'días'
+          ) {
+            endDate.setDate(endDate.getDate() + parseInt(subscription.duration));
+          }
         }
 
         await this.prisma.inscripcion.update({
@@ -1122,7 +1273,7 @@ export class OrdersService {
   }
 
   /** Crea inscripciones a cursos en una orden pagada */
-  private async createCourseEnrollments(orderId: number, userId: number) {
+  private async createCourseEnrollments(orderId: number, userId: number, nextPaymentDate?: Date | null) {
     const order = await this.prisma.orden.findUnique({
       where: { id: Number(orderId) },
       include: { items: true },
@@ -1151,12 +1302,15 @@ export class OrdersService {
 
         let nextProgreso = { ...currentProgreso };
         if (order.esSuscripcion) {
+          const endDate = nextPaymentDate ? new Date(nextPaymentDate) : null;
+          
           nextProgreso = {
             ...nextProgreso,
             subscription: {
               orderId: order.id,
               isActive: true,
               startDate: new Date().toISOString(),
+              endDate: endDate?.toISOString(),
               duration: order.suscripcionFrecuencia || 1,
               durationType: order.suscripcionTipoFrecuencia || 'mes',
             } as any,

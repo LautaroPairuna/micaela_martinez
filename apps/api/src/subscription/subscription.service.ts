@@ -190,7 +190,36 @@ export class SubscriptionService {
           durationType?: string;
         };
       };
-      const subscriptionMeta = metadatos.subscription || {};
+      
+      let subscriptionMeta = metadatos.subscription || {};
+
+      // 🛡️ REPARACIÓN ON-THE-FLY: Si es una orden PAGADA y no tiene fecha de próximo pago, calcularla
+      if (orden.estado === EstadoOrden.PAGADO && !subscriptionMeta.nextPaymentDate) {
+        const frequency = orden.suscripcionFrecuencia || 1;
+        const frequencyType = orden.suscripcionTipoFrecuencia || 'month';
+        const calcDate = new Date(orden.actualizadoEn || orden.creadoEn);
+        
+        if (frequencyType.includes('month')) {
+          calcDate.setMonth(calcDate.getMonth() + frequency);
+        } else if (frequencyType.includes('day')) {
+          calcDate.setDate(calcDate.getDate() + frequency);
+        }
+        
+        subscriptionMeta.nextPaymentDate = calcDate.toISOString();
+        subscriptionMeta.frequency = frequency;
+        subscriptionMeta.frequencyType = frequencyType;
+        
+        // Intentar persistir la reparación de forma asíncrona (sin bloquear)
+        this.prisma.orden.update({
+          where: { id: orden.id },
+          data: { 
+            metadatos: { 
+              ...metadatos, 
+              subscription: subscriptionMeta 
+            } as any 
+          }
+        }).catch(e => this.logger.error(`Error repairing metadata for order ${orden.id}`, e));
+      }
 
       const nextPaymentDate = subscriptionMeta.nextPaymentDate
         ? new Date(subscriptionMeta.nextPaymentDate)
@@ -248,6 +277,7 @@ export class SubscriptionService {
 
     if (!enrollment) return null;
 
+    const now = new Date();
     const progreso = enrollment.progreso as unknown as {
       subscription?: {
         endDate: string;
@@ -261,15 +291,73 @@ export class SubscriptionService {
 
     // Si no tiene información de suscripción, devolvemos acceso permanente
     if (!progreso?.subscription) {
+      // 🛡️ REPARACIÓN ON-THE-FLY para Inscripción: Intentar reconstruir desde la Orden si falta el metadato
+      const lastPaidOrder = await this.prisma.orden.findFirst({
+        where: {
+          usuarioId: Number(userId),
+          estado: EstadoOrden.PAGADO,
+          esSuscripcion: true,
+          items: {
+            some: {
+              tipo: 'CURSO',
+              refId: Number(courseId),
+            },
+          },
+        },
+        orderBy: { creadoEn: 'desc' },
+      });
+
+      if (lastPaidOrder) {
+        const orderMeta = (lastPaidOrder.metadatos as any)?.subscription || {};
+        const frequency = lastPaidOrder.suscripcionFrecuencia || 1;
+        const frequencyType = lastPaidOrder.suscripcionTipoFrecuencia || 'month';
+        const date = new Date(lastPaidOrder.actualizadoEn || lastPaidOrder.creadoEn);
+
+        if (frequencyType.includes('month')) {
+          date.setMonth(date.getMonth() + frequency);
+        } else if (frequencyType.includes('day')) {
+          date.setDate(date.getDate() + frequency);
+        }
+
+        const repairedSub = {
+          orderId: lastPaidOrder.id,
+          subscriptionId: lastPaidOrder.suscripcionId,
+          endDate: orderMeta.nextPaymentDate || date.toISOString(),
+          isActive: true,
+        };
+
+        // Persistir en la inscripción para futuros accesos
+        await this.prisma.inscripcion.update({
+          where: { id: enrollment.id },
+          data: {
+            progreso: {
+              ...(enrollment.progreso as any || {}),
+              subscription: repairedSub,
+            } as any,
+          },
+        });
+
+        return {
+          hasAccess: true,
+          isPermanent: false,
+          expirationDate: repairedSub.endDate,
+          daysLeft: Math.ceil((new Date(repairedSub.endDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+          orderId: lastPaidOrder.id,
+          subscriptionId: lastPaidOrder.suscripcionId,
+          isActive: true,
+          courseName: enrollment.curso.titulo,
+          courseSlug: enrollment.curso.slug,
+        };
+      }
+
       return {
         hasAccess: true,
         isPermanent: true,
-        courseName: 'Curso no disponible',
-        courseSlug: 'curso-no-disponible',
+        courseName: enrollment.curso.titulo,
+        courseSlug: enrollment.curso.slug,
       };
     }
 
-    const now = new Date();
     const endDate = new Date(progreso.subscription.endDate);
     const daysLeft = Math.ceil(
       (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),

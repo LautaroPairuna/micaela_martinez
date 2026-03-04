@@ -23,6 +23,8 @@ export interface SubscriptionMetadata {
   status: string;
   createdAt: string;
   updatedAt?: string;
+  nextPaymentDate?: string;
+  lastPaymentDate?: string;
 }
 
 export interface OrdenMetadata {
@@ -52,6 +54,14 @@ export class SubscriptionMetadataDto {
   @IsOptional()
   @IsDateString()
   updatedAt?: string;
+
+  @IsOptional()
+  @IsDateString()
+  nextPaymentDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  lastPaymentDate?: string;
 }
 
 export class OrdenMetadataDto {

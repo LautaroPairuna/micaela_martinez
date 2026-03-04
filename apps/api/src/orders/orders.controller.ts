@@ -160,6 +160,18 @@ export class OrdersController {
     }
   }
 
+  @Post('sync-subscriptions')
+  async syncHistoricalSubscriptions() {
+    try {
+      return await this.ordersService.syncHistoricalSubscriptions();
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message || 'Error al sincronizar suscripciones',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('webhooks/mercadopago')
   async handleMercadoPagoWebhook(
     @Body() webhookData: any,
