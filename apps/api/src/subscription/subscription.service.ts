@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationsService } from '../notifications/notifications.service';
-import { TipoNotificacion } from '@prisma/client';
+import { TipoNotificacion, EstadoOrden } from '@prisma/client';
 
 @Injectable()
 export class SubscriptionService {
@@ -130,14 +130,30 @@ export class SubscriptionService {
       where: {
         usuarioId: Number(userId),
         esSuscripcion: true,
-        suscripcionActiva: true,
+        OR: [
+          { suscripcionActiva: true },
+          { estado: EstadoOrden.PAGADO }
+        ],
       },
       orderBy: {
         creadoEn: 'desc',
       },
     });
 
+    console.log(`[SubscriptionService] Found ${ordenes.length} active orders for user ${userId}`);
+
     if (ordenes.length === 0) {
+      // Intento de búsqueda fallback (sin suscripcionActiva: true para ver si existen)
+      const allSubs = await this.prisma.orden.findMany({
+        where: {
+          usuarioId: Number(userId),
+          esSuscripcion: true,
+        },
+      });
+      if (allSubs.length > 0) {
+        console.log(`[SubscriptionService] User has ${allSubs.length} subscription orders, but NONE are marked as suscripcionActiva: true`);
+      }
+
       return {
         isActive: false,
         subscriptions: [],

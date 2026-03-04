@@ -181,13 +181,14 @@ export function EnrollmentCard({
         }));
 
         console.log('📊 EnrollmentCard Progress Summary', {
-          enrollmentId: params.enrollmentId,
-          modulesSource: params.modulesSource,
-          modulesTotal: params.modulesToUse?.length || 0,
-          serverCompletedKeys: completedKeys,
-          totals: params.totals,
-          sampleModules,
-        });
+        enrollmentId: params.enrollmentId,
+        modulesSource: params.modulesSource,
+        modulesTotal: params.modulesToUse?.length || 0,
+        serverCompletedKeys: completedKeys,
+        totals: params.totals,
+        sampleModules,
+        hasSubscriptionInfo: !!subscriptionInfo,
+      });
       } catch (e) {
         console.warn('📊 EnrollmentCard Progress Summary logging failed:', e);
       }

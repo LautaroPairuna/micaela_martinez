@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SubscriptionCoursesList } from '@/components/subscription/SubscriptionCoursesList';
 import { SubscriptionInfoCard } from '@/components/subscription/SubscriptionInfoCard';
@@ -59,6 +60,10 @@ type MiAprendizajeClientProps = {
 
 function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeClientProps) {
   const { lessonProgress, courseModules, getLessonProgressKey } = useEnrollmentProgress();
+
+  useEffect(() => {
+    console.log('📦 MiAprendizajeContent - Subscriptions Props:', subscriptionInfo);
+  }, [subscriptionInfo]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -141,13 +146,25 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
             const modules = courseModules[courseId] || [];
             
             // Buscar la suscripción correspondiente a este curso
-            const subscription = subscriptionInfo?.subscriptions?.find(sub => {
-              // Si la suscripción tiene el ID de la orden en los metadatos del enrollment
-              const prog = enrollment.progreso as any;
+            const prog = enrollment.progreso as any;
+            const progOrderId = String(prog?.subscription?.orderId || '').trim();
+
+            let subscription = subscriptionInfo?.subscriptions?.find(sub => {
               const subOrderId = String(sub.orderId).trim();
-              const progOrderId = String(prog?.subscription?.orderId || '').trim();
               return subOrderId === progOrderId && progOrderId !== '';
             });
+
+            // Fallback: Si no hay orderId en el progreso, pero hay una suscripción activa, 
+            // asumimos que este curso pertenece a la suscripción activa (especialmente para migraciones)
+            if (!subscription && subscriptionInfo?.isActive && subscriptionInfo.subscriptions.length > 0) {
+              subscription = subscriptionInfo.subscriptions[0];
+            }
+
+            if (!progOrderId) {
+              console.log(`⚠️ Inscripcion ${enrollment.id} no tiene orderId en progreso.subscription. Usando fallback=${!!subscription}`);
+            } else {
+              console.log(`🔍 Buscando sub para inscripcion ${enrollment.id}: orderId=${progOrderId}, encontrada=${!!subscription}`);
+            }
 
             return (
               <motion.div key={enrollment.id} variants={item} className="h-full transform transition-all duration-200 hover:-translate-y-1">

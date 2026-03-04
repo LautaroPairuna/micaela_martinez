@@ -918,6 +918,8 @@ export class OrdersService {
         return { processed: true, reason: 'order_not_found' };
       }
 
+      console.log(`[MP payment ${paymentId}] Order ${order.id} esSuscripcion=${order.esSuscripcion}`);
+
       // 3. Registrar o actualizar el pago (Idempotente)
       const referenciaPago = String(paymentDetails.id);
 
@@ -958,11 +960,18 @@ export class OrdersService {
       }
 
       // 5. Pago APROBADO: Actualizar orden y habilitar acceso
+      // Re-fetch para asegurar que tenemos los datos más recientes (esSuscripcion, etc)
+      const freshOrder = await this.prisma.orden.findUnique({
+        where: { id: order.id },
+      });
+
+      const isSub = freshOrder?.esSuscripcion || order.esSuscripcion;
+
       await this.prisma.orden.update({
         where: { id: order.id },
         data: {
           estado: EstadoOrden.PAGADO,
-          suscripcionActiva: order.esSuscripcion ? true : null,
+          suscripcionActiva: isSub ? true : null,
           referenciaPago: referenciaPago,
         },
       });
@@ -971,7 +980,7 @@ export class OrdersService {
       await this.createCourseEnrollments(order.id, order.usuarioId);
 
       // 7. Si es suscripción, renovar fechas de expiración y notificar
-      if (order.esSuscripcion) {
+      if (isSub) {
         await this.renewCourseSubscriptions(order.usuarioId);
 
         // Notificar al usuario que su suscripción fue aprobada
@@ -1124,6 +1133,32 @@ export class OrdersService {
 
     const enrollmentResults = await Promise.all(
       courseItems.map(async (i) => {
+        // 1. Buscar inscripcion existente para no perder progreso (lecciones completadas)
+        const existing = await this.prisma.inscripcion.findUnique({
+          where: {
+            usuarioId_cursoId: {
+              usuarioId: Number(userId),
+              cursoId: Number(i.refId),
+            },
+          },
+        });
+
+        const currentProgreso = parseMetadatos(existing?.progreso) || {};
+
+        let nextProgreso = { ...currentProgreso };
+        if (order.esSuscripcion) {
+          nextProgreso = {
+            ...nextProgreso,
+            subscription: {
+              orderId: order.id,
+              isActive: true,
+              startDate: new Date().toISOString(),
+              duration: order.suscripcionFrecuencia || 1,
+              durationType: order.suscripcionTipoFrecuencia || 'mes',
+            } as any,
+          };
+        }
+
         const enrollment = await this.prisma.inscripcion.upsert({
           where: {
             usuarioId_cursoId: {
@@ -1134,12 +1169,13 @@ export class OrdersService {
           update: {
             estado: EstadoInscripcion.ACTIVADA,
             actualizadoEn: new Date(),
+            progreso: json(nextProgreso),
           },
           create: {
             usuarioId: Number(userId),
             cursoId: Number(i.refId),
             estado: EstadoInscripcion.ACTIVADA,
-            progreso: json({}),
+            progreso: json(nextProgreso),
           },
         });
 
