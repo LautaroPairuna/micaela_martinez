@@ -1,6 +1,7 @@
 // apps/api/src/orders/orders.service.ts
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { randomUUID } from 'crypto';
 import { EventTypes } from '../events/event.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { MpPaymentService } from './services/mp-payment.service';
@@ -38,6 +39,17 @@ function normalizeFrequencyType(v?: string | null): FrequencyType {
   return 'months';
 }
 
+type AttemptOptions = { attemptId?: string };
+
+function normalizeAttemptId(attemptId?: string) {
+  const a = (attemptId ?? '').trim();
+  return a !== '' ? a : randomUUID();
+}
+
+function buildMpIdemKey(prefix: 'pay' | 'sub', orderId: number, attemptId: string) {
+  return `${prefix}-${orderId}-${attemptId}`;
+}
+
 function addFrequency(base: Date, freq: number, type: FrequencyType): Date {
   const d = new Date(base);
   if (type === 'months') d.setMonth(d.getMonth() + freq);
@@ -63,6 +75,8 @@ const toInt = (v: string | number | null | undefined): number => {
   return n;
 };
 
+import { CartService } from '../cart/cart.service';
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -71,6 +85,7 @@ export class OrdersService {
     private readonly mpSubscriptionService: MpSubscriptionService,
     private readonly eventEmitter: EventEmitter2,
     private readonly notificationsService: NotificationsService,
+    private readonly cartService: CartService,
   ) {}
 
   /** Crea una orden one-off (no suscripción) */
@@ -171,7 +186,7 @@ export class OrdersService {
     }
 
     // Crear orden en DB
-    return await this.prisma.orden.create({
+    const order = await this.prisma.orden.create({
       data: {
         usuarioId: userId,
         total: total,
@@ -192,6 +207,16 @@ export class OrdersService {
         items: true,
       },
     });
+
+    // 🧹 Limpiar el carrito del usuario tras crear la orden exitosamente
+    try {
+      await this.cartService.clearCart(userId);
+    } catch (error) {
+      console.error('Error clearing cart after order creation:', error);
+      // No bloqueamos la creación de la orden si falla limpiar el carrito, pero logueamos
+    }
+
+    return order;
   }
 
   async getUserOrders(userId: number) {
@@ -503,9 +528,10 @@ export class OrdersService {
     orderId: number,
     userId: number,
     paymentData: MercadoPagoPaymentDto,
-    options?: { idempotencyKey?: string; requestId?: string },
+    options?: AttemptOptions,
   ) {
     const order = await this.getOrderById(orderId, userId);
+
     if (order.estado !== EstadoOrden.PENDIENTE) {
       throw new HttpException(
         'La orden no está en estado pendiente',
@@ -513,21 +539,25 @@ export class OrdersService {
       );
     }
 
-    const idemKey = options?.idempotencyKey || `pay-${order.id}`;
+    const lockKey = `pay-${order.id}`;
+
+    // ✅ attemptId compartido FE/BE (trazabilidad)
+    const attempt = normalizeAttemptId(options?.attemptId);
+    const mpIdemKey = buildMpIdemKey('pay', order.id, attempt);
 
     try {
-      const metadatos = parseMetadatos(order.metadatos);
-      const prevAttempt = metadatos?.paymentAttempts?.[idemKey];
+      const metadatos = parseMetadatos(order.metadatos) as any;
+      const lock = metadatos?.paymentLocks?.[lockKey];
 
-      if (prevAttempt?.status === 'succeeded') {
+      // ✅ si ya se cobró, devolvemos orden
+      if (lock?.status === 'succeeded') {
         return await this.getOrderById(orderId, userId);
       }
-      if (prevAttempt?.status === 'started') {
-        const startedAt =
-          typeof prevAttempt?.createdAt === 'string'
-            ? Date.parse(prevAttempt.createdAt)
-            : NaN;
 
+      // ✅ anti doble click 10s (lock estable)
+      if (lock?.status === 'started') {
+        const startedAt =
+          typeof lock?.createdAt === 'string' ? Date.parse(lock.createdAt) : NaN;
         if (Number.isFinite(startedAt) && Date.now() - startedAt < 10000) {
           throw new HttpException(
             'Pago en progreso, reintentá en unos segundos',
@@ -536,14 +566,41 @@ export class OrdersService {
         }
       }
 
+      // ✅ si este attempt ya fue ejecutado, devolvé idempotente
+      const prevAttempt = metadatos?.paymentAttempts?.[mpIdemKey];
+      if (prevAttempt?.status === 'succeeded') {
+        return await this.getOrderById(orderId, userId);
+      }
+      if (prevAttempt?.status === 'started') {
+        const startedAt =
+          typeof prevAttempt?.createdAt === 'string'
+            ? Date.parse(prevAttempt.createdAt)
+            : NaN;
+        if (Number.isFinite(startedAt) && Date.now() - startedAt < 10000) {
+          throw new HttpException(
+            'Pago en progreso, reintentá en unos segundos',
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
+      // set lock + attempt started
       await this.prisma.orden.update({
         where: { id: order.id },
         data: {
           metadatos: json({
             ...metadatos,
+            paymentLocks: {
+              ...(metadatos?.paymentLocks || {}),
+              [lockKey]: {
+                status: 'started',
+                createdAt: new Date().toISOString(),
+                mpIdemKey,
+              },
+            },
             paymentAttempts: {
               ...(metadatos?.paymentAttempts || {}),
-              [idemKey]: {
+              [mpIdemKey]: {
                 status: 'started',
                 createdAt: new Date().toISOString(),
               },
@@ -552,14 +609,14 @@ export class OrdersService {
         },
       });
 
-      // Email
+      // email
       let payerEmail = paymentData.email;
       if (!payerEmail) {
         const user = await this.prisma.usuario.findUnique({
           where: { id: userId },
           select: { email: true },
         });
-        payerEmail = user?.email;
+        payerEmail = user?.email ?? undefined;
       }
       if (!payerEmail) {
         throw new HttpException(
@@ -567,6 +624,44 @@ export class OrdersService {
           HttpStatus.BAD_REQUEST,
         );
       }
+
+      // MP items
+      const mpItems = (order.items ?? []).map((it: ItemOrden) => {
+        const isCourse = it.tipo === TipoItemOrden.CURSO;
+        const itemId = `${isCourse ? 'COURSE' : 'PRODUCT'}-${it.refId}`;
+        const title = String(it.titulo ?? (isCourse ? 'Curso' : 'Producto'));
+        const categoryId = isCourse ? 'education' : 'others';
+        const quantity = Number(it.cantidad ?? 1);
+        const unitPrice = Number(it.precioUnitario ?? 0);
+        const pictureUrl = (it as any).imagen as string | undefined;
+
+        return {
+          id: itemId,
+          title,
+          description: isCourse
+            ? `Acceso al curso: ${title}`
+            : `Compra de producto: ${title}`,
+          ...(pictureUrl ? { picture_url: pictureUrl } : {}),
+          category_id: categoryId,
+          quantity,
+          unit_price: unitPrice,
+        };
+      });
+
+      const statementDescriptor = 'DOMINIOPRUEBA';
+
+      console.log('[PAY] order', {
+        orderId: order.id,
+        total: String(order.total),
+        mpIdemKey,
+        items: order.items?.map((i: ItemOrden) => ({
+          tipo: i.tipo,
+          refId: i.refId,
+          titulo: i.titulo,
+          qty: i.cantidad,
+          pu: i.precioUnitario,
+        })),
+      });
 
       const paymentResult = await this.mpPaymentService.processPayment(
         {
@@ -577,6 +672,8 @@ export class OrdersService {
           transaction_amount: Number(order.total),
           description: `Pago Orden #${order.id}`,
           external_reference: String(order.id),
+          statement_descriptor: statementDescriptor,
+          additional_info: { items: mpItems },
           payer: {
             email: payerEmail,
             ...(paymentData.identificationType &&
@@ -588,7 +685,7 @@ export class OrdersService {
               }),
           },
         },
-        options,
+        { idempotencyKey: mpIdemKey }, // ✅ tipo correcto
       );
 
       if (paymentResult.status === 'approved') {
@@ -599,16 +696,26 @@ export class OrdersService {
               select: { metadatos: true },
             })
           )?.metadatos,
-        );
+        ) as any;
 
         await this.prisma.orden.update({
           where: { id: order.id },
           data: {
             metadatos: json({
               ...metaSuccess,
+              paymentLocks: {
+                ...(metaSuccess?.paymentLocks || {}),
+                [lockKey]: {
+                  status: 'succeeded',
+                  mpPaymentId: String(paymentResult.id),
+                  statusDetail: paymentResult.status_detail,
+                  updatedAt: new Date().toISOString(),
+                  mpIdemKey,
+                },
+              },
               paymentAttempts: {
                 ...(metaSuccess?.paymentAttempts || {}),
-                [idemKey]: {
+                [mpIdemKey]: {
                   status: 'succeeded',
                   mpPaymentId: String(paymentResult.id),
                   statusDetail: paymentResult.status_detail,
@@ -627,7 +734,7 @@ export class OrdersService {
         );
       }
 
-      // rejected -> failed
+      // rejected
       const metaRejected = parseMetadatos(
         (
           await this.prisma.orden.findUnique({
@@ -635,16 +742,25 @@ export class OrdersService {
             select: { metadatos: true },
           })
         )?.metadatos,
-      );
+      ) as any;
 
       await this.prisma.orden.update({
         where: { id: order.id },
         data: {
           metadatos: json({
             ...metaRejected,
+            paymentLocks: {
+              ...(metaRejected?.paymentLocks || {}),
+              [lockKey]: {
+                status: 'failed',
+                error: `rejected:${paymentResult.status_detail ?? paymentResult.status}`,
+                updatedAt: new Date().toISOString(),
+                mpIdemKey,
+              },
+            },
             paymentAttempts: {
               ...(metaRejected?.paymentAttempts || {}),
-              [idemKey]: {
+              [mpIdemKey]: {
                 status: 'failed',
                 error: `rejected:${paymentResult.status_detail ?? paymentResult.status}`,
                 updatedAt: new Date().toISOString(),
@@ -661,40 +777,8 @@ export class OrdersService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
 
-      // failed
-      try {
-        const metaFail = parseMetadatos(
-          (
-            await this.prisma.orden.findUnique({
-              where: { id: orderId },
-              select: { metadatos: true },
-            })
-          )?.metadatos,
-        );
-
-        await this.prisma.orden.update({
-          where: { id: orderId },
-          data: {
-            metadatos: json({
-              ...metaFail,
-              paymentAttempts: {
-                ...(metaFail?.paymentAttempts || {}),
-                [idemKey]: {
-                  status: 'failed',
-                  error: error instanceof Error ? error.message : String(error),
-                  updatedAt: new Date().toISOString(),
-                },
-              },
-            }),
-          },
-        });
-      } catch {}
-
       const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(
-        `Error al procesar el pago: ${msg}`,
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException(`Error al procesar el pago: ${msg}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -703,9 +787,10 @@ export class OrdersService {
     orderId: number,
     userId: number,
     subscriptionData: MercadoPagoSubscriptionDto,
-    options?: { idempotencyKey?: string; requestId?: string },
+    options?: AttemptOptions,
   ) {
     const order = await this.getOrderById(orderId, userId);
+
     if (order.estado !== EstadoOrden.PENDIENTE) {
       throw new HttpException(
         'La orden no está en estado pendiente',
@@ -713,9 +798,7 @@ export class OrdersService {
       );
     }
 
-    const hasCourses = order.items?.some(
-      (i: ItemOrden) => i.tipo === TipoItemOrden.CURSO,
-    );
+    const hasCourses = order.items?.some((i: ItemOrden) => i.tipo === TipoItemOrden.CURSO);
     if (!hasCourses) {
       throw new HttpException(
         'No hay cursos en la orden para crear una suscripción',
@@ -723,28 +806,33 @@ export class OrdersService {
       );
     }
 
-    if (!subscriptionData.token || typeof subscriptionData.token !== 'string') {
+    // ✅ blindaje: NO permitir productos en una suscripción
+    const hasProducts = order.items?.some((i: ItemOrden) => i.tipo === TipoItemOrden.PRODUCTO);
+    if (hasProducts) {
       throw new HttpException(
-        'Token de tarjeta faltante',
+        'La suscripción solo puede contener cursos. Eliminá productos del carrito.',
         HttpStatus.BAD_REQUEST,
       );
+    }
+
+    if (!subscriptionData.token || typeof subscriptionData.token !== 'string') {
+      throw new HttpException('Token de tarjeta faltante', HttpStatus.BAD_REQUEST);
     }
     if (subscriptionData.token.length < 20) {
-      throw new HttpException(
-        'Token de tarjeta inválido o demasiado corto',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Token de tarjeta inválido o demasiado corto', HttpStatus.BAD_REQUEST);
     }
 
-    const idemKey = options?.idempotencyKey || `sub-${order.id}`;
+    const attempt = normalizeAttemptId(options?.attemptId);
+    const mpIdemKey = buildMpIdemKey('sub', order.id, attempt);
 
     try {
-      const metadatos = parseMetadatos(order.metadatos);
-      const prevAttempt = metadatos?.subscriptionAttempts?.[idemKey];
+      const metadatos = parseMetadatos(order.metadatos) as any;
+      const prevAttempt = metadatos?.subscriptionAttempts?.[mpIdemKey];
 
       if (prevAttempt?.status === 'succeeded') {
         return await this.getOrderById(orderId, userId);
       }
+
       if (prevAttempt?.status === 'started') {
         const startedAt =
           typeof prevAttempt?.createdAt === 'string'
@@ -766,7 +854,7 @@ export class OrdersService {
             ...metadatos,
             subscriptionAttempts: {
               ...(metadatos?.subscriptionAttempts || {}),
-              [idemKey]: {
+              [mpIdemKey]: {
                 status: 'started',
                 createdAt: new Date().toISOString(),
               },
@@ -782,7 +870,7 @@ export class OrdersService {
           where: { id: userId },
           select: { email: true },
         });
-        payerEmail = user?.email;
+        payerEmail = user?.email ?? undefined;
       }
       if (!payerEmail) {
         throw new HttpException(
@@ -791,39 +879,38 @@ export class OrdersService {
         );
       }
 
-      const subscriptionResult =
-        await this.mpSubscriptionService.createSubscription(
-          {
-            token: subscriptionData.token,
-            payment_method_id: subscriptionData.paymentMethodId,
-            transaction_amount: Number(order.total),
-            description: `Suscripción mensual - Orden #${order.id}`,
-            external_reference: String(order.id),
-            frequency: subscriptionData.frequency,
-            frequency_type: subscriptionData.frequencyType,
-            payer: {
-              email: payerEmail,
-              ...(subscriptionData.identificationType &&
-                subscriptionData.identificationNumber && {
-                  identification: {
-                    type: subscriptionData.identificationType,
-                    number: subscriptionData.identificationNumber,
-                  },
-                }),
-            },
+      const subscriptionResult = await this.mpSubscriptionService.createSubscription(
+        {
+          token: subscriptionData.token,
+          payment_method_id: subscriptionData.paymentMethodId,
+          transaction_amount: Number(order.total),
+          description: `Suscripción mensual - Orden #${order.id}`,
+          external_reference: String(order.id),
+          frequency: subscriptionData.frequency,
+          frequency_type: subscriptionData.frequencyType,
+          payer: {
+            email: payerEmail,
+            ...(subscriptionData.identificationType &&
+              subscriptionData.identificationNumber && {
+                identification: {
+                  type: subscriptionData.identificationType,
+                  number: subscriptionData.identificationNumber,
+                },
+              }),
           },
-          options,
-        );
+        },
+        { idempotencyKey: mpIdemKey }, // ✅ FORZADO
+      );
 
       const subId = String(subscriptionResult.id);
 
       const updatedOrder = await this.prisma.orden.update({
         where: { id: Number(orderId) },
         data: {
-          estado: EstadoOrden.PENDIENTE, // Mantenemos PENDIENTE hasta el primer pago approved
-          referenciaPago: String(order.id), // Usamos la orden como referencia externa
+          estado: EstadoOrden.PENDIENTE,
+          referenciaPago: String(order.id),
           esSuscripcion: true,
-          suscripcionActiva: false, // No activa hasta el primer pago
+          suscripcionActiva: false,
           suscripcionId: subId,
           suscripcionFrecuencia: subscriptionData.frequency,
           suscripcionTipoFrecuencia: subscriptionData.frequencyType,
@@ -831,7 +918,7 @@ export class OrdersService {
             ...metadatos,
             subscriptionAttempts: {
               ...(metadatos?.subscriptionAttempts || {}),
-              [idemKey]: {
+              [mpIdemKey]: {
                 status: 'succeeded',
                 mpPreapprovalId: subId,
                 updatedAt: new Date().toISOString(),
@@ -853,19 +940,14 @@ export class OrdersService {
         },
       });
 
-      // ✅ Creamos inscripciones "pendientes" inmediatamente para que el usuario vea el curso y el menú
-      await this.createCourseEnrollmentsAsPending(
-        updatedOrder.id,
-        updatedOrder.usuarioId,
-      );
+      await this.createCourseEnrollmentsAsPending(updatedOrder.id, updatedOrder.usuarioId);
 
-      // Notificar al usuario que la suscripción está siendo procesada
       try {
         await this.notificationsService.createNotification({
           usuarioId: String(userId),
           tipo: TipoNotificacion.SISTEMA,
           titulo: 'Suscripción en proceso',
-          mensaje: `Hemos recibido tu solicitud de suscripción para la orden #${orderId}. El proceso de activación puede demorar entre 2 a 5 horas. Te notificaremos en cuanto esté lista.`,
+          mensaje: `Hemos recibido tu solicitud de suscripción para la orden #${orderId}. Te notificaremos en cuanto esté lista.`,
           url: `/perfil/ordenes/${orderId}`,
           metadata: {
             orderId: Number(orderId),
@@ -873,51 +955,13 @@ export class OrdersService {
             type: 'subscription_processing',
           },
         });
-      } catch (error) {
-        console.error(
-          `[Subscription ${subId}] Error al enviar notificación de proceso:`,
-          error,
-        );
-      }
+      } catch {}
 
       return updatedOrder;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-
-      // failed
-      try {
-        const metaFail = parseMetadatos(
-          (
-            await this.prisma.orden.findUnique({
-              where: { id: orderId },
-              select: { metadatos: true },
-            })
-          )?.metadatos,
-        );
-
-        await this.prisma.orden.update({
-          where: { id: orderId },
-          data: {
-            metadatos: json({
-              ...metaFail,
-              subscriptionAttempts: {
-                ...(metaFail?.subscriptionAttempts || {}),
-                [idemKey]: {
-                  status: 'failed',
-                  error: error instanceof Error ? error.message : String(error),
-                  updatedAt: new Date().toISOString(),
-                },
-              },
-            }),
-          },
-        });
-      } catch {}
-
       const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(
-        `Error al procesar la suscripción: ${msg}`,
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException(`Error al procesar la suscripción: ${msg}`, HttpStatus.BAD_REQUEST);
     }
   }
 

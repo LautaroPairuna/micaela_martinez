@@ -8,9 +8,10 @@ import { MpSubscriptionService } from './services/mp-subscription.service';
 
 import { PrismaModule } from '../prisma/prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, NotificationsModule],
+  imports: [ConfigModule, PrismaModule, NotificationsModule, CartModule],
   controllers: [OrdersController, WebhooksController],
   providers: [OrdersService, MpPaymentService, MpSubscriptionService],
   exports: [OrdersService, MpPaymentService, MpSubscriptionService],

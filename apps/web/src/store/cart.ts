@@ -8,25 +8,25 @@ export type CartKind = 'product' | 'course';
 
 export type CartLineProduct = {
   type: 'product';
-  id: string;            // id del producto
+  id: string;
   slug: string;
   title: string;
-  price: number;         // precio directo
+  price: number;
   image?: string | null;
-  quantity: number;      // >=1
+  quantity: number;
   maxQty?: number | null;
-  descuento?: number | null; // Descuento opcional
+  descuento?: number | null;
 };
 
 export type CartLineCourse = {
   type: 'course';
-  id: string;            // id del curso
+  id: string;
   slug: string;
   title: string;
-  price: number;         // precio directo
+  price: number;
   image?: string | null;
-  quantity: 1;           // fijo
-  descuento?: number | null; // Descuento opcional
+  quantity: 1;
+  descuento?: number | null;
 };
 
 export type CartLine = CartLineProduct | CartLineCourse;
@@ -37,19 +37,22 @@ export type CartState = {
   hydrated: boolean;
   _hasHydrated: boolean;
 
-  // Acciones UI
   open: () => void;
   close: () => void;
   toggle: () => void;
 
-  // Acciones líneas
   clear: () => void;
   remove: (id: string, type: CartKind) => void;
   setQty: (id: string, qty: number) => void;
   increase: (id: string) => void;
   decrease: (id: string) => void;
-  addProduct: (line: Omit<CartLineProduct, 'type' | 'quantity'> & { quantity?: number }) => Promise<void>;
+
+  addProduct: (
+    line: Omit<CartLineProduct, 'type' | 'quantity'> & { quantity?: number },
+  ) => Promise<void>;
+
   addCourse: (line: Omit<CartLineCourse, 'type' | 'quantity'>) => Promise<void>;
+
   syncWithBackend: () => Promise<void>;
   reset: () => void;
   setHasHydrated: (val: boolean) => void;
@@ -57,122 +60,159 @@ export type CartState = {
 
 export const useCart = create<CartState>()(
   persist(
-    (set, get) => ({
-      items: [],
-      isOpen: false,
-      hydrated: false,
-      _hasHydrated: false,
-
-      setHasHydrated: (val) => set({ _hasHydrated: val }),
-
-      open: () => set({ isOpen: true }),
-      close: () => set({ isOpen: false }),
-      toggle: () => set({ isOpen: !get().isOpen }),
-
-      syncWithBackend: async () => {
+    (set, get) => {
+      const syncNow = async (nextItems: CartLine[]) => {
         try {
-          // Sincronizar estado actual con backend
-          // El backend hace merge y devuelve el estado final
-          const { items } = get();
-          console.log('[CartStore] Syncing with backend...', items);
-          const mergedItems = await cartApi.syncCart(items);
-          console.log('[CartStore] Sync success, merged items:', mergedItems);
+          console.log('[CartStore] Syncing full cart with backend...', nextItems);
+          const mergedItems = await cartApi.syncCart(nextItems);
+          console.log('[CartStore] Sync success, merged:', mergedItems);
           set({ items: mergedItems, hydrated: true });
         } catch (error) {
-          console.error('[CartStore] Sync cart failed:', error);
-          // Si falla, al menos marcamos como hidratado para no bloquear UI si dependiera de ello
+          console.error('[CartStore] Sync failed:', error);
           set({ hydrated: true });
         }
-      },
+      };
 
-      clear: () => {
-        set({ items: [] });
-        cartApi.clearCart().catch(() => {});
-      },
-      reset: () => set({ items: [] }),
-      remove: (id, type) => {
-        set({ items: get().items.filter(i => !(i.id === id && i.type === type)) });
-        cartApi.removeItem(type, id).catch(() => {});
-      },
+      return {
+        items: [],
+        isOpen: false,
+        hydrated: false,
+        _hasHydrated: false,
 
-      setQty: (id, qty) => {
-        if (qty < 1 || !Number.isFinite(qty)) return;
-        const nextItems = get().items.map(i =>
-          i.type === 'product' && i.id === id
-            ? { ...i, quantity: Math.max(1, Math.min(qty, i.maxQty ?? 99)) }
-            : i
-        );
-        set({ items: nextItems });
+        setHasHydrated: (val) => set({ _hasHydrated: val }),
 
-        // Sincronizar el item modificado
-      },
+        open: () => set({ isOpen: true }),
+        close: () => set({ isOpen: false }),
+        toggle: () => set({ isOpen: !get().isOpen }),
 
-      increase: (id) => {
-        get().setQty(id, (get().items.find(i => i.id === id && i.type === 'product')?.quantity || 0) + 1);
-      },
+        syncWithBackend: async () => {
+          await syncNow(get().items);
+        },
 
-      decrease: (id) => {
-        get().setQty(id, (get().items.find(i => i.id === id && i.type === 'product')?.quantity || 0) - 1);
-      },
+        clear: () => {
+          set({ items: [] });
+          cartApi.clearCart().catch(() => {});
+        },
 
-      addProduct: async (line) => {
-        const { items } = get();
-        
-        // Validación: No permitir productos si hay cursos (suscripciones)
-        const hasCourses = items.some(i => i.type === 'course');
-        if (hasCourses) {
-          throw new Error('No puedes mezclar productos con suscripciones a cursos. Por favor, finaliza tu compra de cursos primero o vacía tu carrito.');
-        }
+        reset: () => set({ items: [] }),
 
-        const existing = items.find(i => i.type === 'product' && i.id === line.id);
-        
-        if (existing) {
-          get().setQty(line.id, existing.quantity + (line.quantity || 1));
-        } else {
-          set({
-            items: [...items, { ...line, type: 'product', quantity: line.quantity || 1 }]
-          });
-        }
-        
-        const newItem: CartLineProduct = { ...line, type: 'product', quantity: line.quantity || 1, id: line.id, slug: line.slug, title: line.title, price: line.price }; 
-        cartApi.syncCart([newItem]).catch(() => {});
-      },
+        remove: (id, type) => {
+          const next = get().items.filter((i) => !(i.id === id && i.type === type));
+          set({ items: next });
+          // ✅ sync full cart, no solo remove
+          syncNow(next).catch(() => {});
+        },
 
-      addCourse: async (line) => {
-        const { items } = get();
+        setQty: (id, qty) => {
+          if (qty < 1 || !Number.isFinite(qty)) return;
 
-        // Validación: No permitir cursos si hay productos
-        const hasProducts = items.some(i => i.type === 'product');
-        if (hasProducts) {
-          throw new Error('No puedes mezclar suscripciones a cursos con productos físicos. Por favor, finaliza tu compra de productos primero o vacía tu carrito.');
-        }
+          const nextItems = get().items.map((i) =>
+            i.type === 'product' && i.id === id
+              ? { ...i, quantity: Math.max(1, Math.min(qty, i.maxQty ?? 99)) }
+              : i,
+          );
 
-        if (items.some(i => i.type === 'course' && i.id === line.id)) {
-          return;
-        }
+          set({ items: nextItems });
+          syncNow(nextItems).catch(() => {});
+        },
 
-        const newCourse: CartLineCourse = { ...line, type: 'course', quantity: 1, id: line.id, slug: line.slug, title: line.title, price: line.price };
-        set({
-          items: [...items, newCourse]
-        });
-        
-        cartApi.syncCart([newCourse]).catch(() => {});
-      },
-    }),
+        increase: (id) => {
+          const current = get().items.find((i) => i.id === id && i.type === 'product') as
+            | CartLineProduct
+            | undefined;
+          get().setQty(id, (current?.quantity ?? 0) + 1);
+        },
+
+        decrease: (id) => {
+          const current = get().items.find((i) => i.id === id && i.type === 'product') as
+            | CartLineProduct
+            | undefined;
+          get().setQty(id, (current?.quantity ?? 0) - 1);
+        },
+
+        addProduct: async (line) => {
+          const items = get().items;
+
+          const hasCourses = items.some((i) => i.type === 'course');
+          if (hasCourses) {
+            throw new Error(
+              'No puedes mezclar productos con suscripciones a cursos. Finalizá tu compra de cursos primero o vaciá el carrito.',
+            );
+          }
+
+          const qty = Math.max(1, Number(line.quantity ?? 1));
+          const existing = items.find((i) => i.type === 'product' && i.id === line.id) as
+            | CartLineProduct
+            | undefined;
+
+          let nextItems: CartLine[];
+          if (existing) {
+            nextItems = items.map((i) =>
+              i.type === 'product' && i.id === line.id
+                ? {
+                    ...i,
+                    quantity: Math.max(1, Math.min(i.quantity + qty, i.maxQty ?? 99)),
+                  }
+                : i,
+            );
+          } else {
+            const newItem: CartLineProduct = {
+              ...line,
+              type: 'product',
+              quantity: qty,
+              id: line.id,
+              slug: line.slug,
+              title: line.title,
+              price: line.price,
+            };
+            nextItems = [...items, newItem];
+          }
+
+          set({ items: nextItems });
+          await syncNow(nextItems);
+        },
+
+        addCourse: async (line) => {
+          const items = get().items;
+
+          const hasProducts = items.some((i) => i.type === 'product');
+          if (hasProducts) {
+            throw new Error(
+              'No puedes mezclar suscripciones a cursos con productos físicos. Finalizá tu compra de productos primero o vaciá el carrito.',
+            );
+          }
+
+          if (items.some((i) => i.type === 'course' && i.id === line.id)) {
+            return;
+          }
+
+          const newCourse: CartLineCourse = {
+            ...line,
+            type: 'course',
+            quantity: 1,
+            id: line.id,
+            slug: line.slug,
+            title: line.title,
+            price: line.price,
+          };
+
+          const nextItems = [...items, newCourse];
+          set({ items: nextItems });
+          await syncNow(nextItems);
+        },
+      };
+    },
     {
       name: 'cart-storage',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
-      }
-    }
-  )
+      },
+    },
+  ),
 );
 
-// Flag de hidratación para evitar mismatches del badge
-// (patrón simple: marcar hydrated=true en client)
 if (typeof window !== 'undefined') {
-  // marcar hydrated después del primer tick
   requestAnimationFrame(() => {
     try {
       useCart.setState({ hydrated: true });
@@ -180,7 +220,6 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Helpers derivados (no persistidos)
 export const cartSelectors = {
   count: (items: CartLine[]) =>
     items.reduce((acc, it) => acc + (it.type === 'product' ? it.quantity : 1), 0),

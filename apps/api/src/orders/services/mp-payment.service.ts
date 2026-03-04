@@ -16,6 +16,19 @@ export interface MercadoPagoPaymentData {
     identification?: { type: string; number: string };
   };
   external_reference?: string; // orderId string
+  statement_descriptor?: string; // max 22 chars
+  additional_info?: {
+    items?: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      picture_url?: string;
+      category_id?: string;
+      quantity: number;
+      unit_price: number;
+    }>;
+    ip_address?: string;
+  };
 }
 
 export interface MercadoPagoPaymentResponse {
@@ -120,11 +133,13 @@ export class MpPaymentService {
         installments: paymentData.installments ?? 1,
         capture: true,
         binary_mode: binaryMode,
+        statement_descriptor: paymentData.statement_descriptor,
+        additional_info: paymentData.additional_info,
       };
 
+      // Generate a unique idempotency key if not provided to allow retries on failure
       const idempotencyKey =
-        options?.idempotencyKey ||
-        (externalRef ? `pay-${externalRef}` : `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+        options?.idempotencyKey || `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       this.logger.log(
         `MP payment.create -> amount=${paymentRequest.transaction_amount} method=${paymentRequest.payment_method_id} issuer=${paymentRequest.issuer_id} inst=${paymentRequest.installments} ref=${externalRef ?? 'none'} idem=${idempotencyKey}`,

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { JwtUser } from '../auth/types/jwt-user';
 import { OrdersService } from './orders.service';
 import {
@@ -23,11 +24,11 @@ import {
 } from './dto/orders.dto';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async createOrder(
     @CurrentUser() user: JwtUser,
     @Body() createOrderDto: CreateOrderDto,
@@ -43,10 +44,11 @@ export class OrdersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async getUserOrders(@CurrentUser() user: JwtUser) {
     try {
       return await this.ordersService.getUserOrders(user.sub);
-    } catch (error) {
+    } catch {
       throw new HttpException(
         'Error al obtener las órdenes',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -55,19 +57,12 @@ export class OrdersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getOrderById(@CurrentUser() user: JwtUser, @Param('id') id: number) {
     try {
-      const order = await this.ordersService.getOrderById(id, user.sub);
-
-      if (!order) {
-        throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
-      }
-
-      return order;
+      return await this.ordersService.getOrderById(id, user.sub);
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
         'Error al obtener la orden',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -76,6 +71,7 @@ export class OrdersController {
   }
 
   @Post(':id/status')
+  @UseGuards(JwtAuthGuard)
   async updateOrderStatus(
     @CurrentUser() user: JwtUser,
     @Param('id') id: number,
@@ -97,19 +93,19 @@ export class OrdersController {
   }
 
   @Post(':id/payment/mercadopago')
+  @UseGuards(JwtAuthGuard)
   async processMercadoPagoPayment(
     @CurrentUser() user: JwtUser,
     @Param('id') orderId: number,
     @Body() paymentData: MercadoPagoPaymentDto,
-    @Headers('x-idempotency-key') idempotencyKey?: string,
-    @Headers('x-request-id') requestId?: string,
+    @Headers('x-attempt-id') attemptId?: string,
   ) {
     try {
       return await this.ordersService.processMercadoPagoPayment(
         orderId,
         user.sub,
         paymentData,
-        { idempotencyKey, requestId },
+        { attemptId },
       );
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -121,19 +117,19 @@ export class OrdersController {
   }
 
   @Post(':id/subscription/mercadopago')
+  @UseGuards(JwtAuthGuard)
   async createMercadoPagoSubscription(
     @CurrentUser() user: JwtUser,
     @Param('id') orderId: number,
     @Body() subscriptionData: MercadoPagoSubscriptionDto,
-    @Headers('x-idempotency-key') idempotencyKey?: string,
-    @Headers('x-request-id') requestId?: string,
+    @Headers('x-attempt-id') attemptId?: string,
   ) {
     try {
       return await this.ordersService.createMercadoPagoSubscription(
         orderId,
         user.sub,
         subscriptionData,
-        { idempotencyKey, requestId },
+        { attemptId },
       );
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -146,6 +142,7 @@ export class OrdersController {
   }
 
   @Post(':id/subscription/cancel')
+  @UseGuards(JwtAuthGuard)
   async cancelSubscription(
     @CurrentUser() user: JwtUser,
     @Param('id') orderId: number,
@@ -161,6 +158,7 @@ export class OrdersController {
   }
 
   @Post('sync-subscriptions')
+  @UseGuards(JwtAuthGuard)
   async syncHistoricalSubscriptions() {
     try {
       return await this.ordersService.syncHistoricalSubscriptions();
@@ -172,50 +170,25 @@ export class OrdersController {
     }
   }
 
+  @Public()
   @Post('webhooks/mercadopago')
   async handleMercadoPagoWebhook(
     @Body() webhookData: any,
     @Query('type') eventType: string,
-    @Query('data.id') dataId: number,
+    @Query('data.id') dataIdFromQuery: string,
+    @Query('id') idFallback: string,
   ) {
+    const dataId = Number(dataIdFromQuery || idFallback || webhookData?.data?.id || webhookData?.id);
+    if (!eventType || !Number.isFinite(dataId)) {
+      return { received: true, ignored: true, reason: 'missing_type_or_id' };
+    }
+
     try {
       return await this.ordersService.processMercadoPagoWebhook(
         eventType,
         dataId,
         webhookData,
       );
-    } catch (error) {
-      throw new HttpException(
-        (error as Error).message || 'Error al procesar el webhook',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post('mercadopago/webhook')
-  async handleMercadoPagoDirectWebhook(
-    @Query('type') type: string,
-    @Query('id') id: number,
-    @Body() data: any,
-  ) {
-    try {
-      return await this.ordersService.processMercadoPagoWebhook(type, id, data);
-    } catch (error) {
-      throw new HttpException(
-        (error as Error).message || 'Error al procesar el webhook',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post('mercadopago/subscription-webhook')
-  async handleMercadoPagoSubscriptionWebhook(
-    @Query('type') type: string,
-    @Query('id') id: number,
-    @Body() data: any,
-  ) {
-    try {
-      return await this.ordersService.processMercadoPagoWebhook(type, id, data);
     } catch (error) {
       throw new HttpException(
         (error as Error).message || 'Error al procesar el webhook',

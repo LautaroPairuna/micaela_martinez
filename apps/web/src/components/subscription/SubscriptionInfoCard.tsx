@@ -138,12 +138,7 @@ export function SubscriptionInfoCard({
           <span>Plan {getFrequencyText()}</span>
         </div>
         
-        {subscriptionInfo.orderId && (
-          <SubscriptionCancelButton 
-            orderId={subscriptionInfo.orderId.toString()}
-            onCancelled={handleCancelled}
-          />
-        )}
+        {/* Eliminamos el botón de los tres puntos aquí porque ya se accede a este modal desde ese mismo botón */}
       </div>
     </div>
   );
