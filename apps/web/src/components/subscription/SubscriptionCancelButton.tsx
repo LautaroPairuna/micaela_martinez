@@ -12,23 +12,43 @@ import {
 } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
 import { 
-  MoreHorizontal, 
-  XCircle, 
+  MoreHorizontal,  
   HelpCircle, 
-  AlertCircle 
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SubscriptionInfoCard } from './SubscriptionInfoCard';
+
+interface SubscriptionItem {
+  isActive: boolean;
+  orderId: string | number;
+  subscriptionId: string | null;
+  startDate: string;
+  nextPaymentDate: string | null;
+  frequency: number;
+  frequencyType: string;
+  daysLeft: number | null;
+  hoursLeft: number | null;
+}
 
 interface SubscriptionCancelButtonProps {
   orderId: string;
   onCancelled?: () => void;
+  subscriptionInfo?: SubscriptionItem | null;
 }
 
-export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionCancelButtonProps) {
+export function SubscriptionCancelButton({ 
+  orderId, 
+  onCancelled,
+  subscriptionInfo 
+}: SubscriptionCancelButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [showOptions, setShowOptions] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
   const handleCancel = async () => {
     try {
@@ -48,8 +68,6 @@ export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionC
       setIsLoading(false);
     }
   };
-
-  const [showOptions, setShowOptions] = useState(false);
 
   // Variantes de animación
   const fadeInUp = {
@@ -89,9 +107,9 @@ export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionC
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="rounded-full h-8 w-8 p-0 flex items-center justify-center text-zinc-400 hover:text-white bg-black/60 hover:bg-black/80 transition-all duration-300 group/options border-white/20 border backdrop-blur-sm"
+          className="rounded-full h-9 w-9 p-0 flex items-center justify-center text-white bg-black/60 hover:bg-black/80 transition-all duration-300 group/options border-white/30 border backdrop-blur-md shadow-xl"
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <MoreHorizontal className="h-6 w-6" />
           <span className="sr-only">Opciones del curso</span>
         </Button>
         
@@ -104,9 +122,23 @@ export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionC
               transition={{ duration: 0.15 }}
               className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-gray-800/90 backdrop-blur-sm border border-gray-600 z-10"
             >
-              <div role="menu" aria-orientation="vertical">
+              <div role="menu" aria-orientation="vertical" className="p-1 space-y-1">
+                {subscriptionInfo && (
+                  <button
+                    className="flex items-center w-full px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 rounded-md transition-all group"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowOptions(false);
+                      setIsInfoOpen(true);
+                    }}
+                  >
+                    <Info className="mr-2 h-4 w-4 text-[var(--gold)]" />
+                    <span>Ver información</span>
+                  </button>
+                )}
+                
                 <button
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 rounded-md border border-transparent hover:border-gray-600 transition-all"
+                  className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-md transition-all group"
                   role="menuitem"
                   onClick={() => {
                     setShowOptions(false);
@@ -121,6 +153,23 @@ export function SubscriptionCancelButton({ orderId, onCancelled }: SubscriptionC
           )}
         </AnimatePresence>
       </div>
+
+      {/* Modal de Información de Suscripción */}
+      <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
+        <DialogContent className="max-w-lg p-0 bg-[#09090b] border-white/10 overflow-hidden rounded-2xl">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-xl font-serif text-white">Detalles de <span className="text-[var(--gold)] italic">Suscripción</span></DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            {subscriptionInfo && (
+              <SubscriptionInfoCard 
+                subscriptionInfo={subscriptionInfo} 
+                variant="card" 
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-4xl mx-auto p-0 bg-[#09090b] overflow-hidden shadow-2xl rounded-2xl border border-white/10">

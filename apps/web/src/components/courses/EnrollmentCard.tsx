@@ -380,12 +380,10 @@ export function EnrollmentCard({
           <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
             {subscriptionOrderId && (
               <div className="shadow-lg rounded-full">
-                <SubscriptionCancelButton orderId={subscriptionOrderId} />
-              </div>
-            )}
-            {subscriptionInfo && (
-              <div className="shadow-lg rounded-xl">
-                <SubscriptionInfoCard subscriptionInfo={subscriptionInfo} variant="button" />
+                <SubscriptionCancelButton 
+                  orderId={subscriptionOrderId} 
+                  subscriptionInfo={subscriptionInfo}
+                />
               </div>
             )}
           </div>

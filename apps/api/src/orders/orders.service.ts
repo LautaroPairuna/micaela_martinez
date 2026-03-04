@@ -712,7 +712,11 @@ export class OrdersService {
         },
       });
 
-      // NO creamos inscripciones aquí. Esperamos al webhook de payment.status === 'approved'
+      // ✅ Creamos inscripciones "pendientes" inmediatamente para que el usuario vea el curso y el menú
+      await this.createCourseEnrollmentsAsPending(
+        updatedOrder.id,
+        updatedOrder.usuarioId,
+      );
 
       // Notificar al usuario que la suscripción está siendo procesada
       try {
@@ -1169,13 +1173,15 @@ export class OrdersService {
           update: {
             estado: EstadoInscripcion.ACTIVADA,
             actualizadoEn: new Date(),
-            progreso: json(nextProgreso),
+            // ✅ si no es sub, NO toques progreso (o solo si es necesario)
+            ...(order.esSuscripcion ? { progreso: json(nextProgreso) } : {}),
           },
           create: {
             usuarioId: Number(userId),
             cursoId: Number(i.refId),
             estado: EstadoInscripcion.ACTIVADA,
-            progreso: json(nextProgreso),
+            // ✅ si no es sub, guardá null o {} en lugar de metadata vacía
+            progreso: order.esSuscripcion ? json(nextProgreso) : json(null),
           },
         });
 
@@ -1196,5 +1202,58 @@ export class OrdersService {
     );
 
     return enrollmentResults;
+  }
+
+  /** Crea inscripciones "pendientes" con orderId (para que el FE tenga data y menú) */
+  private async createCourseEnrollmentsAsPending(
+    orderId: number,
+    userId: number,
+  ) {
+    const order = await this.prisma.orden.findUnique({
+      where: { id: Number(orderId) },
+      include: { items: true },
+    });
+    if (!order) return;
+
+    const courseItems = order.items.filter(
+      (i) => i.tipo === TipoItemOrden.CURSO,
+    );
+    if (!courseItems.length) return;
+
+    const now = new Date();
+
+    await Promise.all(
+      courseItems.map(async (i) => {
+        const progreso = {
+          subscription: {
+            orderId: order.id, // ✅ clave para el menú de los 3 puntitos
+            isActive: false, // ✅ todavía no activa (en proceso)
+            startDate: now.toISOString(),
+            duration: order.suscripcionFrecuencia || 1,
+            durationType: order.suscripcionTipoFrecuencia || 'mes',
+          },
+        };
+
+        return this.prisma.inscripcion.upsert({
+          where: {
+            usuarioId_cursoId: {
+              usuarioId: Number(userId),
+              cursoId: Number(i.refId),
+            },
+          },
+          update: {
+            estado: EstadoInscripcion.ACTIVADA,
+            actualizadoEn: new Date(),
+            progreso: json(progreso),
+          },
+          create: {
+            usuarioId: Number(userId),
+            cursoId: Number(i.refId),
+            estado: EstadoInscripcion.ACTIVADA,
+            progreso: json(progreso),
+          },
+        });
+      }),
+    );
   }
 }
