@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { MercadoPagoService } from '../orders/mercadopago.service';
+import { MpPaymentService } from '../orders/services/mp-payment.service';
 import type { JwtUser } from '../auth/types/jwt-user';
 
 interface CreatePreferenceDto {
@@ -38,7 +38,7 @@ interface PaymentMethod {
 
 @Controller('payment')
 export class PaymentController {
-  constructor(private readonly mercadoPagoService: MercadoPagoService) {}
+  constructor(private readonly mpPaymentService: MpPaymentService) {}
 
   @Get('methods')
   async getPaymentMethods(): Promise<PaymentMethod[]> {
@@ -113,7 +113,7 @@ export class PaymentController {
 
       console.log('=== CONTROLLER: Llamando al servicio MercadoPago ===');
       const preference =
-        await this.mercadoPagoService.createPreference(mpPreferenceData);
+        await this.mpPaymentService.createPreference(mpPreferenceData);
 
       console.log('=== CONTROLLER: Preferencia creada exitosamente ===');
       console.log('Respuesta de MercadoPago:', {
