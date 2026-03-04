@@ -1028,6 +1028,7 @@ export class OrdersService {
       },
     };
 
+    // 1. Actualizar Orden
     await this.prisma.orden.update({
       where: { id: order.id },
       data: {
@@ -1036,10 +1037,142 @@ export class OrdersService {
       },
     });
 
+    // 2. Actualizar Inscripciones asociadas a esta orden
+    // Buscamos todas las inscripciones que tengan este orderId o subscriptionId
+    const enrollments = await this.prisma.inscripcion.findMany({
+      where: {
+        OR: [
+          { subscriptionOrderId: order.id },
+          { subscriptionId: subscriptionId }
+        ]
+      }
+    });
+
+    for (const enrollment of enrollments) {
+      const currentProgreso = parseJson<Record<string, any>>(enrollment.progreso);
+      const nextProgreso = {
+        ...currentProgreso,
+        subscription: {
+          ...(currentProgreso?.subscription || {}),
+          isActive: false,
+          status: 'cancelled',
+          cancelledAt: new Date().toISOString()
+        }
+      };
+
+      await this.prisma.inscripcion.update({
+        where: { id: enrollment.id },
+        data: {
+          subscriptionActive: false,
+          progreso: json(nextProgreso)
+        }
+      });
+    }
+
     return {
       message: 'Suscripción cancelada exitosamente',
       orderId: order.id,
       subscriptionId,
+    };
+  }
+
+  /**
+   * Permite cancelar un solo ítem (curso) de una suscripción activa.
+   * Si es el último ítem, cancela toda la suscripción.
+   * Si quedan otros, actualiza el monto en MP y marca este ítem como inactivo.
+   */
+  async cancelSubscriptionItem(orderId: number, courseId: number, userId: number) {
+    const order = await this.prisma.orden.findFirst({
+      where: {
+        id: Number(orderId),
+        usuarioId: Number(userId),
+        esSuscripcion: true,
+      },
+      include: { items: true }
+    });
+
+    if (!order) {
+      throw new HttpException('Orden no encontrada', HttpStatus.NOT_FOUND);
+    }
+
+    if (!order.suscripcionId || !order.suscripcionActiva) {
+      throw new HttpException('La suscripción no está activa o no existe', HttpStatus.BAD_REQUEST);
+    }
+
+    // Verificar que el curso pertenezca a la orden
+    const itemToCancel = order.items.find(i => i.tipo === TipoItemOrden.CURSO && Number(i.refId) === Number(courseId));
+    if (!itemToCancel) {
+      throw new HttpException('El curso no pertenece a esta orden de suscripción', HttpStatus.BAD_REQUEST);
+    }
+
+    // Verificar cuántos cursos activos quedan en esta orden (basado en inscripciones activas)
+    const activeEnrollments = await this.prisma.inscripcion.findMany({
+      where: {
+        subscriptionOrderId: order.id,
+        subscriptionActive: true
+      }
+    });
+
+    // Si solo queda 1 (o ninguno), cancelamos todo
+    if (activeEnrollments.length <= 1) {
+      return this.cancelSubscription(orderId, userId);
+    }
+
+    // Si quedan más, procedemos a "Partial Cancellation"
+    // 1. Calcular nuevo monto
+    const currentAmount = Number(order.total);
+    const itemPrice = Number(itemToCancel.precioUnitario);
+    const newAmount = currentAmount - itemPrice;
+
+    if (newAmount <= 0) {
+      // Safety check: si el nuevo monto es 0 o menos, cancelamos todo
+      return this.cancelSubscription(orderId, userId);
+    }
+
+    // 2. Actualizar en MercadoPago
+    try {
+      await this.mpSubscriptionService.updateSubscriptionAmount(order.suscripcionId, newAmount);
+    } catch (error) {
+      console.error('Error updating MP subscription amount:', error);
+      throw new HttpException('Error al actualizar el monto de la suscripción en MercadoPago', HttpStatus.BAD_GATEWAY);
+    }
+
+    // 3. Actualizar Orden (nuevo total)
+    await this.prisma.orden.update({
+      where: { id: order.id },
+      data: {
+        total: new Prisma.Decimal(newAmount)
+      }
+    });
+
+    // 4. Cancelar la inscripción específica
+    const enrollment = activeEnrollments.find(e => Number(e.cursoId) === Number(courseId));
+    if (enrollment) {
+      const currentProgreso = parseJson<Record<string, any>>(enrollment.progreso);
+      const nextProgreso = {
+        ...currentProgreso,
+        subscription: {
+          ...(currentProgreso?.subscription || {}),
+          isActive: false,
+          status: 'cancelled_partial',
+          cancelledAt: new Date().toISOString()
+        }
+      };
+
+      await this.prisma.inscripcion.update({
+        where: { id: enrollment.id },
+        data: {
+          subscriptionActive: false,
+          progreso: json(nextProgreso)
+        }
+      });
+    }
+
+    return {
+      message: 'Curso cancelado de la suscripción exitosamente',
+      orderId: order.id,
+      courseId: courseId,
+      newTotal: newAmount
     };
   }
 
@@ -1204,7 +1337,8 @@ export class OrdersService {
 
     // 6) Si es sub, renovar otras inscripciones del usuario (opcional)
     if (isSub) {
-      await this.renewCourseSubscriptions(order.usuarioId, nextPaymentDate);
+      const subId = freshOrder?.suscripcionId ?? order.suscripcionId ?? paymentDetails.subscription_id;
+      await this.renewCourseSubscriptions(order.usuarioId, nextPaymentDate, subId);
 
       try {
         await this.notificationsService.createNotification({
@@ -1284,12 +1418,21 @@ export class OrdersService {
   /**
    * Renueva las suscripciones de los cursos de un usuario.
    * Ahora renueva columnas y también mantiene el JSON en sync (sin pisar).
+   * ✅ Optimizado: Solo renueva las inscripciones asociadas a la suscripción pagada.
    */
-  private async renewCourseSubscriptions(userId: number, nextPaymentDate?: Date | null) {
-    if (!nextPaymentDate) return;
+  private async renewCourseSubscriptions(userId: number, nextPaymentDate?: Date | null, subscriptionId?: string) {
+    if (!nextPaymentDate || !subscriptionId) return;
 
+    // Buscar SOLO inscripciones vinculadas a esta suscripción
     const enrollments = await this.prisma.inscripcion.findMany({
-      where: { usuarioId: Number(userId) },
+      where: { 
+        usuarioId: Number(userId),
+        OR: [
+          { subscriptionId: subscriptionId },
+          // Fallback para legacy: buscar por JSON si la columna está vacía (opcional pero seguro)
+          { progreso: { path: '$.subscription.subscriptionId', equals: subscriptionId } }
+        ]
+      },
     });
 
     const now = new Date();

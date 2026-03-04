@@ -238,6 +238,62 @@ export class MpSubscriptionService {
     }
   }
 
+  // ✅ Nueva funcionalidad para actualizar monto (Partial Cancellation)
+  async updateSubscriptionAmount(subscriptionId: string, newAmount: number): Promise<any> {
+    if (!subscriptionId) {
+      throw new HttpException('subscriptionId requerido', HttpStatus.BAD_REQUEST);
+    }
+    if (!Number.isFinite(newAmount) || newAmount <= 0) {
+      throw new HttpException('Monto inválido para actualización', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const idemKey = `update-sub-${subscriptionId}-${Date.now()}`;
+
+      const response = await fetch(`https://api.mercadopago.com/preapproval/${subscriptionId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': idemKey,
+        },
+        body: JSON.stringify({ 
+          auto_recurring: {
+            transaction_amount: newAmount
+          } 
+        }),
+      });
+
+      const text = await response.text();
+      const data = safeJsonParse(text);
+
+      if (!response.ok) {
+        this.logger.error(
+          `MP update amount error: status=${response.status} detail=${data?.message || data?.error || text}`,
+        );
+        throw new HttpException(
+          {
+            message: 'Error al actualizar monto de suscripción',
+            mpStatus: response.status,
+            detail: data?.message || data?.error || data,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      this.logger.log(`MP subscription amount updated: id=${subscriptionId} newAmount=${newAmount}`);
+      return data;
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+
+      this.logger.error(`updateSubscriptionAmount unexpected error: ${error?.message || error}`);
+      throw new HttpException(
+        'Error al actualizar suscripción con MercadoPago',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
   async getSubscription(preapprovalId: string): Promise<any> {
     if (!preapprovalId) {
       throw new HttpException('preapprovalId requerido', HttpStatus.BAD_REQUEST);

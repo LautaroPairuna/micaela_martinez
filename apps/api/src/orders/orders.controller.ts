@@ -11,6 +11,7 @@ import {
   HttpStatus,
   Headers,
   Ip,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -59,7 +60,7 @@ export class OrdersController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async getOrderById(@CurrentUser() user: JwtUser, @Param('id') id: number) {
+  async getOrderById(@CurrentUser() user: JwtUser, @Param('id', ParseIntPipe) id: number) {
     try {
       return await this.ordersService.getOrderById(id, user.sub);
     } catch (error) {
@@ -75,7 +76,7 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   async updateOrderStatus(
     @CurrentUser() user: JwtUser,
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateStatusDto: UpdateOrderStatusDto,
   ) {
     try {
@@ -97,7 +98,7 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   async processMercadoPagoPayment(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: number,
+    @Param('id', ParseIntPipe) orderId: number,
     @Body() paymentData: MercadoPagoPaymentDto,
     @Headers('x-attempt-id') attemptId?: string,
     @Ip() ip?: string,
@@ -122,7 +123,7 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   async createMercadoPagoSubscription(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: number,
+    @Param('id', ParseIntPipe) orderId: number,
     @Body() subscriptionData: MercadoPagoSubscriptionDto,
     @Headers('x-attempt-id') attemptId?: string,
   ) {
@@ -143,13 +144,17 @@ export class OrdersController {
     }
   }
 
-  @Post(':id/subscription/cancel')
+  @Post(':id/subscription/cancel/:courseId?')
   @UseGuards(JwtAuthGuard)
   async cancelSubscription(
     @CurrentUser() user: JwtUser,
-    @Param('id') orderId: number,
+    @Param('id', ParseIntPipe) orderId: number,
+    @Param('courseId') courseId?: string,
   ) {
     try {
+      if (courseId) {
+        return await this.ordersService.cancelSubscriptionItem(orderId, Number(courseId), user.sub);
+      }
       return await this.ordersService.cancelSubscription(orderId, user.sub);
     } catch (error) {
       throw new HttpException(
@@ -190,7 +195,8 @@ export class OrdersController {
       webhookData?.resource?.id;
 
     // ✅ SIEMPRE string (pago = numérico; suscripción = alfanumérico)
-    const dataIdRaw = String(rawId ?? '').trim().toLowerCase();
+    // ⚠️ NO usar lowercase acá para preservar case de IDs alfanuméricos
+    const dataIdRaw = String(rawId ?? '').trim();
 
     if (!safeType || !dataIdRaw) {
       return { received: true, ignored: true, reason: 'missing_type_or_id' };
