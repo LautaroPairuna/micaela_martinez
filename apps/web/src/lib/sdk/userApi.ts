@@ -129,6 +129,9 @@ export type Orden = {
   referenciaPago?: string | null;
   creadoEn: string;
   items?: OrdenItem[];
+  esSuscripcion?: boolean;
+  suscripcionActiva?: boolean | null;
+  suscripcionId?: string | null;
 };
 
 /* ───────────────────────────

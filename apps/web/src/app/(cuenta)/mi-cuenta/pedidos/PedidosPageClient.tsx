@@ -228,9 +228,17 @@ export default function PedidosPageClient() {
                       </div>
                       
                       {/* Estado del pedido */}
-                      <div className={`self-start md:self-center flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(o.estado)}`}>
-                        {getStatusIcon(o.estado)}
-                        <span className="capitalize">{o.estado}</span>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className={`self-start md:self-center flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(o.estado)}`}>
+                          {getStatusIcon(o.estado)}
+                          <span className="capitalize">{o.estado}</span>
+                        </div>
+                        {o.esSuscripcion && o.suscripcionActiva === false && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold animate-pulse">
+                            <Clock className="h-3 w-3" />
+                            Procesando activación (2-5hs)
+                          </div>
+                        )}
                       </div>
                     </div>
                     

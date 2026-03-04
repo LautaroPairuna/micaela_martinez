@@ -281,8 +281,8 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             <div className="lg:col-span-2 flex flex-col min-h-0 bg-[var(--subtle)]/30">
               <div className="flex-1 overflow-y-auto p-5 lg:p-6 space-y-5">
                 {/* Estado del pedido */}
-                <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] p-5 shadow-sm">
-                  <h3 className="font-bold text-base mb-3 text-[var(--fg)]">Estado del pedido</h3>
+                <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] p-5 shadow-sm space-y-4">
+                  <h3 className="font-bold text-base text-[var(--fg)]">Estado del pedido</h3>
                   <div className={`flex items-center gap-4 p-4 rounded-xl border ${getStatusColor(order.estado)}`}>
                     <div className="p-2 rounded-full bg-white/10">
                       {getStatusIcon(order.estado)}
@@ -292,6 +292,18 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                       <p className="capitalize font-bold text-lg">{getStatusText(order.estado)}</p>
                     </div>
                   </div>
+
+                  {order.esSuscripcion && order.suscripcionActiva === false && (
+                    <div className="flex items-start gap-3 p-4 bg-blue-900/10 border border-blue-800/30 rounded-xl animate-in fade-in zoom-in duration-300">
+                      <Clock className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-left">
+                        <p className="font-bold text-sm text-blue-200">Activación en proceso</p>
+                        <p className="text-xs text-zinc-400 leading-relaxed mt-1">
+                          Tu suscripción está siendo procesada por Mercado Pago. La activación de tus cursos puede demorar entre <strong>2 a 5 horas</strong>. Te notificaremos en cuanto esté lista.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Resumen de pago */}
