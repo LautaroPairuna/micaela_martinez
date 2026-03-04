@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
-import { json, urlencoded, raw } from 'express';
+import { json, urlencoded } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import * as express from 'express';
 import * as path from 'path';
@@ -39,20 +39,21 @@ const UPLOADS_ROOT_DIR = path.join(PUBLIC_ROOT, 'uploads'); // Nueva raíz de up
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // webhook raw ANTES de json/urlencoded
-  app.use('/api/payments/webhook', raw({ type: '*/*' }));
-
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.use(cookieParser());
+
+  // RequestId + access log JSON
   app.use((req: Request, res: Response, next: NextFunction) => {
     const incoming = req.headers['x-request-id'];
     const requestId =
       typeof incoming === 'string' && incoming.trim() !== ''
         ? incoming
         : randomUUID();
+
     (req as any).requestId = requestId;
     res.setHeader('x-request-id', requestId);
+
     const start = Date.now();
     res.on('finish', () => {
       const durationMs = Date.now() - start;
@@ -60,6 +61,7 @@ async function bootstrap() {
         | { id?: string; sub?: string }
         | undefined;
       const userId = user?.id ?? (req as any).userId ?? user?.sub;
+
       console.log(
         JSON.stringify({
           level: 'info',
@@ -73,9 +75,11 @@ async function bootstrap() {
         }),
       );
     });
+
     next();
   });
-  // Aumentar límites de payload para uploads grandes (pero razonables para RAM)
+
+  // Payload limits (subidas grandes pero razonables para RAM)
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
@@ -99,8 +103,9 @@ async function bootstrap() {
     }),
   );
 
+  // (Opcional) Reglas específicas para media (si querés mantenerlo explícito)
   app.use(
-    MEDIA_PUBLIC_URL, // '/uploads/media' (si quieres reglas específicas para video, mantenlo, sino el de arriba ya lo cubre)
+    MEDIA_PUBLIC_URL, // '/uploads/media'
     express.static(MEDIA_UPLOAD_DIR, {
       index: false,
       maxAge: '30d',
@@ -126,15 +131,16 @@ async function bootstrap() {
     server.setTimeout(3600000);
   }
 
-  // Habilitar CORS para desarrollo y producción
+  // CORS
   app.enableCors({
-    origin: true, // Permitir cualquier origen en dev/test (ajustar en prod si es necesario)
+    origin: true,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
       'Content-Type, Accept, Authorization, X-Requested-With, X-Request-Id',
   });
 
+  // Validation
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

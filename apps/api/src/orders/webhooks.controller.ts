@@ -1,3 +1,5 @@
+// apps/api/src/orders/webhooks.controller.ts
+
 import {
   Controller,
   Post,
@@ -25,50 +27,48 @@ export class WebhooksController {
     @Body() webhookData: any,
     @Query('type') queryType: string,
     @Query('data.id') queryDataId: string,
-    @Headers('x-signature') signature: string,
-    @Headers('x-request-id') requestId: string,
+    @Query('id') queryId: string,
+    @Headers('x-signature') xSignature: string,
+    @Headers('x-request-id') xRequestId: string,
   ) {
-    // Normalizar ID y Tipo (MP puede mandarlos en Query o Body)
-    const dataId = Number(
-      queryDataId || webhookData?.data?.id || webhookData?.id,
-    );
-    const eventType = queryType || webhookData?.type;
+    const eventType = queryType || webhookData?.type || webhookData?.action || webhookData?.topic;
 
-    if (!dataId || !eventType) {
-      console.warn('[Webhook MP] Datos incompletos:', { eventType, dataId });
-      return { status: 'ignored', message: 'Missing id or type' };
+    const rawId =
+      queryDataId ||
+      queryId ||
+      webhookData?.data?.id ||
+      webhookData?.id ||
+      webhookData?.resource?.id;
+
+    const dataId = Number(rawId);
+
+    if (!eventType || !Number.isFinite(dataId)) {
+      console.warn('[Webhook MP] Ignorado: faltan type/id', { eventType, rawId });
+      return { status: 'ignored', reason: 'missing_type_or_id' };
     }
 
-    // 1. Validar firma del webhook (Seguridad)
-    this.validateSignature(signature, requestId, dataId);
-
-    console.log(
-      `[Webhook MP] Recibido evento: ${eventType}, ID: ${dataId}, RequestID: ${requestId}`,
-    );
+    // 1) Validación de firma (si hay secret)
+    this.validateSignatureOrThrow(xSignature, xRequestId, dataId);
 
     try {
+      // 2) Procesar (idempotente del lado OrdersService)
       return await this.ordersService.processMercadoPagoWebhook(
-        eventType,
+        String(eventType),
         dataId,
         webhookData,
       );
     } catch (error) {
+      // ✅ Para MP conviene responder 200 para evitar reintentos infinitos
       console.error('[Webhook MP] Error procesando:', (error as Error).message);
       return { status: 'error', message: (error as Error).message };
     }
   }
 
-  private validateSignature(
-    xSignature: string,
-    xRequestId: string,
-    dataId: number,
-  ) {
+  private validateSignatureOrThrow(xSignature: string, xRequestId: string, dataId: number) {
     const secret = this.configService.get<string>('MERCADOPAGO_WEBHOOK_SECRET');
+
     if (!secret) {
-      // Si no hay secret configurado, permitimos pasar pero logueamos advertencia
-      console.warn(
-        '[Webhook MP] Advertencia: MERCADOPAGO_WEBHOOK_SECRET no configurado. Validación de firma omitida.',
-      );
+      console.warn('[Webhook MP] MERCADOPAGO_WEBHOOK_SECRET no configurado. Firma no validada.');
       return;
     }
 
@@ -76,9 +76,7 @@ export class WebhooksController {
       throw new HttpException('Firma ausente', HttpStatus.UNAUTHORIZED);
     }
 
-    // Extraer timestamp y v1 de la firma
-    // x-signature: ts=123,v1=abc
-    const parts = xSignature.split(',');
+    const parts = xSignature.split(',').map((p) => p.trim());
     const tsPart = parts.find((p) => p.startsWith('ts='));
     const v1Part = parts.find((p) => p.startsWith('v1='));
 
@@ -89,17 +87,23 @@ export class WebhooksController {
     const ts = tsPart.split('=')[1];
     const v1 = v1Part.split('=')[1];
 
-    // Construir el template para validar
-    // manifest: id:dataId;request-id:xRequestId;ts:ts;
+    // Anti-replay: ventana configurable (default 10 min)
+    const replayWindowSec = Number(this.configService.get<string>('MP_WEBHOOK_REPLAY_WINDOW_SEC') || 600);
+    const nowSec = Math.floor(Date.now() / 1000);
+    const tsNum = Number(ts);
+    if (!Number.isFinite(tsNum) || Math.abs(nowSec - tsNum) > replayWindowSec) {
+      throw new HttpException('Firma expirada', HttpStatus.UNAUTHORIZED);
+    }
+
+    // manifest exacto según tu criterio (mantenerlo estable)
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
 
-    // Generar HMAC SHA256
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(manifest);
-    const sha = hmac.digest('hex');
+    const sha = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
 
-    if (sha !== v1) {
-      console.error('[Webhook MP] Error de validación de firma');
+    // timing-safe compare
+    const a = Buffer.from(sha, 'hex');
+    const b = Buffer.from(v1, 'hex');
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
       throw new HttpException('Firma no coincide', HttpStatus.UNAUTHORIZED);
     }
   }
