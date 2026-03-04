@@ -27,13 +27,11 @@ export interface MercadoPagoSubscriptionOptions {
 function normalizeBackUrl(raw: string): string {
   let url = raw?.trim() || 'http://localhost:3000';
   if (!url.startsWith('http://') && !url.startsWith('https://')) url = `https://${url}`;
-  // sin trailing slash para evitar dobles //
   return url.replace(/\/+$/, '');
 }
 
 function normalizeFrequencyType(v: string): MpFrequencyType {
   const s = (v ?? '').toLowerCase().trim();
-  // aceptar variantes comunes
   if (s === 'day' || s === 'days' || s.includes('day') || s === 'dia' || s === 'días' || s === 'dias') {
     return 'days';
   }
@@ -68,10 +66,11 @@ export class MpSubscriptionService {
     return normalizeBackUrl(this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000');
   }
 
+  // ✅ Unificada: ambos servicios deberían usar la MISMA URL
   private get notificationUrl(): string | null {
     const raw =
-      this.configService.get<string>('MERCADOPAGO_SUBSCRIPTION_WEBHOOK_URL') ||
-      this.configService.get<string>('MERCADOPAGO_WEBHOOK_URL') ||
+      this.configService.get<string>('MERCADOPAGO_WEBHOOK_URL') || // ✅ prioridad
+      this.configService.get<string>('MERCADOPAGO_SUBSCRIPTION_WEBHOOK_URL') || // fallback legacy
       null;
 
     if (!raw) return null;
@@ -82,7 +81,6 @@ export class MpSubscriptionService {
     subscriptionData: MercadoPagoSubscriptionData,
     options?: MercadoPagoSubscriptionOptions,
   ): Promise<any> {
-    // Validaciones defensivas
     if (!subscriptionData?.token || subscriptionData.token.length < 20) {
       throw new HttpException('Token de tarjeta inválido', HttpStatus.BAD_REQUEST);
     }
@@ -99,7 +97,6 @@ export class MpSubscriptionService {
     const backUrl = this.frontendUrl;
     const frequencyType = normalizeFrequencyType(subscriptionData.frequency_type);
 
-    // ✅ Preapproval payload recomendado
     const preapprovalPayload: Record<string, any> = {
       reason: subscriptionData.description,
       external_reference: subscriptionData.external_reference,
@@ -119,19 +116,16 @@ export class MpSubscriptionService {
       },
     };
 
-    // ✅ Clave: notification_url para webhooks
+    // ✅ Webhook unificado
     const notif = this.notificationUrl;
-    if (notif) {
-      // OJO: puede requerir path específico en tu API, ej:
-      // https://api.dominioprueba.online/orders/mercadopago/subscription-webhook
-      preapprovalPayload.notification_url = notif;
-    }
+    if (notif) preapprovalPayload.notification_url = notif;
 
     const idemKey =
       options?.idempotencyKey || `sub-${String(subscriptionData.external_reference).trim()}`;
 
-    // Log sanitizado
-    this.logger.log(`Creating MP preapproval: ref=${preapprovalPayload.external_reference} amount=${preapprovalPayload.auto_recurring.transaction_amount} freq=${preapprovalPayload.auto_recurring.frequency}/${preapprovalPayload.auto_recurring.frequency_type}`);
+    this.logger.log(
+      `Creating MP preapproval: ref=${preapprovalPayload.external_reference} amount=${preapprovalPayload.auto_recurring.transaction_amount} freq=${preapprovalPayload.auto_recurring.frequency}/${preapprovalPayload.auto_recurring.frequency_type} notif=${notif ? 'yes' : 'no'}`,
+    );
 
     try {
       const response = await fetch('https://api.mercadopago.com/preapproval', {
@@ -154,8 +148,9 @@ export class MpSubscriptionService {
           response.headers.get('X-Request-Id') ||
           null;
 
-        // Log útil (sin PII sensible)
-        this.logger.error(`MP preapproval error: status=${response.status} reqId=${mpRequestId} detail=${data?.message || data?.error || text}`);
+        this.logger.error(
+          `MP preapproval error: status=${response.status} reqId=${mpRequestId} detail=${data?.message || data?.error || text}`,
+        );
 
         if (response.status >= 500) {
           throw new HttpException(
@@ -180,8 +175,9 @@ export class MpSubscriptionService {
         );
       }
 
-      // Log mínimo
-      this.logger.log(`MP preapproval created: id=${data?.id} status=${data?.status} ref=${data?.external_reference}`);
+      this.logger.log(
+        `MP preapproval created: id=${data?.id} status=${data?.status} ref=${data?.external_reference}`,
+      );
 
       return data;
     } catch (error: any) {
@@ -217,7 +213,9 @@ export class MpSubscriptionService {
       const data = safeJsonParse(text);
 
       if (!response.ok) {
-        this.logger.error(`MP cancel error: status=${response.status} detail=${data?.message || data?.error || text}`);
+        this.logger.error(
+          `MP cancel error: status=${response.status} detail=${data?.message || data?.error || text}`,
+        );
         throw new HttpException(
           {
             message: 'Error al cancelar suscripción',
@@ -258,7 +256,9 @@ export class MpSubscriptionService {
       const data = safeJsonParse(text);
 
       if (!response.ok) {
-        this.logger.error(`MP getSubscription error: status=${response.status} detail=${data?.message || data?.error || text}`);
+        this.logger.error(
+          `MP getSubscription error: status=${response.status} detail=${data?.message || data?.error || text}`,
+        );
         throw new HttpException(
           {
             message: 'Error al obtener suscripción',
