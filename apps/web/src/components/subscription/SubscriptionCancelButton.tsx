@@ -15,7 +15,8 @@ import {
   MoreHorizontal,  
   HelpCircle, 
   AlertCircle,
-  Info
+  Info,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SubscriptionInfoCard } from './SubscriptionInfoCard';
@@ -128,10 +129,22 @@ export function SubscriptionCancelButton({
                   role="menuitem"
                   onClick={() => {
                     setShowOptions(false);
+                    setIsInfoOpen(true);
+                  }}
+                >
+                  <Info className="mr-2 h-4 w-4 text-zinc-500 group-hover:text-[var(--gold)] transition-colors" />
+                  <span>Ver información</span>
+                </button>
+                
+                <button
+                  className="flex items-center w-full px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 rounded-md transition-all group"
+                  role="menuitem"
+                  onClick={() => {
+                    setShowOptions(false);
                     setIsOpen(true);
                   }}
                 >
-                  <AlertCircle className="mr-2 h-4 w-4 text-zinc-500 group-hover:text-red-400 transition-colors" />
+                  <Settings className="mr-2 h-4 w-4 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
                   <span>Gestionar suscripción</span>
                 </button>
               </div>

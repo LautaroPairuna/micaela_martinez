@@ -7,7 +7,6 @@ import { SubscriptionCancelButton } from '@/components/subscription/Subscription
 import { Clock, PlayCircle, BookOpen, Award, Loader2 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
-import { SubscriptionInfoCard } from '@/components/subscription/SubscriptionInfoCard';
 
 type EnrollmentProgreso = {
   porcentaje?: number | null;
@@ -122,13 +121,14 @@ export function EnrollmentCard({
       const orderId = Number(subscription.orderId);
       const frequency = Number(subscription.duration || 1);
       const frequencyType = String(subscription.durationType || 'month');
+      const endDate = (subscription as any).endDate || (subscription as any).nextPaymentDate || null;
       
       return {
         isActive: true, // Si tiene metadata de sub, para la UI la tratamos como activa/pendiente
         orderId,
         subscriptionId: null,
         startDate: new Date().toISOString(), // Fallback (el backend nos lo debería haber dado)
-        nextPaymentDate: null,
+        nextPaymentDate: endDate,
         frequency,
         frequencyType,
         daysLeft: null,
@@ -405,24 +405,14 @@ export function EnrollmentCard({
         <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-40 pointer-events-none" />
 
         {/* ✅ Acciones de suscripción (arriba a la derecha) */}
-        {hasSubscriptionUI && (
-          <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
-            {subToUse && (
-              <div className="shadow-lg rounded-xl">
-                <SubscriptionInfoCard 
-                  subscriptionInfo={subToUse} 
-                  variant="button"
-                />
-              </div>
-            )}
-            {subscriptionOrderId && (
-              <div className="shadow-lg rounded-full">
-                <SubscriptionCancelButton 
-                  orderId={subscriptionOrderId} 
-                  subscriptionInfo={subToUse}
-                />
-              </div>
-            )}
+        {hasSubscriptionUI && subscriptionOrderId && (
+          <div className="absolute top-3 right-3 z-30">
+            <div className="shadow-lg rounded-full">
+              <SubscriptionCancelButton 
+                orderId={subscriptionOrderId} 
+                subscriptionInfo={subToUse}
+              />
+            </div>
           </div>
         )}
 
