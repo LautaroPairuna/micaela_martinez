@@ -66,13 +66,14 @@ export class WebhooksController {
     }
 
     try {
+      // ✅ Procesar (idempotente del lado OrdersService)
       return await this.ordersService.processMercadoPagoWebhook(
         String(eventType),
         dataId,
         webhookData,
       );
     } catch (error) {
-      // ✅ Responder 200 para evitar reintentos infinitos
+      // ✅ Para MP conviene responder 200 para evitar reintentos infinitos
       console.error('[Webhook MP] Error procesando:', (error as Error).message);
       return { status: 'error', message: (error as Error).message };
     }
@@ -85,8 +86,12 @@ export class WebhooksController {
   ) {
     const secret = this.configService.get<string>('MERCADOPAGO_WEBHOOK_SECRET');
 
+    // Si no hay secret, no validamos (pero logueamos).
+    // En producción real, lo ideal es SIEMPRE tenerlo configurado.
     if (!secret) {
-      console.warn('[Webhook MP] MERCADOPAGO_WEBHOOK_SECRET no configurado. Firma no validada.');
+      console.warn(
+        '[Webhook MP] MERCADOPAGO_WEBHOOK_SECRET no configurado. Firma no validada.',
+      );
       return;
     }
 
@@ -94,6 +99,7 @@ export class WebhooksController {
       throw new HttpException('Firma ausente', HttpStatus.UNAUTHORIZED);
     }
 
+    // x-signature: ts=123,v1=abc
     const parts = xSignature.split(',').map((p) => p.trim());
     const tsPart = parts.find((p) => p.startsWith('ts='));
     const v1Part = parts.find((p) => p.startsWith('v1='));
@@ -116,7 +122,7 @@ export class WebhooksController {
       throw new HttpException('Firma expirada', HttpStatus.UNAUTHORIZED);
     }
 
-    // Manifest
+    // Manifest: mantenelo estable
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
 
     const sha = crypto
