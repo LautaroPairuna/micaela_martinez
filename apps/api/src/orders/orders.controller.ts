@@ -144,17 +144,32 @@ export class OrdersController {
     }
   }
 
-  @Post(':id/subscription/cancel/:courseId?')
+  // ✅ Ruta específica para cancelación parcial
+  @Post(':id/subscription/cancel/:courseId')
+  @UseGuards(JwtAuthGuard)
+  async cancelSubscriptionItem(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseIntPipe) orderId: number,
+    @Param('courseId', ParseIntPipe) courseId: number,
+  ) {
+    try {
+      return await this.ordersService.cancelSubscriptionItem(orderId, courseId, user.sub);
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message || 'Error al cancelar el ítem de la suscripción',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  // ✅ Ruta general para cancelación total
+  @Post(':id/subscription/cancel')
   @UseGuards(JwtAuthGuard)
   async cancelSubscription(
     @CurrentUser() user: JwtUser,
     @Param('id', ParseIntPipe) orderId: number,
-    @Param('courseId') courseId?: string,
   ) {
     try {
-      if (courseId) {
-        return await this.ordersService.cancelSubscriptionItem(orderId, Number(courseId), user.sub);
-      }
       return await this.ordersService.cancelSubscription(orderId, user.sub);
     } catch (error) {
       throw new HttpException(

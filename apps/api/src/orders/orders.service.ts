@@ -425,7 +425,7 @@ export class OrdersService {
       });
     } catch {}
 
-    if (estado === EstadoOrden.PAGADO) {
+    if (estado === EstadoOrden.PAGADO && !order.esSuscripcion) {
       await this.createCourseEnrollments(Number(orderId), Number(userId));
     }
 
@@ -1064,6 +1064,7 @@ export class OrdersService {
         where: { id: enrollment.id },
         data: {
           subscriptionActive: false,
+          subscriptionEndDate: new Date(), // ✅ Setear fin de vigencia
           progreso: json(nextProgreso)
         }
       });
@@ -1137,12 +1138,21 @@ export class OrdersService {
       throw new HttpException('Error al actualizar el monto de la suscripción en MercadoPago', HttpStatus.BAD_GATEWAY);
     }
 
-    // 3. Actualizar Orden (nuevo total)
+    // 3. Actualizar Orden (GUARDAR nuevo monto en metadatos, NO mutar total histórico)
+    const metadatos = parseMetadatos(order.metadatos) as any;
+    
     await this.prisma.orden.update({
       where: { id: order.id },
       data: {
-        total: new Prisma.Decimal(newAmount)
-      }
+        metadatos: json({
+          ...metadatos,
+          subscription: {
+            ...(metadatos?.subscription || {}),
+            currentAmount: newAmount,
+            updatedAt: new Date().toISOString(),
+          },
+        }),
+      },
     });
 
     // 4. Cancelar la inscripción específica
@@ -1163,6 +1173,7 @@ export class OrdersService {
         where: { id: enrollment.id },
         data: {
           subscriptionActive: false,
+          subscriptionEndDate: new Date(), // ✅ Setear fin de vigencia
           progreso: json(nextProgreso)
         }
       });
