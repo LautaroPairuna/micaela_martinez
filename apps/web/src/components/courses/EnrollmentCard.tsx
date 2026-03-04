@@ -214,6 +214,7 @@ export function EnrollmentCard({
   const progreso = enrollment.progreso as EnrollmentProgreso;
   const subscription = progreso?.subscription ?? null;
   const hasSubscription = Boolean(subscription);
+  const subscriptionOrderId = subscription?.orderId ? String(subscription.orderId) : null;
   const durationMonths = Number(subscription?.duration ?? 3);
   const diasTotales = Number.isFinite(durationMonths) ? durationMonths * 30 : 90; // fallback
 
@@ -335,6 +336,21 @@ export function EnrollmentCard({
         {/* Overlay sutil para profundidad */}
         <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-40 pointer-events-none" />
 
+        {/* Botón de opciones (3 puntos) para suscripción */}
+        {(hasSubscription || subscriptionInfo) && (
+          <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+            {subscriptionOrderId && (
+              <SubscriptionCancelButton orderId={subscriptionOrderId} />
+            )}
+            {subscriptionInfo && (
+              <SubscriptionInfoCard 
+                subscriptionInfo={subscriptionInfo} 
+                variant="button"
+              />
+            )}
+          </div>
+        )}
+
         {/* Badge de estado (Superpuesto en la imagen) */}
         <div className="absolute bottom-3 left-3 z-30">
            {isCompleted ? (
@@ -358,24 +374,11 @@ export function EnrollmentCard({
 
       {/* Contenido principal */}
       <CardBody className="relative flex flex-col gap-3 flex-1 p-4 sm:p-5 lg:p-6">
-        {/* Botón de opciones (3 puntos) movido aquí para no tapar la imagen */}
-        {hasSubscription ? (
-          <div className="absolute top-4 right-4 z-30">
-            <SubscriptionCancelButton orderId={String(enrollment.id)} />
-          </div>
-        ) : null}
-
-        <div className="flex flex-col gap-1 pr-8">
+        <div className="flex flex-col gap-1">
           <div className="flex items-start justify-between gap-4">
             <h3 className="font-bold text-lg leading-tight line-clamp-2 uppercase tracking-wide text-white group-hover:text-[var(--gold)] transition-colors duration-300">
               {course?.titulo || 'Curso sin título'}
             </h3>
-            {subscriptionInfo && (
-              <SubscriptionInfoCard 
-                subscriptionInfo={subscriptionInfo} 
-                variant="button"
-              />
-            )}
           </div>
         </div>
             

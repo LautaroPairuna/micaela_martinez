@@ -1,10 +1,11 @@
 // src/app/(cuenta)/mi-cuenta/notificaciones/page.tsx
 'use client';
-import { Bell, Info, MessageSquare, Package, UserCheck, BarChart, Lightbulb, Heart, AtSign, Tag } from 'lucide-react';
+import { Bell, Info, MessageSquare, Package, UserCheck, BarChart, Lightbulb, Heart, AtSign, Tag, Clock } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NotificationsList } from '@/components/notifications/NotificationsList';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
+import { motion } from 'framer-motion';
 
 export default function NotificationsAccountPage() {
   const { notifications } = useNotifications();
@@ -17,6 +18,12 @@ export default function NotificationsAccountPage() {
   const unreadCount = notifications.filter(n => !n.leida).length;
   const totalCount = notifications.length;
   const readCount = totalCount - unreadCount;
+
+  // Verificar si hay notificaciones de suscripción aprobada recientemente
+  const hasSubscriptionApproved = notifications.some(n => 
+    n.tipo === 'SISTEMA' && 
+    (n.titulo?.toLowerCase().includes('suscripción') || n.mensaje?.toLowerCase().includes('suscripción'))
+  );
 
   return (
     <div className="space-y-8">
@@ -35,16 +42,40 @@ export default function NotificationsAccountPage() {
         
         {/* Stats compactas a la derecha o abajo */}
         <div className="flex gap-3">
-             <div className="px-4 py-2 bg-zinc-900 rounded-lg border border-zinc-800 flex flex-col items-center">
+             <div className="px-4 py-2 bg-zinc-900 rounded-lg border border-zinc-800 flex flex-col items-center shadow-lg">
                 <span className={`text-lg font-bold ${unreadCount > 0 ? 'text-[var(--gold)]' : 'text-zinc-500'}`}>{unreadCount}</span>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Sin leer</span>
              </div>
-             <div className="px-4 py-2 bg-zinc-900 rounded-lg border border-zinc-800 flex flex-col items-center">
+             <div className="px-4 py-2 bg-zinc-900 rounded-lg border border-zinc-800 flex flex-col items-center shadow-lg">
                 <span className="text-lg font-bold text-zinc-300">{totalCount}</span>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Total</span>
              </div>
         </div>
       </div>
+
+      {/* Card Informativa de Suscripciones (Nueva) */}
+      {!isAdmin && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-blue-500/30 bg-blue-500/5 p-5 relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Clock className="w-24 h-24 text-blue-400" />
+          </div>
+          <div className="flex items-start gap-4 relative z-10">
+            <div className="p-3 rounded-xl bg-blue-500/20 border border-blue-500/30">
+              <Info className="h-6 w-6 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-blue-100 mb-1">Activación de Suscripciones</h3>
+              <p className="text-sm text-blue-200/70 max-w-2xl leading-relaxed">
+                Recordá que tras realizar el pago de una suscripción, la activación de tus cursos puede demorar entre <strong>2 a 5 horas</strong> mientras Mercado Pago procesa la transacción. Te enviaremos una notificación automática en cuanto tu acceso esté listo.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Información sobre notificaciones (Diferenciada por rol) */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-950/50 p-6 relative overflow-hidden group hover:border-zinc-700 transition-colors duration-300">
