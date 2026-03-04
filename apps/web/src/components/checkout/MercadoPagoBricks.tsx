@@ -280,12 +280,13 @@ export function MercadoPagoBricks({
            };
         } else {
            // Payment Brick: configuración completa
-           // IMPORTANTE: Habilitar explícitamente tarjetas si no se detectan solas
+           // Habilitamos todos los medios disponibles para cumplir con la promesa de UI
            paymentMethodsCfg = {
               creditCard: 'all',
               debitCard: 'all',
-              ticket: [], 
-              bankTransfer: []
+              ticket: 'all', // Rapipago, Pago Fácil, etc.
+              bankTransfer: 'all', // Transferencia inmediata MP
+              mercadoPago: 'all', // Dinero en cuenta
            };
         }
 

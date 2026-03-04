@@ -4,13 +4,13 @@ import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X, Trash2, Plus, Minus, ShoppingCart, AlertCircle } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { formatCurrency } from '@/lib/format';
 import { useCart, cartSelectors, CartLineProduct } from '@/store/cart';
 import { useSession } from '@/hooks/useSession';
 import { useToast } from '@/contexts/ToastContext';
-import { PLACEHOLDER_IMAGE, resolveProductThumb, resolveCourseThumb } from '@/lib/image-utils';
+import { resolveProductThumb, resolveCourseThumb } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 
 // Type-guard sin `any`

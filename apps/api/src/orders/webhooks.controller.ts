@@ -1,5 +1,4 @@
 // apps/api/src/orders/webhooks.controller.ts
-
 import {
   Controller,
   Post,
@@ -31,7 +30,11 @@ export class WebhooksController {
     @Headers('x-signature') xSignature: string,
     @Headers('x-request-id') xRequestId: string,
   ) {
-    const eventType = queryType || webhookData?.type || webhookData?.action || webhookData?.topic;
+    const eventType =
+      queryType ||
+      webhookData?.type ||
+      webhookData?.action ||
+      webhookData?.topic;
 
     const rawId =
       queryDataId ||
@@ -47,24 +50,39 @@ export class WebhooksController {
       return { status: 'ignored', reason: 'missing_type_or_id' };
     }
 
-    // 1) Validación de firma (si hay secret)
-    this.validateSignatureOrThrow(xSignature, xRequestId, dataId);
+    // ✅ 1) Bypass controlado para simulación del panel (live_mode:false)
+    const isTestEvent = webhookData?.live_mode === false;
+
+    // ✅ 2) Firma: obligatoria SOLO en eventos reales (live_mode:true)
+    // Si estás en modo test, MP puede no enviar headers de firma válidos.
+    if (!isTestEvent) {
+      this.validateSignatureOrThrow(xSignature, xRequestId, dataId);
+    } else {
+      // Log breve para saber que fue bypass por prueba
+      console.warn('[Webhook MP] Firma omitida por evento de prueba (live_mode:false)', {
+        eventType,
+        dataId,
+      });
+    }
 
     try {
-      // 2) Procesar (idempotente del lado OrdersService)
       return await this.ordersService.processMercadoPagoWebhook(
         String(eventType),
         dataId,
         webhookData,
       );
     } catch (error) {
-      // ✅ Para MP conviene responder 200 para evitar reintentos infinitos
+      // ✅ Responder 200 para evitar reintentos infinitos
       console.error('[Webhook MP] Error procesando:', (error as Error).message);
       return { status: 'error', message: (error as Error).message };
     }
   }
 
-  private validateSignatureOrThrow(xSignature: string, xRequestId: string, dataId: number) {
+  private validateSignatureOrThrow(
+    xSignature: string,
+    xRequestId: string,
+    dataId: number,
+  ) {
     const secret = this.configService.get<string>('MERCADOPAGO_WEBHOOK_SECRET');
 
     if (!secret) {
@@ -88,17 +106,23 @@ export class WebhooksController {
     const v1 = v1Part.split('=')[1];
 
     // Anti-replay: ventana configurable (default 10 min)
-    const replayWindowSec = Number(this.configService.get<string>('MP_WEBHOOK_REPLAY_WINDOW_SEC') || 600);
+    const replayWindowSec = Number(
+      this.configService.get<string>('MP_WEBHOOK_REPLAY_WINDOW_SEC') || 600,
+    );
     const nowSec = Math.floor(Date.now() / 1000);
     const tsNum = Number(ts);
+
     if (!Number.isFinite(tsNum) || Math.abs(nowSec - tsNum) > replayWindowSec) {
       throw new HttpException('Firma expirada', HttpStatus.UNAUTHORIZED);
     }
 
-    // manifest exacto según tu criterio (mantenerlo estable)
+    // Manifest
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
 
-    const sha = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+    const sha = crypto
+      .createHmac('sha256', secret)
+      .update(manifest)
+      .digest('hex');
 
     // timing-safe compare
     const a = Buffer.from(sha, 'hex');

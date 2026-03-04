@@ -96,105 +96,106 @@ export class CartService {
         update: {}, // No-op si existe
       });
 
-      // 2. Procesar items (Merge Strategy: Local adds to DB, existing updates quantity)
-      // Primero, limpieza de items inválidos (ghost items)
+      // 2. Procesar items (Estrategia: Mirroring / Full Sync)
+      // El frontend manda el estado "verdad", así que debemos borrar lo que no venga en 'items'
+
+      // a) Recolectar IDs válidos del payload para preservarlos
+      const validProductIds: number[] = [];
+      const validCourseIds: number[] = [];
+
+      // Normalizar items de entrada para tener IDs resueltos antes de borrar nada
+      const itemsToProcess = [];
+
+      for (const item of items) {
+        // Resolver IDs (pueden venir como número, string numérico o slug)
+        let productoId: number | null = null;
+        if (item.productoId) {
+          const pid = item.productoId;
+          if (typeof pid === 'number') {
+            productoId = pid;
+          } else if (!isNaN(Number(pid))) {
+            productoId = Number(pid);
+          } else {
+            // Es un slug
+            const p = await this.prisma.producto.findFirst({
+              where: { slug: String(pid) },
+              select: { id: true },
+            });
+            productoId = p?.id || null;
+          }
+        }
+
+        let cursoId: number | null = null;
+        if (item.cursoId) {
+          const cid = item.cursoId;
+          if (typeof cid === 'number') {
+            cursoId = cid;
+          } else if (!isNaN(Number(cid))) {
+            cursoId = Number(cid);
+          } else {
+            // Es un slug
+            const c = await this.prisma.curso.findFirst({
+              where: { slug: String(cid) },
+              select: { id: true },
+            });
+            cursoId = c?.id || null;
+          }
+        }
+
+        if (productoId) validProductIds.push(productoId);
+        if (cursoId) validCourseIds.push(cursoId);
+
+        // Guardamos item normalizado para el paso de upsert
+        itemsToProcess.push({ original: item, productoId, cursoId });
+      }
+
+      // b) Borrar items de la DB que NO están en el payload (Pruning)
+      // Borramos productos que no estén en validProductIds
       await this.prisma.itemCarrito.deleteMany({
         where: {
           carritoId: cart.id,
-          productoId: null,
-          cursoId: null,
+          tipo: TipoItemOrden.PRODUCTO,
+          productoId: { notIn: validProductIds },
         },
       });
 
-      for (const item of items) {
+      // Borramos cursos que no estén en validCourseIds
+      await this.prisma.itemCarrito.deleteMany({
+        where: {
+          carritoId: cart.id,
+          tipo: TipoItemOrden.CURSO,
+          cursoId: { notIn: validCourseIds },
+        },
+      });
+
+      // c) Upsert de los items válidos
+      for (const { original: item, productoId, cursoId } of itemsToProcess) {
         try {
-          // FIX: Prisma runtime expects Uppercase enum keys (CURSO/PRODUCTO)
-          // even if the generated type definitions say lowercase ('curso'/'producto').
-          // We cast to any to bypass the TypeScript definition mismatch.
           const tipo =
             item.tipo?.toLowerCase() === 'producto'
-              ? ('PRODUCTO' as any)
-              : ('CURSO' as any);
+              ? TipoItemOrden.PRODUCTO
+              : TipoItemOrden.CURSO;
 
-          // Resolver IDs (pueden venir como número, string numérico o slug)
-          let productoId: number | null = null;
-          if (item.productoId) {
-            const pid = item.productoId;
-            if (typeof pid === 'number') {
-              productoId = pid;
-            } else if (!isNaN(Number(pid))) {
-              productoId = Number(pid);
-            } else {
-              // Es un slug
-              const p = await this.prisma.producto.findFirst({
-                where: { slug: String(pid) },
-                select: { id: true },
-              });
-              productoId = p?.id || null;
-              if (!productoId)
-                console.warn(`[CartService] Product slug not found: ${pid}`);
-            }
-          }
+          if (!productoId && !cursoId) continue;
 
-          let cursoId: number | null = null;
-          if (item.cursoId) {
-            const cid = item.cursoId;
-            if (typeof cid === 'number') {
-              cursoId = cid;
-            } else if (!isNaN(Number(cid))) {
-              cursoId = Number(cid);
-            } else {
-              // Es un slug
-              const c = await this.prisma.curso.findFirst({
-                where: { slug: String(cid) },
-                select: { id: true },
-              });
-              cursoId = c?.id || null;
-              if (!cursoId)
-                console.warn(`[CartService] Course slug not found: ${cid}`);
-            }
-          }
-
-          // Validación estricta: evitar items sin referencia
-          if (tipo === TipoItemOrden.PRODUCTO && !productoId) {
-            console.warn(
-              `[CartService] Skipping invalid product item (no ID):`,
-              item,
-            );
-            continue;
-          }
-          if (tipo === TipoItemOrden.CURSO && !cursoId) {
-            console.warn(
-              `[CartService] Skipping invalid course item (no ID):`,
-              item,
-            );
-            continue;
-          }
-
-          console.log(
-            `[CartService] Processing item: ${tipo} (Prod: ${productoId}, Course: ${cursoId}, Qty: ${item.cantidad})`,
-          );
+          // Buscar si existe (por combinación única)
+          const whereClause: any = {
+             carritoId: cart.id,
+             tipo,
+          };
+          if (productoId) whereClause.productoId = productoId;
+          if (cursoId) whereClause.cursoId = cursoId;
 
           const existingItem = await this.prisma.itemCarrito.findFirst({
-            where: {
-              carritoId: cart.id,
-              tipo,
-              productoId,
-              cursoId,
-            },
+            where: whereClause
           });
 
           if (existingItem) {
-            console.log(
-              `[CartService] Updating existing item ${existingItem.id}`,
-            );
-            // Actualizamos con la cantidad que viene del frontend (asumimos que es la "verdad" actual del usuario)
             await this.prisma.itemCarrito.update({
               where: { id: existingItem.id },
               data: { cantidad: item.cantidad },
             });
           } else {
-            console.log(`[CartService] Creating new item`);
             await this.prisma.itemCarrito.create({
               data: {
                 carritoId: cart.id,
@@ -206,7 +207,7 @@ export class CartService {
             });
           }
         } catch (error) {
-          console.error(`[CartService] Error processing item:`, item, error);
+          console.error(`[CartService] Error processing item upsert:`, item, error);
         }
       }
 
