@@ -141,7 +141,7 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
             const modules = courseModules[courseId] || [];
             
             // Buscar la suscripción correspondiente a este curso
-            const subscription = subscriptionInfo.subscriptions.find(sub => {
+            const subscription = subscriptionInfo?.subscriptions?.find(sub => {
               // Si la suscripción tiene el ID de la orden en los metadatos del enrollment
               const prog = enrollment.progreso as any;
               return String(sub.orderId) === String(prog?.subscription?.orderId);

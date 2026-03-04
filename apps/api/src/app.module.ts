@@ -29,6 +29,7 @@ import { WebsocketsModule } from './websockets/websockets.module';
 import { CartModule } from './cart/cart.module';
 import { CertificateModule } from './certificate/certificate.module';
 import { CommonServicesModule } from './common/services/common-services.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 // 👇 Módulo agregador de todo el admin
 import { AdminModule } from './admin/admin.module';
@@ -58,6 +59,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     LmsModule, // Cursos (listado + detalle)
     AccountModule, // Cuenta de usuario (perfil, direcciones, órdenes, favoritos, inscripciones)
     UsersModule, // Gestión de usuarios (para auth)
+    SubscriptionModule, // Gestión de suscripciones
     OrdersModule, // Gestión de órdenes
     PaymentModule, // Pagos / MercadoPago
     HeroModule, // Imágenes hero / home

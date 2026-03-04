@@ -28,7 +28,7 @@ export interface SubscriptionInfo {
  */
 export async function getUserSubscriptionInfo(): Promise<SubscriptionInfo> {
   try {
-    const response = await apiProxy<SubscriptionInfo>('/api/users/me/subscription', {
+    const response = await apiProxy<SubscriptionInfo>('/subscription/me', {
       cache: 'no-store',
     });
     

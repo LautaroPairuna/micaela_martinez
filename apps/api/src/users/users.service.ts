@@ -209,15 +209,26 @@ export class UsersService {
       image?: string;
     }> = [];
 
+    // Estructura compatible con SubscriptionInfo del frontend
     return {
       isActive: true,
+      subscriptions: [
+        {
+          isActive: true,
+          orderId: activeSubscription.id,
+          subscriptionId: activeSubscription.suscripcionId,
+          startDate: activeSubscription.creadoEn,
+          nextPaymentDate,
+          frequency: Number(activeSubscription.suscripcionFrecuencia) || 1,
+          frequencyType: activeSubscription.suscripcionTipoFrecuencia || 'month',
+          daysLeft: null, // Opcional, se puede calcular si es necesario
+          hoursLeft: null,
+        },
+      ],
+      includedCourses,
+      // Mantener campos antiguos por compatibilidad si fuera necesario
       nextPaymentDate,
       subscriptionId: activeSubscription.suscripcionId,
-      frequency: activeSubscription.suscripcionFrecuencia?.toString() || null,
-      frequencyType: activeSubscription.suscripcionTipoFrecuencia || null,
-      duration: null,
-      durationType: null,
-      includedCourses,
     };
   }
 }
