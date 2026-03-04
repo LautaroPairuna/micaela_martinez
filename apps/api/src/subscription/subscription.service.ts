@@ -112,9 +112,15 @@ export class SubscriptionService {
    * Obtiene información general de la suscripción del usuario
    */
   async getUserInfo(userId: string) {
+    const userIdNum = Number(userId);
+    if (!Number.isFinite(userIdNum)) {
+      this.logger.error(`[SubscriptionService] Invalid userId received: ${userId}`);
+      return { isActive: false, subscriptions: [], includedCourses: [] };
+    }
+
     const ordenes = await this.prisma.orden.findMany({
       where: {
-        usuarioId: Number(userId),
+        usuarioId: userIdNum,
         esSuscripcion: true,
         OR: [
           { suscripcionActiva: true },

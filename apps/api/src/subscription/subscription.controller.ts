@@ -1,8 +1,8 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { GetUser } from '../auth/get-user.decorator';
-import { Usuario } from '@prisma/client';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtUser } from '../auth/types/jwt-user';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -11,30 +11,26 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard)
   @Get('course/:courseId')
   async getSubscriptionInfo(
-    @GetUser() user: Usuario,
+    @CurrentUser() user: JwtUser,
     @Param('courseId') courseId: string,
   ) {
-    return this.subscriptionService.getSubscriptionInfo(
-      String(user.id),
-      courseId,
-    );
+    return this.subscriptionService.getSubscriptionInfo(String(user.sub), courseId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getUserSubscriptionInfo(@GetUser() user: Usuario) {
-    // Usamos el método getUserInfo que no requiere courseId
-    return this.subscriptionService.getUserInfo(String(user.id));
+  async getUserSubscriptionInfo(@CurrentUser() user: JwtUser) {
+    return this.subscriptionService.getUserInfo(String(user.sub));
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('access/:courseId')
   async checkCourseAccess(
-    @GetUser() user: Usuario,
+    @CurrentUser() user: JwtUser,
     @Param('courseId') courseId: string,
   ) {
     const hasAccess = await this.subscriptionService.checkCourseAccess(
-      String(user.id),
+      String(user.sub),
       courseId,
     );
     return { hasAccess };

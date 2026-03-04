@@ -50,6 +50,7 @@ export function PaymentStep() {
   } = useCheckout();
 
   const cartItems = useCart((state) => state.items);
+  const clearCart = useCart((state) => state.clear);
   const cartTotal = useCart((state) => cartSelectors.subtotal(state.items));
   const { error: showError } = useToast();
 
@@ -159,6 +160,10 @@ export function PaymentStep() {
       const newOrder = await createOrder(orderData);
       console.log('=== FRONTEND: Nueva orden creada ===', newOrder.id);
       setOrderId(newOrder.id);
+      
+      // ✅ Limpiar carrito local para evitar items fantasma en futuras órdenes
+      clearCart();
+
       return newOrder.id;
     } catch (error) {
       console.error('Error creating order:', error);

@@ -107,82 +107,72 @@ export function EnrollmentCard({
     return flattenServerProgress(enrollment.progreso);
   }, [enrollment.progreso]);
 
-  // Datos de suscripción (cuando viene desde progreso.subscription o desde el prop subscriptionInfo)
+  // ✅ Datos de suscripción (cuando viene desde progreso.subscription o desde el prop subscriptionInfo)
   const progreso = enrollment.progreso as EnrollmentProgreso;
-  const subscription = progreso?.subscription ?? null;
+  const progOrderId = String(progreso?.subscription?.orderId ?? '').trim();
+  const progDuration = progreso?.subscription?.duration;
+  const progDurationType = progreso?.subscription?.durationType;
 
-  // ✅ Resolver SubscriptionItem completo o light (usando metadata del progreso como fallback)
-  const resolvedSubscriptionInfo = useMemo<SubscriptionItem | null>(() => {
-    if (subscriptionInfo) return subscriptionInfo;
+  // Prioridad: columnas nuevas si existieran en enrollment (type casting seguro)
+  const colOrderId = String((enrollment as any)?.subscriptionOrderId ?? '').trim();
+  const colSubId = String((enrollment as any)?.subscriptionId ?? '').trim();
+
+  // Match: orderId de columna o de progreso
+  const matchOrderId = colOrderId || progOrderId;
+
+  // ✅ Resolver SubscriptionItem estricto
+  // Solo usamos subscriptionInfo si hace match con el orderId del enrollment
+  const subToUse = useMemo(() => {
+    if (!matchOrderId) return null;
     
-    // Si no viene por prop, intentamos reconstruir un item "light" 
-    // basándonos en la metadata que guardamos en createCourseEnrollments(AsPending)
-    if (subscription?.orderId) {
-      const orderId = Number(subscription.orderId);
-      const frequency = Number(subscription.duration || 1);
-      const frequencyType = String(subscription.durationType || 'month');
-      const endDate = (subscription as any).endDate || (subscription as any).nextPaymentDate || null;
-      
-      return {
-        isActive: true, // Si tiene metadata de sub, para la UI la tratamos como activa/pendiente
-        orderId,
-        subscriptionId: null,
-        startDate: new Date().toISOString(), // Fallback (el backend nos lo debería haber dado)
-        nextPaymentDate: endDate,
-        frequency,
-        frequencyType,
-        daysLeft: null,
-        hoursLeft: null,
-      };
+    // 1. Si subscriptionInfo (prop) coincide con el orderId, es la fuente más fresca
+    if (subscriptionInfo && String(subscriptionInfo.orderId).trim() === matchOrderId) {
+      return subscriptionInfo;
     }
-    
+
     return null;
-  }, [subscriptionInfo, subscription]);
+  }, [matchOrderId, subscriptionInfo]);
 
-  // ✅ Calcular primero el orderId usable (para evitar contenedores vacíos)
-  const subscriptionOrderId = resolvedSubscriptionInfo?.orderId ? String(resolvedSubscriptionInfo.orderId) : null;
+  // orderId confirmado
+  const subscriptionOrderId = matchOrderId || null;
 
-  // ✅ Mostrar UI de suscripción solo si realmente hay algo para renderizar
-  const hasSubscriptionUI = Boolean(subscriptionOrderId) || Boolean(resolvedSubscriptionInfo);
+  // ✅ UI solo si hay orderId real (es una suscripción)
+  const hasSubscriptionUI = !!subscriptionOrderId;
 
-  const durationMonths = Number(subscription?.duration ?? 3);
-  const diasTotales = Number.isFinite(durationMonths) ? durationMonths * 30 : 90; // fallback
+  // ✅ Botón cancelar solo si hay subscriptionId real (columna o subInfo)
+  // Esto evita mostrar cancelar en órdenes pendientes sin preapprovalId
+  const canCancel = !!(colSubId || subToUse?.subscriptionId);
 
-  // Usamos el item resuelto para todo el renderizado posterior
-  const subToUse = resolvedSubscriptionInfo;
+  // ✅ Calcular duración real usando subscriptionInfo (fresco) o metadatos (histórico)
+  // Normalizamos frequencyType a 'months' | 'days'
+  const rawDuration = subToUse?.frequency ?? progDuration ?? 3;
+  const rawType = subToUse?.frequencyType ?? progDurationType ?? 'months';
+
+  const diasTotales = useMemo(() => {
+    const val = Number(rawDuration);
+    if (!Number.isFinite(val)) return 90;
+
+    const type = String(rawType).toLowerCase();
+    if (type.includes('day') || type.includes('días') || type.includes('dias')) return val;
+    if (type.includes('week') || type.includes('sem')) return val * 7;
+    if (type.includes('year') || type.includes('año')) return val * 365;
+    
+    return val * 30; // default months
+  }, [rawDuration, rawType]);
 
   // =======================
   // DEBUG SUBSCRIPTION UI
   // =======================
+  /*
   if (process.env.NODE_ENV === 'development') {
-    console.log('🧾 EnrollmentCard SUB DEBUG (raw)', {
-      enrollmentId: enrollment.id,
-      cursoId: enrollment.cursoId,
-      estado: enrollment.estado,
-      progresoRaw: enrollment.progreso,
-      subscriptionInfoProp: subscriptionInfo,
-    });
-
-    console.log('🧾 EnrollmentCard SUB DEBUG (computed)', {
-      subscriptionFromProgreso: subscription,
-      orderIdFromProgreso: subscription?.orderId ?? null,
-      durationFromProgreso: subscription?.duration ?? null,
-
-      subscriptionInfoProp: subscriptionInfo ?? null,
-      orderIdFromProp: subscriptionInfo?.orderId ?? null,
-
-      subscriptionOrderIdComputed: subscriptionOrderId,
-      hasSubscriptionUI,
-    });
-
-    if (!subscriptionInfo && !subscription?.orderId) {
-      console.warn('⚠️ No hay datos suficientes para mostrar SUB UI', {
-        enrollmentId: enrollment.id,
-        subscriptionFromProgreso: subscription ?? null,
-        subscriptionInfoProp: subscriptionInfo ?? null,
-      });
-    }
+     console.log('🧾 EnrollmentCard SUB DEBUG', {
+       id: enrollment.id,
+       matchOrderId,
+       hasSubInfo: !!subToUse,
+       canCancel
+     });
   }
+  */
 
   // Helper para un único log consolidado
   const logProgressSummary = useCallback(
@@ -405,7 +395,7 @@ export function EnrollmentCard({
         <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-40 pointer-events-none" />
 
         {/* ✅ Acciones de suscripción (arriba a la derecha) */}
-        {hasSubscriptionUI && subscriptionOrderId && (
+        {hasSubscriptionUI && canCancel && subscriptionOrderId && (
           <div className="absolute top-3 right-3 z-30">
             <div className="shadow-lg rounded-full">
               <SubscriptionCancelButton 

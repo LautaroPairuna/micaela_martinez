@@ -100,6 +100,18 @@ export class OrdersService {
 
     // Validar items y calcular total
     let total = new Prisma.Decimal(0);
+    
+    // ✅ Validar mezcla prohibida de cursos y productos
+    const hasCourses = items.some(i => i.tipo === TipoItemOrden.CURSO);
+    const hasProducts = items.some(i => i.tipo === TipoItemOrden.PRODUCTO);
+    
+    if (hasCourses && hasProducts) {
+      throw new HttpException(
+        'No es posible procesar una orden mixta (Cursos + Productos). Por favor, comprálos por separado.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const validatedItems: {
       tipo: TipoItemOrden;
       refId: number;

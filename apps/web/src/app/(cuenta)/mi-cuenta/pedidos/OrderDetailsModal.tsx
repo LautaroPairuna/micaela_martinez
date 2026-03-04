@@ -119,7 +119,31 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
   }) : '—';
 
   // Separar productos y cursos (con seguridad de null)
-  const items = order?.items || [];
+  let items = order?.items || [];
+
+  // 🛡️ PARCHE DEFENSIVO: Filtrar items "fantasma" que no corresponden al total pagado
+  // (Caso reportado: Curso "Lifting de pestañas" apareciendo en órdenes de solo productos)
+  const totalOrden = Number(order?.total || 0);
+  const sumaItems = items.reduce((sum, i) => sum + (Number(i.precioUnitario) * i.cantidad), 0);
+
+  // Si hay una discrepancia mayor a $1 (para evitar problemas de redondeo)
+  if (Math.abs(sumaItems - totalOrden) > 1) {
+    // Verificamos si los productos por sí solos explican el total
+    const soloProductos = items.filter(i => i.tipo === 'PRODUCTO');
+    const sumaProductos = soloProductos.reduce((sum, i) => sum + (Number(i.precioUnitario) * i.cantidad), 0);
+
+    if (Math.abs(sumaProductos - totalOrden) <= 1) {
+      console.warn(`⚠️ Orden #${order?.id}: Detectados cursos fantasma. Filtrando visualización.`, {
+        totalOrden,
+        sumaItems,
+        sumaProductos,
+        itemsOriginales: items.length,
+        itemsFiltrados: soloProductos.length
+      });
+      items = soloProductos;
+    }
+  }
+
   const productos = items.filter(item => item.tipo === 'PRODUCTO');
   const cursos = items.filter(item => item.tipo === 'CURSO');
 
