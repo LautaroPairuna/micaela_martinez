@@ -35,16 +35,15 @@ export function SubscriptionInfoCard({
   const [isCancelled, setIsCancelled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  if (!subscriptionInfo.isActive && !isCancelled) {
-    return null;
-  }
-
   const handleCancelled = () => {
     setIsCancelled(true);
     if (onSubscriptionCancelled) {
       onSubscriptionCancelled();
     }
   };
+
+  // Si no está activa, mostramos un mensaje de "En proceso" en lugar de null
+  const isPending = !subscriptionInfo.isActive && !isCancelled;
 
   const getFrequencyText = () => {
     const { frequency, frequencyType } = subscriptionInfo;
@@ -58,6 +57,15 @@ export function SubscriptionInfoCard({
   };
 
   const renderCountdown = () => {
+    if (isPending) {
+      return (
+        <Badge tone="gold" className="font-medium animate-pulse">
+          <ClockIcon className="h-3 w-3" />
+          Activación en proceso
+        </Badge>
+      );
+    }
+
     if (subscriptionInfo.hoursLeft !== null && subscriptionInfo.hoursLeft >= 0 && subscriptionInfo.hoursLeft < 24) {
       return (
         <Badge tone="gold" className="font-medium">
@@ -90,6 +98,14 @@ export function SubscriptionInfoCard({
 
   const content = (
     <div className="space-y-6">
+      {isPending && (
+        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
+          <Info className="h-5 w-5 text-blue-400 mt-0.5" />
+          <p className="text-sm text-blue-200/80 leading-relaxed">
+            Tu suscripción está siendo procesada por Mercado Pago. Esto puede demorar entre 2 y 5 horas.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
           <p className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-bold">Fecha de Inicio</p>
@@ -151,7 +167,7 @@ export function SubscriptionInfoCard({
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-xs font-bold flex items-center gap-2 text-zinc-500 uppercase tracking-[0.1em]">
                   <RefreshCcw className="h-3.5 w-3.5 text-[var(--gold)] animate-spin-slow" />
-                  {isCancelled ? 'Suscripción cancelada' : 'Suscripción activa'}
+                  {isCancelled ? 'Suscripción cancelada' : isPending ? 'Activación en proceso' : 'Suscripción activa'}
                 </DialogTitle>
                 {renderCountdown()}
               </div>
@@ -178,7 +194,7 @@ export function SubscriptionInfoCard({
         <div className="flex items-center justify-between">
           <CardTitle className="text-xs font-bold flex items-center gap-2 text-zinc-500 uppercase tracking-[0.1em]">
             <RefreshCcw className="h-3.5 w-3.5 text-[var(--gold)] animate-spin-slow" />
-            {isCancelled ? 'Suscripción cancelada' : 'Suscripción activa'}
+            {isCancelled ? 'Suscripción cancelada' : isPending ? 'Activación en proceso' : 'Suscripción activa'}
           </CardTitle>
           {renderCountdown()}
         </div>

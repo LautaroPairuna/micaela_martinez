@@ -154,9 +154,9 @@ function MiAprendizajeContent({ initialRows, subscriptionInfo }: MiAprendizajeCl
               return subOrderId === progOrderId && progOrderId !== '';
             });
 
-            // Fallback: Si no hay orderId en el progreso, pero hay una suscripción activa, 
-            // asumimos que este curso pertenece a la suscripción activa (especialmente para migraciones)
-            if (!subscription && subscriptionInfo?.isActive && subscriptionInfo.subscriptions.length > 0) {
+            // Fallback: Si no hay orderId en el progreso, pero hay una suscripción (activa o pendiente), 
+            // asumimos que este curso pertenece a esa suscripción (especialmente para migraciones o activaciones recientes)
+            if (!subscription && subscriptionInfo?.subscriptions && subscriptionInfo.subscriptions.length > 0) {
               subscription = subscriptionInfo.subscriptions[0];
             }
 

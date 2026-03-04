@@ -132,7 +132,8 @@ export class SubscriptionService {
         esSuscripcion: true,
         OR: [
           { suscripcionActiva: true },
-          { estado: EstadoOrden.PAGADO }
+          { estado: EstadoOrden.PAGADO },
+          { suscripcionId: { not: null } } // ✅ Incluir suscripciones en proceso
         ],
       },
       orderBy: {
