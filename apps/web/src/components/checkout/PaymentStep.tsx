@@ -185,7 +185,7 @@ export function PaymentStep() {
       setIsPaymentCompleted(true);
       
       // La orden ya se creó/pagó en el componente Bricks, solo necesitamos redirigir
-      setOrderId(null);
+      // NO limpiamos orderId aquí para poder mostrarlo en la confirmación
       
       markStepCompleted('payment');
       nextStep();

@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/store/cart';
+import { useCheckout } from '@/store/checkout';
 import { CheckoutWizard } from '@/components/checkout/CheckoutWizard';
 import { Card, CardBody } from '@/components/ui/Card';
 import { ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
@@ -12,18 +13,30 @@ import Link from 'next/link';
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, _hasHydrated } = useCart();
+  const { orderId, currentStep } = useCheckout();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Redirigir si el carrito está vacío, pero solo después de la hidratación
+  // Redirigir si el carrito está vacío, pero permitiendo flujo de pago activo
   useEffect(() => {
-    if (isClient && _hasHydrated && items.length === 0) {
-      router.push('/tienda');
-    }
-  }, [items.length, router, isClient, _hasHydrated]);
+    if (!isClient || !_hasHydrated) return;
+
+    // Si hay items, todo correcto
+    if (items.length > 0) return;
+
+    // Si estamos en confirmación, permitimos carrito vacío
+    if (currentStep === 'confirmation') return;
+
+    // Si hay una orden activa (proceso de pago iniciado), permitimos carrito vacío
+    // Esto es crucial porque PaymentStep limpia el carrito al crear la orden
+    if (orderId) return;
+
+    // Si no se cumple nada de lo anterior, redirigir
+    router.push('/tienda');
+  }, [items.length, router, isClient, _hasHydrated, orderId, currentStep]);
 
   if (!isClient || !_hasHydrated) {
     return (
@@ -33,7 +46,10 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
+  // Renderizado condicional: Solo mostrar "Carrito vacío" si realmente no deberíamos estar aquí
+  const shouldShowEmptyCart = items.length === 0 && !orderId && currentStep !== 'confirmation';
+
+  if (shouldShowEmptyCart) {
     return (
       <div className="min-h-screen bg-[var(--bg)] py-8">
         <div className="max-w-4xl mx-auto px-4">
