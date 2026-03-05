@@ -39,47 +39,55 @@ export class OrdersService {
     const esSuscripcion = hasCourse;
 
     // Cargar precios desde DB (fuente de verdad)
-    const cursoIds = cart.items.filter(i => i.cursoId).map(i => i.cursoId!) ;
-    const productoIds = cart.items.filter(i => i.productoId).map(i => i.productoId!);
+    // Usamos filter(Boolean) para asegurar que map no retorne null
+    const cursoIds = cart.items
+      .filter(i => i.cursoId)
+      .map(i => i.cursoId as number);
+      
+    const productoIds = cart.items
+      .filter(i => i.productoId)
+      .map(i => i.productoId as number);
 
     const [cursos, productos] = await Promise.all([
-      cursoIds.length ? this.prisma.curso.findMany({ where: { id: { in: cursoIds }, publicado: true } }) : Promise.resolve([]),
-      productoIds.length ? this.prisma.producto.findMany({ where: { id: { in: productoIds }, publicado: true } }) : Promise.resolve([]),
+      cursoIds.length > 0 ? this.prisma.curso.findMany({ where: { id: { in: cursoIds }, publicado: true } }) : Promise.resolve([]),
+      productoIds.length > 0 ? this.prisma.producto.findMany({ where: { id: { in: productoIds }, publicado: true } }) : Promise.resolve([]),
     ]);
 
     const cursoMap = new Map(cursos.map(c => [c.id, c]));
     const prodMap = new Map(productos.map(p => [p.id, p]));
 
-    const itemsOrden = cart.items.map((it) => {
+    const itemsOrden: any[] = [];
+    
+    for (const it of cart.items) {
       if (it.tipo === 'CURSO') {
         const c = it.cursoId ? cursoMap.get(it.cursoId) : null;
-        if (!c) throw new BadRequestException('Curso inválido o no publicado');
+        if (!c) throw new BadRequestException(`Curso ${it.cursoId} inválido o no publicado`);
         const price = Number(c.precio) - Number(c.descuento || 0);
-        return {
-          tipo: it.tipo,
+        itemsOrden.push({
+          tipo: 'CURSO',
           refId: c.id,
           titulo: c.titulo,
           cantidad: 1,
           precioUnitario: dec(price),
           cursoId: c.id,
           productoId: null,
-        };
+        });
       } else {
         const p = it.productoId ? prodMap.get(it.productoId) : null;
-        if (!p) throw new BadRequestException('Producto inválido o no publicado');
-        if (p.stock < it.cantidad) throw new BadRequestException('Stock insuficiente');
+        if (!p) throw new BadRequestException(`Producto ${it.productoId} inválido o no publicado`);
+        if (p.stock < it.cantidad) throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
         const price = Number(p.precio) - Number(p.descuento || 0);
-        return {
-          tipo: it.tipo,
+        itemsOrden.push({
+          tipo: 'PRODUCTO',
           refId: p.id,
           titulo: p.titulo,
           cantidad: it.cantidad,
           precioUnitario: dec(price),
           cursoId: null,
           productoId: p.id,
-        };
+        });
       }
-    });
+    }
 
     const totalNumber = itemsOrden.reduce((acc, i) => acc + Number(i.precioUnitario) * i.cantidad, 0);
 
@@ -95,12 +103,12 @@ export class OrdersService {
           metadatos: dto.metadatos ?? Prisma.JsonNull,
           direccionEnvioId: dto.direccionEnvioId ? Number(dto.direccionEnvioId) : null,
           direccionFacturacionId: dto.direccionFacturacionId ? Number(dto.direccionFacturacionId) : null,
-          items: { create: itemsOrden as any },
+          items: { create: itemsOrden },
         },
         include: { items: true },
       });
 
-      // Opcional: limpiar carrito al crear orden (recomendado)
+      // Limpiar carrito al crear orden
       await tx.itemCarrito.deleteMany({ where: { carritoId: cart.id } });
 
       return orden;
