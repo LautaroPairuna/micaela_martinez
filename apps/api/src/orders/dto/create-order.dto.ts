@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsNumber, IsArray, ValidateIf, ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsNumber, IsArray, ValidateIf, ValidateNested, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum OrderSource {
@@ -20,7 +20,7 @@ export class CreateOrderItemDto {
 export class CreateOrderDto {
   @IsOptional()
   @IsEnum(OrderSource)
-  source?: OrderSource = OrderSource.CART;
+  source?: OrderSource;
 
   // Opcional: para snapshot/utm/etc.
   @IsOptional()
@@ -40,11 +40,12 @@ export class CreateOrderDto {
   @IsNumber()
   direccionFacturacionId?: number;
 
-  // ✅ Validación condicional: Si no es CART, items es obligatorio.
-  @ValidateIf((o) => o.source !== OrderSource.CART)
+  // ✅ Fix blindado: Si source es undefined o CART, items NO se valida.
+  // Si es DIRECT, items debe ser array no vacío.
+  @ValidateIf((o) => (o.source ?? OrderSource.CART) !== OrderSource.CART)
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
-  @IsOptional() // Permite que sea undefined si source=CART, pero si source!=CART el ValidateIf lo fuerza
   items?: CreateOrderItemDto[];
 }
