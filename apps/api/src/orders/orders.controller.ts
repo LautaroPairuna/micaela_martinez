@@ -6,8 +6,11 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtUser } from '../auth/types/jwt-user';
 import { OrdersService } from './orders.service';
 import {
   CreateOrderDto,
@@ -16,47 +19,47 @@ import {
 } from './dto/orders.dto';
 
 @Controller('orders')
+@UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private readonly orders: OrdersService) {}
 
-  // Ajustá esto según tu auth guard (JWT). Asumo req.user.id.
-  private userId(req: any) {
-    const rawUserId = req.user?.id ?? req.user?.sub;
-    return Number(rawUserId);
+  private userId(user: JwtUser) {
+    return Number(user.sub);
   }
 
   @Post()
-  async create(@Req() req: any, @Body() dto: CreateOrderDto) {
-    console.log('=== API: create order dto keys ===', Object.keys(dto ?? {}));
-    console.log('=== API: dto.source ===', dto?.source);
-    return this.orders.createFromCart(this.userId(req), dto);
+  async create(@CurrentUser() user: JwtUser, @Body() dto: CreateOrderDto) {
+    return this.orders.createFromCart(this.userId(user), dto);
   }
 
   @Get('me')
-  async my(@Req() req: any) {
-    return this.orders.getMyOrders(this.userId(req));
+  async my(@CurrentUser() user: JwtUser) {
+    return this.orders.getMyOrders(this.userId(user));
   }
 
   @Get(':id')
-  async byId(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
-    return this.orders.getOrderById(this.userId(req), id);
+  async byId(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.orders.getOrderById(this.userId(user), id);
   }
 
   @Post(':id/pay')
   async pay(
-    @Req() req: any,
+    @CurrentUser() user: JwtUser,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: PayOrderDto,
   ) {
-    return this.orders.payOneOff(this.userId(req), id, dto);
+    return this.orders.payOneOff(this.userId(user), id, dto);
   }
 
   @Post(':id/subscribe')
   async subscribe(
-    @Req() req: any,
+    @CurrentUser() user: JwtUser,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: SubscribeOrderDto,
   ) {
-    return this.orders.subscribe(this.userId(req), id, dto);
+    return this.orders.subscribe(this.userId(user), id, dto);
   }
 }
