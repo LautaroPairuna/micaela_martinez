@@ -97,7 +97,7 @@ export function ConfirmationStep() {
                 <div className="text-left">
                   <p className="font-medium text-blue-200">Activación de cursos</p>
                   <p className="text-sm text-zinc-400 leading-relaxed">
-                    Tu suscripción está siendo procesada. La activación de tus cursos puede demorar entre <strong>2 a 5 horas</strong>. Te enviaremos una notificación en cuanto esté lista.
+                    Tu suscripción quedó autorizada y estamos esperando el primer cobro de Mercado Pago para activar tus cursos.
                   </p>
                 </div>
               </div>

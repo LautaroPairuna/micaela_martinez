@@ -323,7 +323,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                       <div className="text-left">
                         <p className="font-bold text-sm text-blue-200">Activación en proceso</p>
                         <p className="text-xs text-zinc-400 leading-relaxed mt-1">
-                          Tu suscripción está siendo procesada por Mercado Pago. La activación de tus cursos puede demorar entre <strong>2 a 5 horas</strong>. Te notificaremos en cuanto esté lista.
+                          Tu suscripción está autorizada y pendiente del primer cobro de Mercado Pago. Te notificaremos cuando el pago se apruebe y se active el acceso.
                         </p>
                       </div>
                     </div>

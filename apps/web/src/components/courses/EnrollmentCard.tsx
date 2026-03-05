@@ -138,6 +138,10 @@ export function EnrollmentCard({
 
   // ✅ UI solo si hay orderId real (es una suscripción)
   const hasSubscriptionUI = !!subscriptionOrderId;
+  const enrollmentStatus = String(enrollment.estado ?? '').toUpperCase().trim();
+  const isPendingAuthorization =
+    enrollmentStatus === 'PENDIENTE_AUTORIZACION' ||
+    (hasSubscriptionUI && subToUse?.isActive === false);
 
   // ✅ Botón cancelar solo si hay subscriptionId real (columna o subInfo)
   // Esto evita mostrar cancelar en órdenes pendientes sin preapprovalId
@@ -314,6 +318,11 @@ export function EnrollmentCard({
   );
 
   const ctaHref = useMemo(() => {
+    if (isPendingAuthorization) {
+      return course?.slug
+        ? `/cursos/detalle/${course.slug}`
+        : `/cursos/detalle/${enrollment.cursoId}`;
+    }
     // Si está completado, redirigir al player para repasar
     if (isCompleted && course?.slug) return `/cursos/player/${course.slug}`;
     // Si falta el slug, redirigir a la ficha del curso (fallback)
@@ -340,7 +349,7 @@ export function EnrollmentCard({
       }
     }
     return `/cursos/player/${course.slug}/modulo-1/leccion-1`;
-  }, [isCompleted, course?.slug, course?.modulos, courseModules, lessonProgress, serverProgress, getLessonProgressKey, enrollment.cursoId]);
+  }, [isPendingAuthorization, isCompleted, course?.slug, course?.modulos, courseModules, lessonProgress, serverProgress, getLessonProgressKey, enrollment.cursoId]);
 
   // Resolver la imagen usando la misma lógica que CourseCard
   const courseImageUrl = course?.portadaUrl || (course?.portada ? `/uploads/curso/${course.portada}` : null);
@@ -408,7 +417,12 @@ export function EnrollmentCard({
 
         {/* Badge de estado (Superpuesto en la imagen) */}
         <div className="absolute bottom-3 left-3 z-30">
-          {isCompleted ? (
+          {isPendingAuthorization ? (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/90 text-white text-[10px] font-bold backdrop-blur-md shadow-lg border border-blue-300/20">
+              <Clock className="h-3 w-3" />
+              PAGO EN AUTORIZACIÓN
+            </div>
+          ) : isCompleted ? (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/90 text-white text-[10px] font-bold backdrop-blur-md shadow-lg border border-green-400/20">
               <Award className="h-3 w-3" />
               COMPLETADO
@@ -473,7 +487,27 @@ export function EnrollmentCard({
 
         {/* Footer Actions */}
         <div className="mt-auto pt-6 space-y-2">
-          {isCompleted ? (
+          {isPendingAuthorization ? (
+            <>
+              <div className="w-full px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-400/20 text-blue-200 text-xs leading-relaxed">
+                Estamos autorizando el pago de tu suscripción. Cuando se confirme el primer cobro vas a poder empezar a ver el curso.
+              </div>
+              <Link
+                href={ctaHref}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white font-medium text-xs transition-all duration-200 border border-white/5 hover:border-white/10"
+              >
+                Ver detalle del curso
+              </Link>
+              <button
+                type="button"
+                disabled
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--gold)]/50 text-black/80 font-bold text-sm cursor-not-allowed"
+              >
+                <Clock className="h-4 w-4" />
+                Autorizando pago...
+              </button>
+            </>
+          ) : isCompleted ? (
             <>
               <button
                 onClick={handleDownloadCertificate}

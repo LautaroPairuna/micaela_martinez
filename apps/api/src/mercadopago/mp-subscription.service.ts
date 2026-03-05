@@ -44,17 +44,8 @@ function normalizeFrequencyType(v: string): MpFrequencyType {
   return 'months';
 }
 
-function buildAutoRecurringStartDate(
-  frequency: number,
-  frequencyType: MpFrequencyType,
-): string {
-  const next = new Date();
-  if (frequencyType === 'months') {
-    next.setMonth(next.getMonth() + frequency);
-  } else {
-    next.setDate(next.getDate() + frequency);
-  }
-  return next.toISOString();
+function buildAutoRecurringStartDate(): string {
+  return new Date().toISOString();
 }
 
 function safeJsonParse(text: string): any {
@@ -146,10 +137,7 @@ export class MpSubscriptionService {
     const frequencyType = normalizeFrequencyType(
       subscriptionData.frequency_type,
     );
-    const startDate = buildAutoRecurringStartDate(
-      subscriptionData.frequency,
-      frequencyType,
-    );
+    const startDate = buildAutoRecurringStartDate();
 
     const preapprovalPayload: Record<string, any> = {
       reason: subscriptionData.description,

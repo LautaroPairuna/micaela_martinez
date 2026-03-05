@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GraduationCap, BookOpen } from 'lucide-react';
@@ -71,6 +71,41 @@ function MiAprendizajeContent({
 }: MiAprendizajeClientProps) {
   const { lessonProgress, courseModules, getLessonProgressKey } =
     useEnrollmentProgress();
+  const displayRows = useMemo(() => {
+    const enrolledCourseIds = new Set(
+      initialRows.map((row) => String(row.cursoId ?? '').trim()),
+    );
+    const pendingSubscription =
+      subscriptionInfo.subscriptions.find((sub) => !sub.isActive) ??
+      subscriptionInfo.subscriptions[0] ??
+      null;
+    const fallbackOrderId = pendingSubscription
+      ? String(pendingSubscription.orderId).trim()
+      : '';
+    const pendingRows: EnrollmentRow[] = subscriptionInfo.includedCourses
+      .filter((course) => !enrolledCourseIds.has(String(course.id ?? '').trim()))
+      .map((course) => ({
+        id: `pending-${course.id}`,
+        cursoId: course.id,
+        estado: 'PENDIENTE_AUTORIZACION',
+        progreso: {
+          subscription: {
+            orderId: fallbackOrderId || null,
+          },
+        },
+        curso: {
+          slug: course.slug ?? null,
+          titulo: course.titulo ?? null,
+          portada: course.portada ?? null,
+          portadaUrl: course.portadaUrl ?? null,
+          _count: null,
+        },
+        subscriptionOrderId: fallbackOrderId || null,
+        subscriptionId: pendingSubscription?.subscriptionId ?? null,
+        subscriptionActive: pendingSubscription?.isActive ?? false,
+      }));
+    return [...initialRows, ...pendingRows];
+  }, [initialRows, subscriptionInfo.includedCourses, subscriptionInfo.subscriptions]);
 
   useEffect(() => {
     console.log('📦 MiAprendizajeContent - subscriptionInfo:', subscriptionInfo);
@@ -94,18 +129,18 @@ function MiAprendizajeContent({
         iconColor="text-[var(--pink)]"
         title="Mi Aprendizaje"
         description={
-          initialRows.length > 0
-            ? `${initialRows.length} curso${
-                initialRows.length !== 1 ? 's' : ''
+          displayRows.length > 0
+            ? `${displayRows.length} curso${
+                displayRows.length !== 1 ? 's' : ''
               } en tu biblioteca de aprendizaje`
             : 'Continuá desarrollando tus habilidades profesionales'
         }
         stats={
-          initialRows
+          displayRows
             ? [
                 {
                   label: 'Cursos inscritos',
-                  value: initialRows.length,
+                  value: displayRows.length,
                   icon: BookOpen,
                   color: 'text-[var(--muted)]',
                   bgColor: 'bg-[var(--subtle)]',
@@ -116,7 +151,7 @@ function MiAprendizajeContent({
         }
       />
 
-      {initialRows.length === 0 ? (
+      {displayRows.length === 0 ? (
         <Card className="border-[var(--border)] bg-[var(--bg)]">
           <CardBody className="text-center py-16">
             <div className="max-w-md mx-auto space-y-6">
@@ -150,7 +185,7 @@ function MiAprendizajeContent({
           animate="show"
           className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
         >
-          {initialRows.map((enrollment) => {
+          {displayRows.map((enrollment) => {
             const courseId = String(enrollment.cursoId || '');
             const modules = courseModules[courseId] || [];
 

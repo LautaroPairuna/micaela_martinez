@@ -102,7 +102,7 @@ export function SubscriptionInfoCard({
         <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
           <Info className="h-5 w-5 text-blue-400 mt-0.5" />
           <p className="text-sm text-blue-200/80 leading-relaxed">
-            Tu suscripción está siendo procesada por Mercado Pago. Esto puede demorar entre 2 y 5 horas.
+            Tu suscripción está autorizada y esperando el primer cobro de Mercado Pago.
           </p>
         </div>
       )}
