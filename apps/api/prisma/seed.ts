@@ -8,6 +8,10 @@ import {
   NivelCurso,
   TipoItemOrden,
   TipoLeccion,
+  PagoStatus,
+  PagoProvider,
+  PagoKind,
+  OrdenTipo,
 } from '@prisma/client';
 import { createExtendedClient } from '../src/prisma/prisma.extensions';
 
@@ -51,6 +55,11 @@ const E = {
   estadoInscripcion: (v: unknown) => enumKey(EstadoInscripcion as any, v) as any,
   tipoItemOrden: (v: unknown) => enumKey(TipoItemOrden as any, v) as any,
   tipoLeccion: (v: unknown) => enumKey(TipoLeccion as any, v) as any,
+  // Nuevos enums
+  pagoStatus: (v: unknown) => enumKey(PagoStatus as any, v) as any,
+  pagoProvider: (v: unknown) => enumKey(PagoProvider as any, v) as any,
+  pagoKind: (v: unknown) => enumKey(PagoKind as any, v) as any,
+  ordenTipo: (v: unknown) => enumKey(OrdenTipo as any, v) as any,
 };
 
 /* ───────── Helpers ───────── */
@@ -630,10 +639,37 @@ async function main() {
             moneda: 'ARS',
             referenciaPago: refPago,
             creadoEn: new Date(),
+            // ✅ Asegurar tipo explícito (aunque tenga default)
+            tipo: E.ordenTipo(OrdenTipo.ONE_OFF),
           } as any,
           select: { id: true },
         })
       ).id;
+
+  // ───────────────── Pago Simulado (Ledger)
+  // Verificar si ya existe el pago para esta orden
+  const existingPago = await prisma.pago.findFirst({
+    where: { ordenId },
+  });
+
+  if (!existingPago) {
+    await prisma.pago.create({
+      data: {
+        ordenId: ordenId,
+        usuarioId: clienteId,
+        provider: E.pagoProvider(PagoProvider.MERCADOPAGO),
+        kind: E.pagoKind(PagoKind.ONE_OFF),
+        status: E.pagoStatus(PagoStatus.APPROVED),
+        statusDetail: 'accredited',
+        mpId: 'MP-PAY-123456789', // Fake MP ID
+        monto: new Prisma.Decimal(70000),
+        moneda: 'ARS',
+        creadoEn: new Date(),
+        metadatos: json({ source: 'seed' }),
+      } as any,
+    });
+    console.log('✅ Pago simulado creado para la orden.');
+  }
 
   await prisma.itemOrden.deleteMany({ where: { ordenId } });
   

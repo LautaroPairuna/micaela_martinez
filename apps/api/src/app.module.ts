@@ -20,6 +20,8 @@ import { AccountModule } from './account/account.module';
 import { UsersModule } from './users/users.module';
 import { LmsModule } from './lms/lms.module';
 import { OrdersModule } from './orders/orders.module';
+import { MercadoPagoModule } from './mercadopago/mercadopago.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { PaymentModule } from './payment/payment.module';
 import { HeroModule } from './hero/hero.module';
 import { ReviewsModule } from './reviews/reviews.module';
@@ -61,6 +63,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     UsersModule, // Gestión de usuarios (para auth)
     SubscriptionModule, // Gestión de suscripciones
     OrdersModule, // Gestión de órdenes
+    MercadoPagoModule,
+    WebhooksModule,
     PaymentModule, // Pagos / MercadoPago
     HeroModule, // Imágenes hero / home
     ReviewsModule, // Reseñas y calificaciones

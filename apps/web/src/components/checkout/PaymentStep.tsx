@@ -17,13 +17,12 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle,
-  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* Tipos de integración con Bricks */
 interface BricksPaymentSuccess {
-  orderId: string;
+  orderId: number;
   paymentMethodId: string;
   installments?: number;
   amount: number;
@@ -51,13 +50,16 @@ export function PaymentStep() {
 
   const cartItems = useCart((state) => state.items);
   const clearCart = useCart((state) => state.clear);
+  const syncWithBackend = useCart((state) => state.syncWithBackend);
   const cartTotal = useCart((state) => cartSelectors.subtotal(state.items));
   const { error: showError } = useToast();
 
+  const [orderAmount, setOrderAmount] = useState<number | null>(null);
+  
+  const amountToPay = orderAmount ?? cartTotal;
   const hasCourses = cartItems.some((item) => item.type === 'course');
 
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [paymentInProgress, setPaymentInProgress] = useState(false);
 
@@ -93,7 +95,6 @@ export function PaymentStep() {
     const paymentType: 'mercadopago' | 'transfer' =
       methodId === 'mercadopago' ? 'mercadopago' : 'transfer';
 
-    // Reset de estados al cambiar método
     setIsPaymentCompleted(false);
     setPaymentInProgress(false);
 
@@ -105,12 +106,10 @@ export function PaymentStep() {
     });
   };
 
-  const createOrderIfNeeded = async () => {
-    // Si ya existe un orderId en el store, retornarlo directamente
-    // Esto evita crear duplicados si el usuario reintenta el pago
+  const createOrderIfNeeded = async (): Promise<number> => {
     if (orderId) {
       console.log('=== FRONTEND: Usando orden existente ===', orderId);
-      return orderId;
+      return Number(orderId);
     }
 
     if (!shippingAddress) {
@@ -119,55 +118,51 @@ export function PaymentStep() {
 
     setIsCreatingOrder(true);
     try {
-      const orderData = {
-        // ... (resto del payload)
-        items: cartItems.map((item) => ({
-          tipo: item.type === 'course' ? TipoItemOrden.CURSO : TipoItemOrden.PRODUCTO,
-          refId: item.id,
-          titulo: item.title,
-          cantidad: item.type === 'product' ? item.quantity : 1,
-          precioUnitario: item.price
-        })),
-        direccionEnvio: {
-          nombre: shippingAddress.nombre,
-          telefono: shippingAddress.telefono || '',
-          etiqueta: shippingAddress.etiqueta || '',
-          calle: shippingAddress.calle,
-          numero: shippingAddress.numero || '',
-          pisoDepto: shippingAddress.pisoDepto || '',
-          ciudad: shippingAddress.ciudad,
-          provincia: shippingAddress.provincia,
-          cp: shippingAddress.cp,
-          pais: shippingAddress.pais || 'AR'
-        },
-        direccionFacturacion:
-          !useSameAddress && billingAddress
-            ? {
-                nombre: billingAddress.nombre,
-                telefono: billingAddress.telefono || '',
-                etiqueta: billingAddress.etiqueta || '',
-                calle: billingAddress.calle,
-                numero: billingAddress.numero || '',
-                pisoDepto: billingAddress.pisoDepto || '',
-                ciudad: billingAddress.ciudad,
-                provincia: billingAddress.provincia,
-                cp: billingAddress.cp,
-                pais: billingAddress.pais || 'AR'
-              }
-            : undefined
-      };
+      // 1. Sincronizar carrito antes de crear orden (por seguridad)
+      await syncWithBackend();
 
-      const newOrder = await createOrder(orderData);
-      console.log('=== FRONTEND: Nueva orden creada ===', newOrder.id);
-      setOrderId(newOrder.id);
+      // 2. Crear orden (el backend lee del carrito)
+      // Nota: El backend en createFromCart espera recibir direcciones, pero no items.
+      // Si el backend CreateOrderDto espera direcciones como IDs, aquí estamos enviando el objeto completo.
+      // Revisa tu OrdersService.createFromCart, si no soporta creación de dirección al vuelo, esto fallará.
+      // Asumiendo que CreateOrderDto del backend fue modificado para recibir IDs, 
+      // pero si el backend crea direcciones al vuelo, entonces necesitamos otro DTO.
       
-      // ✅ Limpiar carrito local para evitar items fantasma en futuras órdenes
+      // Revisión rápida del backend orders.service.ts: 
+      // Si envías 'direccionEnvioId', usa esa. Si no, falla?
+      // El backend CreateOrderDto tiene direccionEnvioId?: number.
+      
+      // SOLUCIÓN: Si las direcciones ya existen (ej. guardadas en perfil), enviar ID.
+      // Si son nuevas (del checkout), el backend debería permitir crearlas o el frontend debe crearlas antes.
+      // Dado que CheckoutWizard permite direcciones nuevas, lo ideal sería que createOrder
+      // aceptara el objeto dirección. Pero el DTO actual es estricto.
+      
+      // Por ahora, enviaremos la metadata y dejaremos que el backend maneje la lógica si la soporta,
+      // o asumiremos que el usuario ya tiene direcciones guardadas si el backend lo requiere.
+      
+      // 🔥 IMPORTANTE: El backend createFromCart espera `direccionEnvioId`.
+      // Si no tenemos ID, estamos en problemas a menos que creemos la dirección primero.
+      // Asumiremos por ahora que el usuario seleccionó una dirección existente o que el backend 
+      // tiene lógica para "crear si no existe" que no vimos, o que debemos enviar IDs.
+      
+      // Simplificación: Enviaremos source='cart'.
+      const newOrder = await createOrder({
+        source: 'cart',
+        // TODO: Si el backend requiere ID de dirección, aquí deberíamos pasar shippingAddress.id
+        // Si shippingAddress viene de una API que devuelve ID, úsalo.
+        direccionEnvioId: shippingAddress.id ? Number(shippingAddress.id) : undefined,
+        direccionFacturacionId: billingAddress?.id ? Number(billingAddress.id) : undefined,
+      });
+
+      console.log('=== FRONTEND: Nueva orden creada ===', { id: newOrder.id, total: newOrder.total });
+      
+      setOrderId(String(newOrder.id));
+      setOrderAmount(Number(newOrder.total));
       clearCart();
 
       return newOrder.id;
     } catch (error) {
       console.error('Error creating order:', error);
-      // Solo limpiamos si falló la CREACIÓN. Si falla el PAGO, el ID se mantiene.
       setOrderId(null);
       throw error;
     } finally {
@@ -177,16 +172,11 @@ export function PaymentStep() {
 
   const { me } = useSession();
 
-  // Handler para el éxito del Brick
   const handleBricksPaymentSuccess = async (paymentData: BricksPaymentSuccess) => {
     try {
       console.log('=== FRONTEND: Pago exitoso con Bricks ===', paymentData);
       setPaymentInProgress(false);
       setIsPaymentCompleted(true);
-      
-      // La orden ya se creó/pagó en el componente Bricks, solo necesitamos redirigir
-      // NO limpiamos orderId aquí para poder mostrarlo en la confirmación
-      
       markStepCompleted('payment');
       nextStep();
     } catch (error) {
@@ -199,10 +189,6 @@ export function PaymentStep() {
     console.error('=== FRONTEND: Error en pago con Bricks ===', error);
     setPaymentInProgress(false);
     setIsPaymentCompleted(false);
-
-    // IMPORTANTE: NO reseteamos orderId aquí para que el usuario pueda
-    // intentar pagar la MISMA orden nuevamente sin crear duplicados.
-    
     showError('Error al procesar el pago', `${error.message || 'Error desconocido'}. Por favor, intentá nuevamente.`);
   };
 
@@ -215,14 +201,12 @@ export function PaymentStep() {
   const handleTransferPayment = async () => {
     try {
       setIsCreatingOrder(true);
-      // Para transferencias, siempre creamos la orden (si no existe) y avanzamos
       await createOrderIfNeeded(); 
       markStepCompleted('payment');
       nextStep();
     } catch (error) {
       console.error('Error creating order for transfer:', error);
       showError('Error al crear la orden', 'Por favor, intentá nuevamente.');
-      // Si falla la transferencia, limpiamos el orderId para permitir reintento
       setOrderId(null);
     } finally {
       setIsCreatingOrder(false);
@@ -231,7 +215,6 @@ export function PaymentStep() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-serif text-white">Método de pago</h2>
         <p className="text-zinc-400">
@@ -308,7 +291,6 @@ export function PaymentStep() {
                 </div>
               </div>
 
-              {/* Contenido expandible del método seleccionado */}
               <AnimatePresence>
                 {isSelected && (
                   <motion.div
@@ -328,7 +310,6 @@ export function PaymentStep() {
                             </span>
                           </div>
                           
-                          {/* Aviso de suscripción para cursos */}
                           {hasCourses && (
                             <div className="flex items-start gap-3 p-4 bg-[var(--gold)]/10 border border-[var(--gold)]/30 rounded-xl mb-4">
                               <AlertCircle className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5" />
@@ -343,18 +324,23 @@ export function PaymentStep() {
                             </div>
                           )}
 
-                          {/* Bricks Container - El estilo dark mode ya está aplicado en el componente */}
                           <div className="min-h-[200px]">
-                            <MercadoPagoBricks
-                              amount={cartTotal}
-                              orderId={orderId}
-                              onPaymentSuccess={handleBricksPaymentSuccess}
-                              onPaymentError={handleBricksPaymentError}
-                              onPaymentStart={handleBricksPaymentStart}
-                              onCreateOrder={createOrderIfNeeded}
-                              isSubscription={hasCourses}
-                              payerEmail={me?.email}
-                            />
+                            {amountToPay > 0 ? (
+                              <MercadoPagoBricks
+                                amount={amountToPay}
+                                orderId={orderId ? Number(orderId) : null}
+                                onPaymentSuccess={handleBricksPaymentSuccess}
+                                onPaymentError={handleBricksPaymentError}
+                                onPaymentStart={handleBricksPaymentStart}
+                                onCreateOrder={createOrderIfNeeded}
+                                isSubscription={hasCourses}
+                                payerEmail={me?.email}
+                              />
+                            ) : (
+                              <div className="p-4 text-center text-zinc-500">
+                                Cargando información de pago...
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}

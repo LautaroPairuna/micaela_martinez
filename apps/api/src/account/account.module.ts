@@ -4,7 +4,7 @@ import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { OrdersModule } from '../orders/orders.module';
+import { OrdersModule } from '../ordersLegacy/orders.module';
 
 @Module({
   imports: [PassportModule, OrdersModule],

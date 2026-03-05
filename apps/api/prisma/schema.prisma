@@ -16,6 +16,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================
+// ENUMS
+// ============================
+
+enum TipoItemOrden {
+  CURSO    @map("curso")
+  PRODUCTO @map("producto")
+}
+
+enum EstadoOrden {
+  PENDIENTE   @map("pendiente")
+  PAGADO      @map("pagado")
+  CUMPLIDO    @map("cumplido")
+  CANCELADO   @map("cancelado")
+  REEMBOLSADO @map("reembolsado")
+}
+
+enum NivelCurso {
+  BASICO     @map("basico")
+  INTERMEDIO @map("intermedio")
+  AVANZADO   @map("avanzado")
+}
+
+enum EstadoInscripcion {
+  ACTIVADA    @map("activada")
+  PAUSADA     @map("pausada")
+  DESACTIVADA @map("desactivada")
+}
+
+enum TipoLike {
+  LIKE    @map("like")
+  DISLIKE @map("dislike")
+}
+
+enum TipoLeccion {
+  VIDEO     @map("video")
+  DOCUMENTO @map("documento")
+  QUIZ      @map("quiz")
+  TEXTO     @map("texto")
+}
+
+enum TipoNotificacion {
+  RESPUESTA_RESENA @map("respuesta_resena")
+  LIKE_RESENA      @map("like_resena")
+  MENCION          @map("mencion")
+  SISTEMA          @map("sistema")
+  PROMOCION        @map("promocion")
+  RECORDATORIO     @map("recordatorio")
+}
+
+// ✅ Nuevo: tipo de orden (reemplaza conceptual a esSuscripcion)
+enum OrdenTipo {
+  ONE_OFF      @map("one_off")
+  SUBSCRIPTION @map("subscription")
+}
+
+// ✅ Nuevo: provider de pago
+enum PagoProvider {
+  MERCADOPAGO @map("mercadopago")
+}
+
+// ✅ Nuevo: tipo lógico de transacción
+enum PagoKind {
+  ONE_OFF                  @map("one_off")
+  SUBSCRIPTION_PREAPPROVAL @map("subscription_preapproval")
+  SUBSCRIPTION_PAYMENT     @map("subscription_payment")
+  REFUND                   @map("refund")
+}
+
+// ✅ Nuevo: status normalizado (cross-event)
+enum PagoStatus {
+  PENDING   @map("pending")
+  APPROVED  @map("approved")
+  REJECTED  @map("rejected")
+  CANCELLED @map("cancelled")
+  REFUNDED  @map("refunded")
+  UNKNOWN   @map("unknown")
+}
+
+// ============================
+// MODELOS
+// ============================
+
 model Usuario {
   id                Int       @id @default(autoincrement())
   email             String    @unique
@@ -25,21 +108,21 @@ model Usuario {
   actualizadoEn     DateTime  @updatedAt @map("actualizado_en")
   emailVerificadoEn DateTime? @map("email_verificado_en")
 
-  roles                UsuarioRol[]
-  favoritos            Favorito[]
-  inscripciones        Inscripcion[]
-  ordenes              Orden[]
-  direcciones          Direccion[]
-  resenas              Resena[]
-  resenasLike          ResenaLike[]
-  resenasRespuesta     ResenaRespuesta[]
-  notificaciones       Notificacion[]
-  preferencias         PreferenciasNotificacion?
-  borradores           ResenaBorrador[]
-  auditLogs            AuditLog[]
-  carrito              Carrito?
-  pagosSuscripciones   PagoSuscripcion[]
-  certificados         Certificado[]
+  roles          UsuarioRol[]
+  favoritos      Favorito[]
+  inscripciones  Inscripcion[]
+  ordenes        Orden[]
+  direcciones    Direccion[]
+  resenas        Resena[]
+  resenasLike    ResenaLike[]
+  resenasRespuesta ResenaRespuesta[]
+  notificaciones Notificacion[]
+  preferencias   PreferenciasNotificacion?
+  borradores     ResenaBorrador[]
+  auditLogs      AuditLog[]
+  carrito        Carrito?
+  pagos          Pago[]
+  certificados   Certificado[]
 
   @@map("usuario")
 }
@@ -108,6 +191,7 @@ model Curso {
   borradores    ResenaBorrador[]
   itemsCarrito  ItemCarrito[]
   certificados  Certificado[]
+  itemsOrden    ItemOrden[] @relation("ItemOrdenCurso")
 
   @@index([publicado, destacado, creadoEn])
   @@fulltext([titulo, resumen])
@@ -115,22 +199,22 @@ model Curso {
 }
 
 model Inscripcion {
-  id            Int               @id @default(autoincrement())
-  usuarioId     Int               @map("usuario_id")
-  cursoId       Int               @map("curso_id")
-  estado        EstadoInscripcion @default(ACTIVADA)
+  id        Int               @id @default(autoincrement())
+  usuarioId Int               @map("usuario_id")
+  cursoId   Int               @map("curso_id")
+  estado    EstadoInscripcion @default(ACTIVADA)
 
-  // ✅ sigue existiendo para progreso/lecciones/etc.
-  progreso      Json
+  // progreso/lecciones/etc.
+  progreso Json
 
-  // ✅ NUEVOS: campos de suscripción “queryables”
-  subscriptionOrderId Int?       @map("subscription_order_id")
-  subscriptionId      String?    @map("subscription_id")
-  subscriptionEndDate DateTime?  @map("subscription_end_date")
-  subscriptionActive  Boolean?   @map("subscription_active")
+  // ✅ queryables para suscripción
+  subscriptionOrderId Int?      @map("subscription_order_id")
+  subscriptionId      String?   @map("subscription_id") @db.VarChar(128)
+  subscriptionEndDate DateTime? @map("subscription_end_date")
+  subscriptionActive  Boolean?  @map("subscription_active")
 
-  creadoEn      DateTime          @default(now()) @map("creado_en")
-  actualizadoEn DateTime          @updatedAt @map("actualizado_en")
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
 
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   curso   Curso   @relation(fields: [cursoId], references: [id])
@@ -145,10 +229,10 @@ model Inscripcion {
 }
 
 model Modulo {
-  id        Int      @id @default(autoincrement())
-  cursoId   Int      @map("curso_id")
-  titulo    String   @db.VarChar(255)
-  orden     Int
+  id      Int    @id @default(autoincrement())
+  cursoId Int    @map("curso_id")
+  titulo  String @db.VarChar(255)
+  orden   Int
 
   curso     Curso     @relation(fields: [cursoId], references: [id])
   lecciones Leccion[]
@@ -211,6 +295,7 @@ model Producto {
   resenas      Resena[]
   borradores   ResenaBorrador[]
   itemsCarrito ItemCarrito[]
+  itemsOrden   ItemOrden[] @relation("ItemOrdenProducto")
 
   @@index([publicado, destacado, creadoEn])
   @@index([publicado, precio])
@@ -226,11 +311,11 @@ model Producto {
 }
 
 model ProductoImagen {
-  id         Int     @id @default(autoincrement())
-  productoId Int     @map("producto_id")
-  archivo    String  @db.VarChar(255)
+  id         Int    @id @default(autoincrement())
+  productoId Int    @map("producto_id")
+  archivo    String @db.VarChar(255)
   alt        String? @db.VarChar(255)
-  orden      Int     @default(0)
+  orden      Int    @default(0)
 
   producto Producto @relation(fields: [productoId], references: [id])
 
@@ -252,12 +337,12 @@ model Marca {
 }
 
 model Categoria {
-  id          Int      @id @default(autoincrement())
-  slug        String   @unique @db.VarChar(128)
-  nombre      String
-  imagen      String?  @map("imagen_archivo") @db.VarChar(255)
-  activa      Boolean  @default(true)
-  creadoEn    DateTime @default(now()) @map("creado_en")
+  id       Int      @id @default(autoincrement())
+  slug     String   @unique @db.VarChar(128)
+  nombre   String
+  imagen   String?  @map("imagen_archivo") @db.VarChar(255)
+  activa   Boolean  @default(true)
+  creadoEn DateTime @default(now()) @map("creado_en")
 
   productos Producto[]
 
@@ -270,29 +355,38 @@ model Orden {
   estado                    EstadoOrden @default(PENDIENTE)
   total                     Decimal     @db.Decimal(10, 2)
   moneda                    String      @default("ARS")
+
+  // Informativo (último mpId o referencia)
   referenciaPago            String?     @map("referencia_pago")
+
   creadoEn                  DateTime    @default(now()) @map("creado_en")
   actualizadoEn             DateTime    @updatedAt @map("actualizado_en")
-  esSuscripcion             Boolean     @default(false) @map("es_suscripcion")
-  suscripcionActiva         Boolean?    @map("suscripcion_activa")
-  suscripcionId             String?     @unique @map("suscripcion_id")
-  suscripcionFrecuencia     Int?        @map("suscripcion_frecuencia")
-  suscripcionTipoFrecuencia String?     @map("suscripcion_tipo_frecuencia")
 
-  // ✅ NUEVO: próxima fecha de cobro/fin de período (fuente de verdad para cron/notifs)
+  // ✅ Nuevo: tipo de orden
+  tipo                      OrdenTipo   @default(ONE_OFF) @map("tipo")
+
+  // ✅ Compatibilidad (opcional)
+  esSuscripcion             Boolean     @default(false) @map("es_suscripcion")
+
+  // ===== Suscripción =====
+  suscripcionActiva         Boolean?    @map("suscripcion_activa")
+  suscripcionId             String?     @unique @map("suscripcion_id") @db.VarChar(128)
+  suscripcionFrecuencia     Int?        @map("suscripcion_frecuencia")
+  suscripcionTipoFrecuencia String?     @map("suscripcion_tipo_frecuencia") @db.VarChar(16)
   suscripcionProximoPago    DateTime?   @map("suscripcion_proximo_pago")
 
   metadatos                 Json?
   direccionEnvioId          Int?        @map("direccion_envio_id")
   direccionFacturacionId    Int?        @map("direccion_facturacion_id")
 
-  usuario              Usuario           @relation(fields: [usuarioId], references: [id])
+  usuario              Usuario    @relation(fields: [usuarioId], references: [id])
   items                ItemOrden[]
-  pagos                PagoSuscripcion[]
-  direccionEnvio       Direccion?        @relation("OrdenDireccionEnvio", fields: [direccionEnvioId], references: [id])
-  direccionFacturacion Direccion?        @relation("OrdenDireccionFacturacion", fields: [direccionFacturacionId], references: [id])
+  pagos                Pago[]
+  direccionEnvio       Direccion? @relation("OrdenDireccionEnvio", fields: [direccionEnvioId], references: [id])
+  direccionFacturacion Direccion? @relation("OrdenDireccionFacturacion", fields: [direccionFacturacionId], references: [id])
 
   @@index([usuarioId, estado, creadoEn])
+  @@index([tipo])
   @@index([esSuscripcion])
   @@index([suscripcionActiva])
   @@index([referenciaPago])
@@ -302,6 +396,7 @@ model Orden {
   @@map("orden")
 }
 
+// ✅ ItemOrden: ajustado para relación opcional a curso/producto (mantiene tu refId+tipo)
 model ItemOrden {
   id             Int           @id @default(autoincrement())
   ordenId        Int           @map("orden_id")
@@ -311,33 +406,76 @@ model ItemOrden {
   cantidad       Int           @default(1)
   precioUnitario Decimal       @map("precio_unitario") @db.Decimal(10, 2)
 
-  orden Orden @relation(fields: [ordenId], references: [id])
+  // relaciones "soft" para joins (opcionales)
+  cursoId        Int?          @map("curso_id")
+  productoId     Int?          @map("producto_id")
+
+  orden    Orden    @relation(fields: [ordenId], references: [id])
+  curso    Curso?   @relation("ItemOrdenCurso", fields: [cursoId], references: [id])
+  producto Producto? @relation("ItemOrdenProducto", fields: [productoId], references: [id])
 
   @@index([ordenId])
   @@index([tipo, refId])
+  @@index([cursoId], map: "item_orden_curso_id_fkey")
+  @@index([productoId], map: "item_orden_producto_id_fkey")
   @@map("item_orden")
 }
 
-model PagoSuscripcion {
-  id             Int      @id @default(autoincrement())
-  ordenId        Int      @map("orden_id")
-  usuarioId      Int      @map("usuario_id")
-  referenciaPago String   @map("referencia_pago")
-  monto          Decimal  @db.Decimal(10, 2)
-  estado         String
+// ✅ Nuevo: ledger unificado de pagos
+model Pago {
+  id             Int          @id @default(autoincrement())
+  provider       PagoProvider @default(MERCADOPAGO)
+  kind           PagoKind
+  status         PagoStatus   @default(PENDING)
+  statusDetail   String?      @map("status_detail") @db.VarChar(128)
+
+  ordenId        Int          @map("orden_id")
+  usuarioId      Int          @map("usuario_id")
+
+  // id de MP (payment.id / preapproval.id / authorized_payment.id)
+  mpId           String       @map("mp_id") @db.VarChar(128)
+
+  // idempotencia / trazabilidad
+  attemptId      String?      @map("attempt_id") @db.VarChar(64)
+  idempotencyKey String?      @map("idempotency_key") @db.VarChar(128)
+
+  monto          Decimal      @db.Decimal(10, 2)
+  moneda         String       @default("ARS")
+
   metadatos      Json?
-  creadoEn       DateTime @default(now()) @map("creado_en")
-  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
+  creadoEn       DateTime     @default(now()) @map("creado_en")
+  actualizadoEn  DateTime     @updatedAt @map("actualizado_en")
 
   orden   Orden   @relation(fields: [ordenId], references: [id])
   usuario Usuario @relation(fields: [usuarioId], references: [id])
 
+  @@unique([provider, kind, mpId], map: "uniq_pago_provider_kind_mpid")
   @@index([ordenId])
   @@index([usuarioId])
-  @@unique([referenciaPago])
-  @@index([estado])
+  @@index([status])
   @@index([creadoEn])
-  @@map("pagos_suscripciones")
+  @@index([ordenId, attemptId])
+  @@map("pago")
+}
+
+// ✅ Nuevo: Webhook events (dedupe + auditoría)
+model WebhookEvent {
+  id          Int          @id @default(autoincrement())
+  provider    PagoProvider @default(MERCADOPAGO)
+  eventType   String       @map("event_type") @db.VarChar(64)
+  dataId      String       @map("data_id") @db.VarChar(128)
+  requestId   String?      @map("request_id") @db.VarChar(128)
+  signature   String?      @db.VarChar(512)
+  ts          String?      @db.VarChar(32)
+  status      String       @default("RECEIVED") @db.VarChar(32)
+  receivedAt  DateTime     @default(now()) @map("received_at")
+  processedAt DateTime?    @map("processed_at")
+  payload     Json?
+
+  @@unique([provider, eventType, dataId], map: "uniq_webhook_provider_type_dataid")
+  @@index([receivedAt])
+  @@index([status])
+  @@map("webhook_event")
 }
 
 model Direccion {
@@ -573,50 +711,4 @@ model Certificado {
   @@index([usuarioId])
   @@index([cursoId])
   @@map("certificado")
-}
-
-enum TipoItemOrden {
-  CURSO    @map("curso")
-  PRODUCTO @map("producto")
-}
-
-enum EstadoOrden {
-  PENDIENTE   @map("pendiente")
-  PAGADO      @map("pagado")
-  CUMPLIDO    @map("cumplido")
-  CANCELADO   @map("cancelado")
-  REEMBOLSADO @map("reembolsado")
-}
-
-enum NivelCurso {
-  BASICO     @map("basico")
-  INTERMEDIO @map("intermedio")
-  AVANZADO   @map("avanzado")
-}
-
-enum EstadoInscripcion {
-  ACTIVADA    @map("activada")
-  PAUSADA     @map("pausada")
-  DESACTIVADA @map("desactivada")
-}
-
-enum TipoLike {
-  LIKE    @map("like")
-  DISLIKE @map("dislike")
-}
-
-enum TipoLeccion {
-  VIDEO     @map("video")
-  DOCUMENTO @map("documento")
-  QUIZ      @map("quiz")
-  TEXTO     @map("texto")
-}
-
-enum TipoNotificacion {
-  RESPUESTA_RESENA @map("respuesta_resena")
-  LIKE_RESENA      @map("like_resena")
-  MENCION          @map("mencion")
-  SISTEMA          @map("sistema")
-  PROMOCION        @map("promocion")
-  RECORDATORIO     @map("recordatorio")
 }

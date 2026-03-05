@@ -3,8 +3,6 @@
 import { useCart, cartSelectors } from '@/store/cart';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Price } from '@/components/ui/Price';
-import { Trash2 } from 'lucide-react';
-import { useCheckout } from '@/store/checkout';
 
 export function OrderSummary() {
   const { items } = useCart();

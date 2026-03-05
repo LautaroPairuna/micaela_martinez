@@ -2,8 +2,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { Card, CardBody } from '@/components/ui/Card';
-import { AlertCircle } from 'lucide-react';
 import { MERCADOPAGO_PUBLIC_KEY } from '@/lib/env';
 import { processMercadoPagoPayment, createSubscription } from '@/lib/sdk/ordersApi';
 import { z } from 'zod';
@@ -11,9 +9,8 @@ import { z } from 'zod';
 /* ─────────────────────────── Tipos ─────────────────────────── */
 
 type PaymentSuccessData = {
-  orderId: string;
+  orderId: number;
   paymentMethodId: string;
-  // token eliminado por seguridad
   installments?: number;
   amount: number;
   status: string;
@@ -58,7 +55,7 @@ function parseBrickData(cardFormData: unknown) {
     ? d.installments
     : (Number(d.installments) || 1);
 
-  const issuerId = d.issuer_id != null ? String(d.issuer_id) : undefined;
+  const issuerId = d.issuer_id != null ? Number(d.issuer_id) : 0;
   
   // Extraer paymentMethodId de cualquiera de los campos posibles
   const paymentMethodId = d.payment_method_id || d.paymentMethodId || d.selectedPaymentMethod;
@@ -120,23 +117,6 @@ declare global {
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
-function pickFirst<T = unknown>(obj: Record<string, unknown>, keys: readonly string[]): T | undefined {
-  for (const k of keys) {
-    if (k in obj) return obj[k] as T;
-  }
-  return undefined;
-}
-function extractId(resp: unknown, fallback: string): string {
-  if (!isRecord(resp)) return fallback;
-  const v = pickFirst<unknown>(resp, ['id', 'orderId', 'order_id']);
-  if (typeof v === 'string' || typeof v === 'number') return String(v);
-  return fallback;
-}
-function extractStatus(resp: unknown): string {
-  if (!isRecord(resp)) return 'unknown';
-  const v = pickFirst<unknown>(resp, ['estado', 'status', 'payment_status', 'status_detail', 'state']);
-  return typeof v === 'string' ? v : 'unknown';
-}
 function normalizeError(err: unknown): PaymentErrorData {
   if (err instanceof Error) return { message: err.message, details: err };
   if (typeof err === 'string') return { message: err };
@@ -169,17 +149,15 @@ function loadMercadoPagoSDK(): Promise<MercadoPagoConstructor | null> {
 
 interface MercadoPagoBricksProps {
   amount: number;
-  orderId: string | null;
+  orderId: number | null; // Ahora number
   onPaymentSuccess: OnPaymentSuccess;
   onPaymentError: OnPaymentError;
   onPaymentStart?: () => void;
-  onCreateOrder: () => Promise<string>;
+  onCreateOrder: () => Promise<number>; // Devuelve number
   isSubscription?: boolean;
   subscriptionFrequency?: number;
   subscriptionFrequencyType?: 'days' | 'months';
-  /** Si usás preferencia creada en backend, pasala acá */
   preferenceId?: string | null;
-  /** Email del pagador para pre-completar el brick */
   payerEmail?: string;
 }
 
@@ -206,20 +184,22 @@ export function MercadoPagoBricks({
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
 
-  // Id estable del contenedor (string), requerido por Bricks (usa .startsWith internamente)
   const containerIdRef = useRef<string>(`mp-payment-brick-${Math.random().toString(36).slice(2, 8)}`);
-
   const controllerRef = useRef<BrickController | null>(null);
   const handlersRef = useRef({ onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder });
   handlersRef.current = { onPaymentSuccess, onPaymentError, onPaymentStart, onCreateOrder };
 
-  // Control de montado seguro
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Signature para forzar remount si cambian props críticas
+  useEffect(() => {
+    if (amount <= 0 && !initError) {
+      console.warn('MercadoPagoBricks: Monto inválido o 0, esperando actualización...', amount);
+    }
+  }, [amount, initError]);
+
   const signature = useMemo(() => JSON.stringify({
     amount,
     isSubscription,
@@ -229,7 +209,6 @@ export function MercadoPagoBricks({
     theme: 'dark',
   }), [amount, isSubscription, preferenceId, subscriptionFrequency, subscriptionFrequencyType]);
 
-  // Efecto de limpieza cuando cambia la signature
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -254,39 +233,26 @@ export function MercadoPagoBricks({
       try {
         const MercadoPago = await loadMercadoPagoSDK();
         if (!MercadoPago || cancelled) return;
-
-        // Evitar montar más de una vez por instancia
         if (controllerRef.current) return;
 
         const mp = new MercadoPago(publicKey, { locale: 'es-AR' });
         const bricks = mp.bricks();
+        const safeAmount = Math.max(1, Number(amount) || 0);
 
-        // Configuración de inicialización
-          const init: any = {
-            amount: amount,
-          };
-          
-          const pref = asStringOrNull(preferenceId);
-          if (pref) init.preferenceId = pref;
+        const init: any = { amount: safeAmount };
+        const pref = asStringOrNull(preferenceId);
+        if (pref) init.preferenceId = pref;
 
-        // Configuración de medios: diferenciar entre Payment y Card Payment
         let paymentMethodsCfg: any;
-        
         if (isSubscription) {
-           // Card Payment Brick: configuración simplificada (solo cuotas)
-           // No acepta 'creditCard', 'debitCard' como keys directas en paymentMethods
-           paymentMethodsCfg = {
-             maxInstallments: 1,
-           };
+           paymentMethodsCfg = { maxInstallments: 1 };
         } else {
-           // Payment Brick: configuración completa
-           // Habilitamos todos los medios disponibles para cumplir con la promesa de UI
            paymentMethodsCfg = {
               creditCard: 'all',
               debitCard: 'all',
-              ticket: 'all', // Rapipago, Pago Fácil, etc.
-              bankTransfer: 'all', // Transferencia inmediata MP
-              mercadoPago: 'all', // Dinero en cuenta
+              ticket: 'all',
+              bankTransfer: 'all',
+              mercadoPago: 'all',
            };
         }
 
@@ -310,35 +276,27 @@ export function MercadoPagoBricks({
             },
             onSubmit: async (cardFormData: any): Promise<void> => {
               if (cancelled) return;
-              if (inFlightRef.current) return; // Evita doble submit
+              if (inFlightRef.current) return;
               inFlightRef.current = true;
 
               const { onPaymentStart, onCreateOrder, onPaymentSuccess, onPaymentError } = handlersRef.current;
-
               const parsed = parseBrickData(cardFormData);
+
               if (!parsed.ok) {
                 inFlightRef.current = false;
-                console.error('=== FRONTEND: Fallo validación Zod ===', parsed.error);
                 onPaymentError({ 
-                  message: 'Datos de tarjeta inválidos. Revisá los campos e intentá de nuevo.',
+                  message: 'Datos de tarjeta inválidos.',
                   details: parsed.error, 
                 });
                 return;
               }
 
               const { token, paymentMethodId, issuerId, installments, payer } = parsed.data;
-
-              // Email fallback logic
-              const email = 
-                asStringOrNull(payer?.email) || 
-                payerEmail?.trim() || 
-                null;
+              const email = asStringOrNull(payer?.email) || payerEmail?.trim() || null;
 
               if (!email) {
                 inFlightRef.current = false;
-                onPaymentError({ 
-                  message: 'Necesitamos un email válido para continuar con el pago.',
-                });
+                onPaymentError({ message: 'Necesitamos un email válido.' });
                 return;
               }
 
@@ -347,44 +305,41 @@ export function MercadoPagoBricks({
 
               try {
                 const currentOrderId = orderId ?? (await onCreateOrder());
+                const attemptId = crypto.randomUUID(); // Generamos idempotencia
 
-                console.log('=== FRONTEND: Procesando suscripción/pago ===', {
-                  isSubscription,
-                  orderId: currentOrderId,
-                  email,
-                  issuerId,
-                  installments
-                });
+                console.log('=== FRONTEND: Procesando ===', { currentOrderId, attemptId });
 
-                const rawResult = isSubscription
-                  ? await createSubscription(String(currentOrderId), {
-                      token,
-                      paymentMethodId,
-                      issuerId,
-                      installments,
-                      email,
-                      identificationType: asStringOrNull(payer?.identification?.type) || undefined,
-                      identificationNumber: asStringOrNull(payer?.identification?.number) || undefined,
+                const orderResult = isSubscription
+                  ? await createSubscription(currentOrderId, {
+                      card_token_id: token,
+                      payer_email: email,
+                      payer_identification: {
+                        type: asStringOrNull(payer?.identification?.type) || 'DNI',
+                        number: asStringOrNull(payer?.identification?.number) || '',
+                      },
                       frequency: subscriptionFrequency,
-                      frequencyType: subscriptionFrequencyType,
+                      frequency_type: subscriptionFrequencyType || 'months',
+                      attemptId,
                     })
-                  : await processMercadoPagoPayment(String(currentOrderId), {
+                  : await processMercadoPagoPayment(currentOrderId, {
                       token,
-                      paymentMethodId,
-                      issuerId,
+                      payment_method_id: paymentMethodId,
+                      issuer_id: issuerId,
                       installments,
-                      email,
-                      identificationType: asStringOrNull(payer?.identification?.type) || undefined,
-                      identificationNumber: asStringOrNull(payer?.identification?.number) || undefined,
+                      payer_email: email,
+                      payer_identification: {
+                        type: asStringOrNull(payer?.identification?.type) || 'DNI',
+                        number: asStringOrNull(payer?.identification?.number) || '',
+                      },
+                      attemptId,
                     });
 
                 onPaymentSuccess({
-                  orderId: extractId(rawResult, String(currentOrderId)),
+                  orderId: currentOrderId,
                   paymentMethodId,
-                  // token eliminado por seguridad
                   installments,
                   amount,
-                  status: extractStatus(rawResult),
+                  status: orderResult.estado,
                 });
               } catch (e) {
                 console.error('=== FRONTEND: Error en pago ===', e);
@@ -397,12 +352,10 @@ export function MercadoPagoBricks({
             onError: (error: any) => {
               console.error('=== FRONTEND: Error interno del Brick ===', error);
               if (!cancelled) {
-                // Si el error ocurre antes de onReady o interrumpe la carga
                 if (!isBrickReady) {
-                   setInitError('Hubo un problema al cargar el formulario. Intenta recargar.');
-                   setIsBrickReady(true); // Para quitar skeleton
+                   setInitError('Hubo un problema al cargar el formulario.');
+                   setIsBrickReady(true);
                 }
-                
                 const { onPaymentError } = handlersRef.current;
                 onPaymentError(normalizeError(error));
               }
@@ -410,7 +363,6 @@ export function MercadoPagoBricks({
           },
         };
 
-        // ⬅️ Seleccionar el tipo correcto de Brick
         const brickType = isSubscription ? 'cardPayment' : 'payment';
         const controller = await bricks.create(brickType, containerIdRef.current, settings);
         if (!cancelled) controllerRef.current = controller;
@@ -418,8 +370,8 @@ export function MercadoPagoBricks({
       } catch (err) {
         if (!cancelled) {
           console.error('Error mounting brick:', err);
-          setInitError('No se pudo iniciar la pasarela de pagos.');
-          setIsBrickReady(true); // Quitar skeleton
+          setInitError('No se pudo iniciar la pasarela.');
+          setIsBrickReady(true);
           onPaymentError(normalizeError(err));
         }
       }
@@ -431,65 +383,25 @@ export function MercadoPagoBricks({
       cancelled = true;
       const c = controllerRef.current;
       controllerRef.current = null;
-      void (async () => {
-        try { await c?.unmount?.(); } catch {}
-      })();
+      void (async () => { try { await c?.unmount?.(); } catch {} })();
     };
   }, [publicKey, signature]);
 
-  if (!publicKey) {
-    return (
-      <Card>
-        <CardBody className="p-6">
-          <div className="flex items-center gap-3 text-red-600">
-            <AlertCircle className="h-5 w-5" />
-            <div>
-              <p className="font-semibold">Error de configuración</p>
-              <p className="text-sm">Falta la clave pública de MercadoPago</p>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    );
-  }
+  if (!publicKey) return <div className="text-red-500 p-4">Error: Falta configuración pública.</div>;
 
   return (
     <div className="relative">
       {!isBrickReady && !initError && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 space-y-4 animate-pulse pointer-events-none">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 space-y-4 animate-pulse">
           <div className="w-full h-12 bg-zinc-800 rounded-md" />
           <div className="w-full h-12 bg-zinc-800 rounded-md" />
-          <div className="w-full h-12 bg-zinc-800 rounded-md" />
-          <p className="text-sm text-zinc-500">Cargando pasarela de pago segura...</p>
         </div>
       )}
-      
-      {initError && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-zinc-900 rounded-md border border-red-900/50 text-center">
-           <AlertCircle className="h-10 w-10 text-red-500 mb-3" />
-           <p className="text-red-400 font-medium mb-2">No se pudo cargar el pago</p>
-           <p className="text-sm text-zinc-400 mb-4">{initError}</p>
-           <button 
-             onClick={() => window.location.reload()} 
-             className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-sm transition-colors"
-           >
-             Recargar página
-           </button>
-        </div>
-      )}
-
-      {/* 
-        El contenedor del brick se renderiza siempre porque Bricks necesita encontrar el ID en el DOM
-        antes de montarse. Lo ocultamos visualmente si no está listo, o mostramos el skeleton encima.
-        Pero NO debemos usar un ternario que desmonte el div id={...}
-      */}
+      {initError && <div className="text-red-400 p-4 bg-red-900/20 rounded">{initError}</div>}
       <div id={containerIdRef.current} className={isBrickReady ? '' : 'opacity-0'} />
       {isProcessing && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-lg">
-          <div className="rounded-lg bg-zinc-900 px-4 py-3 text-sm text-zinc-100 flex items-center gap-3 shadow-xl border border-zinc-800">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-            <span>Procesando... No cierres esta ventana.</span>
-          </div>
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 rounded-lg backdrop-blur-sm">
+          <div className="text-white font-medium animate-pulse">Procesando pago...</div>
         </div>
       )}
     </div>

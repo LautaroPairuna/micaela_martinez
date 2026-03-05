@@ -30,9 +30,21 @@ const LONG_TEXT_FIELDS = [
   'resumen',
   'requisitos',
   'comentario',
+  'payload',     // Webhooks
+  'metadatos',   // Json general
+  'mensaje',     // Notificaciones
+  'statusDetail', // Pagos
 ];
 
-const READONLY_FORM_FIELDS = ['ratingProm', 'ratingConteo'];
+const READONLY_FORM_FIELDS = [
+  'ratingProm', 
+  'ratingConteo',
+  'mpId',           // ID externo de pago
+  'idempotencyKey', // Clave técnica
+  'signature',      // Firma webhook
+  'passwordHash',   // Seguridad
+  'suscripcionId',  // ID externo
+];
 
 const IMAGE_FIELD_HINTS = [
   'imagen',

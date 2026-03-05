@@ -1,7 +1,7 @@
 // src/lib/sdk/ordersApi.ts
 import { api } from './api';
 
-// Tipos locales que coinciden con los del backend
+// Tipos locales alineados con el backend
 export enum TipoItemOrden {
   CURSO = 'CURSO',
   PRODUCTO = 'PRODUCTO'
@@ -16,14 +16,16 @@ export enum EstadoOrden {
 }
 
 export interface OrderItem {
+  id: number;
   tipo: TipoItemOrden;
-  refId: string;
+  refId: number;
   titulo: string;
   cantidad: number;
   precioUnitario: number;
 }
 
 export interface OrderAddress {
+  id?: number;
   nombre: string;
   telefono?: string;
   etiqueta?: string;
@@ -36,46 +38,53 @@ export interface OrderAddress {
   pais?: string;
 }
 
+// DTO para crear orden (alineado con backend CreateOrderDto)
 export interface CreateOrderRequest {
-  items: OrderItem[];
-  direccionEnvio: OrderAddress;
-  direccionFacturacion?: OrderAddress;
-  metodoPago?: string;
-  metodoEnvio?: string;
-  costoEnvio?: number;
+  source?: 'cart';
+  mode?: 'COURSES_ONLY' | 'PRODUCTS_ONLY';
+  direccionEnvioId?: number;
+  direccionFacturacionId?: number;
+  metadatos?: unknown;
 }
 
 export interface Order {
-  id: string;
-  usuarioId: string;
+  id: number;
+  usuarioId: number;
   estado: EstadoOrden;
-  total: number;
+  total: string; // Decimal viene como string
+  moneda: string;
   referenciaPago?: string;
-  direccionEnvioId: string;
-  direccionFacturacionId: string;
   creadoEn: string;
   actualizadoEn: string;
   items: OrderItem[];
-  direccionEnvio: OrderAddress;
-  direccionFacturacion: OrderAddress;
+  direccionEnvio?: OrderAddress;
+  direccionFacturacion?: OrderAddress;
 }
 
+// DTO para pagos (alineado con backend PayOrderDto)
 export interface MercadoPagoPaymentData {
   token: string;
-  paymentMethodId: string;
-  issuerId?: string;
-  installments?: number;
-  email?: string;
-  identificationType?: string;
-  identificationNumber?: string;
+  payment_method_id: string;
+  issuer_id: number;
+  installments: number;
+  payer_email: string;
+  payer_identification?: { type: string; number: string };
+  device_session_id?: string;
+  attemptId: string;
 }
 
-export interface MercadoPagoSubscriptionData extends MercadoPagoPaymentData {
+// DTO para suscripciones (alineado con backend SubscribeOrderDto)
+export interface MercadoPagoSubscriptionData {
+  card_token_id: string;
+  payer_email: string;
+  payer_identification?: { type: string; number: string };
+  device_session_id?: string;
   frequency: number;
-  frequencyType: 'days' | 'months';
+  frequency_type: 'days' | 'months';
+  attemptId: string;
 }
 
-// Crear una nueva orden
+// Crear una nueva orden (desde carrito)
 export async function createOrder(orderData: CreateOrderRequest): Promise<Order> {
   const response = await api.post<Order>('/orders', orderData);
   return response.data;
@@ -83,19 +92,19 @@ export async function createOrder(orderData: CreateOrderRequest): Promise<Order>
 
 // Obtener órdenes del usuario
 export async function getUserOrders(): Promise<Order[]> {
-  const response = await api.get<Order[]>('/orders');
+  const response = await api.get<Order[]>('/orders/me');
   return response.data;
 }
 
 // Obtener una orden específica
-export async function getOrderById(orderId: string): Promise<Order> {
+export async function getOrderById(orderId: number | string): Promise<Order> {
   const response = await api.get<Order>(`/orders/${orderId}`);
   return response.data;
 }
 
-// Actualizar estado de una orden
+// Actualizar estado de una orden (Admin/Interno)
 export async function updateOrderStatus(
-  orderId: string,
+  orderId: number | string,
   estado: EstadoOrden,
   referenciaPago?: string
 ): Promise<Order> {
@@ -106,21 +115,21 @@ export async function updateOrderStatus(
   return response.data;
 }
 
-// Procesar pago con MercadoPago
+// Procesar pago ONE_OFF con MercadoPago
 export async function processMercadoPagoPayment(
-  orderId: string,
+  orderId: number | string,
   paymentData: MercadoPagoPaymentData
 ): Promise<Order> {
-  const response = await api.post<Order>(`/orders/${orderId}/payment/mercadopago`, paymentData);
+  const response = await api.post<Order>(`/orders/${orderId}/pay`, paymentData);
   return response.data;
 }
 
-// Crear suscripción con MercadoPago
+// Procesar suscripción con MercadoPago
 export async function createSubscription(
-  orderId: string,
+  orderId: number | string,
   subscriptionData: MercadoPagoSubscriptionData
 ): Promise<Order> {
-  const response = await api.post<Order>(`/orders/${orderId}/subscription/mercadopago`, subscriptionData);
+  const response = await api.post<Order>(`/orders/${orderId}/subscribe`, subscriptionData);
   return response.data;
 }
 
@@ -177,35 +186,22 @@ export async function getPaymentMethods(): Promise<PaymentMethod[]> {
 export async function createMercadoPagoPreference(
   preferenceData: MercadoPagoPreferenceRequest
 ): Promise<MercadoPagoPreference> {
-  console.log('=== SDK: Iniciando llamada a createMercadoPagoPreference ===');
-  console.log('SDK preferenceData:', JSON.stringify(preferenceData, null, 2));
-
+  // console.log('=== SDK: Iniciando llamada a createMercadoPagoPreference ===');
   try {
-    console.log('=== SDK: Realizando POST a /payment/mercadopago/preference ===');
     const response = await api.post<MercadoPagoPreference, MercadoPagoPreferenceRequest>(
       '/payment/mercadopago/preference',
       preferenceData
     );
-
-    console.log('=== SDK: Respuesta recibida del backend ===');
     return response.data;
   } catch (error) {
-    console.error('=== SDK: Error en createMercadoPagoPreference ===');
-    console.error('SDK error:', error);
+    console.error('=== SDK: Error en createMercadoPagoPreference ===', error);
     throw error;
   }
 }
 
-// Webhook de MercadoPago (para uso interno)
-export async function handleMercadoPagoWebhook(
-  notificationData: Record<string, unknown>
-): Promise<void> {
-  await api.post<void, Record<string, unknown>>('/payment/mercadopago/webhook', notificationData);
-}
-
 // Reembolsar pago
 export async function refundPayment(
-  orderId: string,
+  orderId: number | string,
   amount?: number
 ): Promise<RefundResponse> {
   const response = await api.post<RefundResponse, { amount?: number }>(
@@ -216,25 +212,24 @@ export async function refundPayment(
 }
 
 // Cancelar orden
-export async function cancelOrder(orderId: string): Promise<Order> {
+export async function cancelOrder(orderId: number | string): Promise<Order> {
   return await updateOrderStatus(orderId, EstadoOrden.CANCELADO);
 }
 
 // Marcar orden como cumplida
-export async function fulfillOrder(orderId: string): Promise<Order> {
+export async function fulfillOrder(orderId: number | string): Promise<Order> {
   return await updateOrderStatus(orderId, EstadoOrden.CUMPLIDO);
 }
 
-// ==== Cancelar suscripción (sin `any`) ====
+// ==== Cancelar suscripción ====
 export interface CancelSubscriptionResponse {
   success: boolean;
   orderId: string;
-  status?: 'canceled' | 'cancelled' | 'error' | string;
+  status?: string;
   message?: string;
-  canceledAt?: string;
 }
 
-export async function cancelSubscription(orderId: string): Promise<CancelSubscriptionResponse> {
+export async function cancelSubscription(orderId: number | string): Promise<CancelSubscriptionResponse> {
   const response = await api.post<CancelSubscriptionResponse>(
     `/orders/${orderId}/subscription/cancel`
   );
@@ -261,8 +256,7 @@ export async function exportOrders(
   const queryString = params.toString();
   const path = `/orders/export${queryString ? `?${queryString}` : ''}`;
 
-  // Para blobs, usamos fetch directamente
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${path}`, {
     method: 'GET',
     headers: {
       Accept: 'application/octet-stream',

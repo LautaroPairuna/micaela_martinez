@@ -18,7 +18,7 @@ import {
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { AccountService } from './account.service';
-import { OrdersService } from '../orders/orders.service';
+import { OrdersService } from '../ordersLegacy/orders.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtUser } from '../auth/types/jwt-user';
 

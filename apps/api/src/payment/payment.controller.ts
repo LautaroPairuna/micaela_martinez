@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { MpPaymentService } from '../orders/services/mp-payment.service';
+import { MpPaymentService } from '../ordersLegacy/services/mp-payment.service';
 import type { JwtUser } from '../auth/types/jwt-user';
 
 interface CreatePreferenceDto {

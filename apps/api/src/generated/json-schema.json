@@ -120,10 +120,10 @@
             }
           ]
         },
-        "pagosSuscripciones": {
+        "pagos": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PagoSuscripcion"
+            "$ref": "#/definitions/Pago"
           }
         },
         "certificados": {
@@ -354,6 +354,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Certificado"
+          }
+        },
+        "itemsOrden": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemOrden"
           }
         }
       },
@@ -711,6 +717,12 @@
           "items": {
             "$ref": "#/definitions/ItemCarrito"
           }
+        },
+        "itemsOrden": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ItemOrden"
+          }
         }
       },
       "required": [
@@ -867,6 +879,14 @@
           "type": "string",
           "format": "date-time"
         },
+        "tipo": {
+          "type": "string",
+          "default": "ONE_OFF",
+          "enum": [
+            "ONE_OFF",
+            "SUBSCRIPTION"
+          ]
+        },
         "esSuscripcion": {
           "type": "boolean",
           "default": false
@@ -936,7 +956,7 @@
         "pagos": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PagoSuscripcion"
+            "$ref": "#/definitions/Pago"
           }
         },
         "direccionEnvio": {
@@ -995,8 +1015,40 @@
         "precioUnitario": {
           "type": "number"
         },
+        "cursoId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "productoId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "orden": {
           "$ref": "#/definitions/Orden"
+        },
+        "curso": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Curso"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "producto": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Producto"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1007,11 +1059,45 @@
         "precioUnitario"
       ]
     },
-    "PagoSuscripcion": {
+    "Pago": {
       "type": "object",
       "properties": {
         "id": {
           "type": "integer"
+        },
+        "provider": {
+          "type": "string",
+          "default": "MERCADOPAGO",
+          "enum": [
+            "MERCADOPAGO"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ONE_OFF",
+            "SUBSCRIPTION_PREAPPROVAL",
+            "SUBSCRIPTION_PAYMENT",
+            "REFUND"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "default": "PENDING",
+          "enum": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "CANCELLED",
+            "REFUNDED",
+            "UNKNOWN"
+          ]
+        },
+        "statusDetail": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "ordenId": {
           "type": "integer"
@@ -1019,14 +1105,27 @@
         "usuarioId": {
           "type": "integer"
         },
-        "referenciaPago": {
+        "mpId": {
           "type": "string"
+        },
+        "attemptId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "idempotencyKey": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "monto": {
           "type": "number"
         },
-        "estado": {
-          "type": "string"
+        "moneda": {
+          "type": "string",
+          "default": "ARS"
         },
         "metadatos": {
           "type": [
@@ -1054,12 +1153,80 @@
         }
       },
       "required": [
+        "kind",
         "ordenId",
         "usuarioId",
-        "referenciaPago",
+        "mpId",
         "monto",
-        "estado",
         "actualizadoEn"
+      ]
+    },
+    "WebhookEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "provider": {
+          "type": "string",
+          "default": "MERCADOPAGO",
+          "enum": [
+            "MERCADOPAGO"
+          ]
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "dataId": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signature": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ts": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "default": "RECEIVED"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "processedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "payload": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "eventType",
+        "dataId"
       ]
     },
     "Direccion": {
@@ -1831,8 +1998,11 @@
     "itemOrden": {
       "$ref": "#/definitions/ItemOrden"
     },
-    "pagoSuscripcion": {
-      "$ref": "#/definitions/PagoSuscripcion"
+    "pago": {
+      "$ref": "#/definitions/Pago"
+    },
+    "webhookEvent": {
+      "$ref": "#/definitions/WebhookEvent"
     },
     "direccion": {
       "$ref": "#/definitions/Direccion"

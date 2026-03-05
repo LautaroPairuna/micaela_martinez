@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Cron } from '@nestjs/schedule';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TipoNotificacion, EstadoOrden } from '@prisma/client';
-import { parseJson } from '../orders/interfaces/orden-metadata.interface';
+import { parseJson } from '../ordersLegacy/interfaces/orden-metadata.interface';
 
 @Injectable()
 export class SubscriptionService {

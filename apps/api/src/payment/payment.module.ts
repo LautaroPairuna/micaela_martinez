@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentController } from './payment.controller';
-import { OrdersModule } from '../orders/orders.module';
+import { OrdersModule } from '../ordersLegacy/orders.module';
 
 @Module({
   imports: [ConfigModule, OrdersModule],
