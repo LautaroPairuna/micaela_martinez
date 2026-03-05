@@ -28,58 +28,63 @@ async function getSSRRequestHeaders(): Promise<HeadersInit | undefined> {
 }
 
 export async function apiProxy<T>(path: string, init?: NextInit) {
-  // 0) Rewrite SDK → backend
   const rewritten = rewritePath(path.startsWith('/') ? path : `/${path}`);
-
-  // 1) Construir URL absoluta o relativa según entorno
   const url = await resolveApiUrl(rewritten);
 
-  // 2) En SSR, adjuntar cookies entrantes (para sesiones httpOnly)
   const ssrHeaders = await getSSRRequestHeaders();
 
-  // 3) Construir headers finales
-  // Aseguramos Content-Type si hay body y no es FormData
-  const isJson = init?.body && typeof init.body === 'string' && (init.body.startsWith('{') || init.body.startsWith('['));
+  // ✅ Normalizar body + headers
+  const body = (init as any)?.body;
+
+  const isFormData =
+    typeof FormData !== 'undefined' && body instanceof FormData;
+
+  const isStringBody = typeof body === 'string';
+
+  const isPlainObjectBody =
+    body != null &&
+    typeof body === 'object' &&
+    !isFormData &&
+    !(body instanceof ArrayBuffer) &&
+    !(body instanceof Blob) &&
+    !(body instanceof URLSearchParams);
+
+  // Si es objeto plano, lo convertimos a JSON string
+  const normalizedBody =
+    isPlainObjectBody ? JSON.stringify(body) : body;
+
   const finalHeaders: HeadersInit = {
-    ...(isJson ? { 'Content-Type': 'application/json' } : {}),
     ...(ssrHeaders || {}),
     ...(init?.headers || {}),
+    ...(isPlainObjectBody || (isStringBody && (body.startsWith('{') || body.startsWith('[')))
+      ? { 'Content-Type': 'application/json', Accept: 'application/json' }
+      : {}),
   };
 
   const res = await fetch(url, {
     ...init,
+    body: normalizedBody as any,
     headers: finalHeaders,
-    credentials: 'include', // 👈 Enviar cookies automáticamente en cliente
+    credentials: 'include',
     cache: init?.cache,
     next: init?.next,
   });
 
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`HTTP ${res.status} ${res.statusText} — ${url}\n${body}`);
+    const bodyText = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} ${res.statusText} — ${url}\n${bodyText}`);
   }
-  
-  // Manejar respuesta vacía (204 No Content)
-  if (res.status === 204) {
-    return undefined as T;
-  }
-  
-  // Verificar si la respuesta contiene JSON válido
+
+  if (res.status === 204) return undefined as T;
+
   const contentType = res.headers.get('content-type');
   if (!contentType || !contentType.includes('application/json')) {
     const text = await res.text();
-    if (!text.trim()) {
-      return undefined as T;
-    }
-    throw new Error(`Expected JSON response but got ${contentType || 'unknown content type'} — ${url}\n${text}`);
+    if (!text.trim()) return undefined as T;
+    throw new Error(`Expected JSON response but got ${contentType || 'unknown'} — ${url}\n${text}`);
   }
-  
-  try {
-    return await res.json() as T;
-  } catch (jsonError) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Invalid JSON response — ${url}\n${text}\nJSON Error: ${jsonError}`);
-  }
+
+  return (await res.json()) as T;
 }
 
 async function resolveApiUrl(input: string): Promise<string> {
