@@ -253,7 +253,10 @@ export class NotificationsService {
     });
 
     if (recentSimilar) {
-      const updated = await this.updateGroupedNotification(Number(recentSimilar.id), data);
+      const updated = await this.updateGroupedNotification(
+        Number(recentSimilar.id),
+        data,
+      );
       if (updated) {
         this.websocketGateway.emitToUser(
           data.usuarioId,

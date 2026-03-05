@@ -18,7 +18,7 @@ import {
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { AccountService } from './account.service';
-import { OrdersService } from '../ordersLegacy/orders.service';
+import { OrdersService } from '../orders/orders.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtUser } from '../auth/types/jwt-user';
 
@@ -160,7 +160,7 @@ export class AccountController {
   listOrders(@CurrentUser() user: JwtUser) {
     // 🔧 CORRECCIÓN: Usar OrdersService para obtener órdenes con items completos
     // En lugar de this.svc.listOrders que solo devuelve resumen sin items
-    return this.ordersService.getUserOrders(user.sub);
+    return this.ordersService.getMyOrders(user.sub);
   }
 
   /** Mis cursos (inscripciones) */

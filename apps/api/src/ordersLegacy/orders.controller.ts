@@ -60,7 +60,10 @@ export class OrdersController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async getOrderById(@CurrentUser() user: JwtUser, @Param('id', ParseIntPipe) id: number) {
+  async getOrderById(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     try {
       return await this.ordersService.getOrderById(id, user.sub);
     } catch (error) {
@@ -153,10 +156,15 @@ export class OrdersController {
     @Param('courseId', ParseIntPipe) courseId: number,
   ) {
     try {
-      return await this.ordersService.cancelSubscriptionItem(orderId, courseId, user.sub);
+      return await this.ordersService.cancelSubscriptionItem(
+        orderId,
+        courseId,
+        user.sub,
+      );
     } catch (error) {
       throw new HttpException(
-        (error as Error).message || 'Error al cancelar el ítem de la suscripción',
+        (error as Error).message ||
+          'Error al cancelar el ítem de la suscripción',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -200,7 +208,13 @@ export class OrdersController {
     @Query('data.id') dataIdFromQuery: string,
     @Query('id') idFallback: string,
   ) {
-    const safeType = String(eventType || webhookData?.type || webhookData?.action || webhookData?.topic || '').trim();
+    const safeType = String(
+      eventType ||
+        webhookData?.type ||
+        webhookData?.action ||
+        webhookData?.topic ||
+        '',
+    ).trim();
 
     const rawId =
       dataIdFromQuery ||

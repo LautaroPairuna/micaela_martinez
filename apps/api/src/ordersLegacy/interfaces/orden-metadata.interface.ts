@@ -107,7 +107,9 @@ export class OrdenMetadataDto {
  * ✅ Parser genérico para Json de Prisma o string JSON
  * - Útil para order.metadatos y enrollment.progreso
  */
-export function parseJson<T extends object = Record<string, any>>(value: any): T {
+export function parseJson<T extends object = Record<string, any>>(
+  value: any,
+): T {
   if (!value) return {} as T;
   try {
     if (typeof value === 'string') return JSON.parse(value) as T;

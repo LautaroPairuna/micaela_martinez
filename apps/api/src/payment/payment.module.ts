@@ -2,10 +2,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentController } from './payment.controller';
-import { OrdersModule } from '../ordersLegacy/orders.module';
+import { MercadoPagoModule } from '../mercadopago/mercadopago.module';
 
 @Module({
-  imports: [ConfigModule, OrdersModule],
+  imports: [ConfigModule, MercadoPagoModule],
   controllers: [PaymentController],
   providers: [],
   exports: [],

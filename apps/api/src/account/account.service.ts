@@ -328,10 +328,14 @@ export class AccountService {
             cursoId: enrollments[0].cursoId,
             estado: enrollments[0].estado,
             progresoKeys:
-              enrollments[0].progreso && typeof enrollments[0].progreso === 'object'
-                ? Object.keys(enrollments[0].progreso as Record<string, unknown>)
+              enrollments[0].progreso &&
+              typeof enrollments[0].progreso === 'object'
+                ? Object.keys(
+                    enrollments[0].progreso as Record<string, unknown>,
+                  )
                 : null,
-            hasSubscriptionInProgreso: !!(enrollments[0].progreso as any)?.subscription,
+            hasSubscriptionInProgreso: !!(enrollments[0].progreso as any)
+              ?.subscription,
             modulosCount: enrollments[0].curso?.modulos?.length ?? 0,
             leccionesFirstModuloCount:
               enrollments[0].curso?.modulos?.[0]?.lecciones?.length ?? 0,

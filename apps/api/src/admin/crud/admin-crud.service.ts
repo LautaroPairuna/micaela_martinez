@@ -702,7 +702,9 @@ export class AdminCrudService {
         },
       });
       if (existing) {
-        throw new BadRequestException(`El slug '${data.slug}' ya está en uso por otro registro.`);
+        throw new BadRequestException(
+          `El slug '${data.slug}' ya está en uso por otro registro.`,
+        );
       }
     }
 

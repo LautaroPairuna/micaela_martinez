@@ -35,7 +35,8 @@ type FrequencyType = 'months' | 'days';
 
 function normalizeFrequencyType(v?: string | null): FrequencyType {
   const s = (v ?? '').toLowerCase();
-  if (s.includes('day') || s === 'dia' || s === 'días' || s === 'dias') return 'days';
+  if (s.includes('day') || s === 'dia' || s === 'días' || s === 'dias')
+    return 'days';
   return 'months';
 }
 
@@ -46,7 +47,11 @@ function normalizeAttemptId(attemptId?: string) {
   return a !== '' ? a : randomUUID();
 }
 
-function buildMpIdemKey(prefix: 'pay' | 'sub', orderId: number, attemptId: string) {
+function buildMpIdemKey(
+  prefix: 'pay' | 'sub',
+  orderId: number,
+  attemptId: string,
+) {
   return `${prefix}-${orderId}-${attemptId}`;
 }
 
@@ -61,7 +66,7 @@ function mergeSubscriptionMeta(current: any, patch: any) {
   return {
     ...(current || {}),
     subscription: {
-      ...((current?.subscription) || {}),
+      ...(current?.subscription || {}),
       ...(patch || {}),
     },
   };
@@ -91,12 +96,18 @@ import { CartService } from '../cart/cart.service';
 
 function normalizeStatus(status: string): any {
   switch (status) {
-    case 'approved': return 'APPROVED';
-    case 'rejected': return 'REJECTED';
-    case 'cancelled': return 'CANCELLED';
-    case 'refunded': return 'REFUNDED';
-    case 'pending': return 'PENDING';
-    default: return 'UNKNOWN';
+    case 'approved':
+      return 'APPROVED';
+    case 'rejected':
+      return 'REJECTED';
+    case 'cancelled':
+      return 'CANCELLED';
+    case 'refunded':
+      return 'REFUNDED';
+    case 'pending':
+      return 'PENDING';
+    default:
+      return 'UNKNOWN';
   }
 }
 
@@ -123,11 +134,11 @@ export class OrdersService {
 
     // Validar items y calcular total
     let total = new Prisma.Decimal(0);
-    
+
     // ✅ Validar mezcla prohibida de cursos y productos
-    const hasCourses = items.some(i => i.tipo === TipoItemOrden.CURSO);
-    const hasProducts = items.some(i => i.tipo === TipoItemOrden.PRODUCTO);
-    
+    const hasCourses = items.some((i) => i.tipo === TipoItemOrden.CURSO);
+    const hasProducts = items.some((i) => i.tipo === TipoItemOrden.PRODUCTO);
+
     if (hasCourses && hasProducts) {
       throw new HttpException(
         'No es posible procesar una orden mixta (Cursos + Productos). Por favor, comprálos por separado.',
@@ -581,7 +592,7 @@ export class OrdersService {
     const mpIdemKey = buildMpIdemKey('pay', order.id, attempt);
 
     try {
-      const metadatos = parseMetadatos(order.metadatos) as any;
+      const metadatos = parseMetadatos(order.metadatos);
       const lock = metadatos?.paymentLocks?.[lockKey];
 
       // ✅ si ya se cobró, devolvemos orden
@@ -592,7 +603,9 @@ export class OrdersService {
       // ✅ anti doble click 10s (lock estable)
       if (lock?.status === 'started') {
         const startedAt =
-          typeof lock?.createdAt === 'string' ? Date.parse(lock.createdAt) : NaN;
+          typeof lock?.createdAt === 'string'
+            ? Date.parse(lock.createdAt)
+            : NaN;
         if (Number.isFinite(startedAt) && Date.now() - startedAt < 10000) {
           throw new HttpException(
             'Pago en progreso, reintentá en unos segundos',
@@ -708,9 +721,11 @@ export class OrdersService {
           description: `Pago Orden #${order.id}`,
           external_reference: String(order.id),
           statement_descriptor: statementDescriptor,
-          additional_info: { 
+          additional_info: {
             items: mpItems,
-            ...(isPublicIp(options?.ip) ? { ip_address: options!.ip!.trim() } : {}), // ✅ Solo IP pública
+            ...(isPublicIp(options?.ip)
+              ? { ip_address: options!.ip!.trim() }
+              : {}), // ✅ Solo IP pública
           },
           payer: {
             email: payerEmail,
@@ -734,7 +749,7 @@ export class OrdersService {
               select: { metadatos: true },
             })
           )?.metadatos,
-        ) as any;
+        );
 
         await this.prisma.orden.update({
           where: { id: order.id },
@@ -780,7 +795,7 @@ export class OrdersService {
             select: { metadatos: true },
           })
         )?.metadatos,
-      ) as any;
+      );
 
       await this.prisma.orden.update({
         where: { id: order.id },
@@ -816,7 +831,10 @@ export class OrdersService {
       if (error instanceof HttpException) throw error;
 
       const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(`Error al procesar el pago: ${msg}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error al procesar el pago: ${msg}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -836,7 +854,9 @@ export class OrdersService {
       );
     }
 
-    const hasCourses = order.items?.some((i: ItemOrden) => i.tipo === TipoItemOrden.CURSO);
+    const hasCourses = order.items?.some(
+      (i: ItemOrden) => i.tipo === TipoItemOrden.CURSO,
+    );
     if (!hasCourses) {
       throw new HttpException(
         'No hay cursos en la orden para crear una suscripción',
@@ -845,7 +865,9 @@ export class OrdersService {
     }
 
     // ✅ blindaje: NO permitir productos en una suscripción
-    const hasProducts = order.items?.some((i: ItemOrden) => i.tipo === TipoItemOrden.PRODUCTO);
+    const hasProducts = order.items?.some(
+      (i: ItemOrden) => i.tipo === TipoItemOrden.PRODUCTO,
+    );
     if (hasProducts) {
       throw new HttpException(
         'La suscripción solo puede contener cursos. Eliminá productos del carrito.',
@@ -854,17 +876,23 @@ export class OrdersService {
     }
 
     if (!subscriptionData.token || typeof subscriptionData.token !== 'string') {
-      throw new HttpException('Token de tarjeta faltante', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Token de tarjeta faltante',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     if (subscriptionData.token.length < 20) {
-      throw new HttpException('Token de tarjeta inválido o demasiado corto', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Token de tarjeta inválido o demasiado corto',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const attempt = normalizeAttemptId(options?.attemptId);
     const mpIdemKey = buildMpIdemKey('sub', order.id, attempt);
 
     try {
-      const metadatos = parseMetadatos(order.metadatos) as any;
+      const metadatos = parseMetadatos(order.metadatos);
       const prevAttempt = metadatos?.subscriptionAttempts?.[mpIdemKey];
 
       if (prevAttempt?.status === 'succeeded') {
@@ -917,28 +945,29 @@ export class OrdersService {
         );
       }
 
-      const subscriptionResult = await this.mpSubscriptionService.createSubscription(
-        {
-          token: subscriptionData.token,
-          payment_method_id: subscriptionData.paymentMethodId,
-          transaction_amount: Number(order.total),
-          description: `Suscripción mensual - Orden #${order.id}`,
-          external_reference: String(order.id),
-          frequency: subscriptionData.frequency,
-          frequency_type: subscriptionData.frequencyType,
-          payer: {
-            email: payerEmail,
-            ...(subscriptionData.identificationType &&
-              subscriptionData.identificationNumber && {
-                identification: {
-                  type: subscriptionData.identificationType,
-                  number: subscriptionData.identificationNumber,
-                },
-              }),
+      const subscriptionResult =
+        await this.mpSubscriptionService.createSubscription(
+          {
+            token: subscriptionData.token,
+            payment_method_id: subscriptionData.paymentMethodId,
+            transaction_amount: Number(order.total),
+            description: `Suscripción mensual - Orden #${order.id}`,
+            external_reference: String(order.id),
+            frequency: subscriptionData.frequency,
+            frequency_type: subscriptionData.frequencyType,
+            payer: {
+              email: payerEmail,
+              ...(subscriptionData.identificationType &&
+                subscriptionData.identificationNumber && {
+                  identification: {
+                    type: subscriptionData.identificationType,
+                    number: subscriptionData.identificationNumber,
+                  },
+                }),
+            },
           },
-        },
-        { idempotencyKey: mpIdemKey }, // ✅ FORZADO
-      );
+          { idempotencyKey: mpIdemKey }, // ✅ FORZADO
+        );
 
       const subId = String(subscriptionResult.id);
 
@@ -978,7 +1007,10 @@ export class OrdersService {
         },
       });
 
-      await this.createCourseEnrollmentsAsPending(updatedOrder.id, updatedOrder.usuarioId);
+      await this.createCourseEnrollmentsAsPending(
+        updatedOrder.id,
+        updatedOrder.usuarioId,
+      );
 
       try {
         await this.notificationsService.createNotification({
@@ -999,7 +1031,10 @@ export class OrdersService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(`Error al procesar la suscripción: ${msg}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error al procesar la suscripción: ${msg}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -1054,21 +1089,23 @@ export class OrdersService {
       where: {
         OR: [
           { subscriptionOrderId: order.id },
-          { subscriptionId: subscriptionId }
-        ]
-      }
+          { subscriptionId: subscriptionId },
+        ],
+      },
     });
 
     for (const enrollment of enrollments) {
-      const currentProgreso = parseJson<Record<string, any>>(enrollment.progreso);
+      const currentProgreso = parseJson<Record<string, any>>(
+        enrollment.progreso,
+      );
       const nextProgreso = {
         ...currentProgreso,
         subscription: {
           ...(currentProgreso?.subscription || {}),
           isActive: false,
           status: 'cancelled',
-          cancelledAt: new Date().toISOString()
-        }
+          cancelledAt: new Date().toISOString(),
+        },
       };
 
       await this.prisma.inscripcion.update({
@@ -1076,8 +1113,8 @@ export class OrdersService {
         data: {
           subscriptionActive: false,
           subscriptionEndDate: new Date(), // ✅ Setear fin de vigencia
-          progreso: json(nextProgreso)
-        }
+          progreso: json(nextProgreso),
+        },
       });
     }
 
@@ -1093,14 +1130,18 @@ export class OrdersService {
    * Si es el último ítem, cancela toda la suscripción.
    * Si quedan otros, actualiza el monto en MP y marca este ítem como inactivo.
    */
-  async cancelSubscriptionItem(orderId: number, courseId: number, userId: number) {
+  async cancelSubscriptionItem(
+    orderId: number,
+    courseId: number,
+    userId: number,
+  ) {
     const order = await this.prisma.orden.findFirst({
       where: {
         id: Number(orderId),
         usuarioId: Number(userId),
         esSuscripcion: true,
       },
-      include: { items: true }
+      include: { items: true },
     });
 
     if (!order) {
@@ -1108,21 +1149,30 @@ export class OrdersService {
     }
 
     if (!order.suscripcionId || !order.suscripcionActiva) {
-      throw new HttpException('La suscripción no está activa o no existe', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'La suscripción no está activa o no existe',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Verificar que el curso pertenezca a la orden
-    const itemToCancel = order.items.find(i => i.tipo === TipoItemOrden.CURSO && Number(i.refId) === Number(courseId));
+    const itemToCancel = order.items.find(
+      (i) =>
+        i.tipo === TipoItemOrden.CURSO && Number(i.refId) === Number(courseId),
+    );
     if (!itemToCancel) {
-      throw new HttpException('El curso no pertenece a esta orden de suscripción', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'El curso no pertenece a esta orden de suscripción',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Verificar cuántos cursos activos quedan en esta orden (basado en inscripciones activas)
     const activeEnrollments = await this.prisma.inscripcion.findMany({
       where: {
         subscriptionOrderId: order.id,
-        subscriptionActive: true
-      }
+        subscriptionActive: true,
+      },
     });
 
     // Si solo queda 1 (o ninguno), cancelamos todo
@@ -1143,15 +1193,21 @@ export class OrdersService {
 
     // 2. Actualizar en MercadoPago
     try {
-      await this.mpSubscriptionService.updateSubscriptionAmount(order.suscripcionId, newAmount);
+      await this.mpSubscriptionService.updateSubscriptionAmount(
+        order.suscripcionId,
+        newAmount,
+      );
     } catch (error) {
       console.error('Error updating MP subscription amount:', error);
-      throw new HttpException('Error al actualizar el monto de la suscripción en MercadoPago', HttpStatus.BAD_GATEWAY);
+      throw new HttpException(
+        'Error al actualizar el monto de la suscripción en MercadoPago',
+        HttpStatus.BAD_GATEWAY,
+      );
     }
 
     // 3. Actualizar Orden (GUARDAR nuevo monto en metadatos, NO mutar total histórico)
-    const metadatos = parseMetadatos(order.metadatos) as any;
-    
+    const metadatos = parseMetadatos(order.metadatos);
+
     await this.prisma.orden.update({
       where: { id: order.id },
       data: {
@@ -1167,17 +1223,21 @@ export class OrdersService {
     });
 
     // 4. Cancelar la inscripción específica
-    const enrollment = activeEnrollments.find(e => Number(e.cursoId) === Number(courseId));
+    const enrollment = activeEnrollments.find(
+      (e) => Number(e.cursoId) === Number(courseId),
+    );
     if (enrollment) {
-      const currentProgreso = parseJson<Record<string, any>>(enrollment.progreso);
+      const currentProgreso = parseJson<Record<string, any>>(
+        enrollment.progreso,
+      );
       const nextProgreso = {
         ...currentProgreso,
         subscription: {
           ...(currentProgreso?.subscription || {}),
           isActive: false,
           status: 'cancelled_partial',
-          cancelledAt: new Date().toISOString()
-        }
+          cancelledAt: new Date().toISOString(),
+        },
       };
 
       await this.prisma.inscripcion.update({
@@ -1185,8 +1245,8 @@ export class OrdersService {
         data: {
           subscriptionActive: false,
           subscriptionEndDate: new Date(), // ✅ Setear fin de vigencia
-          progreso: json(nextProgreso)
-        }
+          progreso: json(nextProgreso),
+        },
       });
     }
 
@@ -1194,27 +1254,40 @@ export class OrdersService {
       message: 'Curso cancelado de la suscripción exitosamente',
       orderId: order.id,
       courseId: courseId,
-      newTotal: newAmount
+      newTotal: newAmount,
     };
   }
 
   /** Webhook MP enruta por tipo de evento */
-  async processMercadoPagoWebhook(eventType: string, dataIdRaw: string, webhookData: unknown) {
-    const type = String(eventType || '').trim().toLowerCase();
+  async processMercadoPagoWebhook(
+    eventType: string,
+    dataIdRaw: string,
+    webhookData: unknown,
+  ) {
+    const type = String(eventType || '')
+      .trim()
+      .toLowerCase();
     const idRaw = String(dataIdRaw || '').trim(); // 👈 NO lowercase acá
 
     if (!type || !idRaw) {
-      throw new HttpException('Datos de webhook incompletos', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Datos de webhook incompletos',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Normalizamos el "tipo" (type/action/topic) a un set pequeño
-    const normalizedType =
-      type.startsWith('payment') ? 'payment'
-      : type.startsWith('subscription_preapproval') ? 'subscription_preapproval'
-      : type.startsWith('subscription_authorized_payment') ? 'subscription_authorized_payment'
-      : type.startsWith('subscription_payment') ? 'subscription_payment'
-      : type.startsWith('subscription_status_update') ? 'subscription_status_update'
-      : type;
+    const normalizedType = type.startsWith('payment')
+      ? 'payment'
+      : type.startsWith('subscription_preapproval')
+        ? 'subscription_preapproval'
+        : type.startsWith('subscription_authorized_payment')
+          ? 'subscription_authorized_payment'
+          : type.startsWith('subscription_payment')
+            ? 'subscription_payment'
+            : type.startsWith('subscription_status_update')
+              ? 'subscription_status_update'
+              : type;
 
     try {
       switch (normalizedType) {
@@ -1235,7 +1308,12 @@ export class OrdersService {
           // ✅ Acá el ID debe ser numérico (payment id)
           const paymentId = Number(idRaw);
           if (!Number.isFinite(paymentId)) {
-            return { processed: true, ignored: true, reason: 'invalid_payment_id', idRaw };
+            return {
+              processed: true,
+              ignored: true,
+              reason: 'invalid_payment_id',
+              idRaw,
+            };
           }
 
           return await this.handlePaymentWebhook(
@@ -1248,12 +1326,18 @@ export class OrdersService {
           return { received: true, type: normalizedType };
 
         default:
-          console.log(`Evento de webhook no manejado: ${normalizedType}`, { type, idRaw });
+          console.log(`Evento de webhook no manejado: ${normalizedType}`, {
+            type,
+            idRaw,
+          });
           return { received: true, type: normalizedType };
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Error desconocido';
-      throw new HttpException(`Error al procesar el webhook: ${msg}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        `Error al procesar el webhook: ${msg}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -1266,14 +1350,18 @@ export class OrdersService {
     _data: Record<string, unknown>,
   ) {
     // 1) Obtener pago desde MP
-    const paymentDetails = await this.mpPaymentService.getPayment(String(paymentId));
-    if (!paymentDetails) return { processed: false, reason: 'payment_not_found' };
+    const paymentDetails = await this.mpPaymentService.getPayment(
+      String(paymentId),
+    );
+    if (!paymentDetails)
+      return { processed: false, reason: 'payment_not_found' };
 
     const ref = paymentDetails.external_reference;
     if (!ref) return { processed: true, reason: 'missing_external_reference' };
 
     const orderId = Number(ref);
-    if (!Number.isFinite(orderId)) return { processed: true, reason: 'invalid_external_reference' };
+    if (!Number.isFinite(orderId))
+      return { processed: true, reason: 'invalid_external_reference' };
 
     const order = await this.prisma.orden.findUnique({
       where: { id: orderId },
@@ -1325,25 +1413,36 @@ export class OrdersService {
     }
 
     // 4) Pago aprobado -> actualizar Orden / metadatos
-    const freshOrder = await this.prisma.orden.findUnique({ where: { id: order.id } });
+    const freshOrder = await this.prisma.orden.findUnique({
+      where: { id: order.id },
+    });
 
     // ✅ Referencia de pago normalizada
     const referenciaPago = String(paymentDetails.id);
 
     const isSub = Boolean(freshOrder?.esSuscripcion ?? order.esSuscripcion);
 
-    const freq = freshOrder?.suscripcionFrecuencia ?? order.suscripcionFrecuencia ?? 1;
+    const freq =
+      freshOrder?.suscripcionFrecuencia ?? order.suscripcionFrecuencia ?? 1;
     const freqType = normalizeFrequencyType(
-      freshOrder?.suscripcionTipoFrecuencia ?? order.suscripcionTipoFrecuencia ?? 'months',
+      freshOrder?.suscripcionTipoFrecuencia ??
+        order.suscripcionTipoFrecuencia ??
+        'months',
     );
 
     const now = new Date();
     const nextPaymentDate = isSub ? addFrequency(now, freq, freqType) : null;
 
-    const currentMeta = parseJson<any>(freshOrder?.metadatos ?? order.metadatos);
+    const currentMeta = parseJson<any>(
+      freshOrder?.metadatos ?? order.metadatos,
+    );
     const nextMeta = isSub
       ? mergeSubscriptionMeta(currentMeta, {
-          id: freshOrder?.suscripcionId ?? order.suscripcionId ?? paymentDetails.subscription_id ?? undefined,
+          id:
+            freshOrder?.suscripcionId ??
+            order.suscripcionId ??
+            paymentDetails.subscription_id ??
+            undefined,
           frequency: freq,
           frequencyType: freqType,
           status: currentMeta?.subscription?.status ?? 'active',
@@ -1365,12 +1464,23 @@ export class OrdersService {
     });
 
     // 5) Activar inscripciones
-    await this.createCourseEnrollments(order.id, order.usuarioId, nextPaymentDate);
+    await this.createCourseEnrollments(
+      order.id,
+      order.usuarioId,
+      nextPaymentDate,
+    );
 
     // 6) Si es sub, renovar otras inscripciones del usuario (opcional)
     if (isSub) {
-      const subId = freshOrder?.suscripcionId ?? order.suscripcionId ?? paymentDetails.subscription_id;
-      await this.renewCourseSubscriptions(order.usuarioId, nextPaymentDate, subId);
+      const subId =
+        freshOrder?.suscripcionId ??
+        order.suscripcionId ??
+        paymentDetails.subscription_id;
+      await this.renewCourseSubscriptions(
+        order.usuarioId,
+        nextPaymentDate,
+        subId,
+      );
 
       try {
         await this.notificationsService.createNotification({
@@ -1452,18 +1562,27 @@ export class OrdersService {
    * Ahora renueva columnas y también mantiene el JSON en sync (sin pisar).
    * ✅ Optimizado: Solo renueva las inscripciones asociadas a la suscripción pagada.
    */
-  private async renewCourseSubscriptions(userId: number, nextPaymentDate?: Date | null, subscriptionId?: string) {
+  private async renewCourseSubscriptions(
+    userId: number,
+    nextPaymentDate?: Date | null,
+    subscriptionId?: string,
+  ) {
     if (!nextPaymentDate || !subscriptionId) return;
 
     // Buscar SOLO inscripciones vinculadas a esta suscripción
     const enrollments = await this.prisma.inscripcion.findMany({
-      where: { 
+      where: {
         usuarioId: Number(userId),
         OR: [
           { subscriptionId: subscriptionId },
           // Fallback para legacy: buscar por JSON si la columna está vacía (opcional pero seguro)
-          { progreso: { path: '$.subscription.subscriptionId', equals: subscriptionId } }
-        ]
+          {
+            progreso: {
+              path: '$.subscription.subscriptionId',
+              equals: subscriptionId,
+            },
+          },
+        ],
       },
     });
 
@@ -1472,7 +1591,9 @@ export class OrdersService {
 
     for (const enrollment of enrollments) {
       // Solo renovar si está bajo una suscripción activa (por columnas o por JSON)
-      const currentProgreso = parseJson<Record<string, any>>(enrollment.progreso);
+      const currentProgreso = parseJson<Record<string, any>>(
+        enrollment.progreso,
+      );
 
       const hasSub =
         enrollment.subscriptionActive === true ||
@@ -1516,7 +1637,9 @@ export class OrdersService {
     });
     if (!order) return;
 
-    const courseItems = order.items.filter((i) => i.tipo === TipoItemOrden.CURSO);
+    const courseItems = order.items.filter(
+      (i) => i.tipo === TipoItemOrden.CURSO,
+    );
     if (!courseItems.length) return;
 
     const now = new Date();
@@ -1533,14 +1656,19 @@ export class OrdersService {
           },
         });
 
-        const currentProgreso = parseJson<Record<string, any>>(existing?.progreso);
+        const currentProgreso = parseJson<Record<string, any>>(
+          existing?.progreso,
+        );
         let nextProgreso = { ...currentProgreso };
 
-        const endDateColumn = isSub && nextPaymentDate ? new Date(nextPaymentDate) : null;
+        const endDateColumn =
+          isSub && nextPaymentDate ? new Date(nextPaymentDate) : null;
 
         if (isSub) {
           const freq = order.suscripcionFrecuencia ?? 1;
-          const freqType = normalizeFrequencyType(order.suscripcionTipoFrecuencia ?? 'months');
+          const freqType = normalizeFrequencyType(
+            order.suscripcionTipoFrecuencia ?? 'months',
+          );
 
           nextProgreso = {
             ...nextProgreso,
@@ -1611,19 +1739,26 @@ export class OrdersService {
    * Crea inscripciones PENDIENTES (isActive: false) apenas se crea la suscripción.
    * Esto es exactamente donde te faltaba orderId en algunos casos: ahora lo aseguramos por merge y además en columnas.
    */
-  private async createCourseEnrollmentsAsPending(orderId: number, userId: number) {
+  private async createCourseEnrollmentsAsPending(
+    orderId: number,
+    userId: number,
+  ) {
     const order = await this.prisma.orden.findUnique({
       where: { id: Number(orderId) },
       include: { items: true },
     });
     if (!order) return;
 
-    const courseItems = order.items.filter((i) => i.tipo === TipoItemOrden.CURSO);
+    const courseItems = order.items.filter(
+      (i) => i.tipo === TipoItemOrden.CURSO,
+    );
     if (!courseItems.length) return;
 
     const now = new Date();
     const freq = order.suscripcionFrecuencia ?? 1;
-    const freqType = normalizeFrequencyType(order.suscripcionTipoFrecuencia ?? 'months');
+    const freqType = normalizeFrequencyType(
+      order.suscripcionTipoFrecuencia ?? 'months',
+    );
 
     await Promise.all(
       courseItems.map(async (i) => {
@@ -1636,15 +1771,17 @@ export class OrdersService {
           },
         });
 
-        const currentProgreso = parseJson<Record<string, any>>(existing?.progreso);
+        const currentProgreso = parseJson<Record<string, any>>(
+          existing?.progreso,
+        );
 
         const nextProgreso = {
           ...currentProgreso,
           subscription: {
             ...(currentProgreso.subscription || {}),
-            orderId: order.id,                // ✅ siempre presente
+            orderId: order.id, // ✅ siempre presente
             subscriptionId: order.suscripcionId ?? undefined,
-            isActive: false,                  // ✅ en proceso
+            isActive: false, // ✅ en proceso
             startDate: now.toISOString(),
             frequency: freq,
             frequencyType: freqType,

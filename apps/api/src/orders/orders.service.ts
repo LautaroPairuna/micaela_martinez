@@ -1,7 +1,16 @@
 //src/orders/orders.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto, OrderSource, PayOrderDto, SubscribeOrderDto } from './dto/orders.dto';
+import {
+  CreateOrderDto,
+  OrderSource,
+  PayOrderDto,
+  SubscribeOrderDto,
+} from './dto/orders.dto';
 import { MpPaymentService } from '../mercadopago/mp-payment.service';
 import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -22,22 +31,27 @@ export class OrdersService {
 
   async createFromCart(userId: number, dto: CreateOrderDto) {
     if (dto.source && dto.source !== OrderSource.CART) {
-       // Lógica futura para órdenes directas (sin carrito)
-       // Por ahora, solo soportamos carrito
-       throw new BadRequestException('Solo se soportan órdenes desde el carrito por el momento');
+      // Lógica futura para órdenes directas (sin carrito)
+      // Por ahora, solo soportamos carrito
+      throw new BadRequestException(
+        'Solo se soportan órdenes desde el carrito por el momento',
+      );
     }
 
     const cart = await this.prisma.carrito.findUnique({
       where: { usuarioId: userId },
       include: { items: true },
     });
-    if (!cart || cart.items.length === 0) throw new BadRequestException('Carrito vacío');
+    if (!cart || cart.items.length === 0)
+      throw new BadRequestException('Carrito vacío');
 
     // Resolver items reales y validar “no mixto”
     const hasCourse = cart.items.some((i) => i.tipo === 'CURSO');
     const hasProduct = cart.items.some((i) => i.tipo === 'PRODUCTO');
     if (hasCourse && hasProduct) {
-      throw new BadRequestException('No se permiten órdenes mixtas (Cursos + Productos)');
+      throw new BadRequestException(
+        'No se permiten órdenes mixtas (Cursos + Productos)',
+      );
     }
 
     const orderType = hasCourse ? 'SUBSCRIPTION' : 'ONE_OFF'; // si cursos son por suscripción; si no, ajustamos
@@ -46,27 +60,38 @@ export class OrdersService {
     // Cargar precios desde DB (fuente de verdad)
     // Usamos filter(Boolean) para asegurar que map no retorne null
     const cursoIds = cart.items
-      .filter(i => i.cursoId)
-      .map(i => i.cursoId as number);
-      
+      .filter((i) => i.cursoId)
+      .map((i) => i.cursoId as number);
+
     const productoIds = cart.items
-      .filter(i => i.productoId)
-      .map(i => i.productoId as number);
+      .filter((i) => i.productoId)
+      .map((i) => i.productoId as number);
 
     const [cursos, productos] = await Promise.all([
-      cursoIds.length > 0 ? this.prisma.curso.findMany({ where: { id: { in: cursoIds }, publicado: true } }) : Promise.resolve([]),
-      productoIds.length > 0 ? this.prisma.producto.findMany({ where: { id: { in: productoIds }, publicado: true } }) : Promise.resolve([]),
+      cursoIds.length > 0
+        ? this.prisma.curso.findMany({
+            where: { id: { in: cursoIds }, publicado: true },
+          })
+        : Promise.resolve([]),
+      productoIds.length > 0
+        ? this.prisma.producto.findMany({
+            where: { id: { in: productoIds }, publicado: true },
+          })
+        : Promise.resolve([]),
     ]);
 
-    const cursoMap = new Map(cursos.map(c => [c.id, c]));
-    const prodMap = new Map(productos.map(p => [p.id, p]));
+    const cursoMap = new Map(cursos.map((c) => [c.id, c]));
+    const prodMap = new Map(productos.map((p) => [p.id, p]));
 
     const itemsOrden: any[] = [];
-    
+
     for (const it of cart.items) {
       if (it.tipo === 'CURSO') {
         const c = it.cursoId ? cursoMap.get(it.cursoId) : null;
-        if (!c) throw new BadRequestException(`Curso ${it.cursoId} inválido o no publicado`);
+        if (!c)
+          throw new BadRequestException(
+            `Curso ${it.cursoId} inválido o no publicado`,
+          );
         const price = Number(c.precio) - Number(c.descuento || 0);
         itemsOrden.push({
           tipo: 'CURSO',
@@ -79,8 +104,12 @@ export class OrdersService {
         });
       } else {
         const p = it.productoId ? prodMap.get(it.productoId) : null;
-        if (!p) throw new BadRequestException(`Producto ${it.productoId} inválido o no publicado`);
-        if (p.stock < it.cantidad) throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
+        if (!p)
+          throw new BadRequestException(
+            `Producto ${it.productoId} inválido o no publicado`,
+          );
+        if (p.stock < it.cantidad)
+          throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
         const price = Number(p.precio) - Number(p.descuento || 0);
         itemsOrden.push({
           tipo: 'PRODUCTO',
@@ -94,7 +123,10 @@ export class OrdersService {
       }
     }
 
-    const totalNumber = itemsOrden.reduce((acc, i) => acc + Number(i.precioUnitario) * i.cantidad, 0);
+    const totalNumber = itemsOrden.reduce(
+      (acc, i) => acc + Number(i.precioUnitario) * i.cantidad,
+      0,
+    );
 
     return this.prisma.$transaction(async (tx) => {
       const orden = await tx.orden.create({
@@ -106,8 +138,12 @@ export class OrdersService {
           tipo: orderType as any,
           esSuscripcion,
           metadatos: dto.metadatos ?? Prisma.JsonNull,
-          direccionEnvioId: dto.direccionEnvioId ? Number(dto.direccionEnvioId) : null,
-          direccionFacturacionId: dto.direccionFacturacionId ? Number(dto.direccionFacturacionId) : null,
+          direccionEnvioId: dto.direccionEnvioId
+            ? Number(dto.direccionEnvioId)
+            : null,
+          direccionFacturacionId: dto.direccionFacturacionId
+            ? Number(dto.direccionFacturacionId)
+            : null,
           items: { create: itemsOrden },
         },
         include: { items: true },
@@ -159,8 +195,10 @@ export class OrdersService {
 
   async payOneOff(userId: number, orderId: number, dto: PayOrderDto) {
     const order = await this.getOrderById(userId, orderId);
-    if (order.estado !== 'PENDIENTE') throw new BadRequestException('La orden no está pendiente');
-    if (order.tipo !== 'ONE_OFF') throw new BadRequestException('La orden no es de pago único');
+    if (order.estado !== 'PENDIENTE')
+      throw new BadRequestException('La orden no está pendiente');
+    if (order.tipo !== 'ONE_OFF')
+      throw new BadRequestException('La orden no es de pago único');
 
     // idempotencia por intento
     const idemKey = `pay-${orderId}-${dto.attemptId}`;
@@ -199,7 +237,11 @@ export class OrdersService {
         moneda: order.moneda,
         attemptId: dto.attemptId,
         idempotencyKey: idemKey,
-        metadatos: sanitizeMeta({ payment_id: mpRes.id, status: mpRes.status, detail: mpRes.status_detail }),
+        metadatos: sanitizeMeta({
+          payment_id: mpRes.id,
+          status: mpRes.status,
+          detail: mpRes.status_detail,
+        }),
       },
       create: {
         provider: 'MERCADOPAGO',
@@ -213,7 +255,11 @@ export class OrdersService {
         moneda: order.moneda,
         attemptId: dto.attemptId,
         idempotencyKey: idemKey,
-        metadatos: sanitizeMeta({ payment_id: mpRes.id, status: mpRes.status, detail: mpRes.status_detail }),
+        metadatos: sanitizeMeta({
+          payment_id: mpRes.id,
+          status: mpRes.status,
+          detail: mpRes.status_detail,
+        }),
       },
     });
 
@@ -228,8 +274,10 @@ export class OrdersService {
 
   async subscribe(userId: number, orderId: number, dto: SubscribeOrderDto) {
     const order = await this.getOrderById(userId, orderId);
-    if (order.estado !== 'PENDIENTE') throw new BadRequestException('La orden no está pendiente');
-    if (order.tipo !== 'SUBSCRIPTION') throw new BadRequestException('La orden no es de suscripción');
+    if (order.estado !== 'PENDIENTE')
+      throw new BadRequestException('La orden no está pendiente');
+    if (order.tipo !== 'SUBSCRIPTION')
+      throw new BadRequestException('La orden no es de suscripción');
 
     const idemKey = `sub-${orderId}-${dto.attemptId}`;
 
@@ -265,7 +313,11 @@ export class OrdersService {
         moneda: order.moneda,
         attemptId: dto.attemptId,
         idempotencyKey: idemKey,
-        metadatos: sanitizeMeta({ preapproval_id: mpRes.id, status: mpRes.status, next: mpRes.next_payment_date }),
+        metadatos: sanitizeMeta({
+          preapproval_id: mpRes.id,
+          status: mpRes.status,
+          next: mpRes.next_payment_date,
+        }),
       },
       create: {
         provider: 'MERCADOPAGO',
@@ -278,7 +330,11 @@ export class OrdersService {
         moneda: order.moneda,
         attemptId: dto.attemptId,
         idempotencyKey: idemKey,
-        metadatos: sanitizeMeta({ preapproval_id: mpRes.id, status: mpRes.status, next: mpRes.next_payment_date }),
+        metadatos: sanitizeMeta({
+          preapproval_id: mpRes.id,
+          status: mpRes.status,
+          next: mpRes.next_payment_date,
+        }),
       },
     });
 
@@ -288,7 +344,9 @@ export class OrdersService {
       data: {
         suscripcionId: mpRes.id,
         suscripcionActiva: mpRes.status === 'authorized' ? true : null,
-        suscripcionProximoPago: mpRes.next_payment_date ? new Date(mpRes.next_payment_date) : null,
+        suscripcionProximoPago: mpRes.next_payment_date
+          ? new Date(mpRes.next_payment_date)
+          : null,
         referenciaPago: mpRes.id,
       },
     });
@@ -301,7 +359,9 @@ export class OrdersService {
       await this.prisma.$transaction(
         courseItems.map((it) =>
           this.prisma.inscripcion.upsert({
-            where: { usuarioId_cursoId: { usuarioId: userId, cursoId: it.refId } },
+            where: {
+              usuarioId_cursoId: { usuarioId: userId, cursoId: it.refId },
+            },
             update: {
               subscriptionOrderId: order.id,
               subscriptionId: mpRes.id,
@@ -311,7 +371,13 @@ export class OrdersService {
               usuarioId: userId,
               cursoId: it.refId,
               estado: 'ACTIVADA',
-              progreso: { subscription: { orderId: order.id, subscriptionId: mpRes.id, active: false } },
+              progreso: {
+                subscription: {
+                  orderId: order.id,
+                  subscriptionId: mpRes.id,
+                  active: false,
+                },
+              },
               subscriptionOrderId: order.id,
               subscriptionId: mpRes.id,
               subscriptionActive: false,
@@ -339,7 +405,7 @@ function sanitizeMeta(meta: any) {
   // Nunca guardar token/card_token_id completos. Solo ids/status.
   if (!meta || typeof meta !== 'object') return meta;
   const clone = { ...meta };
-  delete (clone as any).token;
-  delete (clone as any).card_token_id;
+  delete clone.token;
+  delete clone.card_token_id;
   return clone;
 }

@@ -40,24 +40,25 @@ export class WebhooksController {
   ) {
     // 1. Normalización del tipo de evento (Payment vs Topic)
     const rawType = String(
-      queryType || 
-      webhookData?.type || 
-      webhookData?.action || 
-      queryTopic || 
-      webhookData?.topic || 
-      ''
+      queryType ||
+        webhookData?.type ||
+        webhookData?.action ||
+        queryTopic ||
+        webhookData?.topic ||
+        '',
     ).trim();
-    
+
     const eventType = normalizeEventType(rawType);
 
     // 2. Normalización del ID
     // data.id puede venir como query param "data.id", "id" o en el body
-    const rawId = queryDataId || queryId || webhookData?.data?.id || webhookData?.id;
+    const rawId =
+      queryDataId || queryId || webhookData?.data?.id || webhookData?.id;
     const dataId = normalizeDataId(rawId);
 
     if (!dataId || eventType === 'unknown') {
       this.logger.warn(`Webhook ignorado: tipo=${rawType} id=${rawId}`);
-      return { ok: true }; 
+      return { ok: true };
     }
 
     // 3. Construcción de dataIdUrl para verificación de firma
@@ -68,7 +69,9 @@ export class WebhooksController {
     // ... (lógica existente de firma)
 
     const secret = this.config.get<string>('MERCADOPAGO_WEBHOOK_SECRET') || '';
-    const allowBypass = String(this.config.get('MP_WEBHOOK_ALLOW_UNVERIFIED_TEST') || 'false') === 'true';
+    const allowBypass =
+      String(this.config.get('MP_WEBHOOK_ALLOW_UNVERIFIED_TEST') || 'false') ===
+      'true';
 
     let signatureOk = false;
     if (secret) {
@@ -84,10 +87,10 @@ export class WebhooksController {
       } catch (e) {
         signatureOk = false;
       }
-      
+
       // Fallback a lógica anterior simple si falla la robusta (opcional, o mantener simple)
       if (!signatureOk) {
-         const result = verifyMpWebhookSignature({
+        const result = verifyMpWebhookSignature({
           secret,
           xSignature,
           xRequestId,
@@ -194,14 +197,17 @@ export class WebhooksController {
     const v1 = v1Part.split('=').slice(1).join('=');
 
     // Validación básica de tiempo (opcional)
-    
+
     // MP usa template específico para el hash
     // Nota: La implementación exacta depende de qué "id" usa MP en el template (data.id o data.id_url).
     // Aquí asumimos validación básica HMAC.
   }
 
-
-  private async processEvent(eventType: string, dataId: string, webhookData: any) {
+  private async processEvent(
+    eventType: string,
+    dataId: string,
+    webhookData: any,
+  ) {
     switch (eventType) {
       case 'payment': {
         const payment = await this.mpPayment.getPayment(dataId);
@@ -234,7 +240,9 @@ export class WebhooksController {
             status: normalizeStatus(payment.status || ''),
             statusDetail: payment.status_detail ?? null,
             ordenId: orderId,
-            usuarioId: Number(payment.metadata?.user_id || 0) || (await this.userIdFromOrder(orderId)),
+            usuarioId:
+              Number(payment.metadata?.user_id || 0) ||
+              (await this.userIdFromOrder(orderId)),
             monto: payment.transaction_amount || 0,
             moneda: payment.currency_id || 'ARS',
             metadatos: sanitizeMeta({
@@ -270,7 +278,11 @@ export class WebhooksController {
           },
           update: {
             status: normalizeStatus(pre.status),
-            metadatos: sanitizeMeta({ preapproval_id: pre.id, status: pre.status, next: pre.next_payment_date }),
+            metadatos: sanitizeMeta({
+              preapproval_id: pre.id,
+              status: pre.status,
+              next: pre.next_payment_date,
+            }),
           },
           create: {
             provider: 'MERCADOPAGO',
@@ -279,9 +291,13 @@ export class WebhooksController {
             status: normalizeStatus(pre.status),
             ordenId: orderId,
             usuarioId: await this.userIdFromOrder(orderId),
-            monto: (await this.totalFromOrder(orderId)),
+            monto: await this.totalFromOrder(orderId),
             moneda: 'ARS',
-            metadatos: sanitizeMeta({ preapproval_id: pre.id, status: pre.status, next: pre.next_payment_date }),
+            metadatos: sanitizeMeta({
+              preapproval_id: pre.id,
+              status: pre.status,
+              next: pre.next_payment_date,
+            }),
           },
         });
 
@@ -289,8 +305,11 @@ export class WebhooksController {
           where: { id: orderId },
           data: {
             suscripcionId: String(pre.id),
-            suscripcionActiva: String(pre.status).toLowerCase() === 'authorized' ? true : null,
-            suscripcionProximoPago: pre.next_payment_date ? new Date(pre.next_payment_date) : null,
+            suscripcionActiva:
+              String(pre.status).toLowerCase() === 'authorized' ? true : null,
+            suscripcionProximoPago: pre.next_payment_date
+              ? new Date(pre.next_payment_date)
+              : null,
             referenciaPago: String(pre.id),
           },
         });
@@ -310,7 +329,8 @@ export class WebhooksController {
         }
 
         // Intentar resolver orderId:
-        const orderId = Number(ap?.external_reference || ap?.metadata?.order_id || 0) ||
+        const orderId =
+          Number(ap?.external_reference || ap?.metadata?.order_id || 0) ||
           Number(webhookData?.data?.external_reference || 0);
 
         if (!orderId) return;
@@ -328,7 +348,11 @@ export class WebhooksController {
           update: {
             status: normalizeStatus(ap?.status || webhookData?.status),
             statusDetail: ap?.status_detail ?? null,
-            metadatos: sanitizeMeta({ authorized_payment_id: mpId, status: ap?.status, detail: ap?.status_detail }),
+            metadatos: sanitizeMeta({
+              authorized_payment_id: mpId,
+              status: ap?.status,
+              detail: ap?.status_detail,
+            }),
           },
           create: {
             provider: 'MERCADOPAGO',
@@ -338,18 +362,30 @@ export class WebhooksController {
             statusDetail: ap?.status_detail ?? null,
             ordenId: orderId,
             usuarioId: await this.userIdFromOrder(orderId),
-            monto: ap?.transaction_amount ?? (await this.totalFromOrder(orderId)),
+            monto:
+              ap?.transaction_amount ?? (await this.totalFromOrder(orderId)),
             moneda: ap?.currency_id ?? 'ARS',
-            metadatos: sanitizeMeta({ authorized_payment_id: mpId, status: ap?.status, detail: ap?.status_detail }),
+            metadatos: sanitizeMeta({
+              authorized_payment_id: mpId,
+              status: ap?.status,
+              detail: ap?.status_detail,
+            }),
           },
         });
 
         // Si aprobado: activar orden + inscripciones
-        const ok = String(ap?.status || '').toLowerCase() === 'approved' || String(ap?.status || '').toLowerCase() === 'authorized';
+        const ok =
+          String(ap?.status || '').toLowerCase() === 'approved' ||
+          String(ap?.status || '').toLowerCase() === 'authorized';
         if (ok) {
-          const next = ap?.next_payment_date ? new Date(ap.next_payment_date) : null;
+          const next = ap?.next_payment_date
+            ? new Date(ap.next_payment_date)
+            : null;
 
-          const ord = await this.prisma.orden.findUnique({ where: { id: orderId }, include: { items: true } });
+          const ord = await this.prisma.orden.findUnique({
+            where: { id: orderId },
+            include: { items: true },
+          });
           if (!ord) return;
 
           await this.prisma.orden.update({
@@ -363,28 +399,47 @@ export class WebhooksController {
           });
 
           // Activar/renovar inscripciones ligadas a esta orden/suscripción
-          const courseItems = ord.items.filter(i => i.tipo === 'CURSO');
+          const courseItems = ord.items.filter((i) => i.tipo === 'CURSO');
           if (courseItems.length) {
             await this.prisma.$transaction(
               courseItems.map((it) =>
                 this.prisma.inscripcion.upsert({
-                  where: { usuarioId_cursoId: { usuarioId: ord.usuarioId, cursoId: it.refId } },
+                  where: {
+                    usuarioId_cursoId: {
+                      usuarioId: ord.usuarioId,
+                      cursoId: it.refId,
+                    },
+                  },
                   update: {
                     subscriptionOrderId: ord.id,
                     subscriptionId: ord.suscripcionId ?? null,
                     subscriptionActive: true,
                     // Si querés, calculamos endDate por frecuencia (ej: +1 month)
-                    subscriptionEndDate: computeEndDate(new Date(), ord.suscripcionFrecuencia, ord.suscripcionTipoFrecuencia),
+                    subscriptionEndDate: computeEndDate(
+                      new Date(),
+                      ord.suscripcionFrecuencia,
+                      ord.suscripcionTipoFrecuencia,
+                    ),
                   },
                   create: {
                     usuarioId: ord.usuarioId,
                     cursoId: it.refId,
                     estado: 'ACTIVADA',
-                    progreso: { subscription: { orderId: ord.id, subscriptionId: ord.suscripcionId, active: true } },
+                    progreso: {
+                      subscription: {
+                        orderId: ord.id,
+                        subscriptionId: ord.suscripcionId,
+                        active: true,
+                      },
+                    },
                     subscriptionOrderId: ord.id,
                     subscriptionId: ord.suscripcionId ?? null,
                     subscriptionActive: true,
-                    subscriptionEndDate: computeEndDate(new Date(), ord.suscripcionFrecuencia, ord.suscripcionTipoFrecuencia),
+                    subscriptionEndDate: computeEndDate(
+                      new Date(),
+                      ord.suscripcionFrecuencia,
+                      ord.suscripcionTipoFrecuencia,
+                    ),
                   },
                 }),
               ),
@@ -400,12 +455,18 @@ export class WebhooksController {
   }
 
   private async userIdFromOrder(orderId: number) {
-    const ord = await this.prisma.orden.findUnique({ where: { id: orderId }, select: { usuarioId: true } });
+    const ord = await this.prisma.orden.findUnique({
+      where: { id: orderId },
+      select: { usuarioId: true },
+    });
     return ord?.usuarioId || 0;
   }
 
   private async totalFromOrder(orderId: number) {
-    const ord = await this.prisma.orden.findUnique({ where: { id: orderId }, select: { total: true } });
+    const ord = await this.prisma.orden.findUnique({
+      where: { id: orderId },
+      select: { total: true },
+    });
     return ord?.total || 0;
   }
 }
@@ -430,20 +491,24 @@ function sanitizeWebhook(payload: any) {
   if (!payload || typeof payload !== 'object') return payload;
   const clone = { ...payload };
   // evitar guardar tokens o PII sensible si llegara
-  delete (clone as any).token;
-  delete (clone as any).card_token_id;
+  delete clone.token;
+  delete clone.card_token_id;
   return clone;
 }
 
 function sanitizeMeta(meta: any) {
   if (!meta || typeof meta !== 'object') return meta;
   const clone = { ...meta };
-  delete (clone as any).token;
-  delete (clone as any).card_token_id;
+  delete clone.token;
+  delete clone.card_token_id;
   return clone;
 }
 
-function computeEndDate(now: Date, freq?: number | null, freqType?: string | null) {
+function computeEndDate(
+  now: Date,
+  freq?: number | null,
+  freqType?: string | null,
+) {
   if (!freq || !freqType) return null;
   const d = new Date(now);
   if (freqType === 'days') d.setDate(d.getDate() + freq);

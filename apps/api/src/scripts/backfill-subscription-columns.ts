@@ -61,23 +61,24 @@ async function main() {
 
   for (const e of enrollments) {
     // Si ya tiene columnas principales, skip
-    if (e.subscriptionOrderId || e.subscriptionEndDate || e.subscriptionId) continue;
+    if (e.subscriptionOrderId || e.subscriptionEndDate || e.subscriptionId)
+      continue;
 
     const prog = parseJson<any>(e.progreso);
     const sub = prog?.subscription;
     if (!sub) continue;
 
     const orderId = sub.orderId ? Number(sub.orderId) : null;
-    const subscriptionId = sub.subscriptionId ? String(sub.subscriptionId) : null;
+    const subscriptionId = sub.subscriptionId
+      ? String(sub.subscriptionId)
+      : null;
 
     const endDateStr = sub.endDate ?? null;
     const endDate = endDateStr ? new Date(endDateStr) : null;
-    const endDateOk = endDate && Number.isFinite(endDate.getTime()) ? endDate : null;
+    const endDateOk =
+      endDate && Number.isFinite(endDate.getTime()) ? endDate : null;
 
-    const active =
-      typeof sub.isActive === 'boolean'
-        ? sub.isActive
-        : null;
+    const active = typeof sub.isActive === 'boolean' ? sub.isActive : null;
 
     await prisma.inscripcion.update({
       where: { id: e.id },

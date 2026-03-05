@@ -34,7 +34,11 @@ export class WebhooksController {
   ) {
     // Normalizamos el tipo a minúsculas para consistencia
     const eventType = String(
-      queryType || webhookData?.type || webhookData?.action || webhookData?.topic || '',
+      queryType ||
+        webhookData?.type ||
+        webhookData?.action ||
+        webhookData?.topic ||
+        '',
     )
       .trim()
       .toLowerCase();
@@ -58,12 +62,19 @@ export class WebhooksController {
     // Usamos una copia SOLO para el manifiesto de firma.
     const dataIdForSignature = dataIdRaw.toLowerCase();
 
-    const secret = this.configService.get<string>('MERCADOPAGO_WEBHOOK_SECRET')?.trim();
+    const secret = this.configService
+      .get<string>('MERCADOPAGO_WEBHOOK_SECRET')
+      ?.trim();
     const allowUnverifiedTest =
-      String(this.configService.get<string>('MP_WEBHOOK_ALLOW_UNVERIFIED_TEST') ?? 'false').toLowerCase() === 'true';
+      String(
+        this.configService.get<string>('MP_WEBHOOK_ALLOW_UNVERIFIED_TEST') ??
+          'false',
+      ).toLowerCase() === 'true';
 
     const liveMode =
-      typeof webhookData?.live_mode === 'boolean' ? webhookData.live_mode : undefined;
+      typeof webhookData?.live_mode === 'boolean'
+        ? webhookData.live_mode
+        : undefined;
 
     const sigHeaderOk = Boolean(String(xSignature ?? '').trim());
     const reqHeaderOk = Boolean(String(xRequestId ?? '').trim());
@@ -83,15 +94,22 @@ export class WebhooksController {
             liveMode,
             hasSigHeaders,
           });
-          return { received: true, rejected: true, reason: 'unverified_test_not_allowed' };
+          return {
+            received: true,
+            rejected: true,
+            reason: 'unverified_test_not_allowed',
+          };
         }
         // bypass controlado
-        this.logger.warn('MP webhook bypass signature (simulation/test allowed)', {
-          eventType,
-          dataIdRaw,
-          liveMode,
-          hasSigHeaders,
-        });
+        this.logger.warn(
+          'MP webhook bypass signature (simulation/test allowed)',
+          {
+            eventType,
+            dataIdRaw,
+            liveMode,
+            hasSigHeaders,
+          },
+        );
       } else {
         this.validateSignatureOrThrow({
           secret,
@@ -102,10 +120,13 @@ export class WebhooksController {
       }
     } else {
       // sin secret -> no validamos (no recomendado en prod)
-      this.logger.warn('MP webhook signature NOT validated: missing MERCADOPAGO_WEBHOOK_SECRET', {
-        eventType,
-        dataIdRaw,
-      });
+      this.logger.warn(
+        'MP webhook signature NOT validated: missing MERCADOPAGO_WEBHOOK_SECRET',
+        {
+          eventType,
+          dataIdRaw,
+        },
+      );
     }
 
     // Dispatch a OrdersService. Importante: pasamos el id RAW (preserva case)
@@ -119,7 +140,11 @@ export class WebhooksController {
       // ⚠️ Para evitar reintentos infinitos, devolvemos 200 pero registramos fuerte.
       // Si preferís reintentos en errores internos, cambiá por throw HttpException 500.
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error('MP webhook processing error', { eventType, dataIdRaw, msg });
+      this.logger.error('MP webhook processing error', {
+        eventType,
+        dataIdRaw,
+        msg,
+      });
       return { received: true, ok: false, error: msg };
     }
   }
@@ -148,7 +173,9 @@ export class WebhooksController {
     const ts = tsPart.split('=').slice(1).join('=');
     const v1 = v1Part.split('=').slice(1).join('=');
 
-    const replayWindowSec = Number(this.configService.get('MP_WEBHOOK_REPLAY_WINDOW_SEC') || 600);
+    const replayWindowSec = Number(
+      this.configService.get('MP_WEBHOOK_REPLAY_WINDOW_SEC') || 600,
+    );
     const nowSec = Math.floor(Date.now() / 1000);
     const tsNum = Number(ts);
 
@@ -159,7 +186,10 @@ export class WebhooksController {
     // ✅ Template EXACTO de la doc (con id en minúsculas para firma)
     const manifest = `id:${dataIdForSignature};request-id:${xRequestId};ts:${ts};`;
 
-    const sha = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+    const sha = crypto
+      .createHmac('sha256', secret)
+      .update(manifest)
+      .digest('hex');
 
     const a = Buffer.from(sha, 'hex');
     const b = Buffer.from(String(v1 || ''), 'hex');

@@ -4,7 +4,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Cron } from '@nestjs/schedule';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TipoNotificacion, EstadoOrden } from '@prisma/client';
-import { parseJson } from '../ordersLegacy/interfaces/orden-metadata.interface';
 
 @Injectable()
 export class SubscriptionService {
@@ -97,7 +96,7 @@ export class SubscriptionService {
     }
 
     // Fallback legacy: mirar JSON
-    const progreso = parseJson<any>(enrollment.progreso);
+    const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
       // Si no hay info de sub => acceso permanente (legacy)
@@ -114,7 +113,9 @@ export class SubscriptionService {
   async getUserInfo(userId: string) {
     const userIdNum = Number(userId);
     if (!Number.isFinite(userIdNum)) {
-      this.logger.error(`[SubscriptionService] Invalid userId received: ${userId}`);
+      this.logger.error(
+        `[SubscriptionService] Invalid userId received: ${userId}`,
+      );
       return { isActive: false, subscriptions: [], includedCourses: [] };
     }
 
@@ -156,11 +157,11 @@ export class SubscriptionService {
     const now = new Date();
 
     const subscriptions = ordenes.map((orden) => {
-      const meta = parseJson<any>(orden.metadatos);
+      const meta = parseProgreso(orden.metadatos);
 
       const nextPaymentDate = orden.suscripcionProximoPago
         ? orden.suscripcionProximoPago.toISOString()
-        : meta?.subscription?.nextPaymentDate ?? null;
+        : (meta?.subscription?.nextPaymentDate ?? null);
 
       const next = nextPaymentDate ? new Date(nextPaymentDate) : null;
 
@@ -179,11 +180,17 @@ export class SubscriptionService {
         subscriptionId: orden.suscripcionId,
         startDate: orden.creadoEn,
         nextPaymentDate,
-        frequency: orden.suscripcionFrecuencia ?? meta?.subscription?.frequency ?? 1,
-        frequencyType: orden.suscripcionTipoFrecuencia ?? meta?.subscription?.frequencyType ?? 'months',
+        frequency:
+          orden.suscripcionFrecuencia ?? meta?.subscription?.frequency ?? 1,
+        frequencyType:
+          orden.suscripcionTipoFrecuencia ??
+          meta?.subscription?.frequencyType ??
+          'months',
         daysLeft,
         hoursLeft,
-        status: meta?.subscription?.status ?? (orden.suscripcionActiva ? 'active' : 'processing'),
+        status:
+          meta?.subscription?.status ??
+          (orden.suscripcionActiva ? 'active' : 'processing'),
       };
     });
 
@@ -219,7 +226,9 @@ export class SubscriptionService {
     // ✅ PRIORIDAD: columnas
     if (enrollment.subscriptionEndDate) {
       const end = enrollment.subscriptionEndDate;
-      const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.ceil(
+        (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       return {
         hasAccess: enrollment.subscriptionActive !== false && end > now,
@@ -235,7 +244,7 @@ export class SubscriptionService {
     }
 
     // Fallback: JSON legacy
-    const progreso = parseJson<any>(enrollment.progreso);
+    const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
       return {
@@ -247,7 +256,9 @@ export class SubscriptionService {
     }
 
     const endDate = new Date(progreso.subscription.endDate);
-    const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const daysLeft = Math.ceil(
+      (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     return {
       hasAccess: endDate > now,
@@ -279,7 +290,9 @@ export class SubscriptionService {
       });
 
       if (enrollments.length === 0) {
-        this.logger.warn(`No se encontraron inscripciones para la orden ${orderId}`);
+        this.logger.warn(
+          `No se encontraron inscripciones para la orden ${orderId}`,
+        );
         return false;
       }
 
@@ -296,7 +309,7 @@ export class SubscriptionService {
       // Mantener JSON consistente (opcional pero recomendado)
       await Promise.all(
         enrollments.map(async (e) => {
-          const progreso = parseJson<any>(e.progreso);
+          const progreso = parseProgreso(e.progreso);
           if (!progreso?.subscription) return;
 
           const next = {
@@ -310,7 +323,7 @@ export class SubscriptionService {
 
           await this.prisma.inscripcion.update({
             where: { id: e.id },
-            data: { progreso: next as any },
+            data: { progreso: next },
           });
         }),
       );
@@ -323,4 +336,58 @@ export class SubscriptionService {
       return false;
     }
   }
+}
+
+function parseProgreso(value: unknown): {
+  subscription?: {
+    endDate?: string;
+    isActive?: boolean;
+    nextPaymentDate?: string;
+    frequency?: number;
+    frequencyType?: string;
+    status?: string;
+    orderId?: number;
+    subscriptionId?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+} | null {
+  if (value == null) return null;
+  if (typeof value === 'object') {
+    return value as {
+      subscription?: {
+        endDate?: string;
+        isActive?: boolean;
+        nextPaymentDate?: string;
+        frequency?: number;
+        frequencyType?: string;
+        status?: string;
+        orderId?: number;
+        subscriptionId?: string;
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    };
+  }
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as {
+        subscription?: {
+          endDate?: string;
+          isActive?: boolean;
+          nextPaymentDate?: string;
+          frequency?: number;
+          frequencyType?: string;
+          status?: string;
+          orderId?: number;
+          subscriptionId?: string;
+          [key: string]: unknown;
+        };
+        [key: string]: unknown;
+      };
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }

@@ -1,7 +1,19 @@
 //src/orders/orders.controller.ts
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto, PayOrderDto, SubscribeOrderDto } from './dto/orders.dto';
+import {
+  CreateOrderDto,
+  PayOrderDto,
+  SubscribeOrderDto,
+} from './dto/orders.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -30,12 +42,20 @@ export class OrdersController {
   }
 
   @Post(':id/pay')
-  async pay(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: PayOrderDto) {
+  async pay(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: PayOrderDto,
+  ) {
     return this.orders.payOneOff(this.userId(req), id, dto);
   }
 
   @Post(':id/subscribe')
-  async subscribe(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: SubscribeOrderDto) {
+  async subscribe(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SubscribeOrderDto,
+  ) {
     return this.orders.subscribe(this.userId(req), id, dto);
   }
 }

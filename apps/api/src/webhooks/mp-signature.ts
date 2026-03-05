@@ -8,7 +8,8 @@ export function verifyMpWebhookSignature(opts: {
 }): { ok: boolean; ts?: string; reason?: string } {
   const { secret, xSignature, xRequestId, dataIdUrl } = opts;
 
-  if (!xSignature || !xRequestId) return { ok: false, reason: 'missing_headers' };
+  if (!xSignature || !xRequestId)
+    return { ok: false, reason: 'missing_headers' };
 
   // x-signature: "ts=...,v1=..."
   const parts = Object.fromEntries(
@@ -23,7 +24,10 @@ export function verifyMpWebhookSignature(opts: {
   if (!ts || !v1) return { ok: false, reason: 'invalid_signature_format' };
 
   const manifest = `id:${dataIdUrl};request-id:${xRequestId};ts:${ts};`;
-  const computed = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+  const computed = crypto
+    .createHmac('sha256', secret)
+    .update(manifest)
+    .digest('hex');
 
   const ok = timingSafeEqualHex(computed, v1);
   return { ok, ts, reason: ok ? undefined : 'mismatch' };

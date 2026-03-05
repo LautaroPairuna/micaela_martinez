@@ -2,7 +2,13 @@
 
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MercadoPagoConfig, Payment, PaymentRefund, PaymentMethod, Preference } from 'mercadopago';
+import {
+  MercadoPagoConfig,
+  Payment,
+  PaymentRefund,
+  PaymentMethod,
+  Preference,
+} from 'mercadopago';
 
 export interface MercadoPagoPaymentData {
   token: string;
@@ -66,7 +72,8 @@ function sanitizeIdNumber(v: string) {
 function normalizeUrl(raw?: string | null): string | null {
   const url = (raw ?? '').trim();
   if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url.replace(/\/+$/, '');
+  if (url.startsWith('http://') || url.startsWith('https://'))
+    return url.replace(/\/+$/, '');
   return `https://${url}`.replace(/\/+$/, '');
 }
 
@@ -81,15 +88,26 @@ export class MpPaymentService {
   private readonly preference: Preference;
 
   constructor(private readonly configService: ConfigService) {
-    const accessToken = this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN');
+    const accessToken = this.configService.get<string>(
+      'MERCADOPAGO_ACCESS_TOKEN',
+    );
 
-    if (!accessToken) throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
+    if (!accessToken)
+      throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
 
-    if (!accessToken.startsWith('TEST-') && !accessToken.startsWith('APP_USR-')) {
-      throw new Error('MERCADOPAGO_ACCESS_TOKEN inválido. Debe comenzar con TEST- o APP_USR-');
+    if (
+      !accessToken.startsWith('TEST-') &&
+      !accessToken.startsWith('APP_USR-')
+    ) {
+      throw new Error(
+        'MERCADOPAGO_ACCESS_TOKEN inválido. Debe comenzar con TEST- o APP_USR-',
+      );
     }
 
-    this.client = new MercadoPagoConfig({ accessToken, options: { timeout: 15000 } });
+    this.client = new MercadoPagoConfig({
+      accessToken,
+      options: { timeout: 15000 },
+    });
     this.payment = new Payment(this.client);
     this.paymentRefund = new PaymentRefund(this.client);
     this.paymentMethod = new PaymentMethod(this.client);
@@ -100,7 +118,9 @@ export class MpPaymentService {
   private get notificationUrl(): string | null {
     return (
       normalizeUrl(this.configService.get<string>('MERCADOPAGO_WEBHOOK_URL')) || // ✅ prioridad
-      normalizeUrl(this.configService.get<string>('MERCADOPAGO_SUBSCRIPTION_WEBHOOK_URL')) || // fallback legacy
+      normalizeUrl(
+        this.configService.get<string>('MERCADOPAGO_SUBSCRIPTION_WEBHOOK_URL'),
+      ) || // fallback legacy
       null
     );
   }
@@ -113,14 +133,24 @@ export class MpPaymentService {
       // 1) Email
       const payerEmail = safeEmail(paymentData.payer.email);
       if (!payerEmail) {
-        throw new HttpException('Email inválido para MercadoPago', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Email inválido para MercadoPago',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       // 2) Identification
       let identification: { type: string; number: string } | undefined;
-      if (paymentData.payer.identification?.type && paymentData.payer.identification?.number) {
-        const idType = paymentData.payer.identification.type.trim().toUpperCase();
-        const cleanNumber = sanitizeIdNumber(paymentData.payer.identification.number);
+      if (
+        paymentData.payer.identification?.type &&
+        paymentData.payer.identification?.number
+      ) {
+        const idType = paymentData.payer.identification.type
+          .trim()
+          .toUpperCase();
+        const cleanNumber = sanitizeIdNumber(
+          paymentData.payer.identification.number,
+        );
 
         const allowedTypes = new Set(['DNI', 'CUIT', 'CUIL']);
         if (allowedTypes.has(idType) && cleanNumber.length > 0) {
@@ -129,12 +159,15 @@ export class MpPaymentService {
       }
 
       // 3) binary_mode
-      const binaryMode = this.configService.get<string>('MP_BINARY_MODE') === 'true';
+      const binaryMode =
+        this.configService.get<string>('MP_BINARY_MODE') === 'true';
 
       // 4) external_reference
       const externalRef = paymentData.external_reference?.trim();
       if (!externalRef) {
-        this.logger.warn('processPayment without external_reference (orderId). Consider enforcing it.');
+        this.logger.warn(
+          'processPayment without external_reference (orderId). Consider enforcing it.',
+        );
       }
 
       // ✅ notification_url (si no viene, usamos env)
@@ -145,7 +178,9 @@ export class MpPaymentService {
       // ✅ body (cast a any para no pelear con typings del SDK)
       const paymentRequest: any = {
         token: paymentData.token,
-        issuer_id: paymentData.issuer_id ? Number(paymentData.issuer_id) : undefined, // ✅ number
+        issuer_id: paymentData.issuer_id
+          ? Number(paymentData.issuer_id)
+          : undefined, // ✅ number
         transaction_amount: paymentData.transaction_amount,
         description: paymentData.description,
         payment_method_id: paymentData.payment_method_id,
@@ -160,13 +195,16 @@ export class MpPaymentService {
         statement_descriptor: paymentData.statement_descriptor,
         additional_info: {
           ...paymentData.additional_info,
-          ...(paymentData.additional_info?.ip_address ? { ip_address: paymentData.additional_info.ip_address } : {}),
+          ...(paymentData.additional_info?.ip_address
+            ? { ip_address: paymentData.additional_info.ip_address }
+            : {}),
         },
         ...(notif ? { notification_url: notif } : {}),
       };
 
       const idempotencyKey =
-        options?.idempotencyKey || `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        options?.idempotencyKey ||
+        `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       this.logger.log(
         `MP payment.create -> amount=${paymentRequest.transaction_amount} method=${paymentRequest.payment_method_id} issuer=${paymentRequest.issuer_id} inst=${paymentRequest.installments} ref=${externalRef ?? 'none'} idem=${idempotencyKey} notif=${notif ? 'yes' : 'no'}`,
@@ -176,7 +214,9 @@ export class MpPaymentService {
         body: paymentRequest,
         requestOptions: {
           idempotencyKey,
-          ...(options?.requestId ? { headers: { 'X-Request-Id': options.requestId } } : {}),
+          ...(options?.requestId
+            ? { headers: { 'X-Request-Id': options.requestId } }
+            : {}),
         } as any,
       });
 
@@ -216,7 +256,10 @@ export class MpPaymentService {
         );
       }
 
-      throw new HttpException(`Error de MercadoPago: ${detail}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error de MercadoPago: ${detail}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -230,7 +273,10 @@ export class MpPaymentService {
         error?.response?.data?.message ||
         error?.message ||
         'Error desconocido';
-      throw new HttpException(`Error al obtener el pago: ${msg}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error al obtener el pago: ${msg}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -249,7 +295,10 @@ export class MpPaymentService {
         error?.response?.data?.message ||
         error?.message ||
         'Error desconocido';
-      throw new HttpException(`Error al reembolsar: ${msg}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error al reembolsar: ${msg}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -262,19 +311,31 @@ export class MpPaymentService {
         error?.response?.data?.message ||
         error?.message ||
         'Error desconocido';
-      throw new HttpException(`Error al obtener métodos: ${msg}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error al obtener métodos: ${msg}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
   async createPreference(preferenceData: any): Promise<any> {
     try {
-      if (!preferenceData.items || !Array.isArray(preferenceData.items) || preferenceData.items.length === 0) {
-        throw new HttpException('Los items son requeridos para crear una preferencia', HttpStatus.BAD_REQUEST);
+      if (
+        !preferenceData.items ||
+        !Array.isArray(preferenceData.items) ||
+        preferenceData.items.length === 0
+      ) {
+        throw new HttpException(
+          'Los items son requeridos para crear una preferencia',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       // ✅ también podés setear notification_url acá (Checkout Pro)
       const notif = this.notificationUrl;
-      const body = notif ? { ...preferenceData, notification_url: notif } : preferenceData;
+      const body = notif
+        ? { ...preferenceData, notification_url: notif }
+        : preferenceData;
 
       const requestOptions = {
         idempotencyKey: `pref-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -301,7 +362,10 @@ export class MpPaymentService {
         );
       }
 
-      throw new HttpException(`Error de MercadoPago: ${msg}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Error de MercadoPago: ${msg}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }

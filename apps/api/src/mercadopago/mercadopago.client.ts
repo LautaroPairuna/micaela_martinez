@@ -36,10 +36,17 @@ export class MercadoPagoClient {
 
     const text = await res.text();
     let json: any = null;
-    try { json = text ? JSON.parse(text) : null; } catch { json = text; }
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = text;
+    }
 
     if (!res.ok) {
-      this.logger.error(`MP ERROR ${opts.method} ${opts.path} -> ${res.status}`, json);
+      this.logger.error(
+        `MP ERROR ${opts.method} ${opts.path} -> ${res.status}`,
+        json,
+      );
       // evitamos filtrar datos sensibles; devolvemos mensaje genérico
       throw new Error(`MercadoPago error: ${res.status}`);
     }

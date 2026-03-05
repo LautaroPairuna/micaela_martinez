@@ -220,7 +220,8 @@ export class UsersService {
           startDate: activeSubscription.creadoEn,
           nextPaymentDate,
           frequency: Number(activeSubscription.suscripcionFrecuencia) || 1,
-          frequencyType: activeSubscription.suscripcionTipoFrecuencia || 'month',
+          frequencyType:
+            activeSubscription.suscripcionTipoFrecuencia || 'month',
           daysLeft: null, // Opcional, se puede calcular si es necesario
           hoursLeft: null,
         },

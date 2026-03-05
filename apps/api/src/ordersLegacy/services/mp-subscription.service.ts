@@ -26,13 +26,21 @@ export interface MercadoPagoSubscriptionOptions {
 
 function normalizeBackUrl(raw: string): string {
   let url = raw?.trim() || 'http://localhost:3000';
-  if (!url.startsWith('http://') && !url.startsWith('https://')) url = `https://${url}`;
+  if (!url.startsWith('http://') && !url.startsWith('https://'))
+    url = `https://${url}`;
   return url.replace(/\/+$/, '');
 }
 
 function normalizeFrequencyType(v: string): MpFrequencyType {
   const s = (v ?? '').toLowerCase().trim();
-  if (s === 'day' || s === 'days' || s.includes('day') || s === 'dia' || s === 'días' || s === 'dias') {
+  if (
+    s === 'day' ||
+    s === 'days' ||
+    s.includes('day') ||
+    s === 'dia' ||
+    s === 'días' ||
+    s === 'dias'
+  ) {
     return 'days';
   }
   return 'months';
@@ -53,8 +61,11 @@ export class MpSubscriptionService {
   constructor(private readonly configService: ConfigService) {}
 
   private get accessToken(): string {
-    const accessToken = this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN');
-    if (!accessToken) throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
+    const accessToken = this.configService.get<string>(
+      'MERCADOPAGO_ACCESS_TOKEN',
+    );
+    if (!accessToken)
+      throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
     return accessToken;
   }
 
@@ -63,7 +74,9 @@ export class MpSubscriptionService {
   }
 
   private get frontendUrl(): string {
-    return normalizeBackUrl(this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000');
+    return normalizeBackUrl(
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000',
+    );
   }
 
   // ✅ Unificada: ambos servicios deberían usar la MISMA URL
@@ -82,20 +95,34 @@ export class MpSubscriptionService {
     options?: MercadoPagoSubscriptionOptions,
   ): Promise<any> {
     if (!subscriptionData?.token || subscriptionData.token.length < 20) {
-      throw new HttpException('Token de tarjeta inválido', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Token de tarjeta inválido',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     if (!subscriptionData?.payer?.email) {
-      throw new HttpException('Email requerido para suscripción', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Email requerido para suscripción',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    if (!Number.isFinite(subscriptionData.transaction_amount) || subscriptionData.transaction_amount <= 0) {
+    if (
+      !Number.isFinite(subscriptionData.transaction_amount) ||
+      subscriptionData.transaction_amount <= 0
+    ) {
       throw new HttpException('Monto inválido', HttpStatus.BAD_REQUEST);
     }
-    if (!Number.isFinite(subscriptionData.frequency) || subscriptionData.frequency <= 0) {
+    if (
+      !Number.isFinite(subscriptionData.frequency) ||
+      subscriptionData.frequency <= 0
+    ) {
       throw new HttpException('Frecuencia inválida', HttpStatus.BAD_REQUEST);
     }
 
     const backUrl = this.frontendUrl;
-    const frequencyType = normalizeFrequencyType(subscriptionData.frequency_type);
+    const frequencyType = normalizeFrequencyType(
+      subscriptionData.frequency_type,
+    );
 
     const preapprovalPayload: Record<string, any> = {
       reason: subscriptionData.description,
@@ -121,7 +148,8 @@ export class MpSubscriptionService {
     if (notif) preapprovalPayload.notification_url = notif;
 
     const idemKey =
-      options?.idempotencyKey || `sub-${String(subscriptionData.external_reference).trim()}`;
+      options?.idempotencyKey ||
+      `sub-${String(subscriptionData.external_reference).trim()}`;
 
     this.logger.log(
       `Creating MP preapproval: ref=${preapprovalPayload.external_reference} amount=${preapprovalPayload.auto_recurring.transaction_amount} freq=${preapprovalPayload.auto_recurring.frequency}/${preapprovalPayload.auto_recurring.frequency_type} notif=${notif ? 'yes' : 'no'}`,
@@ -183,7 +211,9 @@ export class MpSubscriptionService {
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
 
-      this.logger.error(`createSubscription unexpected error: ${error?.message || error}`);
+      this.logger.error(
+        `createSubscription unexpected error: ${error?.message || error}`,
+      );
       throw new HttpException(
         'Error al crear suscripción con MercadoPago',
         HttpStatus.SERVICE_UNAVAILABLE,
@@ -193,21 +223,27 @@ export class MpSubscriptionService {
 
   async cancelSubscription(subscriptionId: string): Promise<any> {
     if (!subscriptionId) {
-      throw new HttpException('subscriptionId requerido', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'subscriptionId requerido',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
       const idemKey = `cancel-sub-${subscriptionId}-${Date.now()}`;
 
-      const response = await fetch(`https://api.mercadopago.com/preapproval/${subscriptionId}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
-          'X-Idempotency-Key': idemKey,
+      const response = await fetch(
+        `https://api.mercadopago.com/preapproval/${subscriptionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Idempotency-Key': idemKey,
+          },
+          body: JSON.stringify({ status: 'cancelled' }),
         },
-        body: JSON.stringify({ status: 'cancelled' }),
-      });
+      );
 
       const text = await response.text();
       const data = safeJsonParse(text);
@@ -230,7 +266,9 @@ export class MpSubscriptionService {
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
 
-      this.logger.error(`cancelSubscription unexpected error: ${error?.message || error}`);
+      this.logger.error(
+        `cancelSubscription unexpected error: ${error?.message || error}`,
+      );
       throw new HttpException(
         'Error al cancelar suscripción con MercadoPago',
         HttpStatus.SERVICE_UNAVAILABLE,
@@ -239,30 +277,42 @@ export class MpSubscriptionService {
   }
 
   // ✅ Nueva funcionalidad para actualizar monto (Partial Cancellation)
-  async updateSubscriptionAmount(subscriptionId: string, newAmount: number): Promise<any> {
+  async updateSubscriptionAmount(
+    subscriptionId: string,
+    newAmount: number,
+  ): Promise<any> {
     if (!subscriptionId) {
-      throw new HttpException('subscriptionId requerido', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'subscriptionId requerido',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     if (!Number.isFinite(newAmount) || newAmount <= 0) {
-      throw new HttpException('Monto inválido para actualización', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Monto inválido para actualización',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
       const idemKey = `update-sub-${subscriptionId}-${Date.now()}`;
 
-      const response = await fetch(`https://api.mercadopago.com/preapproval/${subscriptionId}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
-          'X-Idempotency-Key': idemKey,
+      const response = await fetch(
+        `https://api.mercadopago.com/preapproval/${subscriptionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Idempotency-Key': idemKey,
+          },
+          body: JSON.stringify({
+            auto_recurring: {
+              transaction_amount: newAmount,
+            },
+          }),
         },
-        body: JSON.stringify({ 
-          auto_recurring: {
-            transaction_amount: newAmount
-          } 
-        }),
-      });
+      );
 
       const text = await response.text();
       const data = safeJsonParse(text);
@@ -281,12 +331,16 @@ export class MpSubscriptionService {
         );
       }
 
-      this.logger.log(`MP subscription amount updated: id=${subscriptionId} newAmount=${newAmount}`);
+      this.logger.log(
+        `MP subscription amount updated: id=${subscriptionId} newAmount=${newAmount}`,
+      );
       return data;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
 
-      this.logger.error(`updateSubscriptionAmount unexpected error: ${error?.message || error}`);
+      this.logger.error(
+        `updateSubscriptionAmount unexpected error: ${error?.message || error}`,
+      );
       throw new HttpException(
         'Error al actualizar suscripción con MercadoPago',
         HttpStatus.SERVICE_UNAVAILABLE,
@@ -296,17 +350,23 @@ export class MpSubscriptionService {
 
   async getSubscription(preapprovalId: string): Promise<any> {
     if (!preapprovalId) {
-      throw new HttpException('preapprovalId requerido', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'preapprovalId requerido',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
-      const response = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `https://api.mercadopago.com/preapproval/${preapprovalId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+          },
         },
-      });
+      );
 
       const text = await response.text();
       const data = safeJsonParse(text);
@@ -329,7 +389,9 @@ export class MpSubscriptionService {
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
 
-      this.logger.error(`getSubscription unexpected error: ${error?.message || error}`);
+      this.logger.error(
+        `getSubscription unexpected error: ${error?.message || error}`,
+      );
       throw new HttpException(
         'Error de conexión con MercadoPago',
         HttpStatus.SERVICE_UNAVAILABLE,

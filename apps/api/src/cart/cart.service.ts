@@ -181,14 +181,14 @@ export class CartService {
 
           // Buscar si existe (por combinación única)
           const whereClause: any = {
-             carritoId: cart.id,
-             tipo,
+            carritoId: cart.id,
+            tipo,
           };
           if (productoId) whereClause.productoId = productoId;
           if (cursoId) whereClause.cursoId = cursoId;
 
           const existingItem = await this.prisma.itemCarrito.findFirst({
-            where: whereClause
+            where: whereClause,
           });
 
           if (existingItem) {
@@ -208,7 +208,11 @@ export class CartService {
             });
           }
         } catch (error) {
-          console.error(`[CartService] Error processing item upsert:`, item, error);
+          console.error(
+            `[CartService] Error processing item upsert:`,
+            item,
+            error,
+          );
         }
       }
 
