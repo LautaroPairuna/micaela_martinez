@@ -68,16 +68,15 @@ export function PaymentStep() {
     {
       id: 'mercadopago',
       name: 'Pago Online',
-      description: 'Tarjeta, efectivo, transferencia y más opciones',
+      description: 'Pagá con tarjeta de crédito o débito',
       icon: CreditCard,
       badge: 'Recomendado',
       features: hasCourses 
-        ? ['Solo tarjeta de crédito (requerido para cursos)']
+        ? ['Tarjetas de crédito y débito']
         : [
             'Tarjetas de crédito y débito',
-            'Pago en efectivo (Rapipago, Pago Fácil)',
-            'Transferencia bancaria',
-            'Dinero en cuenta de MercadoPago'
+            'Pago seguro con MercadoPago',
+            'Confirmación inmediata'
           ]
     },
     ...(!hasCourses ? [{

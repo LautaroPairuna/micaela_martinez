@@ -117,20 +117,96 @@ declare global {
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
-function normalizeError(err: unknown): PaymentErrorData {
+function normalizeText(value: unknown): string {
+  if (typeof value === 'string') return value.toLowerCase();
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value).toLowerCase();
+  }
+  return '';
+}
+function buildErrorHaystack(err: unknown): string {
+  const tokens: string[] = [];
+  const push = (value: unknown) => {
+    const normalized = normalizeText(value);
+    if (normalized) tokens.push(normalized);
+  };
+
+  if (typeof err === 'string') push(err);
+  if (err instanceof Error) {
+    push(err.message);
+  }
+
   if (isRecord(err)) {
-    const cause = asStringOrNull(err.cause);
-    const message = asStringOrNull(err.message);
-    if (
-      cause === 'missing_payment_information' &&
-      message === 'payment_method_not_in_allowed_types'
-    ) {
-      return {
-        message:
-          'El medio elegido no está permitido para este checkout. Probá con una tarjeta de crédito o débito.',
-        details: err,
-      };
+    push(err.message);
+    push(err.cause);
+    push(err.type);
+    const details = err.details;
+    if (isRecord(details)) {
+      push(details.message);
+      push(details.cause);
+      push(details.type);
+      push(details.code);
+      push(details.error);
+      push(details.status_detail);
+    } else {
+      push(details);
     }
+  }
+
+  try {
+    tokens.push(JSON.stringify(err).toLowerCase());
+  } catch {}
+
+  return tokens.join(' ');
+}
+function mapMercadoPagoErrorMessage(err: unknown): string | null {
+  const haystack = buildErrorHaystack(err);
+  if (!haystack) return null;
+
+  if (haystack.includes('payment_method_not_in_allowed_types')) {
+    return 'El medio elegido no está permitido para este checkout. Probá con una tarjeta de crédito o débito.';
+  }
+  if (haystack.includes('cc_rejected_insufficient_amount')) {
+    return 'La tarjeta no tiene fondos suficientes. Probá con otra tarjeta o contactá a tu banco.';
+  }
+  if (
+    haystack.includes('cc_rejected_bad_filled_card_number') ||
+    haystack.includes('cc_rejected_bad_filled_date') ||
+    haystack.includes('cc_rejected_bad_filled_security_code') ||
+    haystack.includes('cc_rejected_bad_filled_other')
+  ) {
+    return 'Revisá los datos de la tarjeta e intentá nuevamente.';
+  }
+  if (haystack.includes('cc_rejected_invalid_installments')) {
+    return 'La tarjeta no acepta esa cantidad de cuotas. Probá con otra opción.';
+  }
+  if (haystack.includes('cc_rejected_call_for_authorize')) {
+    return 'Tu banco requiere autorización. Contactalo o probá con otra tarjeta.';
+  }
+  if (haystack.includes('cc_rejected_card_disabled')) {
+    return 'La tarjeta está inactiva o bloqueada. Probá con otra tarjeta.';
+  }
+  if (haystack.includes('cc_rejected_duplicated_payment')) {
+    return 'Ya se registró un pago muy similar. Esperá unos minutos antes de reintentar.';
+  }
+  if (haystack.includes('cc_rejected_high_risk')) {
+    return 'El pago fue rechazado por validación de seguridad. Probá con otro medio.';
+  }
+  if (haystack.includes('cc_rejected_max_attempts')) {
+    return 'Se alcanzó el máximo de intentos con esta tarjeta. Probá con otra.';
+  }
+  if (haystack.includes('cc_rejected_other_reason') || haystack.includes('cc_rejected_card_error')) {
+    return 'Tu banco rechazó el pago. Probá con otra tarjeta o contactá a tu banco.';
+  }
+  return null;
+}
+function normalizeError(err: unknown): PaymentErrorData {
+  const mappedMessage = mapMercadoPagoErrorMessage(err);
+  if (mappedMessage) {
+    return {
+      message: mappedMessage,
+      details: err,
+    };
   }
   if (err instanceof Error) return { message: err.message, details: err };
   if (typeof err === 'string') return { message: err };
@@ -272,9 +348,9 @@ export function MercadoPagoBricks({
            paymentMethodsCfg = {
               creditCard: 'all',
               debitCard: 'all',
-              ticket: 'all',
-              bankTransfer: 'all',
-              mercadoPago: 'all',
+              ticket: [],
+              bankTransfer: [],
+              mercadoPago: [],
            };
         }
 
