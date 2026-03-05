@@ -4,8 +4,8 @@ import { AuthView } from '@/components/auth/AuthView';
 import { FadeIn } from '@/components/ui/Motion';
 
 export const metadata: Metadata = {
-  title: 'Acceso',
-  description: 'Ingresá o creá tu cuenta para comprar cursos y productos.',
+  title: 'Acceso y Registro',
+  description: 'Ingresá a tu cuenta para acceder a tus cursos, gestionar tus pedidos y disfrutar de beneficios exclusivos en Micaela Martinez.',
   alternates: { canonical: '/auth' },
 };
 

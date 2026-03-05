@@ -16,8 +16,12 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://micapestanas.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: { default: 'Micaela Martinez - Extenciones de Pestañas', template: '%s | Micaela Martinez - Extenciones de Pestañas' },
-  description: 'Cursos y tienda de productos de extensiones de pestañas',
+  title: { 
+    default: 'Micaela Martinez | Extenciones de Pestañas', 
+    template: '%s | Micaela Martinez' 
+  },
+  description: 'Academia líder en extensiones de pestañas y lifting en Argentina. Cursos online y presenciales, insumos profesionales y cosmética exclusiva para lashistas.',
+  keywords: ['extensiones de pestañas', 'lifting de pestañas', 'cursos de pestañas', 'insumos pestañas', 'lashista', 'micaela martinez', 'argentina', 'cosmética'],
   alternates: {
     canonical: '/',
   },
@@ -25,9 +29,9 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_AR',
     url: baseUrl,
-    siteName: 'Micaela Martinez - Extenciones de Pestañas',
-    title: 'Micaela Martinez - Extenciones de Pestañas',
-    description: 'Cursos y tienda de productos de extensiones de pestañas',
+    siteName: 'Micaela Martinez',
+    title: 'Micaela Martinez | Cursos de Pestañas y Tienda Profesional',
+    description: 'Academia líder en extensiones de pestañas y lifting en Argentina. Cursos online y presenciales, insumos profesionales y cosmética exclusiva para lashistas.',
   },
   robots: {
     index: true,

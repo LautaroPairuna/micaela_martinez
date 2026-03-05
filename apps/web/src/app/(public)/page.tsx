@@ -79,7 +79,7 @@ function SeeAllButton({
 export const metadata: Metadata = {
   title: "Inicio",
   description:
-    "Cursos y tienda de cosmética minimalista y elegante por Micaela Pestañas.",
+    "Descubrí la excelencia en extensiones de pestañas. Cursos profesionales, productos de alta calidad y todo lo que necesitás para potenciar tu carrera como lashista.",
   alternates: { canonical: "/" },
 };
 

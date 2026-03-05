@@ -130,16 +130,7 @@ function HeaderInner() {
         {/* Columna 1: Logo + Navegación */}
         <div className="flex items-center gap-x-8">
           <Link href="/" aria-label="Micaela Pestañas — Inicio" className="flex items-center">
-            <Image
-              src="/images/mica_pestanas_logo.svg"
-              alt="Micaela Pestañas"
-              width={220}
-              height={40}
-              priority
-              fetchPriority="high"
-              sizes="(min-width:1280px) 220px, 160px"
-              className="h-20 w-auto my-auto"
-            />
+            Inicio
           </Link>
 
           <nav className="flex items-center gap-6 text-sm" aria-label="Principal">
