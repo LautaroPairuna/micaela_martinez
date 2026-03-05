@@ -338,9 +338,6 @@ export function MercadoPagoBricks({
            paymentMethodsCfg = {
               creditCard: 'all',
               debitCard: 'all',
-              ticket: [],
-              bankTransfer: [],
-              mercadoPago: [],
               maxInstallments: 1,
               minInstallments: 1,
            };
@@ -348,11 +345,10 @@ export function MercadoPagoBricks({
            paymentMethodsCfg = {
               creditCard: 'all',
               debitCard: 'all',
-              ticket: [],
-              bankTransfer: [],
-              mercadoPago: [],
            };
         }
+
+        const brickType: 'cardPayment' = 'cardPayment';
 
         const settings: any = {
           initialization: init,
@@ -471,7 +467,6 @@ export function MercadoPagoBricks({
           },
         };
 
-        const brickType = 'payment';
         const controller = await bricks.create(brickType, containerIdRef.current, settings);
         if (!cancelled) controllerRef.current = controller;
 
