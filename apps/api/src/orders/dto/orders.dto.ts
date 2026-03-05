@@ -52,9 +52,10 @@ export class PayOrderDto {
   @IsString()
   payment_method_id!: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
-  issuer_id!: number;
+  issuer_id?: number;
 
   @IsInt()
   @Min(1)
@@ -80,6 +81,10 @@ export class PayOrderDto {
 export class SubscribeOrderDto {
   @IsString()
   card_token_id!: string;
+
+  @IsOptional()
+  @IsString()
+  payment_method_id?: string;
 
   @IsString()
   payer_email!: string;

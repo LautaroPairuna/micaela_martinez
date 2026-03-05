@@ -5,7 +5,7 @@ export type MpFrequencyType = 'months' | 'days';
 
 export interface MercadoPagoSubscriptionData {
   token: string; // card_token_id
-  payment_method_id: string; // compat, no se usa en preapproval
+  payment_method_id?: string;
   transaction_amount: number;
   description: string;
   external_reference: string; // orderId string
@@ -156,6 +156,9 @@ export class MpSubscriptionService {
       external_reference: subscriptionData.external_reference,
       payer_email: subscriptionData.payer.email,
       card_token_id: subscriptionData.token,
+      ...(subscriptionData.payment_method_id
+        ? { payment_method_id: subscriptionData.payment_method_id }
+        : {}),
       auto_recurring: {
         frequency: subscriptionData.frequency,
         frequency_type: frequencyType,
@@ -452,7 +455,7 @@ export class MpSubscriptionService {
     return this.createSubscription(
       {
         token: input.card_token_id,
-        payment_method_id: '', // no usado
+        payment_method_id: input.payment_method_id,
         transaction_amount: input.auto_recurring.transaction_amount,
         description: input.reason,
         external_reference: input.external_reference,

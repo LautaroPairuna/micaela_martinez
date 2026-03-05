@@ -323,6 +323,7 @@ export class OrdersService {
         external_reference: String(order.id),
         payer_email: dto.payer_email,
         card_token_id: dto.card_token_id,
+        payment_method_id: dto.payment_method_id,
         auto_recurring: {
           frequency: dto.frequency,
           frequency_type: dto.frequency_type,

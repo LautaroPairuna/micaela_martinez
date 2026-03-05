@@ -69,7 +69,7 @@ export interface Order {
 export interface MercadoPagoPaymentData {
   token: string;
   payment_method_id: string;
-  issuer_id: number;
+  issuer_id?: number;
   installments: number;
   payer_email: string;
   payer_identification?: { type: string; number: string };
@@ -80,6 +80,7 @@ export interface MercadoPagoPaymentData {
 // DTO para suscripciones (alineado con backend SubscribeOrderDto)
 export interface MercadoPagoSubscriptionData {
   card_token_id: string;
+  payment_method_id?: string;
   payer_email: string;
   payer_identification?: { type: string; number: string };
   device_session_id?: string;

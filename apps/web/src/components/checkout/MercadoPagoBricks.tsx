@@ -55,7 +55,7 @@ function parseBrickData(cardFormData: unknown) {
     ? d.installments
     : (Number(d.installments) || 1);
 
-  const issuerId = d.issuer_id != null ? Number(d.issuer_id) : 0;
+  const issuerId = d.issuer_id != null ? Number(d.issuer_id) : undefined;
   
   // Extraer paymentMethodId de cualquiera de los campos posibles
   const paymentMethodId = d.payment_method_id || d.paymentMethodId || d.selectedPaymentMethod;
@@ -412,6 +412,7 @@ export function MercadoPagoBricks({
                 const orderResult = isSubscription
                   ? await createSubscription(currentOrderId, {
                       card_token_id: token,
+                      payment_method_id: paymentMethodId,
                       payer_email: email,
                       payer_identification: {
                         type: asStringOrNull(payer?.identification?.type) || 'DNI',
@@ -424,7 +425,7 @@ export function MercadoPagoBricks({
                   : await processMercadoPagoPayment(currentOrderId, {
                       token,
                       payment_method_id: paymentMethodId,
-                      issuer_id: issuerId,
+                      ...(issuerId != null ? { issuer_id: issuerId } : {}),
                       installments,
                       payer_email: email,
                       payer_identification: {
