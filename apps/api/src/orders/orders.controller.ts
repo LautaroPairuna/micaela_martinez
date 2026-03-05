@@ -62,4 +62,12 @@ export class OrdersController {
   ) {
     return this.orders.subscribe(this.userId(user), id, dto);
   }
+
+  @Post(':id/subscription/cancel')
+  async cancelSubscription(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.orders.cancelSubscription(this.userId(user), id);
+  }
 }

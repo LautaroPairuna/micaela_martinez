@@ -44,6 +44,19 @@ function normalizeFrequencyType(v: string): MpFrequencyType {
   return 'months';
 }
 
+function buildAutoRecurringStartDate(
+  frequency: number,
+  frequencyType: MpFrequencyType,
+): string {
+  const next = new Date();
+  if (frequencyType === 'months') {
+    next.setMonth(next.getMonth() + frequency);
+  } else {
+    next.setDate(next.getDate() + frequency);
+  }
+  return next.toISOString();
+}
+
 function safeJsonParse(text: string): any {
   try {
     return JSON.parse(text);
@@ -133,6 +146,10 @@ export class MpSubscriptionService {
     const frequencyType = normalizeFrequencyType(
       subscriptionData.frequency_type,
     );
+    const startDate = buildAutoRecurringStartDate(
+      subscriptionData.frequency,
+      frequencyType,
+    );
 
     const preapprovalPayload: Record<string, any> = {
       reason: subscriptionData.description,
@@ -144,6 +161,7 @@ export class MpSubscriptionService {
         frequency_type: frequencyType,
         transaction_amount: subscriptionData.transaction_amount,
         currency_id: this.currencyId,
+        start_date: startDate,
       },
       back_url: backUrl,
       status: 'authorized',
@@ -162,7 +180,7 @@ export class MpSubscriptionService {
       `sub-${String(subscriptionData.external_reference).trim()}`;
 
     this.logger.log(
-      `Creating MP preapproval: ref=${preapprovalPayload.external_reference} amount=${preapprovalPayload.auto_recurring.transaction_amount} freq=${preapprovalPayload.auto_recurring.frequency}/${preapprovalPayload.auto_recurring.frequency_type} notif=${notif ? 'yes' : 'no'}`,
+      `Creating MP preapproval: ref=${preapprovalPayload.external_reference} amount=${preapprovalPayload.auto_recurring.transaction_amount} freq=${preapprovalPayload.auto_recurring.frequency}/${preapprovalPayload.auto_recurring.frequency_type} start=${preapprovalPayload.auto_recurring.start_date} notif=${notif ? 'yes' : 'no'}`,
     );
 
     try {

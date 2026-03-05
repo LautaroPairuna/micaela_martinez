@@ -1,9 +1,15 @@
 // apps/api/src/subscription/subscription.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Cron } from '@nestjs/schedule';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TipoNotificacion, EstadoOrden } from '@prisma/client';
+import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
 
 @Injectable()
 export class SubscriptionService {
@@ -12,6 +18,7 @@ export class SubscriptionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly mpSubscriptionService: MpSubscriptionService,
   ) {}
 
   /**
@@ -335,6 +342,88 @@ export class SubscriptionService {
       this.logger.error(`Error al cancelar suscripción: ${msg}`, error as any);
       return false;
     }
+  }
+
+  async cancelOrderSubscription(userId: number, orderId: number) {
+    if (!Number.isFinite(userId) || !Number.isFinite(orderId)) {
+      throw new BadRequestException('Parámetros inválidos');
+    }
+
+    const order = await this.prisma.orden.findFirst({
+      where: {
+        id: Number(orderId),
+        usuarioId: Number(userId),
+        tipo: 'SUBSCRIPTION',
+      },
+      select: {
+        id: true,
+        suscripcionId: true,
+        metadatos: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Orden de suscripción no encontrada');
+    }
+    if (!order.suscripcionId) {
+      throw new BadRequestException(
+        'La orden no tiene una suscripción asociada',
+      );
+    }
+
+    const cancellation = await this.mpSubscriptionService.cancelSubscription(
+      order.suscripcionId,
+    );
+
+    const currentMeta = parseProgreso(order.metadatos) ?? {};
+    const currentSubscription =
+      currentMeta.subscription && typeof currentMeta.subscription === 'object'
+        ? currentMeta.subscription
+        : {};
+
+    await this.prisma.orden.update({
+      where: { id: order.id },
+      data: {
+        suscripcionActiva: false,
+        suscripcionProximoPago: null,
+        metadatos: {
+          ...currentMeta,
+          subscription: {
+            ...currentSubscription,
+            status: 'cancelled',
+            cancelledAt: new Date().toISOString(),
+            cancellation,
+          },
+        },
+      },
+    });
+
+    const enrollmentsCancelled = await this.cancelSubscription(
+      String(userId),
+      String(order.id),
+    );
+
+    if (!enrollmentsCancelled) {
+      await this.prisma.inscripcion.updateMany({
+        where: {
+          usuarioId: Number(userId),
+          OR: [
+            { subscriptionOrderId: order.id },
+            { subscriptionId: order.suscripcionId },
+          ],
+        },
+        data: {
+          subscriptionActive: false,
+        },
+      });
+    }
+
+    return {
+      ok: true,
+      orderId: order.id,
+      subscriptionId: order.suscripcionId,
+      status: 'cancelled',
+    };
   }
 }
 

@@ -13,6 +13,7 @@ import {
 } from './dto/orders.dto';
 import { MpPaymentService } from '../mercadopago/mp-payment.service';
 import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
 
@@ -27,6 +28,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly mpPayment: MpPaymentService,
     private readonly mpSub: MpSubscriptionService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   async createFromCart(userId: number, dto: CreateOrderDto) {
@@ -412,6 +414,10 @@ export class OrdersService {
     }
 
     return mpRes;
+  }
+
+  async cancelSubscription(userId: number, orderId: number) {
+    return this.subscriptionService.cancelOrderSubscription(userId, orderId);
   }
 }
 
