@@ -1,3 +1,5 @@
+//src/lib/api-proxy
+
 import { getServerHeaders } from './server-utils';
 
 type NextInit = RequestInit & { next?: { revalidate?: number | false; tags?: string[] } };

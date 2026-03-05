@@ -95,7 +95,18 @@ export async function createOrder(orderData: CreateOrderRequest): Promise<Order>
   // Limpiar undefined para asegurar que el JSON sea limpio
   const payload = Object.fromEntries(
     Object.entries(orderData).filter(([, v]) => v !== undefined)
-  );
+  ) as any;
+
+  // 🔥 Blindaje: si items existe pero NO es array, lo removemos
+  if ('items' in payload && !Array.isArray(payload.items)) {
+    console.warn('=== SDK: removing non-array items ===', payload.items);
+    delete payload.items;
+  }
+
+  // Si items es array vacío, también lo removemos
+  if (Array.isArray(payload.items) && payload.items.length === 0) {
+    delete payload.items;
+  }
 
   try {
     // Forzamos la cabecera Content-Type explícitamente, aunque api.post debería ponerla.

@@ -1,3 +1,4 @@
+//src/components/checkout/PaymentStep.tsx
 'use client';
 
 import { useState } from 'react';

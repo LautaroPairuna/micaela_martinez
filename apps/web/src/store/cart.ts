@@ -1,3 +1,5 @@
+//src/store/cart.ts
+
 'use client';
 
 import { create } from 'zustand';
@@ -7,7 +9,7 @@ import { cartApi } from '@/lib/sdk/cartApi';
 export type CartKind = 'product' | 'course';
 
 export type CartLineProduct = {
-  type: 'product';
+  type: 'product'; 
   id: string;
   slug: string;
   title: string;
