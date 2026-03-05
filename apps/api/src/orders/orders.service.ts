@@ -1,9 +1,7 @@
 //src/orders/orders.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto, OrderSource } from './dto/create-order.dto';
-import { PayOrderDto } from './dto/pay-order.dto';
-import { SubscribeOrderDto } from './dto/subscribe-order.dto';
+import { CreateOrderDto, OrderSource, PayOrderDto, SubscribeOrderDto } from './dto/orders.dto';
 import { MpPaymentService } from '../mercadopago/mp-payment.service';
 import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
 import { Decimal } from '@prisma/client/runtime/library';
