@@ -15,6 +15,10 @@ export enum EstadoOrden {
   REEMBOLSADO = 'REEMBOLSADO'
 }
 
+export enum OrderSource {
+  CART = 'cart',
+}
+
 export interface OrderItem {
   id: number;
   tipo: TipoItemOrden;
@@ -40,7 +44,7 @@ export interface OrderAddress {
 
 // DTO para crear orden (alineado con backend CreateOrderDto)
 export interface CreateOrderRequest {
-  source?: 'cart';
+  source?: OrderSource;
   mode?: 'COURSES_ONLY' | 'PRODUCTS_ONLY';
   direccionEnvioId?: number;
   direccionFacturacionId?: number;

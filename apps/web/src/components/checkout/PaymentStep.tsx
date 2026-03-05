@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useCheckout } from '@/store/checkout';
 import { useCart, cartSelectors } from '@/store/cart';
 import { useSession } from '@/hooks/useSession';
-import { createOrder, TipoItemOrden } from '@/lib/sdk/ordersApi';
+import { createOrder, TipoItemOrden, OrderSource } from '@/lib/sdk/ordersApi';
 import { Button } from '@/components/ui/Button';
 import { MercadoPagoBricks } from './MercadoPagoBricks';
 import { useToast } from '@/contexts/ToastContext';
@@ -147,7 +147,7 @@ export function PaymentStep() {
       
       // Simplificación: Enviaremos source='cart'.
       const newOrder = await createOrder({
-        source: 'cart',
+        source: OrderSource.CART,
         // TODO: Si el backend requiere ID de dirección, aquí deberíamos pasar shippingAddress.id
         // Si shippingAddress viene de una API que devuelve ID, úsalo.
         direccionEnvioId: shippingAddress.id ? Number(shippingAddress.id) : undefined,
