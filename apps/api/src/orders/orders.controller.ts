@@ -15,6 +15,7 @@ export class OrdersController {
 
   @Post()
   async create(@Req() req: any, @Body() dto: CreateOrderDto) {
+    console.log('=== API: create order ===', { userId: this.userId(req), dto });
     return this.orders.createFromCart(this.userId(req), dto);
   }
 

@@ -90,8 +90,15 @@ export interface MercadoPagoSubscriptionData {
 
 // Crear una nueva orden (desde carrito)
 export async function createOrder(orderData: CreateOrderRequest): Promise<Order> {
-  const response = await api.post<Order>('/orders', orderData);
-  return response.data;
+  console.log('=== SDK: createOrder called ===', orderData);
+  try {
+    const response = await api.post<Order>('/orders', orderData);
+    console.log('=== SDK: createOrder response ===', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('=== SDK: createOrder error ===', error.response?.data || error);
+    throw error;
+  }
 }
 
 // Obtener órdenes del usuario
