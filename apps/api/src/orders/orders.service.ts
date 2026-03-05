@@ -30,6 +30,10 @@ export class OrdersService {
   ) {}
 
   async createFromCart(userId: number, dto: CreateOrderDto) {
+    if (!Number.isFinite(userId) || userId <= 0) {
+      throw new BadRequestException('Usuario inválido');
+    }
+
     if (dto.source && dto.source !== OrderSource.CART) {
       // Lógica futura para órdenes directas (sin carrito)
       // Por ahora, solo soportamos carrito

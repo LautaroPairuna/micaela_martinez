@@ -21,7 +21,8 @@ export class OrdersController {
 
   // Ajustá esto según tu auth guard (JWT). Asumo req.user.id.
   private userId(req: any) {
-    return Number(req.user?.id);
+    const rawUserId = req.user?.id ?? req.user?.sub;
+    return Number(rawUserId);
   }
 
   @Post()
