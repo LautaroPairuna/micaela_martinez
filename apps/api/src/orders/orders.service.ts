@@ -22,6 +22,16 @@ function dec(n: number) {
   return new Decimal(n.toFixed(2));
 }
 
+function applyDiscount(price: number, discount?: number | null) {
+  const safePrice = Number.isFinite(price) ? Math.max(0, price) : 0;
+  const rawDiscount = Number(discount ?? 0);
+  const safeDiscount = Number.isFinite(rawDiscount)
+    ? Math.min(100, Math.max(0, rawDiscount))
+    : 0;
+  const final = safePrice * (1 - safeDiscount / 100);
+  return Math.max(0, final);
+}
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -98,7 +108,7 @@ export class OrdersService {
           throw new BadRequestException(
             `Curso ${it.cursoId} inválido o no publicado`,
           );
-        const price = Number(c.precio) - Number(c.descuento || 0);
+        const price = applyDiscount(Number(c.precio), Number(c.descuento ?? 0));
         itemsOrden.push({
           tipo: 'CURSO',
           refId: c.id,
@@ -116,7 +126,7 @@ export class OrdersService {
           );
         if (p.stock < it.cantidad)
           throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
-        const price = Number(p.precio) - Number(p.descuento || 0);
+        const price = applyDiscount(Number(p.precio), Number(p.descuento ?? 0));
         itemsOrden.push({
           tipo: 'PRODUCTO',
           refId: p.id,

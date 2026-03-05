@@ -10,6 +10,7 @@ type CourseForCartButton = {
   titulo: string;
   precio: number;
   portadaUrl?: string | null;
+  descuento?: number | null;
 };
 
 export function BuyCourseButton({
@@ -34,6 +35,7 @@ export function BuyCourseButton({
         title: c.titulo,
         price: c.precio,
         image: c.portadaUrl ?? null,
+        descuento: c.descuento,
       });
 
       router.push('/checkout');

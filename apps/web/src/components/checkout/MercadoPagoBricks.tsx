@@ -118,6 +118,20 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 function normalizeError(err: unknown): PaymentErrorData {
+  if (isRecord(err)) {
+    const cause = asStringOrNull(err.cause);
+    const message = asStringOrNull(err.message);
+    if (
+      cause === 'missing_payment_information' &&
+      message === 'payment_method_not_in_allowed_types'
+    ) {
+      return {
+        message:
+          'El medio elegido no está permitido para este checkout. Probá con una tarjeta de crédito o débito.',
+        details: err,
+      };
+    }
+  }
   if (err instanceof Error) return { message: err.message, details: err };
   if (typeof err === 'string') return { message: err };
   return { message: 'Error desconocido', details: err };
@@ -245,7 +259,15 @@ export function MercadoPagoBricks({
 
         let paymentMethodsCfg: any;
         if (isSubscription) {
-           paymentMethodsCfg = { maxInstallments: 1 };
+           paymentMethodsCfg = {
+              creditCard: 'all',
+              debitCard: 'all',
+              ticket: [],
+              bankTransfer: [],
+              mercadoPago: [],
+              maxInstallments: 1,
+              minInstallments: 1,
+           };
         } else {
            paymentMethodsCfg = {
               creditCard: 'all',
@@ -372,7 +394,7 @@ export function MercadoPagoBricks({
           },
         };
 
-        const brickType = isSubscription ? 'cardPayment' : 'payment';
+        const brickType = 'payment';
         const controller = await bricks.create(brickType, containerIdRef.current, settings);
         if (!cancelled) controllerRef.current = controller;
 

@@ -12,6 +12,7 @@ import { AddCourseButton } from '@/components/cart/AddCourseButton';
 import { Star, BookOpen, Clock } from 'lucide-react';
 import { useEnrollmentProgressSafe } from '@/components/courses/EnrollmentProgressProvider';
 import { formatDuration } from '@/lib/utils';
+import { calculatePrice } from '@/lib/price-utils';
 
 type NivelCurso = 'BASICO' | 'INTERMEDIO' | 'AVANZADO';
 const NIVEL_LABEL: Record<NivelCurso, string> = {
@@ -44,6 +45,10 @@ type InscripcionMini = {
 export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscripcion?: InscripcionMini }) {
 
   const nivelLabel = c.nivel ? NIVEL_LABEL[c.nivel] : undefined;
+  const { final: precioFinal, original: precioOriginal } = calculatePrice(
+    c.precio,
+    c.descuento,
+  );
 
   const progressCtx = useEnrollmentProgressSafe();
   const providerPct = progressCtx ? progressCtx.getCourseProgressBySlug(c.slug) : 0;
@@ -176,7 +181,7 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
                 {!isEnrolled && (
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                      <Price value={c.precio} tone="pink" />
+                      <Price value={precioFinal} compareAt={precioOriginal} tone="pink" />
                       <span className="text-xs text-[var(--muted)]">Suscripción mensual</span>
                     </div>
                   </div>
@@ -204,7 +209,7 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
                         id: c.id,
                         slug: c.slug,
                         titulo: c.titulo,
-                        precio: c.precio,
+                        precio: precioFinal,
                         portadaUrl: c.portadaUrl,
                         descuento: c.descuento
                       }}

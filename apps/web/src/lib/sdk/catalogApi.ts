@@ -55,6 +55,7 @@ export type CourseQuery = {
 };
 export type CourseListItem = {
   id: string; slug: string; titulo: string; precio: number;
+  descuento?: number | null;
   portadaUrl?: string | null; ratingProm?: number | null; ratingConteo?: number | null;
   totalLessons?: number;
   totalDuration?: number;

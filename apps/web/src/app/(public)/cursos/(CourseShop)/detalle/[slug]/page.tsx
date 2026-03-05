@@ -22,6 +22,7 @@ import { formatDuration } from '@/lib/utils';
 import type { Nivel } from '@/lib/routes';
 import { BuyCourseButton } from '@/components/cart/BuyCourseButton';
 import { CourseDetailClient } from '@/components/courses/CourseDetailClient';
+import { calculatePrice } from '@/lib/price-utils';
 
 // ✅ Wrapper client que limita el sticky hasta el final de la sección
 import { CourseDetailStickyShell } from '@/components/courses/CourseDetailStickyShell';
@@ -111,6 +112,10 @@ export default async function CursoPage({
   }
 
   const c = await getCourseBySlug(slug);
+  const { final: courseFinalPrice, original: courseOriginalPrice } = calculatePrice(
+    c.precio,
+    c.descuento,
+  );
 
   const session = await auth();
   let hasAccess = false;
@@ -480,7 +485,11 @@ export default async function CursoPage({
             <div className="bg-[var(--bg)] border border-default shadow-2xl rounded-b-lg lg:rounded-lg overflow-hidden relative backdrop-blur-sm">
               <div className="p-6 space-y-6">
                 <div className="flex items-baseline gap-2">
-                  <Price value={c.precio} className="text-3xl font-bold text-[var(--fg)]" />
+                  <Price
+                    value={courseFinalPrice}
+                    compareAt={courseOriginalPrice}
+                    className="text-3xl font-bold text-[var(--fg)]"
+                  />
                 </div>
 
                 <div className="space-y-3">
@@ -494,7 +503,7 @@ export default async function CursoPage({
                   ) : (
                     <>
                       <BuyCourseButton
-                        c={c}
+                        c={{ ...c, precio: courseFinalPrice }}
                         className="w-full py-3 bg-[var(--pink)] text-white font-bold text-base hover:bg-[var(--pink-dark)] transition-all shadow-[0_0_20px_rgba(255,192,203,0.3)] hover:shadow-[0_0_30px_rgba(255,192,203,0.5)] rounded-lg"
                       />
                       <button className="w-full py-3 border border-[var(--pink)]/30 text-[var(--pink)] font-bold text-base hover:bg-[var(--pink)]/10 transition-colors rounded-lg">
