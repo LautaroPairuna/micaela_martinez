@@ -92,11 +92,24 @@ export interface MercadoPagoSubscriptionData {
 export async function createOrder(orderData: CreateOrderRequest): Promise<Order> {
   console.log('=== SDK: createOrder called ===', orderData);
   try {
-    const response = await api.post<Order>('/orders', orderData);
+    // Forzamos la cabecera Content-Type explícitamente, aunque api.post debería ponerla.
+    // Esto es para asegurar que no se pierda en el camino.
+    const response = await api.post<Order>('/orders', orderData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
     console.log('=== SDK: createOrder response ===', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('=== SDK: createOrder error ===', error.response?.data || error);
+    console.error('=== SDK: createOrder error ===', error.message || error);
+    // Si el error viene del backend (apiProxy lanza Error con el body), intentamos parsearlo
+    if (error.message && error.message.includes('HTTP 400')) {
+       try {
+         const jsonPart = error.message.split('\n')[1];
+         console.error('=== SDK: Backend Validation Error ===', JSON.parse(jsonPart));
+       } catch {}
+    }
     throw error;
   }
 }

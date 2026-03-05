@@ -37,13 +37,18 @@ export async function apiProxy<T>(path: string, init?: NextInit) {
   // 2) En SSR, adjuntar cookies entrantes (para sesiones httpOnly)
   const ssrHeaders = await getSSRRequestHeaders();
 
+  // 3) Construir headers finales
+  // Aseguramos Content-Type si hay body y no es FormData
+  const isJson = init?.body && typeof init.body === 'string' && (init.body.startsWith('{') || init.body.startsWith('['));
+  const finalHeaders: HeadersInit = {
+    ...(isJson ? { 'Content-Type': 'application/json' } : {}),
+    ...(ssrHeaders || {}),
+    ...(init?.headers || {}),
+  };
+
   const res = await fetch(url, {
     ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(ssrHeaders || {}),
-      ...(init?.headers || {}),
-    },
+    headers: finalHeaders,
     credentials: 'include', // 👈 Enviar cookies automáticamente en cliente
     cache: init?.cache,
     next: init?.next,
