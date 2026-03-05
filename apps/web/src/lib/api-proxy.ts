@@ -56,7 +56,8 @@ export async function apiProxy<T>(path: string, init?: NextInit) {
   const finalHeaders: HeadersInit = {
     ...(ssrHeaders || {}),
     ...(init?.headers || {}),
-    ...(isPlainObjectBody || (isStringBody && (body.startsWith('{') || body.startsWith('[')))
+    // Si detectamos que es un objeto plano o un string JSON, forzamos application/json
+    ...(isPlainObjectBody || (isStringBody && (body.trim().startsWith('{') || body.trim().startsWith('[')))
       ? { 'Content-Type': 'application/json', Accept: 'application/json' }
       : {}),
   };

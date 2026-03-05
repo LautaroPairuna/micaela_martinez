@@ -40,9 +40,9 @@ export class CreateOrderDto {
   @IsNumber()
   direccionFacturacionId?: number;
 
-  // ✅ Fix blindado: Si source es undefined o CART, items NO se valida.
-  // Si es DIRECT, items debe ser array no vacío.
-  @ValidateIf((o) => (o.source ?? OrderSource.CART) !== OrderSource.CART)
+  // ✅ Fix blindado: Solo validar items si es DIRECT explícitamente.
+  // Cualquier otra cosa (undefined, null, CART) se asume como CART.
+  @ValidateIf((o) => (o.source ?? OrderSource.CART) === OrderSource.DIRECT)
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
