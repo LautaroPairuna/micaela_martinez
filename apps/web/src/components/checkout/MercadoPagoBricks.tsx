@@ -305,7 +305,9 @@ export function MercadoPagoBricks({
 
               try {
                 const currentOrderId = orderId ?? (await onCreateOrder());
-                const attemptId = crypto.randomUUID(); // Generamos idempotencia
+                const attemptId = (typeof globalThis.crypto?.randomUUID === 'function') 
+                  ? globalThis.crypto.randomUUID() 
+                  : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
                 console.log('=== FRONTEND: Procesando ===', { currentOrderId, attemptId });
 

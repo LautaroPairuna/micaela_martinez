@@ -91,10 +91,16 @@ export interface MercadoPagoSubscriptionData {
 // Crear una nueva orden (desde carrito)
 export async function createOrder(orderData: CreateOrderRequest): Promise<Order> {
   console.log('=== SDK: createOrder called ===', orderData);
+
+  // Limpiar undefined para asegurar que el JSON sea limpio
+  const payload = Object.fromEntries(
+    Object.entries(orderData).filter(([, v]) => v !== undefined)
+  );
+
   try {
     // Forzamos la cabecera Content-Type explícitamente, aunque api.post debería ponerla.
     // Esto es para asegurar que no se pierda en el camino.
-    const response = await api.post<Order>('/orders', orderData, {
+    const response = await api.post<Order>('/orders', payload, {
       headers: {
         'Content-Type': 'application/json'
       }

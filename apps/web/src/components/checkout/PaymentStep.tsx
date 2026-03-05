@@ -152,6 +152,11 @@ export function PaymentStep() {
         // Si shippingAddress viene de una API que devuelve ID, úsalo.
         direccionEnvioId: shippingAddress.id ? Number(shippingAddress.id) : undefined,
         direccionFacturacionId: billingAddress?.id ? Number(billingAddress.id) : undefined,
+        metadatos: {
+          userAgent: navigator.userAgent,
+          shippingAddressSnapshot: shippingAddress,
+          billingAddressSnapshot: billingAddress || shippingAddress,
+        },
       });
 
       console.log('=== FRONTEND: Nueva orden creada ===', { id: newOrder.id, total: newOrder.total });
