@@ -5,8 +5,9 @@ export enum OrderSource {
 }
 
 export class CreateOrderDto {
+  @IsOptional()
   @IsEnum(OrderSource)
-  source: OrderSource = OrderSource.CART;
+  source?: OrderSource = OrderSource.CART;
 
   // Opcional: para snapshot/utm/etc.
   @IsOptional()

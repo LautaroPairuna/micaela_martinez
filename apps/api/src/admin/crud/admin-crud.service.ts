@@ -693,6 +693,19 @@ export class AdminCrudService {
       );
     }
 
+    // Verificar unicidad de slug antes de update (si aplica)
+    if (data.slug) {
+      const existing = await client.findFirst({
+        where: {
+          slug: data.slug,
+          NOT: { [idField.name]: parsedId },
+        },
+      });
+      if (existing) {
+        throw new BadRequestException(`El slug '${data.slug}' ya está en uso por otro registro.`);
+      }
+    }
+
     const before = await client.findUnique({
       where: { [idField.name]: parsedId },
     });
