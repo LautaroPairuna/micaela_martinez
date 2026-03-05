@@ -117,7 +117,7 @@ function HeaderInner() {
     <header
       className={[
         'top-0 z-40 relative',
-        'bg-[var(--bg)] border-b border-default py-6',
+        'bg-[var(--bg)] border-b border-default py-4',
         'after:content-[""] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-px',
         'after:h-[2px] after:bg-gradient-to-r after:from-transparent after:via-[var(--gold-strong)]/90 after:to-transparent',
         'after:pointer-events-none',
