@@ -44,7 +44,7 @@ export interface OrderAddress {
 
 // DTO para crear orden (alineado con backend CreateOrderDto)
 export interface CreateOrderRequest {
-  source?: OrderSource;
+  source?: OrderSource | 'cart'; // Permitimos string 'cart' por compatibilidad
   mode?: 'COURSES_ONLY' | 'PRODUCTS_ONLY';
   direccionEnvioId?: number;
   direccionFacturacionId?: number;
