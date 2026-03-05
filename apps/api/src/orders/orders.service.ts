@@ -206,6 +206,23 @@ export class OrdersService {
 
     // idempotencia por intento
     const idemKey = `pay-${orderId}-${dto.attemptId}`;
+    const mpItems = order.items.map((item) => {
+      const isCourse = item.tipo === 'CURSO';
+      const image = isCourse ? item.curso?.portada : item.producto?.imagen;
+      const title = item.titulo?.trim() || (isCourse ? 'Curso' : 'Producto');
+
+      return {
+        id: `${isCourse ? 'COURSE' : 'PRODUCT'}-${item.refId}`,
+        title,
+        description: isCourse
+          ? `Acceso al curso ${title}`
+          : `Compra de producto ${title}`,
+        ...(image ? { picture_url: image } : {}),
+        category_id: isCourse ? 'education' : 'others',
+        quantity: Number(item.cantidad ?? 1),
+        unit_price: Number(item.precioUnitario ?? 0),
+      };
+    });
 
     // Crear pago en MP
     const mpRes = await this.mpPayment.createPayment(
@@ -221,6 +238,9 @@ export class OrdersService {
           identification: dto.payer_identification,
         },
         external_reference: String(order.id),
+        additional_info: {
+          items: mpItems,
+        },
       },
       idemKey,
     );

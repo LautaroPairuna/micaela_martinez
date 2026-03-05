@@ -15,10 +15,15 @@ import type { JwtUser } from '../auth/types/jwt-user';
 
 interface CreatePreferenceDto {
   items: Array<{
+    id?: string;
     title: string;
+    description?: string;
+    category_id?: string;
+    picture_url?: string;
     quantity: number;
     unit_price: number;
   }>;
+  external_reference?: string;
   payer?: {
     email?: string;
   };
@@ -87,11 +92,21 @@ export class PaymentController {
 
       const userId = user.sub;
       const userEmail = user.email;
+      const now = Date.now();
+      const defaultExternalReference = `pref_${userId}_${now}`;
+      const externalReference =
+        preferenceData.external_reference?.trim() || defaultExternalReference;
 
       // Preparar los datos para MercadoPago
       const mpPreferenceData = {
-        items: preferenceData.items.map((item) => ({
+        items: preferenceData.items.map((item, index) => ({
+          id: item.id?.trim() || `ITEM-${index + 1}`,
           title: item.title,
+          description: item.description?.trim() || item.title,
+          category_id: item.category_id?.trim() || 'others',
+          ...(item.picture_url?.trim()
+            ? { picture_url: item.picture_url.trim() }
+            : {}),
           quantity: item.quantity,
           unit_price: item.unit_price,
           currency_id: 'ARS',
@@ -101,7 +116,7 @@ export class PaymentController {
         },
         back_urls: preferenceData.back_urls,
         auto_return: 'approved',
-        external_reference: `user_${userId}_${Date.now()}`,
+        external_reference: externalReference,
         notification_url: `${process.env.API_BASE_URL || process.env.PUBLIC_URL || 'http://localhost:3001'}/api/payment/mercadopago/webhook`,
       };
 

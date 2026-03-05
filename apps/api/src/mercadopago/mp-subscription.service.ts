@@ -52,6 +52,18 @@ function safeJsonParse(text: string): any {
   }
 }
 
+function normalizeMpErrorDetail(data: any, rawText: string): string {
+  const candidate =
+    data?.message || data?.error || rawText || 'Error desconocido';
+  if (typeof candidate === 'string') return candidate;
+  if (Array.isArray(candidate)) return candidate.map(String).join(' | ');
+  try {
+    return JSON.stringify(candidate);
+  } catch {
+    return String(candidate);
+  }
+}
+
 @Injectable()
 export class MpSubscriptionService {
   private readonly logger = new Logger(MpSubscriptionService.name);
@@ -173,9 +185,11 @@ export class MpSubscriptionService {
           response.headers.get('x-request-id') ||
           response.headers.get('X-Request-Id') ||
           null;
+        const detail = normalizeMpErrorDetail(data, text);
+        const detailUpper = detail.toUpperCase();
 
         this.logger.error(
-          `MP preapproval error: status=${response.status} reqId=${mpRequestId} detail=${data?.message || data?.error || text}`,
+          `MP preapproval error: status=${response.status} reqId=${mpRequestId} detail=${detail}`,
         );
 
         if (response.status >= 500) {
@@ -184,9 +198,26 @@ export class MpSubscriptionService {
               message: 'MercadoPago upstream error',
               mpStatus: response.status,
               mpRequestId,
-              detail: data?.message || data?.error || data,
+              detail,
             },
             HttpStatus.BAD_GATEWAY,
+          );
+        }
+
+        if (
+          response.status === 401 &&
+          (detailUpper.includes('CC_VAL_433') ||
+            detailUpper.includes('CREDIT CARD VALIDATION HAS FAILED'))
+        ) {
+          throw new HttpException(
+            {
+              message: 'La tarjeta fue rechazada por validación',
+              code: 'CARD_VALIDATION_FAILED',
+              mpStatus: response.status,
+              mpRequestId,
+              detail,
+            },
+            HttpStatus.PAYMENT_REQUIRED,
           );
         }
 
@@ -195,7 +226,7 @@ export class MpSubscriptionService {
             message: 'Error al crear suscripción',
             mpStatus: response.status,
             mpRequestId,
-            detail: data?.message || data?.error || data,
+            detail,
           },
           HttpStatus.BAD_REQUEST,
         );

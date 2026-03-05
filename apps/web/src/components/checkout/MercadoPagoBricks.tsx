@@ -336,12 +336,19 @@ export function MercadoPagoBricks({
                       attemptId,
                     });
 
+                const resolvedStatus =
+                  isRecord(orderResult) && typeof orderResult.estado === 'string'
+                    ? orderResult.estado
+                    : isRecord(orderResult) && typeof orderResult.status === 'string'
+                      ? orderResult.status
+                      : 'PENDING';
+
                 onPaymentSuccess({
                   orderId: currentOrderId,
                   paymentMethodId,
                   installments,
                   amount,
-                  status: orderResult.estado,
+                  status: resolvedStatus,
                 });
               } catch (e) {
                 console.error('=== FRONTEND: Error en pago ===', e);
