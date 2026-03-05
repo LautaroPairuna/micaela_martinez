@@ -660,7 +660,10 @@ export class AdminMetaService {
           type: String(field?.type ?? ''),
           kind,
           isId: !!field?.isId,
-          isRequired: !!field?.isRequired,
+          isRequired:
+            fieldDef?.isRequired !== undefined
+              ? fieldDef.isRequired
+              : !!field?.isRequired,
           isList: !!field?.isList,
           isEnum,
 
@@ -793,7 +796,10 @@ export class AdminMetaService {
           type: String(field.type ?? ''),
           kind,
           isId: !!field.isId,
-          isRequired: !!field.isRequired,
+          isRequired:
+            fieldDef?.isRequired !== undefined
+              ? fieldDef.isRequired
+              : !!field.isRequired,
           isList: !!field.isList,
           isEnum,
           relationModel:

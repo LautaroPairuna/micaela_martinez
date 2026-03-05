@@ -224,11 +224,9 @@ export function clearUserCache(): void {
    Perfil
 ──────────────────────────── */
 export async function getMe(opts?: NextOpts) {
-  if (opts?.cache !== 'no-store') {
-    const cached = getCachedUser();
-    if (cached) {
-      return cached;
-    }
+  const cached = getCachedUser();
+  if (opts?.cache !== 'no-store' && cached) {
+    return cached;
   }
   try {
     const raw = await apiProxy<BackendMe>('/users/me', { ...opts, cache: 'no-store' });
@@ -238,7 +236,15 @@ export async function getMe(opts?: NextOpts) {
       setCachedUser(user);
     }
     return user;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('HTTP 401')) {
+      clearUserCache();
+      return null;
+    }
+    if (cached) {
+      return cached;
+    }
+    console.error('getMe failed:', error);
     return null;
   }
 }

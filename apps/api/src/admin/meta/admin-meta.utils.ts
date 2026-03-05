@@ -290,7 +290,10 @@ export function buildAdminMetaFromDmmf(dmmf: DmmfLike): ResourceMeta[] {
         type: field.type,
         kind,
         isId: field.isId,
-        isRequired: field.isRequired,
+        isRequired:
+          fieldDef?.isRequired !== undefined
+            ? fieldDef.isRequired
+            : field.isRequired,
         isList: field.isList,
         isEnum,
         relationModel: field.relationName ?? undefined,

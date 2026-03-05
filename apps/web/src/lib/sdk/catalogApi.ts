@@ -12,6 +12,10 @@ export type PaginationMeta = {
   totalItems?: number; itemCount?: number; totalPages?: number; currentPage?: number; pages?: number;
 };
 export type ListResp<T> = { items: T[]; meta?: PaginationMeta; total?: number; page?: number; perPage?: number; };
+type ProxyRequestOptions = {
+  cache?: RequestCache;
+  next?: { revalidate?: number | false; tags?: string[] };
+};
 
 /* ───────────────── Productos ───────────────── */
 export type ProductQuery = {
@@ -152,9 +156,15 @@ export async function getRelatedProducts(categoriaSlug: string, excludeSlug?: st
 }
 
 /* ───────────────── Endpoints Cursos (vía proxy) ───────────────── */
-export async function getCourses(params: Partial<CourseQuery> = {}) {
+export async function getCourses(
+  params: Partial<CourseQuery> = {},
+  options?: ProxyRequestOptions,
+) {
   const qp = cleanCourseQuery(params);
-  return apiProxy<ListResp<CourseListItem>>(`/catalog/cursos${toQS(qp)}`, { next: { revalidate: 60, tags: ['courses'] } });
+  return apiProxy<ListResp<CourseListItem>>(`/catalog/cursos${toQS(qp)}`, {
+    ...options,
+    next: { revalidate: 60, tags: ['courses'], ...options?.next },
+  });
 }
 export async function getCourseFacets(params: Partial<CourseQuery> = {}) {
   const qp = cleanCourseQuery(params);
@@ -197,8 +207,11 @@ export async function getHeroImages() {
 }
 
 /* ───────────────── Safe variants ───────────────── */
-export async function safeGetCourses(params: Partial<CourseQuery> = {}) {
-  try { return await getCourses(params); }
+export async function safeGetCourses(
+  params: Partial<CourseQuery> = {},
+  options?: ProxyRequestOptions,
+) {
+  try { return await getCourses(params, options); }
   catch (e) { console.error('getCourses failed:', e); return { items: [], meta: { page: 1, pages: 1 } } as ListResp<CourseListItem>; }
 }
 export async function safeGetProducts(params: Partial<ProductQuery> = {}) {

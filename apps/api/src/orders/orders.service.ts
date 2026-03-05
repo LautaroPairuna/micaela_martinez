@@ -377,43 +377,55 @@ export class OrdersService {
       },
     });
 
-    // Crear/actualizar inscripciones “pendientes/activas” según tu lógica
-    // Si tus cursos son por suscripción: activar al primer cobro aprobado (webhook).
-    // Igual dejamos marcados los campos para no perder la vinculación:
-    const courseItems = order.items.filter((i) => i.tipo === 'CURSO');
-    if (courseItems.length) {
-      await this.prisma.$transaction(
-        courseItems.map((it) =>
-          this.prisma.inscripcion.upsert({
-            where: {
-              usuarioId_cursoId: { usuarioId: userId, cursoId: it.refId },
-            },
-            update: {
-              subscriptionOrderId: order.id,
-              subscriptionId: mpRes.id,
-              subscriptionActive: false,
-            },
-            create: {
-              usuarioId: userId,
-              cursoId: it.refId,
-              estado: 'ACTIVADA',
-              progreso: {
-                subscription: {
-                  orderId: order.id,
-                  subscriptionId: mpRes.id,
-                  active: false,
-                },
-              },
-              subscriptionOrderId: order.id,
-              subscriptionId: mpRes.id,
-              subscriptionActive: false,
-            },
-          }),
-        ),
-      );
+    return mpRes;
+  }
+
+  async getPaymentStatusByMpId(userId: number, paymentId: string) {
+    const cleanPaymentId = String(paymentId ?? '').trim();
+    if (!cleanPaymentId) {
+      throw new BadRequestException('paymentId inválido');
     }
 
-    return mpRes;
+    const payment = await this.prisma.pago.findFirst({
+      where: { mpId: cleanPaymentId, usuarioId: userId },
+      select: {
+        mpId: true,
+        status: true,
+        statusDetail: true,
+        kind: true,
+        ordenId: true,
+        orden: {
+          select: {
+            id: true,
+            estado: true,
+            referenciaPago: true,
+          },
+        },
+      },
+      orderBy: { creadoEn: 'desc' },
+    });
+
+    if (!payment) {
+      return {
+        paymentId: cleanPaymentId,
+        status: null,
+        statusDetail: null,
+        orderId: null,
+        orderStatus: null,
+        reference: null,
+        kind: null,
+      };
+    }
+
+    return {
+      paymentId: payment.mpId,
+      status: payment.status,
+      statusDetail: payment.statusDetail,
+      orderId: payment.ordenId,
+      orderStatus: payment.orden?.estado ?? null,
+      reference: payment.orden?.referenciaPago ?? null,
+      kind: payment.kind,
+    };
   }
 
   async cancelSubscription(userId: number, orderId: number) {

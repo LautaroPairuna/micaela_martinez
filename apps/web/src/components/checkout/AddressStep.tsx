@@ -61,7 +61,7 @@ export function AddressStep() {
 
     loadAddresses();
     return () => { isMounted = false; };
-  }, [setShippingAddress]); // Eliminado shippingAddress de las dependencias
+  }, [setShippingAddress, shippingAddress]); // Agregado shippingAddress a las dependencias
 
   const handleContinue = () => {
     if (!shippingAddress) return;

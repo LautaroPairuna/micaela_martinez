@@ -6,7 +6,7 @@ import type { ComponentProps } from "react";
 import { Section } from "@/components/layout/Section";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { CourseCard } from "@/components/courses/CourseCard";
-import { safeGetCourses, safeGetProducts, safeGetHeroImages } from "@/lib/sdk/catalogApi";
+import { getCourses, getProducts, getHeroImages } from "@/lib/sdk/catalogApi";
 import { getMe, listEnrollments } from "@/lib/sdk/userApi";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { CoursesGridClient } from "@/components/courses/CoursesGridClient";
@@ -102,32 +102,36 @@ const productKey = (p: ProductMinimal, i: number) => {
 };
 
 export default async function HomePage() {
-  // Usar funciones seguras que no fallan en build estático
-  const [cursos, productos, heroImages] = await Promise.all([
-    safeGetCourses({ sort: "relevancia", page: 1, perPage: 8 }),
-    safeGetProducts({ destacado: true, page: 1, perPage: 12 }),
-    safeGetHeroImages(),
+  const [coursesResult, productsResult, heroResult] = await Promise.allSettled([
+    getCourses(
+      { sort: "novedades", page: 1, perPage: 4 },
+      { cache: "no-store", next: { revalidate: 0, tags: ["courses"] } },
+    ),
+    getProducts({ destacado: true, page: 1, perPage: 12 }),
+    getHeroImages(),
   ]);
 
-  const courses: CourseMinimal[] = Array.isArray(cursos?.items)
-    ? (cursos!.items as CourseMinimal[])
+  const courses: CourseMinimal[] =
+    coursesResult.status === "fulfilled" && Array.isArray(coursesResult.value?.items)
+    ? (coursesResult.value.items as CourseMinimal[])
     : [];
-  const products: ProductMinimal[] = Array.isArray(productos?.items)
-    ? (productos!.items as ProductMinimal[])
+  const products: ProductMinimal[] =
+    productsResult.status === "fulfilled" && Array.isArray(productsResult.value?.items)
+    ? (productsResult.value.items as ProductMinimal[])
     : [];
+  const heroImages = heroResult.status === "fulfilled" && Array.isArray(heroResult.value)
+    ? heroResult.value
+    : [];
+  const coursesUnavailable = coursesResult.status === "rejected";
+  const productsUnavailable = productsResult.status === "rejected";
 
   // Randomización de productos destacados si hay más de 4
   const featuredProducts = products.length > 4 
     ? [...products].sort(() => 0.5 - Math.random()) 
     : products;
 
-  // Randomización de cursos destacados si hay más de 4
-  const featuredCourses = courses.length > 4
-    ? [...courses].sort(() => 0.5 - Math.random())
-    : courses;
-
   // visibles
-  const courseCount = Math.min(4, featuredCourses.length);
+  const courseCount = Math.min(4, courses.length);
   const productCount = Math.min(4, featuredProducts.length);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -197,9 +201,13 @@ export default async function HomePage() {
           {courseCount > 0 ? (
             <HydrationBoundary state={dehydrate(qc)}>
               <div className={compactWrap(courseCount, "max-w-7xl")}>
-                <CoursesGridClient courses={featuredCourses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
+                <CoursesGridClient courses={courses.slice(0, courseCount)} isLoggedIn={isLoggedIn} />
               </div>
             </HydrationBoundary>
+          ) : coursesUnavailable ? (
+            <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
+              No pudimos cargar los cursos en este momento. Intentá nuevamente en unos minutos.
+            </div>
           ) : (
             <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
               Sin cursos por ahora. Estamos preparando novedades.
@@ -234,6 +242,10 @@ export default async function HomePage() {
               {featuredProducts.slice(0, productCount).map((p, i) => (
                 <ProductCard key={productKey(p, i)} p={p} />
               ))}
+            </div>
+          ) : productsUnavailable ? (
+            <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">
+              No pudimos cargar los productos destacados en este momento. Intentá nuevamente en unos minutos.
             </div>
           ) : (
             <div className="rounded-xl2 border border-default bg-[var(--bg)]/60 p-6 text-center text-sm text-muted">

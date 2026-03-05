@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 export function ClientToastContainer() {
   return (
     <>
-      <style jsx global>{`
+      <style>{`
         /* Posicionamiento más abajo del header */
         .Toastify__toast-container--top-right {
           top: 120px !important;

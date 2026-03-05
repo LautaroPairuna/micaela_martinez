@@ -181,8 +181,21 @@ export async function logout() {
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
       
-      // Limpiar sessionStorage también
-      sessionStorage.clear();
+      // Limpiar sessionStorage relacionado a auth/upload sin tocar datos de UX global
+      const sessionKeysToRemove = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (
+          key &&
+          (key.includes('auth') ||
+            key.includes('session') ||
+            key.includes('token') ||
+            key.startsWith('admin_upload_'))
+        ) {
+          sessionKeysToRemove.push(key);
+        }
+      }
+      sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
       
       // 5. Forzar recarga de la página para limpiar cualquier estado residual
       // Esto asegura que todos los componentes se reinicialicen correctamente
@@ -193,8 +206,29 @@ export async function logout() {
     console.error('Error durante logout:', error);
     // Aún así intentar limpiar el estado local y redirigir
     if (typeof window !== 'undefined') {
-      localStorage.clear();
-      sessionStorage.clear();
+      const localKeysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('auth') || key.includes('session') || key.includes('token'))) {
+          localKeysToRemove.push(key);
+        }
+      }
+      localKeysToRemove.forEach(key => localStorage.removeItem(key));
+
+      const sessionKeysToRemove = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (
+          key &&
+          (key.includes('auth') ||
+            key.includes('session') ||
+            key.includes('token') ||
+            key.startsWith('admin_upload_'))
+        ) {
+          sessionKeysToRemove.push(key);
+        }
+      }
+      sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
       window.location.href = '/';
     }
   }

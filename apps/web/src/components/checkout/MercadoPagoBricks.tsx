@@ -394,7 +394,19 @@ export function MercadoPagoBricks({
       controllerRef.current = null;
       void (async () => { try { await c?.unmount?.(); } catch {} })();
     };
-  }, [publicKey, signature]);
+  }, [
+    publicKey,
+    signature,
+    amount,
+    isBrickReady,
+    isSubscription,
+    onPaymentError,
+    orderId,
+    payerEmail,
+    preferenceId,
+    subscriptionFrequency,
+    subscriptionFrequencyType,
+  ]);
 
   if (!publicKey) return <div className="text-red-500 p-4">Error: Falta configuración pública.</div>;
 

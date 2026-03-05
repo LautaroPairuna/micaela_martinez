@@ -24,6 +24,12 @@ interface FailurePaymentData {
   statusDetail: PaymentStatusDetail | null;
 }
 
+type PaymentStatusResponse = {
+  paymentId: string;
+  status: string | null;
+  statusDetail: string | null;
+};
+
 function CheckoutFailureContent() {
   const searchParams = useSearchParams();
   const [paymentData, setPaymentData] = useState<FailurePaymentData | null>(null);
@@ -37,7 +43,22 @@ function CheckoutFailureContent() {
     const fetchPaymentData = async () => {
       try {
         if (paymentId) {
-          // Simular datos por ahora
+          const res = await fetch(`/api/orders/payment/${encodeURIComponent(paymentId)}/status`, {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+          });
+
+          if (res.ok) {
+            const payload = (await res.json()) as PaymentStatusResponse;
+            setPaymentData({
+              id: payload.paymentId || paymentId,
+              status: payload.status,
+              statusDetail: payload.statusDetail as PaymentStatusDetail | null,
+            });
+            return;
+          }
+
           setPaymentData({
             id: paymentId,
             status,
@@ -46,6 +67,13 @@ function CheckoutFailureContent() {
         }
       } catch (error) {
         console.error('Error fetching payment data:', error);
+        if (paymentId) {
+          setPaymentData({
+            id: paymentId,
+            status,
+            statusDetail,
+          });
+        }
       } finally {
         setLoading(false);
       }

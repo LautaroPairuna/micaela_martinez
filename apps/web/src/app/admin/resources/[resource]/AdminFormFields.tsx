@@ -653,13 +653,16 @@ export function renderAdminField({
             className="w-full appearance-none rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-sm text-slate-100 transition-colors hover:border-[#444] focus:border-[#08885d] focus:ring-1 focus:ring-[#08885d] outline-none pr-8"
             value={value ?? ''}
             onChange={(e) =>
-              setFormValues((prev) => ({
-                ...prev,
-                [field.name]:
-                  field.type === 'Int'
-                    ? Number(e.target.value) || null
-                    : e.target.value,
-              }))
+              setFormValues((prev) => {
+                const raw = e.target.value;
+                const numericTypes = ['Int', 'Int?', 'BigInt', 'number'];
+                const isNumeric = numericTypes.includes(field.type);
+                
+                return {
+                  ...prev,
+                  [field.name]: isNumeric ? (raw === '' ? null : Number(raw)) : raw,
+                };
+              })
             }
             disabled={loading || field.readOnly}
             style={{ colorScheme: 'dark' }}
@@ -821,13 +824,18 @@ export function renderAdminField({
 
   /* Json */
   if (field.type === 'Json') {
+    const rawValue =
+      value && typeof value === 'object'
+        ? JSON.stringify(value, null, 2)
+        : String(value ?? '');
+
     return (
       <div key={field.name} className="space-y-1 md:col-span-2">
         <LabelWithTooltip />
         <textarea
           className="w-full rounded-md border border-[#2a2a2a] bg-[#101010] px-3 py-2 text-xs text-slate-100"
           rows={4}
-          value={value ?? ''}
+          value={rawValue}
           onChange={(e) => onChangeField(field, e as any)}
           disabled={field.readOnly}
         />

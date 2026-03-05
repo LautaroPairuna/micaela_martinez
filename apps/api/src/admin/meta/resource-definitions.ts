@@ -13,6 +13,7 @@ export type FieldDefinition = {
     | 'date'
     | 'select';
   readOnly?: boolean;
+  isRequired?: boolean;
 };
 
 export type ResourceDefinitions = Record<
@@ -67,6 +68,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     descuento: {
       label: 'Descuento (%)',
       help: 'Porcentaje de descuento (0-100).',
+      isRequired: false,
     },
     publicado: { label: '¿Publicado?', help: 'Visible para los usuarios.' },
     destacado: {
@@ -138,6 +140,7 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     descuento: {
       label: 'Descuento (%)',
       help: 'Porcentaje de descuento (0-100).',
+      isRequired: false,
     },
     descripcionMD: {
       label: 'Descripción Completa (MD)',

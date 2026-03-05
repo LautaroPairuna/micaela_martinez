@@ -45,6 +45,14 @@ export class OrdersController {
     return this.orders.getOrderById(this.userId(user), id);
   }
 
+  @Get('payment/:paymentId/status')
+  async byPaymentId(
+    @CurrentUser() user: JwtUser,
+    @Param('paymentId') paymentId: string,
+  ) {
+    return this.orders.getPaymentStatusByMpId(this.userId(user), paymentId);
+  }
+
   @Post(':id/pay')
   async pay(
     @CurrentUser() user: JwtUser,

@@ -23,8 +23,10 @@ export function FadeIn({
     right: { x: -20, y: 0 },
   };
 
+  const MotionDiv = motion.div as any;
+
   return (
-    <motion.div
+    <MotionDiv
       initial={{ opacity: 0, ...directions[direction] }}
       whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
@@ -33,13 +35,14 @@ export function FadeIn({
       {...props}
     >
       {children}
-    </motion.div>
+    </MotionDiv>
   );
 }
 
 export function StaggerContainer({ children, delay = 0, stagger = 0.1, className = '', ...props }: any) {
+  const MotionDiv = motion.div as any;
   return (
-    <motion.div
+    <MotionDiv
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-50px" }}
@@ -56,18 +59,22 @@ export function StaggerContainer({ children, delay = 0, stagger = 0.1, className
       {...props}
     >
       {children}
-    </motion.div>
+    </MotionDiv>
   );
 }
 
-export const ScaleIn = ({ children, delay = 0, className = '' }: any) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.4, delay }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
+export const ScaleIn = ({ children, delay = 0, className = '', ...props }: any) => {
+  const MotionDiv = motion.div as any;
+  return (
+    <MotionDiv
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay }}
+      className={className}
+      {...props}
+    >
+      {children}
+    </MotionDiv>
+  );
+};

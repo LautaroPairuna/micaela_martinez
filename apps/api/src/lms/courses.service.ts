@@ -31,8 +31,7 @@ function mapSort(sort?: string): Prisma.CursoOrderByWithRelationInput[] {
 
 const activeEnrollmentStates: EstadoInscripcion[] = [
   EstadoInscripcion.ACTIVADA,
-  EstadoInscripcion.PAUSADA,
-].map((state) => state.toUpperCase() as EstadoInscripcion);
+];
 
 @Injectable()
 export class CoursesService {

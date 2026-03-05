@@ -212,7 +212,7 @@ export function EnrollmentCard({
         console.warn('📊 EnrollmentCard Progress Summary logging failed:', e);
       }
     },
-    [getLessonProgressKey],
+    [getLessonProgressKey, subscriptionInfo],
   );
 
   // Calcular progreso en tiempo real usando la lógica de CoursePlayer
