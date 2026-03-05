@@ -2,7 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
@@ -12,7 +11,7 @@ import { CartPanel } from '@/components/cart/CartPanel';
 import {
   Menu, X, LogIn, UserPlus, GraduationCap, ShoppingBag, HelpCircle,
   ChevronRight, Instagram, User, LogOut, ChevronDown,
-  Heart, Package, LayoutDashboard, MapPin, Bell
+  Heart, Package, LayoutDashboard, MapPin, Bell, Home
 } from 'lucide-react';
 
 import { logout } from '@/lib/auth';
@@ -34,7 +33,6 @@ function HeaderFallback() {
   return (
     <header className="top-0 z-40 relative bg-[var(--bg)] border-b border-default py-4">
       <div className="mx-auto px-4 sm:px-6 min-[1200px]:px-8 h-16 flex items-center gap-10">
-        <div className="h-20 w-[160px] rounded bg-subtle/50" aria-hidden />
         <div className="hidden min-[1200px]:flex items-center gap-6">
           <div className="h-4 w-16 rounded bg-subtle/60" />
           <div className="h-4 w-16 rounded bg-subtle/60" />
@@ -127,13 +125,10 @@ function HeaderInner() {
       ].join(' ')}
     >
       <div className="mx-auto px-4 sm:px-6 xl:px-8 h-16 hidden xl:grid grid-cols-3 items-center gap-8">
-        {/* Columna 1: Logo + Navegación */}
+        {/* Columna 1: Navegación */}
         <div className="flex items-center gap-x-8">
-          <Link href="/" aria-label="Micaela Pestañas — Inicio" className="flex items-center">
-            Inicio
-          </Link>
-
           <nav className="flex items-center gap-6 text-sm" aria-label="Principal">
+            <NavLink href="/" active={pathname === '/'}>Inicio</NavLink>
             <NavLink href="/cursos" active={pathname.startsWith('/cursos')}>Cursos</NavLink>
             <NavLink href="/tienda" active={pathname.startsWith('/tienda')}>Tienda</NavLink>
           </nav>
@@ -188,30 +183,18 @@ function HeaderInner() {
       </div>
 
       {/* Versión móvil */}
-       <div className="mx-auto px-4 sm:px-6 xl:hidden h-16 flex items-center gap-10">
-        <Link href="/" aria-label="Micaela Pestañas — Inicio" className="flex items-center">
-          <Image
-            src="/images/mica_pestanas_logo.svg"
-            alt="Micaela Pestañas"
-            width={220}
-            height={40}
-            priority
-            fetchPriority="high"
-            sizes="(min-width:1200px) 220px, 160px"
-            className="h-20 w-auto"
-          />
-        </Link>
-
-        {/* Móvil */}
+      <div className="mx-auto px-4 sm:px-6 xl:hidden h-16 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <SearchBar />
+        </div>
         <button
-          className="xl:hidden ml-auto inline-flex items-center gap-2 rounded-xl2 border border-default px-3 py-2"
+          className="xl:hidden inline-flex shrink-0 items-center justify-center rounded-xl2 border border-default p-2.5"
           onClick={() => setOpen(true)}
           aria-label="Abrir menú"
           aria-expanded={open}
           aria-controls="mobile-menu"
         >
           <Menu className="size-4" />
-          Menú
         </button>
       </div>
 
@@ -470,16 +453,7 @@ function MobilePanel({
         {/* Header mejorado */}
         <div className="sticky top-0 bg-gradient-to-r from-white via-white to-neutral-50/90 backdrop-blur-md border-b border-neutral-200/60 shadow-sm">
           <div className="px-6 py-5 flex items-center justify-between">
-            <Link href="/" onClick={close} className="flex items-center group" aria-label="Inicio">
-              <Image 
-                src="/images/mica_pestanas_logo.svg" 
-                alt="Micaela Pestañas" 
-                width={180} 
-                height={32} 
-                className="h-12 w-auto transition-transform duration-200 group-hover:scale-105" 
-                priority 
-              />
-            </Link>
+            <span className="text-base font-semibold text-neutral-900">Menú</span>
 
             <button 
               onClick={close} 
@@ -496,14 +470,6 @@ function MobilePanel({
             >
               <X className="size-5 text-neutral-600" />
             </button>
-          </div>
-        </div>
-
-        {/* Buscador mejorado */}
-        <div className="px-6 py-4 bg-gradient-to-r from-neutral-50/50 to-white border-b border-neutral-200/60">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--gold)]/5 to-transparent rounded-xl2 pointer-events-none" />
-            <SearchBar />
           </div>
         </div>
 
@@ -635,6 +601,28 @@ function MobilePanel({
               Explorar
             </h3>
             <ul className="space-y-1">
+              <li>
+                <Link
+                  href="/"
+                  onClick={close}
+                  className={[
+                    'flex items-center justify-between',
+                    'px-4 py-4 rounded-xl',
+                    'text-neutral-700 hover:text-neutral-900',
+                    'hover:bg-gradient-to-r hover:from-[var(--gold)]/10 hover:to-transparent',
+                    'transition-all duration-200',
+                    'group focus:outline-none focus:ring-2 focus:ring-[var(--gold)]/50'
+                  ].join(' ')}
+                >
+                  <span className="inline-flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-neutral-100 text-neutral-700 group-hover:bg-[var(--gold)]/10 group-hover:text-[var(--gold)] transition-colors">
+                      <Home className="size-5" />
+                    </div>
+                    <span className="font-medium text-neutral-800">Inicio</span>
+                  </span>
+                  <ChevronRight className="size-4 text-[var(--gold)]/60 group-hover:text-[var(--gold)] transition-colors" />
+                </Link>
+              </li>
               <li>
                 <Link 
                   href="/cursos" 
