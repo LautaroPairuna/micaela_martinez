@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto, OrderSource } from './dto/create-order.dto';
 import { PayOrderDto } from './dto/pay-order.dto';
 import { SubscribeOrderDto } from './dto/subscribe-order.dto';
 import { MpPaymentService } from '../mercadopago/mp-payment.service';
@@ -22,6 +22,12 @@ export class OrdersService {
   ) {}
 
   async createFromCart(userId: number, dto: CreateOrderDto) {
+    if (dto.source && dto.source !== OrderSource.CART) {
+       // Lógica futura para órdenes directas (sin carrito)
+       // Por ahora, solo soportamos carrito
+       throw new BadRequestException('Solo se soportan órdenes desde el carrito por el momento');
+    }
+
     const cart = await this.prisma.carrito.findUnique({
       where: { usuarioId: userId },
       include: { items: true },
