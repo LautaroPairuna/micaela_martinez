@@ -49,5 +49,6 @@ export class CreateOrderDto {
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
+  @IsOptional() // Añadimos IsOptional para que el validador no explote si items es undefined cuando la condición ValidateIf es true (aunque ValidateIf ya maneja la condicionalidad, IsOptional ayuda en algunos edge cases de class-validator)
   items?: CreateOrderItemDto[];
 }

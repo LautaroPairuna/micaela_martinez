@@ -16,7 +16,9 @@ export class OrdersController {
 
   @Post()
   async create(@Req() req: any, @Body() dto: CreateOrderDto) {
-    console.log('=== API: create order ===', { userId: this.userId(req), dto });
+    console.log('=== API: create order dto keys ===', Object.keys(dto ?? {}));
+    console.log('=== API: dto.source ===', dto?.source);
+    console.log('=== API: dto.items typeof ===', typeof (dto as any)?.items, 'isArray=', Array.isArray((dto as any)?.items), 'value=', (dto as any)?.items);
     return this.orders.createFromCart(this.userId(req), dto);
   }
 
