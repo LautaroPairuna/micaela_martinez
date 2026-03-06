@@ -176,48 +176,95 @@ export class SubscriptionService {
 
     const now = new Date();
 
-    const subscriptions = ordenes.map((orden) => {
-      const meta = parseProgreso(orden.metadatos);
-      const preapprovalPayment = orden.pagos.find(
-        (p) => p.kind === 'SUBSCRIPTION_PREAPPROVAL',
-      );
-      const preapprovalMeta = parseProgreso(preapprovalPayment?.metadatos);
+    const subscriptions = await Promise.all(
+      ordenes.map(async (orden) => {
+        const meta = parseProgreso(orden.metadatos);
+        const preapprovalPayment = orden.pagos.find(
+          (p) => p.kind === 'SUBSCRIPTION_PREAPPROVAL',
+        );
+        const preapprovalMeta = parseProgreso(preapprovalPayment?.metadatos);
 
-      const nextPaymentDate = orden.suscripcionProximoPago
-        ? orden.suscripcionProximoPago.toISOString()
-        : (meta?.subscription?.nextPaymentDate ??
-          (typeof preapprovalMeta?.next === 'string' ? preapprovalMeta.next : null));
+        let nextPaymentDate = orden.suscripcionProximoPago
+          ? orden.suscripcionProximoPago.toISOString()
+          : (meta?.subscription?.nextPaymentDate ??
+            (typeof preapprovalMeta?.next === 'string'
+              ? preapprovalMeta.next
+              : null));
 
-      const next = nextPaymentDate ? new Date(nextPaymentDate) : null;
+        if (orden.suscripcionId) {
+          const parsedNext = nextPaymentDate ? new Date(nextPaymentDate) : null;
+          const shouldRefreshFromMp =
+            !parsedNext ||
+            Number.isNaN(parsedNext.getTime()) ||
+            parsedNext <= now;
 
-      let daysLeft: number | null = null;
-      let hoursLeft: number | null = null;
+          if (shouldRefreshFromMp) {
+            try {
+              const pre = await this.mpSubscriptionService.getPreapproval(
+                orden.suscripcionId,
+              );
+              const freshNext =
+                typeof pre?.next_payment_date === 'string'
+                  ? pre.next_payment_date
+                  : null;
 
-      if (next) {
-        const diffMs = next.getTime() - now.getTime();
-        daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (daysLeft < 1) hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
-      }
+              if (freshNext) {
+                nextPaymentDate = freshNext;
+                await this.prisma.orden.update({
+                  where: { id: orden.id },
+                  data: {
+                    suscripcionProximoPago: new Date(freshNext),
+                    metadatos: {
+                      ...(meta ?? {}),
+                      subscription: {
+                        ...((meta?.subscription as Record<string, unknown>) ??
+                          {}),
+                        nextPaymentDate: freshNext,
+                        status:
+                          typeof pre?.status === 'string'
+                            ? pre.status
+                            : meta?.subscription?.status ?? 'processing',
+                      },
+                    } as any,
+                  },
+                });
+              }
+            } catch {
+              // seguimos con el mejor dato local disponible
+            }
+          }
+        }
 
-      return {
-        isActive: orden.suscripcionActiva !== false,
-        orderId: orden.id,
-        subscriptionId: orden.suscripcionId,
-        startDate: orden.creadoEn,
-        nextPaymentDate,
-        frequency:
-          orden.suscripcionFrecuencia ?? meta?.subscription?.frequency ?? 1,
-        frequencyType:
-          orden.suscripcionTipoFrecuencia ??
-          meta?.subscription?.frequencyType ??
-          'months',
-        daysLeft,
-        hoursLeft,
-        status:
-          meta?.subscription?.status ??
-          (orden.suscripcionActiva ? 'active' : 'processing'),
-      };
-    });
+        const next = nextPaymentDate ? new Date(nextPaymentDate) : null;
+        let daysLeft: number | null = null;
+        let hoursLeft: number | null = null;
+
+        if (next) {
+          const diffMs = next.getTime() - now.getTime();
+          daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          if (daysLeft < 1) hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+        }
+
+        return {
+          isActive: orden.suscripcionActiva !== false,
+          orderId: orden.id,
+          subscriptionId: orden.suscripcionId,
+          startDate: orden.creadoEn,
+          nextPaymentDate,
+          frequency:
+            orden.suscripcionFrecuencia ?? meta?.subscription?.frequency ?? 1,
+          frequencyType:
+            orden.suscripcionTipoFrecuencia ??
+            meta?.subscription?.frequencyType ??
+            'months',
+          daysLeft,
+          hoursLeft,
+          status:
+            meta?.subscription?.status ??
+            (orden.suscripcionActiva ? 'active' : 'processing'),
+        };
+      }),
+    );
 
     return {
       isActive: subscriptions.some((s) => s.isActive),

@@ -9,6 +9,8 @@ export function normalizeEventType(raw: string) {
   // Suscripciones
   if (t.startsWith('subscription_preapproval'))
     return 'subscription_preapproval';
+  if (t.startsWith('authorized_payment'))
+    return 'subscription_authorized_payment';
   if (t.startsWith('subscription_authorized_payment'))
     return 'subscription_authorized_payment';
   if (t.startsWith('subscription_payment')) return 'subscription_payment';
