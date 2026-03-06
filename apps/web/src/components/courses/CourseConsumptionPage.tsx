@@ -1,15 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Lock, Play, Clock, BookOpen, Award, CheckCircle } from 'lucide-react';
+
 import { CoursePlayer } from './CoursePlayer';
 import { CourseCurriculum } from './CourseCurriculum';
 import { Card, CardBody } from '@/components/ui/Card';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Price } from '@/components/ui/Price';
 import { BuyCourseButton } from '@/components/cart/BuyCourseButton';
-import { useEffect, useState } from 'react';
 import { getUserSubscriptionInfo } from '@/lib/services/subscription.service';
-import { Lock, Play, Clock, BookOpen, Award, CheckCircle } from 'lucide-react';
+import type { Course, LessonContent } from '@/types/course';
 
 type CourseDetail = {
   id: string;
@@ -30,6 +32,7 @@ type CourseDetail = {
       titulo?: string | null;
       duracion?: number | null;
       rutaSrc?: string | null;
+      previewUrl?: string | null;
       tipo?: 'VIDEO' | 'TEXTO' | 'DOCUMENTO' | 'QUIZ';
       contenido?: unknown;
     }> | null;
@@ -50,73 +53,79 @@ type CourseConsumptionPageProps = {
   hasAccess: boolean;
 };
 
+function normalizeLessonContent(value: unknown): LessonContent {
+  if (value == null) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') return value as Record<string, unknown>;
+  return null;
+}
+
 export function CourseConsumptionPage({
   course,
   session,
   hasAccess,
 }: CourseConsumptionPageProps) {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  
-  // Estado para almacenar información de acceso
+
   const [accessInfo, setAccessInfo] = useState<{
     accessType: 'enrollment' | 'subscription' | null;
     hasAccess: boolean;
   } | null>(null);
 
-  // Verificar si el usuario tiene una suscripción activa
   useEffect(() => {
-    if (session) {
-      const checkSubscription = async () => {
-        try {
-          const subscriptionInfo = await getUserSubscriptionInfo();
-          setHasActiveSubscription(subscriptionInfo.isActive);
-          
-          // Verificar tipo de acceso
-          if (hasAccess) {
-            setAccessInfo({
-              hasAccess: true,
-              accessType: 'enrollment'
-            });
-          } else if (subscriptionInfo.isActive) {
-            setAccessInfo({
-              hasAccess: true,
-              accessType: 'subscription'
-            });
-          } else {
-            setAccessInfo({
-              hasAccess: false,
-              accessType: null
-            });
-          }
-        } catch (error) {
-          console.error('Error al verificar suscripción:', error);
+    if (!session) return;
+
+    const checkSubscription = async () => {
+      try {
+        const subscriptionInfo = await getUserSubscriptionInfo();
+        setHasActiveSubscription(subscriptionInfo.isActive);
+
+        if (hasAccess) {
+          setAccessInfo({
+            hasAccess: true,
+            accessType: 'enrollment',
+          });
+        } else if (subscriptionInfo.isActive) {
+          setAccessInfo({
+            hasAccess: true,
+            accessType: 'subscription',
+          });
+        } else {
+          setAccessInfo({
+            hasAccess: false,
+            accessType: null,
+          });
         }
-      };
-      
-      checkSubscription();
-    }
+      } catch (error) {
+        console.error('Error al verificar suscripción:', error);
+      }
+    };
+
+    void checkSubscription();
   }, [session, hasAccess]);
-  
-  // Calcular estadísticas del curso
+
   const totalLessons =
-    course.modulos?.reduce((acc, modulo) => acc + (modulo.lecciones?.length || 0), 0) || 0;
+    course.modulos?.reduce(
+      (acc, modulo) => acc + (modulo.lecciones?.length || 0),
+      0,
+    ) || 0;
 
   const totalDuration =
     course.modulos?.reduce(
       (acc, modulo) =>
         acc +
-        (modulo.lecciones?.reduce((lessonAcc, leccion) => lessonAcc + ((leccion.duracion || 0) * 60), 0) ||
-          0),
-      0
+        (modulo.lecciones?.reduce(
+          (lessonAcc, leccion) => lessonAcc + ((leccion.duracion || 0) * 60),
+          0,
+        ) || 0),
+      0,
     ) || 0;
 
   const durationMinutes = Math.round(totalDuration / 60);
   const moduleCount = course.modulos?.length || 0;
 
-  // Si el usuario tiene acceso completo, mostrar el reproductor
   if (hasAccess && session) {
-    // Adaptar el curso para CoursePlayer
-    const adaptedCourse = {
+    const adaptedCourse: Course = {
       id: course.id,
       slug: course.slug,
       titulo: course.titulo,
@@ -124,24 +133,26 @@ export function CourseConsumptionPage({
       imagenUrl: course.portadaUrl ?? null,
       modulos: course.modulos
         ? course.modulos.map((modulo, index) => ({
-            id: modulo.id, // Usar ID real del backend
+            id: modulo.id,
             titulo: modulo.titulo || `Módulo ${index + 1}`,
             orden: index + 1,
             lecciones: modulo.lecciones
               ? modulo.lecciones.map((leccion, leccionIndex) => ({
-                  id: leccion.id, // Usar ID real del backend
+                  id: leccion.id,
                   titulo: leccion.titulo || `Lección ${leccionIndex + 1}`,
-                  descripcion: null as string | null,
+                  descripcion: null,
                   rutaSrc: leccion.rutaSrc || null,
+                  previewUrl: leccion.previewUrl || null,
                   duracion: leccion.duracion ?? null,
                   orden: leccionIndex + 1,
-                  // El contenido ya viene parseado desde la API
-                  contenido: leccion.contenido ?? null,
+                  contenido: normalizeLessonContent(leccion.contenido),
                   tipo:
                     leccion.tipo ??
-                    (leccion.rutaSrc && leccion.rutaSrc.trim() !== '' && leccion.rutaSrc.startsWith('http')
-                      ? ('VIDEO' as const)
-                      : ('TEXTO' as const)),
+                    (leccion.rutaSrc &&
+                    leccion.rutaSrc.trim() !== '' &&
+                    leccion.rutaSrc.startsWith('http')
+                      ? 'VIDEO'
+                      : 'TEXTO'),
                 }))
               : null,
           }))
@@ -157,31 +168,28 @@ export function CourseConsumptionPage({
 
     return (
       <div className="min-h-screen bg-[var(--bg)]">
-        <CoursePlayer
-          course={adaptedCourse}
-          enrollment={enrollment}
-        />
+        <CoursePlayer course={adaptedCourse} enrollment={enrollment} />
       </div>
     );
   }
 
-  // Vista para usuarios sin acceso (no autenticados o sin inscripción)
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      {/* Header del curso */}
       <div className="bg-gradient-to-r from-gray-900 to-black border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid lg:grid-cols-[1fr_400px] gap-8 items-start">
-            {/* Información principal */}
             <div className="space-y-6">
               <div className="space-y-4">
-                <h1 className="text-3xl lg:text-4xl font-bold text-white">{course.titulo}</h1>
+                <h1 className="text-3xl lg:text-4xl font-bold text-white">
+                  {course.titulo}
+                </h1>
                 {course.resumen && (
-                  <p className="text-lg text-gray-300 max-w-3xl">{course.resumen}</p>
+                  <p className="text-lg text-gray-300 max-w-3xl">
+                    {course.resumen}
+                  </p>
                 )}
               </div>
 
-              {/* Estadísticas */}
               <div className="flex flex-wrap gap-6 text-sm text-gray-400">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
@@ -198,19 +206,21 @@ export function CourseConsumptionPage({
                 {course.duracionTipo && course.duracionTotalS && (
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    <span>Duración: {course.duracionTotalS} {course.duracionTipo}</span>
+                    <span>
+                      Duración: {course.duracionTotalS} {course.duracionTipo}
+                    </span>
                   </div>
                 )}
-
               </div>
 
-              {/* Estado de acceso */}
               {!session ? (
                 <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <Lock className="w-5 h-5 text-blue-400" />
                     <div>
-                      <h3 className="font-medium text-blue-300">Inicia sesión para acceder</h3>
+                      <h3 className="font-medium text-blue-300">
+                        Inicia sesión para acceder
+                      </h3>
                       <p className="text-sm text-blue-400">
                         Necesitas una cuenta para ver el contenido del curso
                       </p>
@@ -222,7 +232,9 @@ export function CourseConsumptionPage({
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-400" />
                     <div>
-                      <h3 className="font-medium text-green-300">Acceso completo</h3>
+                      <h3 className="font-medium text-green-300">
+                        Acceso completo
+                      </h3>
                       <p className="text-sm text-green-400">
                         Tienes acceso a este curso por inscripción directa
                       </p>
@@ -234,7 +246,9 @@ export function CourseConsumptionPage({
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-[var(--gold)]" />
                     <div>
-                      <h3 className="font-medium text-[var(--gold)]">Acceso por suscripción</h3>
+                      <h3 className="font-medium text-[var(--gold)]">
+                        Acceso por suscripción
+                      </h3>
                       <p className="text-sm text-[var(--gold)]/80">
                         Tienes acceso a este curso mediante tu suscripción activa
                       </p>
@@ -246,9 +260,12 @@ export function CourseConsumptionPage({
                   <div className="flex items-center gap-3">
                     <Lock className="w-5 h-5 text-yellow-400" />
                     <div>
-                      <h3 className="font-medium text-yellow-300">Acceso restringido</h3>
+                      <h3 className="font-medium text-yellow-300">
+                        Acceso restringido
+                      </h3>
                       <p className="text-sm text-yellow-400">
-                        Necesitas inscribirte en este curso o tener una suscripción activa para acceder al contenido
+                        Necesitas inscribirte en este curso o tener una
+                        suscripción activa para acceder al contenido
                       </p>
                     </div>
                   </div>
@@ -256,10 +273,8 @@ export function CourseConsumptionPage({
               )}
             </div>
 
-            {/* Panel de compra/acceso */}
             <Card className="sticky top-8">
               <CardBody className="space-y-4">
-                {/* Imagen de portada */}
                 <div className="aspect-video rounded-lg overflow-hidden bg-gray-808">
                   {course.portadaUrl ? (
                     <SafeImage
@@ -274,12 +289,16 @@ export function CourseConsumptionPage({
                   )}
                 </div>
 
-                {/* Precio y beneficios */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                      <Price value={course.precio / 100} className="text-2xl font-bold" />
-                      <span className="text-sm text-gray-400">Suscripción mensual</span>
+                      <Price
+                        value={course.precio / 100}
+                        className="text-2xl font-bold"
+                      />
+                      <span className="text-sm text-gray-400">
+                        Suscripción mensual
+                      </span>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Award className="w-4 h-4" />
@@ -287,7 +306,6 @@ export function CourseConsumptionPage({
                     </div>
                   </div>
 
-                  {/* Botones de acción */}
                   <div className="space-y-2">
                     {!session ? (
                       <>
@@ -317,7 +335,6 @@ export function CourseConsumptionPage({
                     )}
                   </div>
 
-                  {/* Características */}
                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
                     <div className="bg-gray-800 rounded p-2 flex items-center gap-2">
                       <Play className="w-3 h-3" />
@@ -339,49 +356,51 @@ export function CourseConsumptionPage({
         </div>
       </div>
 
-      {/* Contenido del curso */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-[1fr_400px] gap-8">
-          {/* Contenido principal */}
           <div className="space-y-8">
-            {/* Descripción */}
             {course.descripcionMD && (
               <Card>
                 <CardBody>
-                  <h2 className="text-xl font-semibold mb-4">Descripción del curso</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Descripción del curso
+                  </h2>
                   <div className="prose prose-gray max-w-none">
-                    <p className="whitespace-pre-line text-gray-300">{course.descripcionMD}</p>
+                    <p className="whitespace-pre-line text-gray-300">
+                      {course.descripcionMD}
+                    </p>
                   </div>
                 </CardBody>
               </Card>
             )}
 
-            {/* Currículo del curso */}
             <Card>
               <CardBody>
-                <h2 className="text-xl font-semibold mb-4">Contenido del curso</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Contenido del curso
+                </h2>
                 {course.modulos && course.modulos.length > 0 ? (
                   <CourseCurriculum
                     modules={course.modulos.map((modulo, index) => ({
                       titulo: modulo.titulo || `Módulo ${index + 1}`,
                       lecciones:
                         modulo.lecciones?.map((leccion, leccionIndex) => ({
-                          titulo: leccion.titulo || `Lección ${leccionIndex + 1}`,
+                          titulo:
+                            leccion.titulo || `Lección ${leccionIndex + 1}`,
                           duracion: leccion.duracion || 0,
                         })) || [],
                     }))}
                   />
                 ) : (
-                  <p className="text-gray-500">No hay contenido disponible para mostrar.</p>
+                  <p className="text-gray-500">
+                    No hay contenido disponible para mostrar.
+                  </p>
                 )}
               </CardBody>
             </Card>
           </div>
 
-          {/* Sidebar adicional */}
-          <div className="space-y-6">
-
-          </div>
+          <div className="space-y-6" />
         </div>
       </div>
     </div>
