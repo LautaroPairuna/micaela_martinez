@@ -11,6 +11,21 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { TipoNotificacion, EstadoOrden } from '@prisma/client';
 import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
 
+type ParsedMeta = {
+  subscription?: {
+    endDate?: string;
+    isActive?: boolean;
+    nextPaymentDate?: string;
+    frequency?: number;
+    frequencyType?: string;
+    status?: string;
+    orderId?: number;
+    subscriptionId?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
@@ -74,10 +89,6 @@ export class SubscriptionService {
     }
   }
 
-  /**
-   * ✅ Ajuste anti-bug: si la inscripción parece de suscripción pero falta endDate,
-   * NO se considera acceso permanente.
-   */
   async checkCourseAccess(userId: string, courseId: string): Promise<boolean> {
     const enrollment = await this.prisma.inscripcion.findUnique({
       where: {
@@ -98,21 +109,15 @@ export class SubscriptionService {
       return isActive && enrollment.subscriptionEndDate > now;
     }
 
-    // ✅ Si parece suscripción moderna (tiene refs) pero no hay endDate => sin acceso
-    if (enrollment.subscriptionOrderId || enrollment.subscriptionId) {
-      return false;
-    }
-
-    // Fallback legacy: mirar JSON
+    // fallback legacy JSON
     const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
-      // Legacy real (sin suscripción registrada): acceso permanente
-      return true;
+      return true; // legacy/permanente
     }
 
     const endDate = new Date(progreso.subscription.endDate);
-    return endDate > now;
+    return endDate > now && progreso.subscription.isActive !== false;
   }
 
   async getUserInfo(userId: string) {
@@ -146,16 +151,8 @@ export class SubscriptionService {
     }
 
     const cursos = await this.prisma.curso.findMany({
-      where: {
-        destacado: true,
-        publicado: true,
-      },
-      select: {
-        id: true,
-        titulo: true,
-        slug: true,
-        portada: true,
-      },
+      where: { destacado: true, publicado: true },
+      select: { id: true, titulo: true, slug: true, portada: true },
     });
 
     const now = new Date();
@@ -246,19 +243,6 @@ export class SubscriptionService {
     const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
-      // Si parece suscripción moderna pero no hay endDate => sin acceso (evita “permiso gratis”)
-      if (enrollment.subscriptionOrderId || enrollment.subscriptionId) {
-        return {
-          hasAccess: false,
-          isPermanent: false,
-          courseName: enrollment.curso.titulo,
-          courseSlug: enrollment.curso.slug,
-          orderId: enrollment.subscriptionOrderId ?? null,
-          subscriptionId: enrollment.subscriptionId ?? null,
-          isActive: enrollment.subscriptionActive !== false,
-        };
-      }
-
       return {
         hasAccess: true,
         isPermanent: true,
@@ -273,7 +257,7 @@ export class SubscriptionService {
     );
 
     return {
-      hasAccess: endDate > now,
+      hasAccess: endDate > now && progreso.subscription.isActive !== false,
       isPermanent: false,
       expirationDate: progreso.subscription.endDate,
       daysLeft: Math.max(daysLeft, 0),
@@ -319,18 +303,19 @@ export class SubscriptionService {
           const progreso = parseProgreso(e.progreso);
           if (!progreso?.subscription) return;
 
-          const next = {
+          const next: ParsedMeta = {
             ...progreso,
             subscription: {
               ...(progreso.subscription || {}),
               isActive: false,
               cancelledAt: new Date().toISOString(),
+              status: 'cancelled',
             },
           };
 
           await this.prisma.inscripcion.update({
             where: { id: e.id },
-            data: { progreso: next },
+            data: { progreso: next as any },
           });
         }),
       );
@@ -391,10 +376,11 @@ export class SubscriptionService {
           subscription: {
             ...currentSubscription,
             status: 'cancelled',
+            isActive: false,
             cancelledAt: new Date().toISOString(),
             cancellation,
           },
-        },
+        } as any,
       },
     });
 
@@ -427,33 +413,15 @@ export class SubscriptionService {
   }
 }
 
-function parseProgreso(value: unknown): {
-  subscription?: {
-    endDate?: string;
-    isActive?: boolean;
-    nextPaymentDate?: string;
-    frequency?: number;
-    frequencyType?: string;
-    status?: string;
-    orderId?: number;
-    subscriptionId?: string;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-} | null {
+function parseProgreso(value: unknown): ParsedMeta | null {
   if (value == null) return null;
-
-  if (typeof value === 'object') {
-    return value as any;
-  }
-
+  if (typeof value === 'object') return value as ParsedMeta;
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value) as any;
+      return JSON.parse(value) as ParsedMeta;
     } catch {
       return null;
     }
   }
-
   return null;
 }
