@@ -1,4 +1,4 @@
-// src/orders/orders.service.ts
+// apps/api/src/orders/orders.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -31,6 +31,42 @@ function applyDiscount(price: number, discount?: number | null) {
   return Math.max(0, final);
 }
 
+/**
+ * Prisma v6: InputJsonValue NO incluye null.
+ * Para null hay que usar Prisma.JsonNull (o DbNull) y el input correcto es NullableJsonNullValueInput.
+ */
+type PrismaJson = Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput;
+
+function toPrismaJson(value: unknown): PrismaJson {
+  if (value === null) return Prisma.JsonNull;
+
+  const t = typeof value;
+
+  if (t === 'string' || t === 'number' || t === 'boolean') {
+    return value as Prisma.InputJsonValue;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((v) => toPrismaJson(v)) as unknown as Prisma.InputJsonValue;
+  }
+
+  if (t === 'object') {
+    return value as Prisma.InputJsonObject;
+  }
+
+  return String(value);
+}
+
+function sanitizeMeta(meta: unknown): PrismaJson {
+  if (!meta || typeof meta !== 'object') return toPrismaJson(meta);
+
+  const clone: Record<string, unknown> = { ...(meta as any) };
+  delete clone.token;
+  delete clone.card_token_id;
+
+  return toPrismaJson(clone);
+}
+
 function normalizeStatus(mpStatus: string) {
   const s = String(mpStatus || '').toLowerCase();
   if (s === 'approved' || s === 'authorized') return 'APPROVED';
@@ -39,37 +75,6 @@ function normalizeStatus(mpStatus: string) {
   if (s === 'refunded') return 'REFUNDED';
   if (!s) return 'UNKNOWN';
   return 'PENDING';
-}
-
-/**
- * Convierte cualquier objeto a Prisma.InputJsonValue de forma segura
- * (sin `unknown` y sin Date/BigInt raros).
- */
-function toInputJson(value: unknown): Prisma.InputJsonValue {
-  return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
-}
-
-function sanitizeMeta(meta: unknown): Prisma.InputJsonValue {
-  if (!meta || typeof meta !== 'object') return toInputJson(meta ?? {});
-  const clone: any = { ...(meta as any) };
-  // Nunca guardar token/card_token_id completos.
-  delete clone.token;
-  delete clone.card_token_id;
-  return toInputJson(clone);
-}
-
-function computeEndDate(
-  now: Date,
-  freq?: number | null,
-  freqType?: string | null,
-) {
-  if (!freq || !freqType) return null;
-  const d = new Date(now);
-  if (freqType === 'days') d.setDate(d.getDate() + freq);
-  else if (freqType === 'weeks') d.setDate(d.getDate() + freq * 7);
-  else if (freqType === 'months') d.setMonth(d.getMonth() + freq);
-  else if (freqType === 'years') d.setFullYear(d.getFullYear() + freq);
-  return d;
 }
 
 @Injectable()
@@ -151,6 +156,7 @@ export class OrdersService {
           throw new BadRequestException(
             `Curso ${it.cursoId} inválido o no publicado`,
           );
+
         const price = applyDiscount(Number(c.precio), Number(c.descuento ?? 0));
         itemsOrden.push({
           tipo: 'CURSO',
@@ -169,6 +175,7 @@ export class OrdersService {
           );
         if (p.stock < it.cantidad)
           throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
+
         const price = applyDiscount(Number(p.precio), Number(p.descuento ?? 0));
         itemsOrden.push({
           tipo: 'PRODUCTO',
@@ -196,8 +203,10 @@ export class OrdersService {
           moneda: 'ARS',
           tipo: orderType as any,
           esSuscripcion,
-          // ✅ NO uses Prisma.JsonNull: te rompe tipos
-          metadatos: dto.metadatos ? toInputJson(dto.metadatos) : undefined,
+          // ✅ Prisma v6 JSON: NO mandes null / JsonNull si no hace falta.
+          ...(dto.metadatos !== undefined
+            ? { metadatos: toPrismaJson(dto.metadatos) }
+            : {}),
           direccionEnvioId: dto.direccionEnvioId
             ? Number(dto.direccionEnvioId)
             : null,
@@ -210,6 +219,7 @@ export class OrdersService {
       });
 
       await tx.itemCarrito.deleteMany({ where: { carritoId: cart.id } });
+
       return orden;
     });
   }
@@ -345,13 +355,6 @@ export class OrdersService {
     return mpRes;
   }
 
-  /**
-   * ✅ SUBSCRIBE robusto:
-   * - Crea Preapproval (MP)
-   * - Guarda orden (suscripcionId/proximoPago + metadatos.subscription.orderId)
-   * - Crea inscripciones "pendientes" (subscriptionActive=false)
-   * - Reconciliación inmediata: si MP ya cobró (last_charged_date) => activa ahora
-   */
   async subscribe(userId: number, orderId: number, dto: SubscribeOrderDto) {
     const order = await this.getOrderById(userId, orderId);
     if (order.estado !== 'PENDIENTE')
@@ -373,12 +376,12 @@ export class OrdersService {
           frequency_type: dto.frequency_type,
           transaction_amount: Number(order.total),
           currency_id: order.moneda,
+          // ⚠️ si tu mpSub agrega start_date, que sea >= ahora (y no pasado)
         },
       },
       idemKey,
     );
 
-    // ledger preapproval
     await this.prisma.pago.upsert({
       where: {
         provider_kind_mpId: {
@@ -397,7 +400,7 @@ export class OrdersService {
         metadatos: sanitizeMeta({
           preapproval_id: mpRes.id,
           status: mpRes.status,
-          next: mpRes.next_payment_date ?? null,
+          next: mpRes.next_payment_date,
         }),
       },
       create: {
@@ -414,195 +417,22 @@ export class OrdersService {
         metadatos: sanitizeMeta({
           preapproval_id: mpRes.id,
           status: mpRes.status,
-          next: mpRes.next_payment_date ?? null,
+          next: mpRes.next_payment_date,
         }),
       },
     });
-
-    // ✅ Guardar orden + metadatos.subscription.orderId SIEMPRE
-    const currentMeta =
-      (order.metadatos ? (order.metadatos as any) : {}) ?? {};
-    const nextMeta = {
-      ...currentMeta,
-      subscription: {
-        ...(typeof currentMeta?.subscription === 'object'
-          ? currentMeta.subscription
-          : {}),
-        orderId: order.id,
-        subscriptionId: String(mpRes.id),
-        status: String(mpRes.status || ''),
-        frequency: dto.frequency,
-        frequencyType: dto.frequency_type,
-        createdAt: new Date().toISOString(),
-        nextPaymentDate: mpRes.next_payment_date ?? null,
-        isActive: String(mpRes.status).toLowerCase() === 'authorized',
-      },
-    };
 
     await this.prisma.orden.update({
       where: { id: order.id },
       data: {
         suscripcionId: String(mpRes.id),
-        suscripcionActiva: String(mpRes.status).toLowerCase() === 'authorized'
-          ? true
-          : null,
+        suscripcionActiva: mpRes.status === 'authorized' ? true : null,
         suscripcionProximoPago: mpRes.next_payment_date
           ? new Date(mpRes.next_payment_date)
           : null,
         referenciaPago: String(mpRes.id),
-        metadatos: toInputJson(nextMeta),
       },
     });
-
-    // ✅ Crear/Actualizar inscripciones "pendientes" (no activas hasta primer cobro)
-    const courseItems = order.items.filter((i) => i.tipo === 'CURSO');
-
-    if (courseItems.length) {
-      await this.prisma.$transaction(
-        courseItems.map((it) =>
-          this.prisma.inscripcion.upsert({
-            where: {
-              usuarioId_cursoId: {
-                usuarioId: userId,
-                cursoId: it.refId,
-              },
-            },
-            update: {
-              subscriptionOrderId: order.id,
-              subscriptionId: String(mpRes.id),
-              subscriptionActive: false,
-              // endDate se setea cuando se aprueba el pago (webhook o reconciliación)
-            },
-            create: {
-              usuarioId: userId,
-              cursoId: it.refId,
-              estado: 'ACTIVADA', // o tu estado default
-              progreso: toInputJson({
-                subscription: {
-                  orderId: order.id,
-                  subscriptionId: String(mpRes.id),
-                  isActive: false,
-                  status: 'processing',
-                  frequency: dto.frequency,
-                  frequencyType: dto.frequency_type,
-                  createdAt: new Date().toISOString(),
-                },
-              }),
-              subscriptionOrderId: order.id,
-              subscriptionId: String(mpRes.id),
-              subscriptionActive: false,
-            },
-          }),
-        ),
-      );
-    }
-
-    // ✅ Reconciliación inmediata: si MP ya cobró, activamos AHORA (tu UI deja de esperar)
-    try {
-      const pre = await this.mpSub.getPreapproval(String(mpRes.id));
-      const charged = !!pre?.last_charged_date;
-      const isAuth = String(pre?.status || '').toLowerCase() === 'authorized';
-
-      if (charged && isAuth) {
-        const nextDate = pre?.next_payment_date
-          ? new Date(pre.next_payment_date)
-          : null;
-
-        await this.prisma.orden.update({
-          where: { id: order.id },
-          data: {
-            estado: 'PAGADO',
-            suscripcionActiva: true,
-            suscripcionProximoPago: nextDate,
-            referenciaPago: String(pre.id),
-            metadatos: toInputJson({
-              ...nextMeta,
-              subscription: {
-                ...nextMeta.subscription,
-                isActive: true,
-                status: 'active',
-                lastChargedDate: pre.last_charged_date,
-                nextPaymentDate: pre.next_payment_date ?? nextMeta.subscription.nextPaymentDate,
-              },
-            }),
-          },
-        });
-
-        if (courseItems.length) {
-          await this.prisma.$transaction(
-            courseItems.map((it) =>
-              this.prisma.inscripcion.upsert({
-                where: {
-                  usuarioId_cursoId: {
-                    usuarioId: userId,
-                    cursoId: it.refId,
-                  },
-                },
-                update: {
-                  subscriptionOrderId: order.id,
-                  subscriptionId: String(pre.id),
-                  subscriptionActive: true,
-                  subscriptionEndDate: computeEndDate(
-                    new Date(),
-                    dto.frequency,
-                    dto.frequency_type,
-                  ),
-                  progreso: toInputJson({
-                    subscription: {
-                      orderId: order.id,
-                      subscriptionId: String(pre.id),
-                      isActive: true,
-                      status: 'active',
-                      frequency: dto.frequency,
-                      frequencyType: dto.frequency_type,
-                      lastChargedDate: pre.last_charged_date,
-                      nextPaymentDate: pre.next_payment_date ?? null,
-                      endDate: computeEndDate(
-                        new Date(),
-                        dto.frequency,
-                        dto.frequency_type,
-                      )?.toISOString() ?? null,
-                    },
-                  }),
-                },
-                create: {
-                  usuarioId: userId,
-                  cursoId: it.refId,
-                  estado: 'ACTIVADA',
-                  progreso: toInputJson({
-                    subscription: {
-                      orderId: order.id,
-                      subscriptionId: String(pre.id),
-                      isActive: true,
-                      status: 'active',
-                      frequency: dto.frequency,
-                      frequencyType: dto.frequency_type,
-                      lastChargedDate: pre.last_charged_date,
-                      nextPaymentDate: pre.next_payment_date ?? null,
-                      endDate: computeEndDate(
-                        new Date(),
-                        dto.frequency,
-                        dto.frequency_type,
-                      )?.toISOString() ?? null,
-                    },
-                  }),
-                  subscriptionOrderId: order.id,
-                  subscriptionId: String(pre.id),
-                  subscriptionActive: true,
-                  subscriptionEndDate: computeEndDate(
-                    new Date(),
-                    dto.frequency,
-                    dto.frequency_type,
-                  ),
-                },
-              }),
-            ),
-          );
-        }
-      }
-    } catch {
-      // si MP no responde, webhook lo hará.
-    }
 
     return mpRes;
   }
