@@ -1,6 +1,4 @@
 'use client';
-
-import React from 'react';
 import { Lesson } from '@/types/course';
 import { LessonContent } from './LessonContent';
 import { cn } from '@/lib/utils';

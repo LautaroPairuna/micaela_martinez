@@ -1,3 +1,4 @@
+// AdminRichTextEditor.tsx
 'use client';
 
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';

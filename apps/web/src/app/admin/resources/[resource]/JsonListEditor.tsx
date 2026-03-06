@@ -1,3 +1,4 @@
+// JsonListEditor.tsx
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Plus, X, GripVertical } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';

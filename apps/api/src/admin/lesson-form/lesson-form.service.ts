@@ -204,7 +204,7 @@ export class LessonFormService {
       title: 'Texto',
       fields: [
         {
-          key: 'contenido',
+          key: 'body',
           label: 'Contenido',
           type: 'richtext',
           required: true,
