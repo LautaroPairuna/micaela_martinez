@@ -1,3 +1,4 @@
+// ContentPlayer.tsx
 'use client';
 import { Lesson } from '@/types/course';
 import { LessonContent } from './LessonContent';

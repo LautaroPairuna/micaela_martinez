@@ -1,4 +1,3 @@
-// src/types/course.ts
 export type LessonType = 'VIDEO' | 'TEXTO' | 'DOCUMENTO' | 'QUIZ';
 
 export type QuizQuestion = {
@@ -8,31 +7,74 @@ export type QuizQuestion = {
   explicacion?: string;
 };
 
-export type LessonContent =
-  | {
-      // Legacy
-      texto?: string;
-      documento?: { url: string; nombre: string; tipo: string };
-      quiz?: QuizQuestion;
-      preguntas?: QuizQuestion[];
-      // Unificado
-      tipo?: 'QUIZ' | 'TEXTO' | 'DOCUMENTO';
-      data?: {
-        preguntas?: QuizQuestion[];
-        configuracion?: {
-          mostrarResultados?: boolean;
-          permitirReintentos?: boolean;
-          puntuacionMinima?: number;
-        };
-        contenido?: string;          // TEXTO
-        url?: string;                // DOCUMENTO
-        nombre?: string;
-        tipoArchivo?: string;
-      };
-    }
-  | string
-  | null
-  | undefined;
+export type DocumentLessonData = {
+  url?: string;
+  nombre?: string;
+  tipo?: string;
+  tipoArchivo?: string;
+};
+
+export type QuizLessonConfig = {
+  mostrarResultados?: boolean;
+  permitirReintentos?: boolean;
+  puntuacionMinima?: number;
+};
+
+export type LessonContentObject = {
+  // ───── Legacy ─────
+  texto?: string;
+  documento?: DocumentLessonData;
+  quiz?: QuizQuestion;
+  preguntas?: QuizQuestion[];
+
+  // ───── Nuevo formato plano ─────
+  tipo?: 'QUIZ' | 'TEXTO' | 'DOCUMENTO';
+  body?: string;
+  html?: string;
+  content?: string;
+  markdown?: string;
+  text?: string;
+  contenido?: string;
+
+  url?: string;
+  nombre?: string;
+  tipoArchivo?: string;
+  intro?: string;
+
+  configuracion?: QuizLessonConfig;
+
+  // ───── Formato unificado/anidado ─────
+  data?: {
+    preguntas?: QuizQuestion[];
+    configuracion?: QuizLessonConfig;
+
+    // TEXTO
+    body?: string;
+    html?: string;
+    content?: string;
+    markdown?: string;
+    text?: string;
+    contenido?: string;
+
+    // DOCUMENTO
+    url?: string;
+    nombre?: string;
+    tipoArchivo?: string;
+
+    // QUIZ
+    intro?: string;
+  };
+
+  // bloques opcionales por compatibilidad futura
+  blocks?: Array<{
+    text?: string;
+    [key: string]: unknown;
+  }>;
+
+  [key: string]: unknown;
+};
+
+export type LessonContent = LessonContentObject | string | null | undefined;
 
 export interface Lesson {
   id: string;
@@ -42,7 +84,7 @@ export interface Lesson {
   previewUrl?: string | null;
   duracion?: number | null; // en minutos
   orden: number;
-  tipo?: LessonType;
+  tipo: LessonType;
   contenido?: LessonContent;
 }
 
