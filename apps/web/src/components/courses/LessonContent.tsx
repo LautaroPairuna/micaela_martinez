@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import {
-  CheckCircle,
-  Circle,
-  FileText,
-  HelpCircle,
-  Clock,
-  ArrowRight,
-  RotateCcw,
-  FileIcon,
-  Download,
-  ExternalLink,
+import { 
+  CheckCircle, 
+  Circle, 
+  FileText, 
+  HelpCircle, 
+  Clock, 
+  ArrowRight, 
+  RotateCcw, 
+  FileIcon, 
+  Download, 
+  ExternalLink, 
   ChevronRight,
   ChevronLeft,
-  XCircle,
+  XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn, formatDuration } from '@/lib/utils';
@@ -111,85 +111,21 @@ const looksLikeHtml = (value: string): boolean => {
 // COMPONENTE: DOCUMENTO
 // ─────────────────────────────────────────────────────────────────────────────
 
-function DocumentContent({
-  lesson,
-  isCompleted = false,
-  onToggleComplete,
-  onComplete,
-  onNext,
-}: LessonContentProps) {
+function DocumentContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   const docInfo = useMemo(() => {
-    const content = lesson.contenido as Record<string, unknown> | string | null | undefined;
+    const content = lesson.contenido as any;
     if (!content) return null;
-
+    
+    if (content.url) return { url: content.url, nombre: content.nombre || lesson.titulo, tipo: content.tipo || 'PDF' };
+    if (content.documento) return { url: content.documento.url, nombre: content.documento.nombre || lesson.titulo, tipo: content.documento.tipo || 'PDF' };
+    if (content.data) return { url: content.data.url, nombre: content.data.nombre || lesson.titulo, tipo: content.data.tipoArchivo || 'PDF' };
+    
     if (typeof content === 'string') {
       try {
-        const parsed = JSON.parse(content) as Record<string, unknown>;
-        if (typeof parsed.url === 'string') {
-          return {
-            url: parsed.url,
-            nombre:
-              typeof parsed.nombre === 'string' ? parsed.nombre : lesson.titulo,
-            tipo:
-              typeof parsed.tipo === 'string'
-                ? parsed.tipo
-                : typeof parsed.tipoArchivo === 'string'
-                  ? parsed.tipoArchivo
-                  : 'PDF',
-          };
-        }
-      } catch {
-        return null;
-      }
-      return null;
+        const parsed = JSON.parse(content);
+        if (parsed.url) return { url: parsed.url, nombre: parsed.nombre || lesson.titulo, tipo: parsed.tipo || 'PDF' };
+      } catch {}
     }
-
-    if (typeof content.url === 'string') {
-      return {
-        url: content.url,
-        nombre:
-          typeof content.nombre === 'string' ? content.nombre : lesson.titulo,
-        tipo:
-          typeof content.tipo === 'string'
-            ? content.tipo
-            : typeof content.tipoArchivo === 'string'
-              ? content.tipoArchivo
-              : 'PDF',
-      };
-    }
-
-    if (
-      content.documento &&
-      typeof content.documento === 'object' &&
-      content.documento !== null
-    ) {
-      const documento = content.documento as Record<string, unknown>;
-      if (typeof documento.url === 'string') {
-        return {
-          url: documento.url,
-          nombre:
-            typeof documento.nombre === 'string'
-              ? documento.nombre
-              : lesson.titulo,
-          tipo:
-            typeof documento.tipo === 'string' ? documento.tipo : 'PDF',
-        };
-      }
-    }
-
-    if (content.data && typeof content.data === 'object') {
-      const data = content.data as Record<string, unknown>;
-      if (typeof data.url === 'string') {
-        return {
-          url: data.url,
-          nombre:
-            typeof data.nombre === 'string' ? data.nombre : lesson.titulo,
-          tipo:
-            typeof data.tipoArchivo === 'string' ? data.tipoArchivo : 'PDF',
-        };
-      }
-    }
-
     return null;
   }, [lesson.contenido, lesson.titulo]);
 
@@ -201,30 +137,27 @@ function DocumentContent({
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-100">
               <FileIcon className="h-10 w-10 text-slate-400" />
             </div>
-
+            
             <h1 className="mb-3 text-3xl font-bold tracking-tight text-slate-900">
               {docInfo?.nombre || lesson.titulo}
             </h1>
-
+            
             <div className="mx-auto mb-8 flex max-w-md items-center justify-center gap-4 text-sm text-slate-500">
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
-                {lesson.duracion
-                  ? formatDuration(Math.round(lesson.duracion * 60))
-                  : 'Lectura'}
+                {lesson.duracion ? formatDuration(Math.round(lesson.duracion * 60)) : 'Lectura'}
               </span>
               <span>•</span>
               <span className="uppercase">{docInfo?.tipo || 'Documento'}</span>
             </div>
 
             <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-600">
-              {lesson.descripcion ||
-                'Descarga este recurso para complementar tu aprendizaje. Puedes consultarlo en cualquier momento.'}
+              {lesson.descripcion || "Descarga este recurso para complementar tu aprendizaje. Puedes consultarlo en cualquier momento."}
             </p>
 
             {docInfo ? (
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <a
+                <a 
                   href={docInfo.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -233,7 +166,7 @@ function DocumentContent({
                   <Download className="h-5 w-5" />
                   Descargar
                 </a>
-                <a
+                <a 
                   href={docInfo.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -257,10 +190,7 @@ function DocumentContent({
             <ul className="space-y-3 text-slate-600">
               <li className="flex items-start gap-3">
                 <div className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400" />
-                <span>
-                  Guarda este documento en una carpeta dedicada a este curso
-                  para fácil acceso.
-                </span>
+                <span>Guarda este documento en una carpeta dedicada a este curso para fácil acceso.</span>
               </li>
               <li className="flex items-start gap-3">
                 <div className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400" />
@@ -276,25 +206,16 @@ function DocumentContent({
           <button
             onClick={onToggleComplete}
             className={cn(
-              'flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors',
-              isCompleted
-                ? 'bg-green-50 text-green-700'
-                : 'text-slate-600 hover:bg-slate-100',
+              "flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors",
+              isCompleted ? "bg-green-50 text-green-700" : "text-slate-600 hover:bg-slate-100"
             )}
           >
-            {isCompleted ? (
-              <CheckCircle className="h-5 w-5" />
-            ) : (
-              <Circle className="h-5 w-5" />
-            )}
-            {isCompleted ? 'Completado' : 'Marcar como leído'}
+            {isCompleted ? <CheckCircle className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+            {isCompleted ? "Completado" : "Marcar como leído"}
           </button>
-
+          
           {(!isCompleted || onNext) && (
-            <Button
-              onClick={() => onNext?.() || onComplete?.()}
-              className="bg-slate-900 text-white hover:bg-slate-800"
-            >
+            <Button onClick={() => onNext?.() || onComplete?.()} className="bg-slate-900 text-white hover:bg-slate-800">
               Continuar
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -309,13 +230,7 @@ function DocumentContent({
 // COMPONENTE: TEXTO
 // ─────────────────────────────────────────────────────────────────────────────
 
-function TextContent({
-  lesson,
-  isCompleted = false,
-  onToggleComplete,
-  onComplete,
-  onNext,
-}: LessonContentProps) {
+function TextContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   const content = useMemo(() => {
     const extracted = extractTextContent(lesson.contenido);
     return extracted || null;
@@ -396,26 +311,22 @@ function TextContent({
           <button
             onClick={onToggleComplete}
             className={cn(
-              'flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all',
-              isCompleted
-                ? 'bg-green-100 text-green-800 ring-1 ring-green-200'
-                : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200',
+              "flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all",
+              isCompleted 
+                ? "bg-green-100 text-green-800 ring-1 ring-green-200" 
+                : "bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200"
             )}
           >
-            {isCompleted ? (
-              <CheckCircle className="h-4 w-4" />
-            ) : (
-              <Circle className="h-4 w-4" />
-            )}
-            {isCompleted ? 'Leída' : 'Marcar como leída'}
+            {isCompleted ? <CheckCircle className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+            {isCompleted ? "Leída" : "Marcar como leída"}
           </button>
-
+          
           {(!isCompleted || onNext) && (
-            <Button
+            <Button 
               onClick={() => {
                 if (!isCompleted) onComplete?.();
                 onNext?.();
-              }}
+              }} 
               className="rounded-full bg-slate-900 px-8 text-white hover:bg-slate-800"
             >
               Siguiente Lección
@@ -431,18 +342,12 @@ function TextContent({
 // COMPONENTE: QUIZ
 // ─────────────────────────────────────────────────────────────────────────────
 
-function QuizContent({
-  lesson,
-  isCompleted = false,
-  onToggleComplete,
-  onComplete,
-  onNext,
-}: LessonContentProps) {
+function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-
+  
   const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
@@ -472,7 +377,7 @@ function QuizContent({
     const interval = setInterval(() => {
       const now = new Date();
       const diff = cooldownUntil.getTime() - now.getTime();
-
+      
       if (diff <= 0) {
         setCooldownUntil(null);
         localStorage.removeItem(`quiz-cooldown-${lesson.id}`);
@@ -488,34 +393,19 @@ function QuizContent({
   }, [cooldownUntil, lesson.id]);
 
   const { questions, intro } = useMemo(() => {
-    let content = lesson.contenido as Record<string, unknown> | string | null | undefined;
-
+    let content = lesson.contenido as any;
     if (typeof content === 'string') {
-      try {
-        content = JSON.parse(content) as Record<string, unknown>;
-      } catch {
-        content = null;
-      }
+      try { content = JSON.parse(content); } catch {}
     }
-
+    
     let qs: QuizQuestion[] = [];
     let introText: string | null = null;
 
-    if (content && typeof content === 'object') {
-      if (Array.isArray(content.preguntas)) {
-        qs = content.preguntas as QuizQuestion[];
-        introText = typeof content.intro === 'string' ? content.intro : null;
-      } else if (content.data && typeof content.data === 'object') {
-        const data = content.data as Record<string, unknown>;
-        if (Array.isArray(data.preguntas)) {
-          qs = data.preguntas as QuizQuestion[];
-        }
-        introText = typeof data.intro === 'string' ? data.intro : null;
-      } else if (content.quiz && typeof content.quiz === 'object') {
-        qs = [content.quiz as QuizQuestion];
-      }
+    if (content) {
+      if (Array.isArray(content.preguntas)) { qs = content.preguntas; introText = content.intro || null; }
+      else if (content.data && Array.isArray(content.data.preguntas)) { qs = content.data.preguntas; introText = content.data.intro || null; }
+      else if (content.quiz) { qs = [content.quiz]; }
     }
-
     return { questions: qs, intro: introText };
   }, [lesson.contenido]);
 
@@ -536,15 +426,13 @@ function QuizContent({
     return {
       correct,
       total: questions.length,
-      percentage: questions.length
-        ? Math.round((correct / questions.length) * 100)
-        : 0,
+      percentage: Math.round((correct / questions.length) * 100)
     };
   }, [questions, selectedAnswers]);
 
   const handleOptionSelect = (optionIndex: number) => {
     if (isSubmitted) return;
-    setSelectedAnswers((prev) => ({ ...prev, [currentQuestionIndex]: optionIndex }));
+    setSelectedAnswers(prev => ({ ...prev, [currentQuestionIndex]: optionIndex }));
   };
 
   const handleSubmit = () => {
@@ -581,6 +469,7 @@ function QuizContent({
     return (
       <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50 p-6 md:p-12">
         <div className="w-full max-w-xl rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-900/5 md:p-12 text-center">
+          
           {cooldownUntil ? (
             <>
               <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-orange-50 text-orange-600">
@@ -602,7 +491,7 @@ function QuizContent({
               <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
                 <HelpCircle className="h-10 w-10" />
               </div>
-
+              
               <h2 className="mb-4 text-3xl font-bold text-slate-900">Evaluación de Conocimientos</h2>
               <div className="mb-8 text-lg text-slate-600 whitespace-pre-wrap leading-relaxed">
                 {intro}
@@ -619,11 +508,7 @@ function QuizContent({
                 </div>
               </div>
 
-              <Button
-                onClick={() => setHasStarted(true)}
-                size="lg"
-                className="w-full rounded-xl bg-indigo-600 text-lg hover:bg-indigo-700 md:w-auto md:px-12"
-              >
+              <Button onClick={() => setHasStarted(true)} size="lg" className="w-full rounded-xl bg-indigo-600 text-lg hover:bg-indigo-700 md:w-auto md:px-12">
                 Comenzar Quiz
               </Button>
             </>
@@ -643,9 +528,9 @@ function QuizContent({
               {isSubmitted ? 'Resultados' : `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`}
             </div>
           </div>
-
+          
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-            <div
+            <div 
               className="h-full bg-indigo-600 transition-all duration-500 ease-out"
               style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
@@ -655,6 +540,7 @@ function QuizContent({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
         <div className="mx-auto flex min-h-full max-w-3xl flex-col">
+          
           {!isSubmitted ? (
             <div className="animate-in slide-in-from-right-8 fade-in duration-300">
               <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 md:p-10">
@@ -671,28 +557,24 @@ function QuizContent({
                       key={index}
                       onClick={() => handleOptionSelect(index)}
                       className={cn(
-                        'group relative flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200',
+                        "group relative flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200",
                         isSelected
-                          ? 'border-indigo-600 bg-indigo-50/50 shadow-md'
-                          : 'border-transparent bg-white shadow-sm ring-1 ring-slate-200 hover:border-indigo-200 hover:bg-slate-50',
+                          ? "border-indigo-600 bg-indigo-50/50 shadow-md"
+                          : "border-transparent bg-white shadow-sm ring-1 ring-slate-200 hover:border-indigo-200 hover:bg-slate-50"
                       )}
                     >
-                      <div
-                        className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-colors',
-                          isSelected
-                            ? 'border-indigo-600 bg-indigo-600 text-white'
-                            : 'border-slate-300 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-500',
-                        )}
-                      >
+                      <div className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-colors",
+                        isSelected
+                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          : "border-slate-300 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-500"
+                      )}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      <span
-                        className={cn(
-                          'text-lg',
-                          isSelected ? 'font-medium text-indigo-900' : 'text-slate-700',
-                        )}
-                      >
+                      <span className={cn(
+                        "text-lg",
+                        isSelected ? "font-medium text-indigo-900" : "text-slate-700"
+                      )}>
                         {option}
                       </span>
                     </button>
@@ -702,95 +584,69 @@ function QuizContent({
             </div>
           ) : (
             <div className="animate-in zoom-in-95 fade-in duration-300 space-y-6">
-              <div
-                className={cn(
-                  'rounded-3xl p-8 text-center text-white shadow-xl',
-                  score.percentage === 100 ? 'bg-emerald-600' : 'bg-rose-600',
-                )}
-              >
+              <div className={cn(
+                "rounded-3xl p-8 text-center text-white shadow-xl",
+                score.percentage === 100 ? "bg-emerald-600" : "bg-rose-600"
+              )}>
                 <div className="mb-4 flex justify-center">
                   {score.percentage === 100 ? (
-                    <div className="rounded-full bg-white/20 p-4">
-                      <CheckCircle className="h-12 w-12" />
-                    </div>
+                    <div className="rounded-full bg-white/20 p-4"><CheckCircle className="h-12 w-12" /></div>
                   ) : (
-                    <div className="rounded-full bg-white/20 p-4">
-                      <XCircle className="h-12 w-12" />
-                    </div>
+                    <div className="rounded-full bg-white/20 p-4"><XCircle className="h-12 w-12" /></div>
                   )}
                 </div>
                 <div className="mb-2 text-5xl font-bold">{score.percentage}%</div>
                 <h2 className="text-2xl font-bold">
-                  {score.percentage === 100 ? '¡Excelente trabajo!' : 'Necesitas repasar'}
+                  {score.percentage === 100 ? "¡Excelente trabajo!" : "Necesitas repasar"}
                 </h2>
                 <p className="mt-2 text-white/90">
-                  {score.percentage === 100
-                    ? 'Has respondido todas las preguntas correctamente.'
+                  {score.percentage === 100 
+                    ? "Has respondido todas las preguntas correctamente." 
                     : `Has acertado ${score.correct} de ${score.total}. Se requiere 100% para aprobar.`}
                 </p>
                 {score.percentage < 100 && (
                   <div className="mt-4 inline-block rounded-lg bg-black/20 px-4 py-2 text-sm font-medium text-white/90">
-                    Cooldown de 2 minutos activado
+                     Cooldown de 2 minutos activado
                   </div>
                 )}
               </div>
 
               <div className="space-y-4">
-                <h3 className="px-2 text-sm font-bold uppercase tracking-wider text-slate-500">
-                  Revisión detallada
-                </h3>
+                <h3 className="px-2 text-sm font-bold uppercase tracking-wider text-slate-500">Revisión detallada</h3>
                 {questions.map((q, idx) => {
                   const userAnswer = selectedAnswers[idx];
                   const isCorrect = userAnswer === q.respuestaCorrecta;
-
+                  
                   return (
-                    <div
-                      key={idx}
-                      className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200"
-                    >
-                      <div
-                        className={cn(
-                          'border-l-4 p-5',
-                          isCorrect ? 'border-emerald-500' : 'border-rose-500',
-                        )}
-                      >
+                    <div key={idx} className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                      <div className={cn(
+                        "border-l-4 p-5",
+                        isCorrect ? "border-emerald-500" : "border-rose-500"
+                      )}>
                         <p className="mb-3 font-medium text-slate-900">{q.pregunta}</p>
-
+                        
                         <div className="space-y-3 text-sm">
                           <div className="flex items-start gap-2">
-                            <div className="mt-0.5">
-                              {isCorrect ? (
-                                <CheckCircle className="h-5 w-5 text-emerald-500" />
-                              ) : (
-                                <XCircle className="h-5 w-5 text-rose-500" />
-                              )}
-                            </div>
-                            <div>
-                              <span
-                                className={cn(
-                                  'block font-bold mb-1',
-                                  isCorrect ? 'text-emerald-700' : 'text-rose-700',
-                                )}
-                              >
-                                Tu respuesta:
-                              </span>
-                              <span className="text-slate-700 block">
-                                {q.opciones[userAnswer] || 'Sin responder'}
-                              </span>
-                            </div>
+                             <div className="mt-0.5">
+                               {isCorrect ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-rose-500" />}
+                             </div>
+                             <div>
+                               <span className={cn("block font-bold mb-1", isCorrect ? "text-emerald-700" : "text-rose-700")}>
+                                 Tu respuesta:
+                               </span>
+                               <span className="text-slate-700 block">
+                                 {q.opciones[userAnswer] || "Sin responder"}
+                               </span>
+                             </div>
                           </div>
-
+                          
                           {!isCorrect && (
                             <div className="mt-3 rounded-lg bg-emerald-50 p-3 border border-emerald-100">
                               <div className="flex items-start gap-2">
                                 <CheckCircle className="mt-0.5 h-5 w-5 text-emerald-600" />
                                 <div>
-                                  <span className="block font-bold text-emerald-800 mb-1">
-                                    Respuesta correcta:
-                                  </span>
-                                  <span className="text-emerald-900 font-medium">
-                                    {q.opciones[q.respuestaCorrecta]}
-                                  </span>
+                                  <span className="block font-bold text-emerald-800 mb-1">Respuesta correcta:</span>
+                                  <span className="text-emerald-900 font-medium">{q.opciones[q.respuestaCorrecta]}</span>
                                   <p className="mt-2 text-xs text-emerald-700">
                                     Esta es la opción correcta porque corresponde a los conceptos vistos en la lección.
                                   </p>
@@ -806,6 +662,7 @@ function QuizContent({
               </div>
             </div>
           )}
+          
         </div>
       </div>
 
@@ -815,7 +672,7 @@ function QuizContent({
             <>
               <Button
                 variant="ghost"
-                onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentQuestionIndex === 0}
                 className="text-slate-500"
               >
@@ -824,8 +681,8 @@ function QuizContent({
               </Button>
 
               {isLastQuestion ? (
-                <Button
-                  onClick={handleSubmit}
+                <Button 
+                  onClick={handleSubmit} 
                   disabled={!allAnswered}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
                 >
@@ -833,8 +690,8 @@ function QuizContent({
                   <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button
-                  onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
+                <Button 
+                  onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
                   disabled={selectedAnswers[currentQuestionIndex] === undefined}
                   className="bg-slate-900 hover:bg-slate-800 text-white min-w-[140px]"
                 >
@@ -855,12 +712,9 @@ function QuizContent({
                   Repasar
                 </Button>
               )}
-
+              
               {score.percentage === 100 && (
-                <Button
-                  onClick={() => onNext?.() || onComplete?.()}
-                  className="bg-slate-900 text-white hover:bg-slate-800"
-                >
+                <Button onClick={() => onNext?.() || onComplete?.()} className="bg-slate-900 text-white hover:bg-slate-800">
                   Continuar Curso
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -877,54 +731,20 @@ function QuizContent({
 // COMPONENTE PRINCIPAL: EXPORT
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function LessonContent({
-  lesson,
-  isCompleted,
-  onToggleComplete,
-  onComplete,
-  onNext,
-}: LessonContentProps) {
+export function LessonContent({ lesson, isCompleted, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   switch (lesson.tipo) {
     case 'TEXTO':
-      return (
-        <TextContent
-          lesson={lesson}
-          isCompleted={isCompleted}
-          onToggleComplete={onToggleComplete}
-          onComplete={onComplete}
-          onNext={onNext}
-        />
-      );
+      return <TextContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     case 'DOCUMENTO':
-      return (
-        <DocumentContent
-          lesson={lesson}
-          isCompleted={isCompleted}
-          onToggleComplete={onToggleComplete}
-          onComplete={onComplete}
-          onNext={onNext}
-        />
-      );
+      return <DocumentContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     case 'QUIZ':
-      return (
-        <QuizContent
-          lesson={lesson}
-          isCompleted={isCompleted}
-          onToggleComplete={onToggleComplete}
-          onComplete={onComplete}
-          onNext={onNext}
-        />
-      );
+      return <QuizContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     default:
       return (
         <div className="flex h-full items-center justify-center bg-slate-50 p-8 text-center">
           <div>
-            <h2 className="mb-2 text-xl font-bold text-slate-900">
-              Tipo de contenido no soportado
-            </h2>
-            <p className="text-slate-500">
-              La lección de tipo "{lesson.tipo}" no tiene una vista implementada.
-            </p>
+            <h2 className="mb-2 text-xl font-bold text-slate-900">Tipo de contenido no soportado</h2>
+            <p className="text-slate-500">La lección de tipo "{lesson.tipo}" no tiene una vista implementada.</p>
           </div>
         </div>
       );
