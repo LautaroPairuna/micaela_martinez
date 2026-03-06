@@ -15,7 +15,7 @@ import { MpPaymentService } from '../mercadopago/mp-payment.service';
 import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { Decimal } from '@prisma/client/runtime/library';
-import { Prisma, EstadoInscripcion } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 function dec(n: number) {
   return new Decimal(n.toFixed(2));
@@ -42,61 +42,52 @@ function normalizeStatus(mpStatus: string) {
 }
 
 /**
- * ✅ Prisma JSON typing: lo que guardes en metadatos debe ser InputJsonValue.
- * Este helper elimina campos sensibles y devuelve InputJsonValue.
+ * Prisma (Json) necesita InputJsonValue.
+ * En Prisma v6: JsonNull NO es InputJsonValue.
+ * => devolvemos undefined cuando no hay meta (Prisma lo omite).
  */
-function sanitizeMeta(meta: unknown): Prisma.InputJsonValue {
-  if (!meta || typeof meta !== 'object') return meta as Prisma.InputJsonValue;
+function sanitizeMeta(meta: unknown): Prisma.InputJsonValue | undefined {
+  if (meta == null) return undefined;
 
-  const clone: Record<string, unknown> = { ...(meta as Record<string, unknown>) };
-  delete (clone as any).token;
-  delete (clone as any).card_token_id;
-
-  // Prisma acepta objetos plain como InputJsonObject
-  return clone as Prisma.InputJsonObject;
-}
-
-function safeJsonObject(value: unknown): Prisma.InputJsonObject {
-  if (!value) return {} as Prisma.InputJsonObject;
-
-  if (typeof value === 'object') {
-    return value as Prisma.InputJsonObject;
+  if (
+    typeof meta === 'string' ||
+    typeof meta === 'number' ||
+    typeof meta === 'boolean'
+  ) {
+    return meta;
   }
 
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === 'object') return parsed as Prisma.InputJsonObject;
-      return {} as Prisma.InputJsonObject;
-    } catch {
-      return {} as Prisma.InputJsonObject;
-    }
+  if (Array.isArray(meta)) {
+    return meta as unknown as Prisma.InputJsonValue;
   }
 
-  return {} as Prisma.InputJsonObject;
+  if (typeof meta === 'object') {
+    const clone: Record<string, unknown> = { ...(meta as any) };
+    delete (clone as any).token;
+    delete (clone as any).card_token_id;
+    return clone as unknown as Prisma.InputJsonValue;
+  }
+
+  return String(meta);
 }
 
-/**
- * Merge no destructivo de `subscription` dentro de un JSON (con types Prisma).
- */
-function mergeSubscriptionMeta(
-  base: unknown,
-  patch: Prisma.InputJsonObject,
-): Prisma.InputJsonObject {
-  const obj = safeJsonObject(base);
+function computeNextPaymentDateFallback(args: {
+  baseDate: Date;
+  frequency: number;
+  frequencyType: string;
+}): Date {
+  const { baseDate, frequency, frequencyType } = args;
 
-  const sub =
-    (obj as any).subscription && typeof (obj as any).subscription === 'object'
-      ? ((obj as any).subscription as Prisma.InputJsonObject)
-      : ({} as Prisma.InputJsonObject);
+  const d = new Date(baseDate);
+  const f = Number.isFinite(Number(frequency)) ? Number(frequency) : 1;
+  const t = String(frequencyType || 'months').toLowerCase();
 
-  return {
-    ...(obj as any),
-    subscription: {
-      ...(sub as any),
-      ...(patch as any),
-    },
-  } as Prisma.InputJsonObject;
+  if (t.includes('day')) d.setDate(d.getDate() + f);
+  else if (t.includes('week')) d.setDate(d.getDate() + f * 7);
+  else if (t.includes('year')) d.setFullYear(d.getFullYear() + f);
+  else d.setMonth(d.getMonth() + f);
+
+  return d;
 }
 
 @Injectable()
@@ -170,9 +161,7 @@ export class OrdersService {
           throw new BadRequestException(
             `Curso ${it.cursoId} inválido o no publicado`,
           );
-
         const price = applyDiscount(Number(c.precio), Number(c.descuento ?? 0));
-
         itemsOrden.push({
           tipo: 'CURSO',
           refId: c.id,
@@ -190,9 +179,7 @@ export class OrdersService {
           );
         if (p.stock < it.cantidad)
           throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
-
         const price = applyDiscount(Number(p.precio), Number(p.descuento ?? 0));
-
         itemsOrden.push({
           tipo: 'PRODUCTO',
           refId: p.id,
@@ -219,7 +206,7 @@ export class OrdersService {
           moneda: 'ARS',
           tipo: orderType as any,
           esSuscripcion,
-          metadatos: (dto.metadatos ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          metadatos: (dto.metadatos as any) ?? undefined,
           direccionEnvioId: dto.direccionEnvioId
             ? Number(dto.direccionEnvioId)
             : null,
@@ -314,9 +301,7 @@ export class OrdersService {
           identification: dto.payer_identification,
         },
         external_reference: String(order.id),
-        additional_info: {
-          items: mpItems,
-        },
+        additional_info: { items: mpItems },
       },
       idemKey,
     );
@@ -377,11 +362,6 @@ export class OrdersService {
     if (order.tipo !== 'SUBSCRIPTION')
       throw new BadRequestException('La orden no es de suscripción');
 
-    const courseItems = order.items.filter((i) => i.tipo === 'CURSO' && i.cursoId);
-    if (courseItems.length === 0) {
-      throw new BadRequestException('La orden de suscripción no contiene cursos');
-    }
-
     const idemKey = `sub-${orderId}-${dto.attemptId}`;
 
     const mpRes = await this.mpSub.createPreapproval(
@@ -401,130 +381,104 @@ export class OrdersService {
       idemKey,
     );
 
-    const now = new Date();
-    const blockEndDate = new Date(now.getTime() - 1000);
+    const mpNextRaw = (mpRes as any)?.next_payment_date as
+      | string
+      | null
+      | undefined;
+    const mpCreatedRaw = (mpRes as any)?.date_created as
+      | string
+      | null
+      | undefined;
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.pago.upsert({
-        where: {
-          provider_kind_mpId: {
-            provider: 'MERCADOPAGO',
-            kind: 'SUBSCRIPTION_PREAPPROVAL',
-            mpId: mpRes.id,
-          },
-        },
-        update: {
-          status: normalizeStatus(mpRes.status),
-          statusDetail: null,
-          monto: dec(Number(order.total)),
-          moneda: order.moneda,
-          attemptId: dto.attemptId,
-          idempotencyKey: idemKey,
-          metadatos: sanitizeMeta({
-            preapproval_id: mpRes.id,
-            status: mpRes.status,
-            next: mpRes.next_payment_date,
-          }),
-        },
-        create: {
+    const nextPaymentDate =
+      mpNextRaw
+        ? new Date(mpNextRaw)
+        : computeNextPaymentDateFallback({
+            baseDate: mpCreatedRaw ? new Date(mpCreatedRaw) : new Date(),
+            frequency: dto.frequency,
+            frequencyType: dto.frequency_type,
+          });
+
+    await this.prisma.pago.upsert({
+      where: {
+        provider_kind_mpId: {
           provider: 'MERCADOPAGO',
           kind: 'SUBSCRIPTION_PREAPPROVAL',
           mpId: mpRes.id,
-          status: normalizeStatus(mpRes.status),
-          ordenId: order.id,
-          usuarioId: userId,
-          monto: dec(Number(order.total)),
-          moneda: order.moneda,
-          attemptId: dto.attemptId,
-          idempotencyKey: idemKey,
-          metadatos: sanitizeMeta({
-            preapproval_id: mpRes.id,
-            status: mpRes.status,
-            next: mpRes.next_payment_date,
-          }),
         },
-      });
-
-      const patchedMeta = mergeSubscriptionMeta(
-        order.metadatos,
-        {
-          status: (mpRes.status ?? 'processing') as any,
-          createdAt: now.toISOString(),
-          frequency: dto.frequency as any,
-          frequencyType: dto.frequency_type as any,
-          nextPaymentDate: (mpRes.next_payment_date ?? null) as any,
-          orderId: order.id as any,
-          subscriptionId: mpRes.id as any,
-        } as Prisma.InputJsonObject,
-      );
-
-      await tx.orden.update({
-        where: { id: order.id },
-        data: {
-          suscripcionId: mpRes.id,
-          suscripcionActiva: false,
-          suscripcionProximoPago: mpRes.next_payment_date
-            ? new Date(mpRes.next_payment_date)
-            : null,
-          referenciaPago: mpRes.id,
-
-          suscripcionFrecuencia: dto.frequency,
-          suscripcionTipoFrecuencia: dto.frequency_type,
-
-          metadatos: patchedMeta,
-        },
-      });
-
-      for (const item of courseItems) {
-        const cursoId = Number(item.cursoId);
-
-        const existing = await tx.inscripcion.findUnique({
-          where: { usuarioId_cursoId: { usuarioId: userId, cursoId } },
-          select: { id: true, progreso: true },
-        });
-
-        const prevProg = safeJsonObject(existing?.progreso);
-
-        const nextProg = mergeSubscriptionMeta(
-          prevProg,
-          {
-            orderId: order.id as any,
-            subscriptionId: mpRes.id as any,
-            isActive: false as any,
-            endDate: blockEndDate.toISOString() as any,
-            frequency: dto.frequency as any,
-            frequencyType: dto.frequency_type as any,
-            status: (mpRes.status ?? 'processing') as any,
-            createdAt: now.toISOString() as any,
-            nextPaymentDate: (mpRes.next_payment_date ?? null) as any,
-          } as Prisma.InputJsonObject,
-        );
-
-        await tx.inscripcion.upsert({
-          where: { usuarioId_cursoId: { usuarioId: userId, cursoId } },
-          update: {
-            estado: EstadoInscripcion.PAUSADA,
-            progreso: nextProg,
-            subscriptionOrderId: order.id,
-            subscriptionId: mpRes.id,
-            subscriptionActive: false,
-            subscriptionEndDate: blockEndDate,
-          },
-          create: {
-            usuarioId: userId,
-            cursoId,
-            estado: EstadoInscripcion.PAUSADA,
-            progreso: nextProg,
-            subscriptionOrderId: order.id,
-            subscriptionId: mpRes.id,
-            subscriptionActive: false,
-            subscriptionEndDate: blockEndDate,
-          },
-        });
-      }
-
-      return mpRes;
+      },
+      update: {
+        status: normalizeStatus(mpRes.status),
+        statusDetail: null,
+        monto: dec(Number(order.total)),
+        moneda: order.moneda,
+        attemptId: dto.attemptId,
+        idempotencyKey: idemKey,
+        metadatos: sanitizeMeta({
+          preapproval_id: mpRes.id,
+          status: mpRes.status,
+          next_payment_date: mpNextRaw ?? null,
+          date_created: mpCreatedRaw ?? null,
+        }),
+      },
+      create: {
+        provider: 'MERCADOPAGO',
+        kind: 'SUBSCRIPTION_PREAPPROVAL',
+        mpId: mpRes.id,
+        status: normalizeStatus(mpRes.status),
+        ordenId: order.id,
+        usuarioId: userId,
+        monto: dec(Number(order.total)),
+        moneda: order.moneda,
+        attemptId: dto.attemptId,
+        idempotencyKey: idemKey,
+        metadatos: sanitizeMeta({
+          preapproval_id: mpRes.id,
+          status: mpRes.status,
+          next_payment_date: mpNextRaw ?? null,
+          date_created: mpCreatedRaw ?? null,
+        }),
+      },
     });
+
+    const currentMeta =
+      order.metadatos && typeof order.metadatos === 'object'
+        ? (order.metadatos as any)
+        : {};
+
+    const currentSub =
+      currentMeta?.subscription && typeof currentMeta.subscription === 'object'
+        ? currentMeta.subscription
+        : {};
+
+    await this.prisma.orden.update({
+      where: { id: order.id },
+      data: {
+        suscripcionId: mpRes.id,
+        suscripcionActiva: mpRes.status === 'authorized' ? true : null,
+        suscripcionProximoPago: nextPaymentDate ?? null,
+        suscripcionFrecuencia: dto.frequency,
+        suscripcionTipoFrecuencia: dto.frequency_type,
+        referenciaPago: mpRes.id,
+        metadatos: sanitizeMeta({
+          ...currentMeta,
+          subscription: {
+            ...currentSub,
+            status: mpRes.status,
+            preapprovalId: mpRes.id,
+            frequency: dto.frequency,
+            frequencyType: dto.frequency_type,
+            createdAt: mpCreatedRaw ?? new Date().toISOString(),
+            nextPaymentDate: nextPaymentDate
+              ? nextPaymentDate.toISOString()
+              : null,
+            orderId: order.id,
+          },
+        }),
+      },
+    });
+
+    return mpRes;
   }
 
   async getPaymentStatusByMpId(userId: number, paymentId: string) {
