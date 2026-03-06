@@ -47,7 +47,9 @@ function toPrismaJson(value: unknown): PrismaJson {
   }
 
   if (Array.isArray(value)) {
-    return value.map((v) => toPrismaJson(v)) as unknown as Prisma.InputJsonValue;
+    return value.map((v) =>
+      toPrismaJson(v),
+    ) as unknown as Prisma.InputJsonValue;
   }
 
   if (t === 'object') {
@@ -433,6 +435,11 @@ export class OrdersService {
         referenciaPago: String(mpRes.id),
       },
     });
+
+    await this.subscriptionService.ensurePendingEnrollmentsForSubscriptionOrder(
+      userId,
+      order.id,
+    );
 
     return mpRes;
   }

@@ -154,7 +154,10 @@ export class WebhooksController {
         },
       });
     } catch (e) {
-      this.logger.error(`Error processing event ${eventType}:${dataId}`, e as any);
+      this.logger.error(
+        `Error processing event ${eventType}:${dataId}`,
+        e as any,
+      );
     }
 
     return { ok: true };
@@ -446,7 +449,8 @@ export class WebhooksController {
 
         const ordMetaPatched = mergeSubscriptionMeta(ord.metadatos, {
           status: 'active',
-          subscriptionId: ord.suscripcionId ?? (pre?.id ? String(pre.id) : null),
+          subscriptionId:
+            ord.suscripcionId ?? (pre?.id ? String(pre.id) : null),
           nextPaymentDate: endDate ? endDate.toISOString() : null,
           lastPaymentId: mpId,
           lastPaymentStatus: String(ap?.status || 'approved'),
@@ -577,7 +581,9 @@ function sanitizeWebhook(payload: unknown): Prisma.InputJsonValue {
 
 function sanitizeMeta(meta: unknown): Prisma.InputJsonValue {
   if (!meta || typeof meta !== 'object') return meta as Prisma.InputJsonValue;
-  const clone: Record<string, unknown> = { ...(meta as Record<string, unknown>) };
+  const clone: Record<string, unknown> = {
+    ...(meta as Record<string, unknown>),
+  };
   delete (clone as any).token;
   delete (clone as any).card_token_id;
   return clone as Prisma.InputJsonObject;

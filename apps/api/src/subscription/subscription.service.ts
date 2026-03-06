@@ -113,6 +113,9 @@ export class SubscriptionService {
     const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
+      if (progreso?.subscription) {
+        return progreso.subscription.isActive === true;
+      }
       return true; // legacy/permanente
     }
 
@@ -243,6 +246,17 @@ export class SubscriptionService {
     const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
+      if (progreso?.subscription) {
+        return {
+          hasAccess: progreso.subscription.isActive === true,
+          isPermanent: false,
+          orderId: progreso.subscription.orderId ?? null,
+          subscriptionId: progreso.subscription.subscriptionId ?? null,
+          isActive: progreso.subscription.isActive === true,
+          courseName: enrollment.curso.titulo,
+          courseSlug: enrollment.curso.slug,
+        };
+      }
       return {
         hasAccess: true,
         isPermanent: true,
@@ -267,6 +281,98 @@ export class SubscriptionService {
       courseName: enrollment.curso.titulo,
       courseSlug: enrollment.curso.slug,
     };
+  }
+
+  async ensurePendingEnrollmentsForSubscriptionOrder(
+    userId: number,
+    orderId: number,
+  ) {
+    if (!Number.isFinite(userId) || !Number.isFinite(orderId)) {
+      throw new BadRequestException('Parámetros inválidos');
+    }
+
+    const order = await this.prisma.orden.findFirst({
+      where: {
+        id: Number(orderId),
+        usuarioId: Number(userId),
+        tipo: 'SUBSCRIPTION',
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Orden de suscripción no encontrada');
+    }
+
+    const courseItems = order.items.filter((item) => item.tipo === 'CURSO');
+    if (courseItems.length === 0) {
+      return { created: 0, updated: 0 };
+    }
+
+    const nowIso = new Date().toISOString();
+    const frequency = order.suscripcionFrecuencia ?? 1;
+    const frequencyType = order.suscripcionTipoFrecuencia ?? 'months';
+    let created = 0;
+    let updated = 0;
+
+    for (const item of courseItems) {
+      const existing = await this.prisma.inscripcion.findUnique({
+        where: {
+          usuarioId_cursoId: {
+            usuarioId: Number(userId),
+            cursoId: Number(item.refId),
+          },
+        },
+      });
+
+      const currentProgress = parseProgreso(existing?.progreso) ?? {};
+      const nextProgress: ParsedMeta = {
+        ...currentProgress,
+        subscription: {
+          ...(currentProgress.subscription || {}),
+          orderId: order.id,
+          subscriptionId: order.suscripcionId ?? undefined,
+          status: 'authorized',
+          isActive: false,
+          startDate: nowIso,
+          frequency,
+          frequencyType,
+        },
+      };
+
+      if (existing) {
+        await this.prisma.inscripcion.update({
+          where: { id: existing.id },
+          data: {
+            estado: 'ACTIVADA',
+            progreso: nextProgress as any,
+            subscriptionOrderId: order.id,
+            subscriptionId: order.suscripcionId,
+            subscriptionActive: false,
+            subscriptionEndDate: null,
+          },
+        });
+        updated += 1;
+      } else {
+        await this.prisma.inscripcion.create({
+          data: {
+            usuarioId: Number(userId),
+            cursoId: Number(item.refId),
+            estado: 'ACTIVADA',
+            progreso: nextProgress as any,
+            subscriptionOrderId: order.id,
+            subscriptionId: order.suscripcionId,
+            subscriptionActive: false,
+            subscriptionEndDate: null,
+          },
+        });
+        created += 1;
+      }
+    }
+
+    return { created, updated };
   }
 
   async cancelSubscription(userId: string, orderId: string): Promise<boolean> {
