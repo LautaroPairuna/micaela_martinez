@@ -223,7 +223,7 @@ export class SubscriptionService {
                         status:
                           typeof pre?.status === 'string'
                             ? pre.status
-                            : meta?.subscription?.status ?? 'processing',
+                            : (meta?.subscription?.status ?? 'processing'),
                       },
                     } as any,
                   },

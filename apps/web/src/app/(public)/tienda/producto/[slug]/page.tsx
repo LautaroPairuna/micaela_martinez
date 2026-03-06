@@ -46,6 +46,19 @@ type Product = {
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 const abs = (u?: string | null) => (u ? (u.startsWith('http') ? u : new URL(u, SITE).toString()) : undefined);
+const stripHtmlTags = (value: string) =>
+  value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
 /** Normaliza el slug devuelto por la API (corto o completo) a una ruta canónica usable */
 const canonicalFrom = (slugish?: string | null) => {
@@ -82,7 +95,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     };
   }
 
-  const desc = (p.descripcionMD || p.titulo || '').toString().slice(0, 160);
+  const desc = stripHtmlTags((p.descripcionMD || p.titulo || '').toString()).slice(0, 160);
   const url = canonicalFrom(p.slug);
 
   const images: string[] =
@@ -126,6 +139,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   if (!product) {
     redirect('/tienda');
   }
+
+  const plainDescription = stripHtmlTags(String(product.descripcionMD ?? ''));
 
   // Unificar imagen principal + galería
   const galleryImages = [];
@@ -239,7 +254,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               {/* Descripción Corta */}
               <div className="prose prose-invert prose-p:text-zinc-400 prose-sm mb-8 max-w-none">
                 {product.descripcionMD ? (
-                  <p>{product.descripcionMD.slice(0, 300)}{product.descripcionMD.length > 300 ? '...' : ''}</p>
+                  <p>{plainDescription.slice(0, 300)}{plainDescription.length > 300 ? '...' : ''}</p>
                 ) : (
                   <p className="text-zinc-500 italic">Sin descripción disponible.</p>
                 )}

@@ -54,6 +54,35 @@ export type AdminListResponse = {
   pagination: Pagination;
 };
 
+const decodeHtmlEntities = (value: string) =>
+  value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+
+const normalizeDescripcionMd = (value: string) => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+
+  const withBreaks = raw
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<\/li>\s*<li[^>]*>/gi, '\n- ')
+    .replace(/<li[^>]*>/gi, '- ')
+    .replace(/<\/?(ul|ol|p|div|span|strong|em|b|i|h[1-6])[^>]*>/gi, '');
+
+  const withoutTags = withBreaks.replace(/<[^>]+>/g, '');
+  const decoded = decodeHtmlEntities(withoutTags);
+
+  return decoded
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 /* ─────────────────────── Servicio CRUD genérico ─────────────────────── */
 
 @Injectable()
@@ -421,6 +450,15 @@ export class AdminCrudService {
         data[field.name] = input[field.name];
       }
     }
+
+    if (
+      meta.name === 'Producto' &&
+      typeof data.descripcionMD === 'string' &&
+      data.descripcionMD.trim()
+    ) {
+      data.descripcionMD = normalizeDescripcionMd(data.descripcionMD);
+    }
+
     return data;
   }
 

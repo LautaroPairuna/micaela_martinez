@@ -169,6 +169,22 @@ export function EnrollmentCard({
     return val * 30; // default months
   }, [rawDuration, rawType]);
 
+  const subscriptionTimeLabel = useMemo(() => {
+    if (subToUse?.hoursLeft !== null && subToUse?.hoursLeft !== undefined) {
+      if (subToUse.hoursLeft >= 0 && subToUse.hoursLeft < 24) {
+        return `${subToUse.hoursLeft} ${subToUse.hoursLeft === 1 ? 'hora' : 'horas'}`;
+      }
+    }
+
+    if (subToUse?.daysLeft !== null && subToUse?.daysLeft !== undefined) {
+      if (subToUse.daysLeft >= 0) {
+        return `${subToUse.daysLeft} ${subToUse.daysLeft === 1 ? 'día' : 'días'}`;
+      }
+    }
+
+    return `${diasTotales} días`;
+  }, [subToUse?.daysLeft, subToUse?.hoursLeft, diasTotales]);
+
   // =======================
   // DEBUG SUBSCRIPTION UI
   // =======================
@@ -468,7 +484,7 @@ export function EnrollmentCard({
           {hasSubscriptionUI && (
             <div className="flex items-center gap-1.5 text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/20">
               <Clock className="h-3 w-3" />
-              <span>{diasTotales} días</span>
+              <span>{subscriptionTimeLabel}</span>
             </div>
           )}
         </div>
