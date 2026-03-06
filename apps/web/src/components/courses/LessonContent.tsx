@@ -195,7 +195,7 @@ function DocumentContent({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#F8F9FA]">
-      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
         <div className="mx-auto max-w-3xl space-y-8">
           <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-900/5 md:p-12 text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-100">
@@ -271,7 +271,7 @@ function DocumentContent({
         </div>
       </div>
 
-      <div className="border-t border-slate-200 bg-white px-6 py-4">
+      <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <button
             onClick={onToggleComplete}
@@ -318,8 +318,8 @@ function TextContent({
 }: LessonContentProps) {
   const content = useMemo(() => {
     const extracted = extractTextContent(lesson.contenido);
-    return extracted || lesson.descripcion || null;
-  }, [lesson.contenido, lesson.descripcion]);
+    return extracted || null;
+  }, [lesson.contenido]);
 
   const hasHtmlContent = useMemo(() => {
     if (!content) return false;
@@ -328,55 +328,50 @@ function TextContent({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-6 py-12 md:py-16">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-2xl px-6 py-12 md:py-16">
           <div className="mb-10 border-b border-slate-100 pb-8 text-center">
             <div className="mb-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
               <FileText className="h-4 w-4" />
               <span>Lección de Texto</span>
             </div>
-
             <h1 className="text-3xl font-bold leading-tight text-slate-900 md:text-4xl">
               {lesson.titulo}
             </h1>
-
             {lesson.duracion && (
               <p className="mt-4 text-slate-500 font-medium">
-                Lectura estimada:{' '}
-                {formatDuration(Math.round(lesson.duracion * 60))}
+                Lectura estimada: {formatDuration(Math.round(lesson.duracion * 60))}
               </p>
             )}
           </div>
 
-          <section className="min-h-[40vh]">
+          <article className="prose prose-slate prose-lg max-w-none min-h-[320px]">
             {content ? (
               hasHtmlContent ? (
-                <article
-                  className="prose prose-slate prose-lg max-w-none prose-headings:text-slate-900 prose-p:text-slate-800 prose-strong:text-slate-900 prose-a:text-slate-900"
+                <div
+                  className="text-slate-800"
                   dangerouslySetInnerHTML={{ __html: String(content) }}
                 />
               ) : (
-                <article className="prose prose-slate prose-lg max-w-none">
-                  <div className="whitespace-pre-wrap text-lg leading-8 text-slate-800 antialiased">
-                    {String(content)}
-                  </div>
-                </article>
+                <div className="whitespace-pre-wrap text-xl leading-8 text-slate-800 antialiased">
+                  {String(content)}
+                </div>
               )
             ) : (
-              <div className="flex min-h-[40vh] items-center justify-center">
-                <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-slate-50 px-6 py-10 text-center shadow-sm">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white ring-1 ring-slate-200">
+              <div className="flex min-h-[320px] items-center justify-center">
+                <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center shadow-sm">
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-white ring-1 ring-slate-200">
                     <FileText className="h-7 w-7 text-slate-400" />
                   </div>
 
-                  <h2 className="text-xl font-semibold text-slate-900">
+                  <h2 className="text-2xl font-semibold text-slate-900">
                     Esta lección todavía no tiene contenido publicado
                   </h2>
 
-                  <p className="mt-3 text-sm leading-6 text-slate-500">
-                    El material principal de esta lección aún no fue cargado o
-                    no está disponible temporalmente. Puedes revisar la
-                    descripción o continuar con la siguiente lección.
+                  <p className="mt-4 text-base leading-7 text-slate-500">
+                    El material principal de esta lección aún no fue cargado o no está
+                    disponible temporalmente. Puedes revisar la descripción o continuar con
+                    la siguiente lección.
                   </p>
 
                   {lesson.descripcion && (
@@ -392,12 +387,12 @@ function TextContent({
                 </div>
               </div>
             )}
-          </section>
+          </article>
         </div>
       </div>
 
-      <div className="border-t border-slate-100 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
+      <div className="shrink-0 border-t border-slate-100 bg-white/80 px-6 py-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
           <button
             onClick={onToggleComplete}
             className={cn(
@@ -444,9 +439,7 @@ function QuizContent({
   onNext,
 }: LessonContentProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>(
-    {},
-  );
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
@@ -511,8 +504,7 @@ function QuizContent({
     if (content && typeof content === 'object') {
       if (Array.isArray(content.preguntas)) {
         qs = content.preguntas as QuizQuestion[];
-        introText =
-          typeof content.intro === 'string' ? content.intro : null;
+        introText = typeof content.intro === 'string' ? content.intro : null;
       } else if (content.data && typeof content.data === 'object') {
         const data = content.data as Record<string, unknown>;
         if (Array.isArray(data.preguntas)) {
@@ -530,9 +522,7 @@ function QuizContent({
   const currentQuestion = questions[currentQuestionIndex];
   const hasQuestions = questions.length > 0;
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  const allAnswered = questions.every(
-    (_, idx) => selectedAnswers[idx] !== undefined,
-  );
+  const allAnswered = questions.every((_, idx) => selectedAnswers[idx] !== undefined);
 
   useEffect(() => {
     if (!intro && hasQuestions && !hasStarted) setHasStarted(true);
@@ -554,10 +544,7 @@ function QuizContent({
 
   const handleOptionSelect = (optionIndex: number) => {
     if (isSubmitted) return;
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: optionIndex,
-    }));
+    setSelectedAnswers((prev) => ({ ...prev, [currentQuestionIndex]: optionIndex }));
   };
 
   const handleSubmit = () => {
@@ -569,13 +556,8 @@ function QuizContent({
       const now = new Date();
       const cooldownTime = new Date(now.getTime() + 2 * 60 * 1000);
       setCooldownUntil(cooldownTime);
-      localStorage.setItem(
-        `quiz-cooldown-${lesson.id}`,
-        cooldownTime.toISOString(),
-      );
-      toast.error(
-        'No has alcanzado el 100%. Debes esperar para reintentar.',
-      );
+      localStorage.setItem(`quiz-cooldown-${lesson.id}`, cooldownTime.toISOString());
+      toast.error('No has alcanzado el 100%. Debes esperar para reintentar.');
     }
   };
 
@@ -604,20 +586,14 @@ function QuizContent({
               <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-orange-50 text-orange-600">
                 <Clock className="h-10 w-10 animate-pulse" />
               </div>
-              <h2 className="mb-4 text-3xl font-bold text-slate-900">
-                Tiempo de espera
-              </h2>
+              <h2 className="mb-4 text-3xl font-bold text-slate-900">Tiempo de espera</h2>
               <p className="mb-8 text-lg text-slate-600">
-                Debes esperar unos minutos antes de volver a intentar el examen
-                para repasar los conceptos.
+                Debes esperar unos minutos antes de volver a intentar el examen para repasar los conceptos.
               </p>
               <div className="mb-8 text-4xl font-mono font-bold text-orange-600">
                 {timeLeft || 'Calculando...'}
               </div>
-              <Button
-                disabled
-                className="w-full rounded-xl bg-slate-200 text-slate-400"
-              >
+              <Button disabled className="w-full rounded-xl bg-slate-200 text-slate-400">
                 Espera para reintentar
               </Button>
             </>
@@ -627,9 +603,7 @@ function QuizContent({
                 <HelpCircle className="h-10 w-10" />
               </div>
 
-              <h2 className="mb-4 text-3xl font-bold text-slate-900">
-                Evaluación de Conocimientos
-              </h2>
+              <h2 className="mb-4 text-3xl font-bold text-slate-900">Evaluación de Conocimientos</h2>
               <div className="mb-8 text-lg text-slate-600 whitespace-pre-wrap leading-relaxed">
                 {intro}
               </div>
@@ -660,33 +634,27 @@ function QuizContent({
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#F8FAFC]">
-      <div className="border-b border-slate-200 bg-white px-6 py-4">
+    <div className="flex h-full min-h-0 w-full flex-col bg-[#F8FAFC]">
+      <div className="shrink-0 border-b border-slate-200 bg-white px-6 py-4">
         <div className="mx-auto max-w-3xl">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-lg font-bold text-slate-900">
-              {lesson.titulo}
-            </h1>
+            <h1 className="text-lg font-bold text-slate-900">{lesson.titulo}</h1>
             <div className="text-sm font-medium text-slate-500">
-              {isSubmitted
-                ? 'Resultados'
-                : `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`}
+              {isSubmitted ? 'Resultados' : `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`}
             </div>
           </div>
 
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div
               className="h-full bg-indigo-600 transition-all duration-500 ease-out"
-              style={{
-                width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
-              }}
+              style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="mx-auto flex h-full max-w-3xl flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="mx-auto flex min-h-full max-w-3xl flex-col">
           {!isSubmitted ? (
             <div className="animate-in slide-in-from-right-8 fade-in duration-300">
               <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 md:p-10">
@@ -722,9 +690,7 @@ function QuizContent({
                       <span
                         className={cn(
                           'text-lg',
-                          isSelected
-                            ? 'font-medium text-indigo-900'
-                            : 'text-slate-700',
+                          isSelected ? 'font-medium text-indigo-900' : 'text-slate-700',
                         )}
                       >
                         {option}
@@ -753,13 +719,9 @@ function QuizContent({
                     </div>
                   )}
                 </div>
-                <div className="mb-2 text-5xl font-bold">
-                  {score.percentage}%
-                </div>
+                <div className="mb-2 text-5xl font-bold">{score.percentage}%</div>
                 <h2 className="text-2xl font-bold">
-                  {score.percentage === 100
-                    ? '¡Excelente trabajo!'
-                    : 'Necesitas repasar'}
+                  {score.percentage === 100 ? '¡Excelente trabajo!' : 'Necesitas repasar'}
                 </h2>
                 <p className="mt-2 text-white/90">
                   {score.percentage === 100
@@ -792,9 +754,7 @@ function QuizContent({
                           isCorrect ? 'border-emerald-500' : 'border-rose-500',
                         )}
                       >
-                        <p className="mb-3 font-medium text-slate-900">
-                          {q.pregunta}
-                        </p>
+                        <p className="mb-3 font-medium text-slate-900">{q.pregunta}</p>
 
                         <div className="space-y-3 text-sm">
                           <div className="flex items-start gap-2">
@@ -809,9 +769,7 @@ function QuizContent({
                               <span
                                 className={cn(
                                   'block font-bold mb-1',
-                                  isCorrect
-                                    ? 'text-emerald-700'
-                                    : 'text-rose-700',
+                                  isCorrect ? 'text-emerald-700' : 'text-rose-700',
                                 )}
                               >
                                 Tu respuesta:
@@ -834,8 +792,7 @@ function QuizContent({
                                     {q.opciones[q.respuestaCorrecta]}
                                   </span>
                                   <p className="mt-2 text-xs text-emerald-700">
-                                    Esta es la opción correcta porque corresponde
-                                    a los conceptos vistos en la lección.
+                                    Esta es la opción correcta porque corresponde a los conceptos vistos en la lección.
                                   </p>
                                 </div>
                               </div>
@@ -852,15 +809,13 @@ function QuizContent({
         </div>
       </div>
 
-      <div className="border-t border-slate-200 bg-white px-6 py-4">
+      <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           {!isSubmitted ? (
             <>
               <Button
                 variant="ghost"
-                onClick={() =>
-                  setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
-                }
+                onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                 disabled={currentQuestionIndex === 0}
                 className="text-slate-500"
               >
@@ -879,9 +834,7 @@ function QuizContent({
                 </Button>
               ) : (
                 <Button
-                  onClick={() =>
-                    setCurrentQuestionIndex((prev) => prev + 1)
-                  }
+                  onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
                   disabled={selectedAnswers[currentQuestionIndex] === undefined}
                   className="bg-slate-900 hover:bg-slate-800 text-white min-w-[140px]"
                 >
@@ -897,11 +850,7 @@ function QuizContent({
                   Espera el tiempo de cooldown para reintentar
                 </div>
               ) : (
-                <Button
-                  onClick={handleRetry}
-                  variant="outline"
-                  className="gap-2"
-                >
+                <Button onClick={handleRetry} variant="outline" className="gap-2">
                   <RotateCcw className="h-4 w-4" />
                   Repasar
                 </Button>

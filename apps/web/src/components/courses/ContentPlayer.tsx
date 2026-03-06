@@ -1,5 +1,5 @@
-// ContentPlayer.tsx
 'use client';
+
 import { Lesson } from '@/types/course';
 import { LessonContent } from './LessonContent';
 import { cn } from '@/lib/utils';
@@ -14,17 +14,17 @@ type ContentPlayerProps = {
   className?: string;
 };
 
-export function ContentPlayer({ 
-  lesson, 
-  isCompleted, 
-  onToggleComplete, 
-  onComplete, 
+export function ContentPlayer({
+  lesson,
+  isCompleted,
+  onToggleComplete,
+  onComplete,
   onNext,
-  className 
+  className,
 }: ContentPlayerProps) {
   return (
-    <div className={cn('h-full w-full', className)}>
-      <LessonContent 
+    <div className={cn('h-full min-h-0 w-full overflow-hidden', className)}>
+      <LessonContent
         lesson={lesson}
         isCompleted={isCompleted}
         onToggleComplete={onToggleComplete}
