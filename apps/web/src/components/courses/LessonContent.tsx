@@ -341,22 +341,24 @@ function TextContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENTE: QUIZ
 // ─────────────────────────────────────────────────────────────────────────────
-
 function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   
+  // Cooldown
   const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
+  // Cargar estado inicial y cooldown
   useEffect(() => {
     setHasStarted(false);
     setIsSubmitted(false);
     setSelectedAnswers({});
     setCurrentQuestionIndex(0);
 
+    // Chequear cooldown en localStorage
     const savedCooldown = localStorage.getItem(`quiz-cooldown-${lesson.id}`);
     if (savedCooldown) {
       const date = new Date(savedCooldown);
@@ -368,6 +370,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
     }
   }, [lesson.id]);
 
+  // Timer para el cooldown
   useEffect(() => {
     if (!cooldownUntil) {
       setTimeLeft(null);
@@ -414,6 +417,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const allAnswered = questions.every((_, idx) => selectedAnswers[idx] !== undefined);
 
+  // Auto-start si no hay intro
   useEffect(() => {
     if (!intro && hasQuestions && !hasStarted) setHasStarted(true);
   }, [intro, hasQuestions, hasStarted]);
@@ -437,12 +441,14 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 
   const handleSubmit = () => {
     setIsSubmitted(true);
+    // REGLA: 100% para aprobar
     if (score.percentage === 100) {
       toast.success('¡Felicitaciones! Has aprobado el examen.');
       onComplete?.();
     } else {
+      // Activar cooldown de 2 minutos
       const now = new Date();
-      const cooldownTime = new Date(now.getTime() + 2 * 60 * 1000);
+      const cooldownTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutos
       setCooldownUntil(cooldownTime);
       localStorage.setItem(`quiz-cooldown-${lesson.id}`, cooldownTime.toISOString());
       toast.error('No has alcanzado el 100%. Debes esperar para reintentar.');
@@ -465,12 +471,14 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
     );
   }
 
+  // PANTALLA: INTRO (o BLOQUEO COOLDOWN)
   if ((intro && !hasStarted && !isSubmitted) || (cooldownUntil && !isSubmitted)) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50 p-6 md:p-12">
         <div className="w-full max-w-xl rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-900/5 md:p-12 text-center">
           
           {cooldownUntil ? (
+             // MODO COOLDOWN
             <>
               <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-orange-50 text-orange-600">
                 <Clock className="h-10 w-10 animate-pulse" />
@@ -487,6 +495,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
               </Button>
             </>
           ) : (
+            // MODO INTRO
             <>
               <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
                 <HelpCircle className="h-10 w-10" />
@@ -520,6 +529,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-[#F8FAFC]">
+      {/* Header / Progress */}
       <div className="shrink-0 border-b border-slate-200 bg-white px-6 py-4">
         <div className="mx-auto max-w-3xl">
           <div className="mb-4 flex items-center justify-between">
@@ -529,6 +539,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
             </div>
           </div>
           
+          {/* Progress Bar */}
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div 
               className="h-full bg-indigo-600 transition-all duration-500 ease-out"
@@ -538,10 +549,12 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
         <div className="mx-auto flex min-h-full max-w-3xl flex-col">
           
           {!isSubmitted ? (
+            /* MODO: PREGUNTAS */
             <div className="animate-in slide-in-from-right-8 fade-in duration-300">
               <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5 md:p-10">
                 <h2 className="text-xl font-medium leading-relaxed text-slate-900 md:text-2xl">
@@ -583,6 +596,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
               </div>
             </div>
           ) : (
+            /* MODO: RESULTADOS */
             <div className="animate-in zoom-in-95 fade-in duration-300 space-y-6">
               <div className={cn(
                 "rounded-3xl p-8 text-center text-white shadow-xl",
@@ -626,6 +640,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
                         <p className="mb-3 font-medium text-slate-900">{q.pregunta}</p>
                         
                         <div className="space-y-3 text-sm">
+                          {/* Respuesta del usuario */}
                           <div className="flex items-start gap-2">
                              <div className="mt-0.5">
                                {isCorrect ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-rose-500" />}
@@ -640,6 +655,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
                              </div>
                           </div>
                           
+                          {/* Corrección si falló */}
                           {!isCorrect && (
                             <div className="mt-3 rounded-lg bg-emerald-50 p-3 border border-emerald-100">
                               <div className="flex items-start gap-2">
@@ -647,6 +663,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
                                 <div>
                                   <span className="block font-bold text-emerald-800 mb-1">Respuesta correcta:</span>
                                   <span className="text-emerald-900 font-medium">{q.opciones[q.respuestaCorrecta]}</span>
+                                  {/* Aquí iría la explicación si existiera en el modelo de datos */}
                                   <p className="mt-2 text-xs text-emerald-700">
                                     Esta es la opción correcta porque corresponde a los conceptos vistos en la lección.
                                   </p>
@@ -666,6 +683,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
         </div>
       </div>
 
+      {/* Footer Navigation */}
       <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           {!isSubmitted ? (
