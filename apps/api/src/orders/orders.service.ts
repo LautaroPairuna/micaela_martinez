@@ -1,4 +1,4 @@
-//src/orders/orders.service.ts
+// apps/api/src/orders/orders.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -15,10 +15,9 @@ import { MpPaymentService } from '../mercadopago/mp-payment.service';
 import { MpSubscriptionService } from '../mercadopago/mp-subscription.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { Decimal } from '@prisma/client/runtime/library';
-import { Prisma } from '@prisma/client';
+import { Prisma, EstadoInscripcion } from '@prisma/client';
 
 function dec(n: number) {
-  // Prisma Decimal safe
   return new Decimal(n.toFixed(2));
 }
 
@@ -30,6 +29,74 @@ function applyDiscount(price: number, discount?: number | null) {
     : 0;
   const final = safePrice * (1 - safeDiscount / 100);
   return Math.max(0, final);
+}
+
+function normalizeStatus(mpStatus: string) {
+  const s = String(mpStatus || '').toLowerCase();
+  if (s === 'approved' || s === 'authorized') return 'APPROVED';
+  if (s === 'rejected') return 'REJECTED';
+  if (s === 'cancelled') return 'CANCELLED';
+  if (s === 'refunded') return 'REFUNDED';
+  if (!s) return 'UNKNOWN';
+  return 'PENDING';
+}
+
+/**
+ * ✅ Prisma JSON typing: lo que guardes en metadatos debe ser InputJsonValue.
+ * Este helper elimina campos sensibles y devuelve InputJsonValue.
+ */
+function sanitizeMeta(meta: unknown): Prisma.InputJsonValue {
+  if (!meta || typeof meta !== 'object') return meta as Prisma.InputJsonValue;
+
+  const clone: Record<string, unknown> = { ...(meta as Record<string, unknown>) };
+  delete (clone as any).token;
+  delete (clone as any).card_token_id;
+
+  // Prisma acepta objetos plain como InputJsonObject
+  return clone as Prisma.InputJsonObject;
+}
+
+function safeJsonObject(value: unknown): Prisma.InputJsonObject {
+  if (!value) return {} as Prisma.InputJsonObject;
+
+  if (typeof value === 'object') {
+    return value as Prisma.InputJsonObject;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object') return parsed as Prisma.InputJsonObject;
+      return {} as Prisma.InputJsonObject;
+    } catch {
+      return {} as Prisma.InputJsonObject;
+    }
+  }
+
+  return {} as Prisma.InputJsonObject;
+}
+
+/**
+ * Merge no destructivo de `subscription` dentro de un JSON (con types Prisma).
+ */
+function mergeSubscriptionMeta(
+  base: unknown,
+  patch: Prisma.InputJsonObject,
+): Prisma.InputJsonObject {
+  const obj = safeJsonObject(base);
+
+  const sub =
+    (obj as any).subscription && typeof (obj as any).subscription === 'object'
+      ? ((obj as any).subscription as Prisma.InputJsonObject)
+      : ({} as Prisma.InputJsonObject);
+
+  return {
+    ...(obj as any),
+    subscription: {
+      ...(sub as any),
+      ...(patch as any),
+    },
+  } as Prisma.InputJsonObject;
 }
 
 @Injectable()
@@ -47,8 +114,6 @@ export class OrdersService {
     }
 
     if (dto.source && dto.source !== OrderSource.CART) {
-      // Lógica futura para órdenes directas (sin carrito)
-      // Por ahora, solo soportamos carrito
       throw new BadRequestException(
         'Solo se soportan órdenes desde el carrito por el momento',
       );
@@ -61,7 +126,6 @@ export class OrdersService {
     if (!cart || cart.items.length === 0)
       throw new BadRequestException('Carrito vacío');
 
-    // Resolver items reales y validar “no mixto”
     const hasCourse = cart.items.some((i) => i.tipo === 'CURSO');
     const hasProduct = cart.items.some((i) => i.tipo === 'PRODUCTO');
     if (hasCourse && hasProduct) {
@@ -70,11 +134,9 @@ export class OrdersService {
       );
     }
 
-    const orderType = hasCourse ? 'SUBSCRIPTION' : 'ONE_OFF'; // si cursos son por suscripción; si no, ajustamos
+    const orderType = hasCourse ? 'SUBSCRIPTION' : 'ONE_OFF';
     const esSuscripcion = hasCourse;
 
-    // Cargar precios desde DB (fuente de verdad)
-    // Usamos filter(Boolean) para asegurar que map no retorne null
     const cursoIds = cart.items
       .filter((i) => i.cursoId)
       .map((i) => i.cursoId as number);
@@ -108,7 +170,9 @@ export class OrdersService {
           throw new BadRequestException(
             `Curso ${it.cursoId} inválido o no publicado`,
           );
+
         const price = applyDiscount(Number(c.precio), Number(c.descuento ?? 0));
+
         itemsOrden.push({
           tipo: 'CURSO',
           refId: c.id,
@@ -126,7 +190,9 @@ export class OrdersService {
           );
         if (p.stock < it.cantidad)
           throw new BadRequestException(`Stock insuficiente para ${p.titulo}`);
+
         const price = applyDiscount(Number(p.precio), Number(p.descuento ?? 0));
+
         itemsOrden.push({
           tipo: 'PRODUCTO',
           refId: p.id,
@@ -153,7 +219,7 @@ export class OrdersService {
           moneda: 'ARS',
           tipo: orderType as any,
           esSuscripcion,
-          metadatos: dto.metadatos ?? Prisma.JsonNull,
+          metadatos: (dto.metadatos ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           direccionEnvioId: dto.direccionEnvioId
             ? Number(dto.direccionEnvioId)
             : null,
@@ -165,7 +231,6 @@ export class OrdersService {
         include: { items: true },
       });
 
-      // Limpiar carrito al crear orden
       await tx.itemCarrito.deleteMany({ where: { carritoId: cart.id } });
 
       return orden;
@@ -216,8 +281,8 @@ export class OrdersService {
     if (order.tipo !== 'ONE_OFF')
       throw new BadRequestException('La orden no es de pago único');
 
-    // idempotencia por intento
     const idemKey = `pay-${orderId}-${dto.attemptId}`;
+
     const mpItems = order.items.map((item) => {
       const isCourse = item.tipo === 'CURSO';
       const image = isCourse ? item.curso?.portada : item.producto?.imagen;
@@ -236,7 +301,6 @@ export class OrdersService {
       };
     });
 
-    // Crear pago en MP
     const mpRes = await this.mpPayment.createPayment(
       {
         transaction_amount: Number(order.total),
@@ -257,7 +321,6 @@ export class OrdersService {
       idemKey,
     );
 
-    // Registrar en DB (ledger)
     await this.prisma.pago.upsert({
       where: {
         provider_kind_mpId: {
@@ -299,7 +362,6 @@ export class OrdersService {
       },
     });
 
-    // Actualizar referenciaPago informativa
     await this.prisma.orden.update({
       where: { id: order.id },
       data: { referenciaPago: String(mpRes.id) },
@@ -314,6 +376,11 @@ export class OrdersService {
       throw new BadRequestException('La orden no está pendiente');
     if (order.tipo !== 'SUBSCRIPTION')
       throw new BadRequestException('La orden no es de suscripción');
+
+    const courseItems = order.items.filter((i) => i.tipo === 'CURSO' && i.cursoId);
+    if (courseItems.length === 0) {
+      throw new BadRequestException('La orden de suscripción no contiene cursos');
+    }
 
     const idemKey = `sub-${orderId}-${dto.attemptId}`;
 
@@ -334,61 +401,130 @@ export class OrdersService {
       idemKey,
     );
 
-    // Registrar preapproval en ledger
-    await this.prisma.pago.upsert({
-      where: {
-        provider_kind_mpId: {
+    const now = new Date();
+    const blockEndDate = new Date(now.getTime() - 1000);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.pago.upsert({
+        where: {
+          provider_kind_mpId: {
+            provider: 'MERCADOPAGO',
+            kind: 'SUBSCRIPTION_PREAPPROVAL',
+            mpId: mpRes.id,
+          },
+        },
+        update: {
+          status: normalizeStatus(mpRes.status),
+          statusDetail: null,
+          monto: dec(Number(order.total)),
+          moneda: order.moneda,
+          attemptId: dto.attemptId,
+          idempotencyKey: idemKey,
+          metadatos: sanitizeMeta({
+            preapproval_id: mpRes.id,
+            status: mpRes.status,
+            next: mpRes.next_payment_date,
+          }),
+        },
+        create: {
           provider: 'MERCADOPAGO',
           kind: 'SUBSCRIPTION_PREAPPROVAL',
           mpId: mpRes.id,
+          status: normalizeStatus(mpRes.status),
+          ordenId: order.id,
+          usuarioId: userId,
+          monto: dec(Number(order.total)),
+          moneda: order.moneda,
+          attemptId: dto.attemptId,
+          idempotencyKey: idemKey,
+          metadatos: sanitizeMeta({
+            preapproval_id: mpRes.id,
+            status: mpRes.status,
+            next: mpRes.next_payment_date,
+          }),
         },
-      },
-      update: {
-        status: normalizeStatus(mpRes.status),
-        statusDetail: null,
-        monto: dec(Number(order.total)),
-        moneda: order.moneda,
-        attemptId: dto.attemptId,
-        idempotencyKey: idemKey,
-        metadatos: sanitizeMeta({
-          preapproval_id: mpRes.id,
-          status: mpRes.status,
-          next: mpRes.next_payment_date,
-        }),
-      },
-      create: {
-        provider: 'MERCADOPAGO',
-        kind: 'SUBSCRIPTION_PREAPPROVAL',
-        mpId: mpRes.id,
-        status: normalizeStatus(mpRes.status),
-        ordenId: order.id,
-        usuarioId: userId,
-        monto: dec(Number(order.total)),
-        moneda: order.moneda,
-        attemptId: dto.attemptId,
-        idempotencyKey: idemKey,
-        metadatos: sanitizeMeta({
-          preapproval_id: mpRes.id,
-          status: mpRes.status,
-          next: mpRes.next_payment_date,
-        }),
-      },
-    });
+      });
 
-    // Guardar en Orden: suscripcionId + proximoPago (si viene)
-    await this.prisma.orden.update({
-      where: { id: order.id },
-      data: {
-        suscripcionId: mpRes.id,
-        suscripcionActiva: mpRes.status === 'authorized' ? true : null,
-        suscripcionProximoPago: mpRes.next_payment_date
-          ? new Date(mpRes.next_payment_date)
-          : null,
-        referenciaPago: mpRes.id,
-      },
-    });
+      const patchedMeta = mergeSubscriptionMeta(
+        order.metadatos,
+        {
+          status: (mpRes.status ?? 'processing') as any,
+          createdAt: now.toISOString(),
+          frequency: dto.frequency as any,
+          frequencyType: dto.frequency_type as any,
+          nextPaymentDate: (mpRes.next_payment_date ?? null) as any,
+          orderId: order.id as any,
+          subscriptionId: mpRes.id as any,
+        } as Prisma.InputJsonObject,
+      );
 
-    return mpRes;
+      await tx.orden.update({
+        where: { id: order.id },
+        data: {
+          suscripcionId: mpRes.id,
+          suscripcionActiva: false,
+          suscripcionProximoPago: mpRes.next_payment_date
+            ? new Date(mpRes.next_payment_date)
+            : null,
+          referenciaPago: mpRes.id,
+
+          suscripcionFrecuencia: dto.frequency,
+          suscripcionTipoFrecuencia: dto.frequency_type,
+
+          metadatos: patchedMeta,
+        },
+      });
+
+      for (const item of courseItems) {
+        const cursoId = Number(item.cursoId);
+
+        const existing = await tx.inscripcion.findUnique({
+          where: { usuarioId_cursoId: { usuarioId: userId, cursoId } },
+          select: { id: true, progreso: true },
+        });
+
+        const prevProg = safeJsonObject(existing?.progreso);
+
+        const nextProg = mergeSubscriptionMeta(
+          prevProg,
+          {
+            orderId: order.id as any,
+            subscriptionId: mpRes.id as any,
+            isActive: false as any,
+            endDate: blockEndDate.toISOString() as any,
+            frequency: dto.frequency as any,
+            frequencyType: dto.frequency_type as any,
+            status: (mpRes.status ?? 'processing') as any,
+            createdAt: now.toISOString() as any,
+            nextPaymentDate: (mpRes.next_payment_date ?? null) as any,
+          } as Prisma.InputJsonObject,
+        );
+
+        await tx.inscripcion.upsert({
+          where: { usuarioId_cursoId: { usuarioId: userId, cursoId } },
+          update: {
+            estado: EstadoInscripcion.PAUSADA,
+            progreso: nextProg,
+            subscriptionOrderId: order.id,
+            subscriptionId: mpRes.id,
+            subscriptionActive: false,
+            subscriptionEndDate: blockEndDate,
+          },
+          create: {
+            usuarioId: userId,
+            cursoId,
+            estado: EstadoInscripcion.PAUSADA,
+            progreso: nextProg,
+            subscriptionOrderId: order.id,
+            subscriptionId: mpRes.id,
+            subscriptionActive: false,
+            subscriptionEndDate: blockEndDate,
+          },
+        });
+      }
+
+      return mpRes;
+    });
   }
 
   async getPaymentStatusByMpId(userId: number, paymentId: string) {
@@ -442,23 +578,4 @@ export class OrdersService {
   async cancelSubscription(userId: number, orderId: number) {
     return this.subscriptionService.cancelOrderSubscription(userId, orderId);
   }
-}
-
-function normalizeStatus(mpStatus: string) {
-  const s = String(mpStatus || '').toLowerCase();
-  if (s === 'approved' || s === 'authorized') return 'APPROVED';
-  if (s === 'rejected') return 'REJECTED';
-  if (s === 'cancelled') return 'CANCELLED';
-  if (s === 'refunded') return 'REFUNDED';
-  if (!s) return 'UNKNOWN';
-  return 'PENDING';
-}
-
-function sanitizeMeta(meta: any) {
-  // Nunca guardar token/card_token_id completos. Solo ids/status.
-  if (!meta || typeof meta !== 'object') return meta;
-  const clone = { ...meta };
-  delete clone.token;
-  delete clone.card_token_id;
-  return clone;
 }

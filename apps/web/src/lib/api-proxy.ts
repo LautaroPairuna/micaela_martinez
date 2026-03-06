@@ -6,12 +6,12 @@ type NextInit = RequestInit & { next?: { revalidate?: number | false; tags?: str
 
 /** Rewrites locales (front SDK → backend) */
 const REWRITES: Array<[RegExp, string]> = [
-  [/^\/user\/addresses$/, '/account/addresses'],
-  [/^\/user\/addresses\/([^/]+)$/, '/account/addresses/$1'],
-  [/^\/user\/favorites$/, '/account/favorites'],
-  [/^\/user\/favorites\/([^/]+)$/, '/account/favorites/$1'],
-  [/^\/user\/orders$/, '/account/orders'],
-  [/^\/user\/enrollments$/, '/account/enrollments'],
+  [/^\/user\/addresses$/, '/users/me/enrollmentsaddresses'],
+  [/^\/user\/addresses\/([^/]+)$/, '/users/me/enrollmentsaddresses/$1'],
+  [/^\/user\/favorites$/, '/users/me/enrollmentsfavorites'],
+  [/^\/user\/favorites\/([^/]+)$/, '/users/me/enrollmentsfavorites/$1'],
+  [/^\/user\/orders$/, '/users/me/enrollmentsorders'],
+  [/^\/user\/enrollments$/, '/users/me/enrollmentsenrollments'],
   [/^\/users\/me\/enrollments\/progress$/, '/users/me/enrollments/progress'],
   // Removed incorrect rewrite: [/^\/catalog\/cursos\/([^/]+)\/contenido$/, '/lms/courses/$1/content'],
   // The backend controller is already at /catalog/cursos/:slug/contenido

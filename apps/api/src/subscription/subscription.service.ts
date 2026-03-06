@@ -21,10 +21,6 @@ export class SubscriptionService {
     private readonly mpSubscriptionService: MpSubscriptionService,
   ) {}
 
-  /**
-   * Verifica suscripciones próximas a vencer y envía notificaciones
-   * Se ejecuta diariamente a las 8:00 AM
-   */
   @Cron('0 8 * * *')
   async checkExpiringSubscriptions() {
     this.logger.log('Verificando suscripciones próximas a vencer...');
@@ -34,7 +30,6 @@ export class SubscriptionService {
       const threeDaysFromNow = new Date(now);
       threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
-      // ✅ FUENTE DE VERDAD: Orden.suscripcionProximoPago
       const subscriptions = await this.prisma.orden.findMany({
         where: {
           esSuscripcion: true,
@@ -80,7 +75,8 @@ export class SubscriptionService {
   }
 
   /**
-   * Verifica si un usuario tiene acceso activo a un curso
+   * ✅ Ajuste anti-bug: si la inscripción parece de suscripción pero falta endDate,
+   * NO se considera acceso permanente.
    */
   async checkCourseAccess(userId: string, courseId: string): Promise<boolean> {
     const enrollment = await this.prisma.inscripcion.findUnique({
@@ -102,11 +98,16 @@ export class SubscriptionService {
       return isActive && enrollment.subscriptionEndDate > now;
     }
 
+    // ✅ Si parece suscripción moderna (tiene refs) pero no hay endDate => sin acceso
+    if (enrollment.subscriptionOrderId || enrollment.subscriptionId) {
+      return false;
+    }
+
     // Fallback legacy: mirar JSON
     const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
-      // Si no hay info de sub => acceso permanente (legacy)
+      // Legacy real (sin suscripción registrada): acceso permanente
       return true;
     }
 
@@ -114,9 +115,6 @@ export class SubscriptionService {
     return endDate > now;
   }
 
-  /**
-   * Obtiene información general de la suscripción del usuario
-   */
   async getUserInfo(userId: string) {
     const userIdNum = Number(userId);
     if (!Number.isFinite(userIdNum)) {
@@ -147,7 +145,6 @@ export class SubscriptionService {
       };
     }
 
-    // Cursos incluidos (según tu lógica actual)
     const cursos = await this.prisma.curso.findMany({
       where: {
         destacado: true,
@@ -208,9 +205,6 @@ export class SubscriptionService {
     };
   }
 
-  /**
-   * Obtiene información de la suscripción de un usuario a un curso
-   */
   async getSubscriptionInfo(userId: string, courseId: string) {
     const enrollment = await this.prisma.inscripcion.findUnique({
       where: {
@@ -230,7 +224,6 @@ export class SubscriptionService {
 
     const now = new Date();
 
-    // ✅ PRIORIDAD: columnas
     if (enrollment.subscriptionEndDate) {
       const end = enrollment.subscriptionEndDate;
       const daysLeft = Math.ceil(
@@ -250,10 +243,22 @@ export class SubscriptionService {
       };
     }
 
-    // Fallback: JSON legacy
     const progreso = parseProgreso(enrollment.progreso);
 
     if (!progreso?.subscription?.endDate) {
+      // Si parece suscripción moderna pero no hay endDate => sin acceso (evita “permiso gratis”)
+      if (enrollment.subscriptionOrderId || enrollment.subscriptionId) {
+        return {
+          hasAccess: false,
+          isPermanent: false,
+          courseName: enrollment.curso.titulo,
+          courseSlug: enrollment.curso.slug,
+          orderId: enrollment.subscriptionOrderId ?? null,
+          subscriptionId: enrollment.subscriptionId ?? null,
+          isActive: enrollment.subscriptionActive !== false,
+        };
+      }
+
       return {
         hasAccess: true,
         isPermanent: true,
@@ -280,10 +285,6 @@ export class SubscriptionService {
     };
   }
 
-  /**
-   * Desactiva la suscripción de un usuario (por orderId)
-   * ✅ Robusto: usa columnas (subscriptionOrderId)
-   */
   async cancelSubscription(userId: string, orderId: string): Promise<boolean> {
     try {
       const orderIdNum = Number(orderId);
@@ -313,7 +314,6 @@ export class SubscriptionService {
         },
       });
 
-      // Mantener JSON consistente (opcional pero recomendado)
       await Promise.all(
         enrollments.map(async (e) => {
           const progreso = parseProgreso(e.progreso);
@@ -442,41 +442,18 @@ function parseProgreso(value: unknown): {
   [key: string]: unknown;
 } | null {
   if (value == null) return null;
+
   if (typeof value === 'object') {
-    return value as {
-      subscription?: {
-        endDate?: string;
-        isActive?: boolean;
-        nextPaymentDate?: string;
-        frequency?: number;
-        frequencyType?: string;
-        status?: string;
-        orderId?: number;
-        subscriptionId?: string;
-        [key: string]: unknown;
-      };
-      [key: string]: unknown;
-    };
+    return value as any;
   }
+
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value) as {
-        subscription?: {
-          endDate?: string;
-          isActive?: boolean;
-          nextPaymentDate?: string;
-          frequency?: number;
-          frequencyType?: string;
-          status?: string;
-          orderId?: number;
-          subscriptionId?: string;
-          [key: string]: unknown;
-        };
-        [key: string]: unknown;
-      };
+      return JSON.parse(value) as any;
     } catch {
       return null;
     }
   }
+
   return null;
 }
