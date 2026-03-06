@@ -388,7 +388,7 @@ export function EnrollmentCard({
             <SafeImage
               src={courseImageUrl}
               alt=""
-              ratio="auto"
+              ratio="1/1"
               className="w-full h-full opacity-50 blur-2xl scale-110"
               imgClassName="w-full h-full object-cover"
               fit="cover"
