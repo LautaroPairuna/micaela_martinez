@@ -146,6 +146,10 @@ export type Inscripcion = {
   estado: EstadoInscripcion;
   creadoEn: string;
   progreso?: unknown;
+  subscriptionOrderId?: string | number | null;
+  subscriptionId?: string | null;
+  subscriptionEndDate?: string | Date | null;
+  subscriptionActive?: boolean | null;
   curso?: { 
     id: string; 
     slug?: string; 
@@ -589,6 +593,10 @@ type BackendEnrollment = {
   creadoEn: string;
   actualizadoEn: string;
   progreso?: unknown;
+  subscriptionOrderId?: string | number | null;
+  subscriptionId?: string | null;
+  subscriptionEndDate?: string | null;
+  subscriptionActive?: boolean | null;
   curso?: { 
     id: string; 
     slug?: string; 
@@ -642,6 +650,10 @@ export async function listEnrollments(opts?: NextOpts) {
       estado: r.estado, // Usar estado directo sin mapeo
       creadoEn: r.creadoEn,
       progreso: r.progreso,
+      subscriptionOrderId: r.subscriptionOrderId ?? null,
+      subscriptionId: r.subscriptionId ?? null,
+      subscriptionEndDate: r.subscriptionEndDate ?? null,
+      subscriptionActive: r.subscriptionActive ?? null,
       curso: c ? { 
         id: c.id, 
         slug: c.slug, 

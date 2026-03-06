@@ -143,6 +143,22 @@ export class SubscriptionService {
         ],
       },
       orderBy: { creadoEn: 'desc' },
+      include: {
+        pagos: {
+          where: {
+            provider: 'MERCADOPAGO',
+            kind: {
+              in: ['SUBSCRIPTION_PREAPPROVAL', 'SUBSCRIPTION_PAYMENT'],
+            },
+          },
+          orderBy: { creadoEn: 'desc' },
+          take: 5,
+          select: {
+            kind: true,
+            metadatos: true,
+          },
+        },
+      },
     });
 
     if (ordenes.length === 0) {
@@ -162,10 +178,15 @@ export class SubscriptionService {
 
     const subscriptions = ordenes.map((orden) => {
       const meta = parseProgreso(orden.metadatos);
+      const preapprovalPayment = orden.pagos.find(
+        (p) => p.kind === 'SUBSCRIPTION_PREAPPROVAL',
+      );
+      const preapprovalMeta = parseProgreso(preapprovalPayment?.metadatos);
 
       const nextPaymentDate = orden.suscripcionProximoPago
         ? orden.suscripcionProximoPago.toISOString()
-        : (meta?.subscription?.nextPaymentDate ?? null);
+        : (meta?.subscription?.nextPaymentDate ??
+          (typeof preapprovalMeta?.next === 'string' ? preapprovalMeta.next : null));
 
       const next = nextPaymentDate ? new Date(nextPaymentDate) : null;
 

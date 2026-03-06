@@ -428,7 +428,7 @@ export class OrdersService {
       where: { id: order.id },
       data: {
         suscripcionId: String(mpRes.id),
-        suscripcionActiva: mpRes.status === 'authorized' ? true : null,
+        suscripcionActiva: false,
         suscripcionProximoPago: mpRes.next_payment_date
           ? new Date(mpRes.next_payment_date)
           : null,

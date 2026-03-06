@@ -332,8 +332,7 @@ export class WebhooksController {
           where: { id: orderId },
           data: {
             suscripcionId: String(pre.id),
-            suscripcionActiva:
-              String(pre.status).toLowerCase() === 'authorized' ? true : null,
+            suscripcionActiva: false,
             suscripcionProximoPago: pre.next_payment_date
               ? new Date(pre.next_payment_date)
               : null,

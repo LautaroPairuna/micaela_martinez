@@ -116,6 +116,10 @@ export function EnrollmentCard({
   // Prioridad: columnas nuevas si existieran en enrollment (type casting seguro)
   const colOrderId = String((enrollment as any)?.subscriptionOrderId ?? '').trim();
   const colSubId = String((enrollment as any)?.subscriptionId ?? '').trim();
+  const colSubActive = (enrollment as any)?.subscriptionActive as
+    | boolean
+    | null
+    | undefined;
 
   // Match: orderId de columna o de progreso
   const matchOrderId = colOrderId || progOrderId;
@@ -141,6 +145,7 @@ export function EnrollmentCard({
   const enrollmentStatus = String(enrollment.estado ?? '').toUpperCase().trim();
   const isPendingAuthorization =
     enrollmentStatus === 'PENDIENTE_AUTORIZACION' ||
+    (hasSubscriptionUI && colSubActive === false) ||
     (hasSubscriptionUI && subToUse?.isActive === false);
 
   // ✅ Botón cancelar solo si hay subscriptionId real (columna o subInfo)
