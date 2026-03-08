@@ -42,6 +42,7 @@ export class RevalidationService {
   async revalidateResource(resourceName: string) {
     const map: Record<string, string[]> = {
       Producto: ['products'],
+      ProductoImagen: ['products'],
       Curso: ['courses'],
       Marca: ['products'],
       Categoria: ['products'],
@@ -54,7 +55,11 @@ export class RevalidationService {
     }
 
     // Invalidar caché interno de NestJS (CatalogService manual cache)
-    if (['Producto', 'Marca', 'Categoria'].includes(resourceName)) {
+    if (
+      ['Producto', 'ProductoImagen', 'Marca', 'Categoria'].includes(
+        resourceName,
+      )
+    ) {
       const count = this.cacheService.deletePattern('catalog:products:');
       this.logger.log(
         `Invalidated ${count} catalog cache entries for ${resourceName}`,

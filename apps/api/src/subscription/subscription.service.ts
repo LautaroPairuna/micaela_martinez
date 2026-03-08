@@ -236,6 +236,29 @@ export class SubscriptionService {
         }
 
         const next = nextPaymentDate ? new Date(nextPaymentDate) : null;
+        if (next && !Number.isNaN(next.getTime())) {
+          await this.prisma.inscripcion.updateMany({
+            where: {
+              usuarioId: userIdNum,
+              OR: [
+                { subscriptionOrderId: orden.id },
+                ...(orden.suscripcionId
+                  ? [{ subscriptionId: orden.suscripcionId }]
+                  : []),
+              ],
+            },
+            data: {
+              subscriptionOrderId: orden.id,
+              subscriptionId: orden.suscripcionId,
+              subscriptionActive:
+                orden.suscripcionActiva !== null
+                  ? orden.suscripcionActiva
+                  : false,
+              subscriptionEndDate: next,
+            },
+          });
+        }
+
         let daysLeft: number | null = null;
         let hoursLeft: number | null = null;
 
@@ -382,6 +405,12 @@ export class SubscriptionService {
     const nowIso = new Date().toISOString();
     const frequency = order.suscripcionFrecuencia ?? 1;
     const frequencyType = order.suscripcionTipoFrecuencia ?? 'months';
+    const nextPaymentDate = order.suscripcionProximoPago
+      ? order.suscripcionProximoPago.toISOString()
+      : undefined;
+    const subscriptionStatus = String(
+      parseProgreso(order.metadatos)?.subscription?.status ?? 'authorized',
+    );
     let created = 0;
     let updated = 0;
 
@@ -402,11 +431,13 @@ export class SubscriptionService {
           ...(currentProgress.subscription || {}),
           orderId: order.id,
           subscriptionId: order.suscripcionId ?? undefined,
-          status: 'authorized',
           isActive: false,
           startDate: nowIso,
+          endDate: nextPaymentDate,
+          nextPaymentDate,
           frequency,
           frequencyType,
+          status: subscriptionStatus,
         },
       };
 
@@ -419,7 +450,7 @@ export class SubscriptionService {
             subscriptionOrderId: order.id,
             subscriptionId: order.suscripcionId,
             subscriptionActive: false,
-            subscriptionEndDate: null,
+            subscriptionEndDate: order.suscripcionProximoPago ?? null,
           },
         });
         updated += 1;
@@ -433,7 +464,7 @@ export class SubscriptionService {
             subscriptionOrderId: order.id,
             subscriptionId: order.suscripcionId,
             subscriptionActive: false,
-            subscriptionEndDate: null,
+            subscriptionEndDate: order.suscripcionProximoPago ?? null,
           },
         });
         created += 1;

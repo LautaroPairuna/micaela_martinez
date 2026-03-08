@@ -26,7 +26,7 @@ export class ImageUrlUtil {
    * Genera URL para imágenes adicionales de producto
    */
   static getProductGalleryImageUrl(filename: string): string {
-    return `${this.BASE_IMAGE_PATH}/producto/${filename}`;
+    return `${this.BASE_IMAGE_PATH}/producto_imagen/${filename}`;
   }
 
   /**

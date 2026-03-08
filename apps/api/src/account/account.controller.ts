@@ -201,12 +201,18 @@ export class AccountController {
   }
 
   @Get('enrollments/quiz-cooldown')
-  getQuizCooldown(@CurrentUser() user: JwtUser, @Query() query: QuizCooldownQueryDto) {
+  getQuizCooldown(
+    @CurrentUser() user: JwtUser,
+    @Query() query: QuizCooldownQueryDto,
+  ) {
     return this.svc.getQuizCooldown(user.sub, query);
   }
 
   @Post('enrollments/quiz-cooldown')
-  setQuizCooldown(@CurrentUser() user: JwtUser, @Body() dto: SetQuizCooldownDto) {
+  setQuizCooldown(
+    @CurrentUser() user: JwtUser,
+    @Body() dto: SetQuizCooldownDto,
+  ) {
     return this.svc.setQuizCooldown(user.sub, dto);
   }
 }

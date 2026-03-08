@@ -22,6 +22,17 @@ function resolveRelationLabel(relation: any) {
   return null;
 }
 
+function normalizeSubscriptionStatusLabel(status: string) {
+  const value = status.trim().toLowerCase();
+  if (value === 'authorized') return 'Autorizada';
+  if (value === 'active') return 'Activa';
+  if (value === 'paused') return 'Pausada';
+  if (value === 'cancelled') return 'Cancelada';
+  if (value === 'rejected') return 'Rechazada';
+  if (value === 'pending') return 'Pendiente';
+  return status;
+}
+
 function ThumbnailImage({ src, alt, fallbackSrc, originalSrc }: { src: string; alt: string; fallbackSrc?: string; originalSrc?: string }) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [error, setError] = useState(false);
@@ -240,6 +251,27 @@ export function renderCell({
 
   // ──────────────── BOOLEANOS ────────────────
   if (field.type === 'Boolean') {
+    if (meta.name === 'Inscripcion' && field.name === 'subscriptionActive') {
+      const rawStatus = row?.progreso?.subscription?.status;
+      if (typeof rawStatus === 'string' && rawStatus.trim()) {
+        const normalized = rawStatus.trim().toLowerCase();
+        const tone =
+          normalized === 'active' || normalized === 'authorized'
+            ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/60'
+            : normalized === 'pending' || normalized === 'paused'
+              ? 'bg-amber-500/20 text-amber-200 border border-amber-500/60'
+              : 'bg-rose-500/15 text-rose-200 border border-rose-500/60';
+
+        return (
+          <span
+            className={`inline-flex min-w-[120px] items-center justify-center rounded-full px-3 py-1 text-[12px] font-medium ${tone}`}
+          >
+            {normalizeSubscriptionStatusLabel(rawStatus)}
+          </span>
+        );
+      }
+    }
+
     const b = Boolean(value);
     return (
       <span
@@ -275,6 +307,25 @@ export function renderCell({
 
   // ──────────────── DATETIME ────────────────
   if (field.type === 'DateTime') {
+    if (meta.name === 'Inscripcion' && field.name === 'subscriptionEndDate') {
+      const metaDate = row?.progreso?.subscription?.endDate;
+      const fallbackDate =
+        typeof metaDate === 'string' && metaDate.trim().length > 0
+          ? new Date(metaDate)
+          : null;
+      if (
+        (value === null || value === undefined || value === '') &&
+        fallbackDate &&
+        !Number.isNaN(fallbackDate.getTime())
+      ) {
+        return (
+          <span className="text-[12px] text-slate-200">
+            {fallbackDate.toLocaleDateString()} {fallbackDate.toLocaleTimeString()}
+          </span>
+        );
+      }
+    }
+
     const d = new Date(value);
     return (
       <span className="text-[12px] text-slate-200">

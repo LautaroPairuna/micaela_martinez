@@ -120,7 +120,13 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
   Inscripcion: {
     usuarioId: { label: 'Usuario' },
     cursoId: { label: 'Curso' },
-    estado: { label: 'Estado' },
+    estado: { label: 'Estado de inscripción' },
+    subscriptionOrderId: { label: 'Orden de suscripción' },
+    subscriptionId: { label: 'ID suscripción' },
+    subscriptionEndDate: { label: 'Fin de suscripción' },
+    subscriptionActive: { label: 'Estado suscripción' },
+    creadoEn: { label: 'Creada el', showInForm: false },
+    actualizadoEn: { label: 'Actualizada el', showInForm: false },
     progreso: { label: 'Progreso (%)', showInList: false },
   },
 
