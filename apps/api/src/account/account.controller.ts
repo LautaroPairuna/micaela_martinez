@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -101,6 +102,27 @@ class UpdateLessonProgressDto {
   progressData?: any;
 }
 
+class QuizCooldownQueryDto {
+  @IsInt()
+  @Type(() => Number)
+  enrollmentId!: number;
+
+  @IsInt()
+  @Type(() => Number)
+  moduleId!: number;
+
+  @IsInt()
+  @Type(() => Number)
+  lessonId!: number;
+}
+
+class SetQuizCooldownDto extends QuizCooldownQueryDto {
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  cooldownSeconds?: number;
+}
+
 @UseGuards(JwtAuthGuard)
 @Controller('users/me')
 export class AccountController {
@@ -176,5 +198,15 @@ export class AccountController {
     @Body() dto: UpdateLessonProgressDto,
   ) {
     return this.svc.updateLessonProgress(user.sub, dto);
+  }
+
+  @Get('enrollments/quiz-cooldown')
+  getQuizCooldown(@CurrentUser() user: JwtUser, @Query() query: QuizCooldownQueryDto) {
+    return this.svc.getQuizCooldown(user.sub, query);
+  }
+
+  @Post('enrollments/quiz-cooldown')
+  setQuizCooldown(@CurrentUser() user: JwtUser, @Body() dto: SetQuizCooldownDto) {
+    return this.svc.setQuizCooldown(user.sub, dto);
   }
 }

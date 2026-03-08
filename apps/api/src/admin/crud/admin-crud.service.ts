@@ -693,6 +693,15 @@ export class AdminCrudService {
       );
     }
 
+    if (
+      meta.name === 'ProductoImagen' &&
+      (typeof data.archivo !== 'string' || !data.archivo.trim())
+    ) {
+      throw new BadRequestException(
+        'El campo "archivo" es obligatorio. Subí una imagen antes de guardar.',
+      );
+    }
+
     const created = await client.create({ data });
 
     const idField = meta.fields.find((f) => f.isId);

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -46,6 +47,13 @@ type LessonProgressMap = Record<number, Record<number, LessonProgressEntry>>;
 type ProgressData = {
   completedAt?: string | null;
   [k: string]: unknown;
+};
+
+type QuizCooldownInput = {
+  enrollmentId: number;
+  moduleId: number;
+  lessonId: number;
+  cooldownSeconds?: number;
 };
 
 @Injectable()
@@ -451,5 +459,129 @@ export class AccountService {
     });
 
     return updated;
+  }
+
+  async getQuizCooldown(
+    userId: number,
+    dto: Omit<QuizCooldownInput, 'cooldownSeconds'>,
+  ) {
+    const enrollment = await this.prisma.inscripcion.findFirst({
+      where: {
+        id: Number(dto.enrollmentId),
+        usuarioId: Number(userId),
+      },
+      select: {
+        id: true,
+        progreso: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Inscripción no encontrada o no autorizada');
+    }
+
+    const currentProgress =
+      (enrollment.progreso as Record<string, unknown> | null) ?? {};
+    const cooldownsRaw = currentProgress.quizCooldowns;
+    const cooldowns =
+      cooldownsRaw && typeof cooldownsRaw === 'object'
+        ? (cooldownsRaw as Record<string, unknown>)
+        : {};
+
+    const key = `${dto.moduleId}-${dto.lessonId}`;
+    const rawValue = cooldowns[key];
+    const now = Date.now();
+
+    if (typeof rawValue !== 'string') {
+      return { active: false, cooldownUntil: null, secondsLeft: 0 };
+    }
+
+    const until = new Date(rawValue);
+    if (Number.isNaN(until.getTime()) || until.getTime() <= now) {
+      delete cooldowns[key];
+
+      await this.prisma.inscripcion.update({
+        where: { id: enrollment.id },
+        data: {
+          progreso: JSON.parse(
+            JSON.stringify({
+              ...currentProgress,
+              quizCooldowns: cooldowns,
+            }),
+          ),
+          actualizadoEn: new Date(),
+        },
+      });
+
+      return { active: false, cooldownUntil: null, secondsLeft: 0 };
+    }
+
+    const secondsLeft = Math.ceil((until.getTime() - now) / 1000);
+    return {
+      active: true,
+      cooldownUntil: until.toISOString(),
+      secondsLeft: Math.max(secondsLeft, 0),
+    };
+  }
+
+  async setQuizCooldown(userId: number, dto: QuizCooldownInput) {
+    const cooldownSeconds =
+      typeof dto.cooldownSeconds === 'number' &&
+      Number.isFinite(dto.cooldownSeconds) &&
+      dto.cooldownSeconds > 0
+        ? Math.floor(dto.cooldownSeconds)
+        : 120;
+
+    if (cooldownSeconds > 3600) {
+      throw new BadRequestException(
+        'cooldownSeconds no puede ser mayor a 3600',
+      );
+    }
+
+    const enrollment = await this.prisma.inscripcion.findFirst({
+      where: {
+        id: Number(dto.enrollmentId),
+        usuarioId: Number(userId),
+      },
+      select: {
+        id: true,
+        progreso: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Inscripción no encontrada o no autorizada');
+    }
+
+    const currentProgress =
+      (enrollment.progreso as Record<string, unknown> | null) ?? {};
+    const cooldownsRaw = currentProgress.quizCooldowns;
+    const cooldowns =
+      cooldownsRaw && typeof cooldownsRaw === 'object'
+        ? (cooldownsRaw as Record<string, unknown>)
+        : {};
+
+    const key = `${dto.moduleId}-${dto.lessonId}`;
+    const cooldownUntil = new Date(Date.now() + cooldownSeconds * 1000);
+    cooldowns[key] = cooldownUntil.toISOString();
+
+    await this.prisma.inscripcion.update({
+      where: { id: enrollment.id },
+      data: {
+        progreso: JSON.parse(
+          JSON.stringify({
+            ...currentProgress,
+            quizCooldowns: cooldowns,
+          }),
+        ),
+        actualizadoEn: new Date(),
+      },
+    });
+
+    return {
+      active: true,
+      cooldownUntil: cooldownUntil.toISOString(),
+      secondsLeft: cooldownSeconds,
+    };
   }
 }

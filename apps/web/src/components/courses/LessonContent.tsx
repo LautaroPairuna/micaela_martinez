@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   CheckCircle, 
   Circle, 
@@ -19,10 +19,13 @@ import {
 import { Button } from '@/components/ui/Button';
 import { cn, formatDuration } from '@/lib/utils';
 import { Lesson, QuizQuestion } from '@/types/course';
+import { getQuizCooldown, setQuizCooldown } from '@/lib/sdk/userApi';
 import { toast } from 'react-toastify';
 
 type LessonContentProps = {
   lesson: Lesson;
+  enrollmentId?: string | number;
+  moduleId?: string | number;
   isCompleted?: boolean;
   onToggleComplete?: () => void;
   onComplete?: () => void;
@@ -341,36 +344,96 @@ function TextContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENTE: QUIZ
 // ─────────────────────────────────────────────────────────────────────────────
-function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete, onNext }: LessonContentProps) {
+function QuizContent({
+  lesson,
+  enrollmentId,
+  moduleId,
+  isCompleted = false,
+  onToggleComplete,
+  onComplete,
+  onNext,
+}: LessonContentProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   
-  // Cooldown
   const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const cooldownKey = `quiz-cooldown-${lesson.id}`;
+  const hasServerCooldown =
+    enrollmentId !== undefined &&
+    enrollmentId !== null &&
+    String(enrollmentId) !== 'temp' &&
+    moduleId !== undefined &&
+    moduleId !== null;
 
-  // Cargar estado inicial y cooldown
+  const resolveLocalCooldown = useCallback(() => {
+    const savedCooldown = localStorage.getItem(cooldownKey);
+    if (!savedCooldown) {
+      setCooldownUntil(null);
+      return;
+    }
+
+    const date = new Date(savedCooldown);
+    if (!Number.isNaN(date.getTime()) && date > new Date()) {
+      setCooldownUntil(date);
+      return;
+    }
+
+    localStorage.removeItem(cooldownKey);
+    setCooldownUntil(null);
+  }, [cooldownKey]);
+
   useEffect(() => {
     setHasStarted(false);
     setIsSubmitted(false);
     setSelectedAnswers({});
     setCurrentQuestionIndex(0);
 
-    // Chequear cooldown en localStorage
-    const savedCooldown = localStorage.getItem(`quiz-cooldown-${lesson.id}`);
-    if (savedCooldown) {
-      const date = new Date(savedCooldown);
-      if (date > new Date()) {
-        setCooldownUntil(date);
-      } else {
-        localStorage.removeItem(`quiz-cooldown-${lesson.id}`);
-      }
-    }
-  }, [lesson.id]);
+    let cancelled = false;
 
-  // Timer para el cooldown
+    const loadCooldown = async () => {
+      if (!hasServerCooldown) {
+        resolveLocalCooldown();
+        return;
+      }
+
+      try {
+        const res = await getQuizCooldown(
+          enrollmentId as string | number,
+          moduleId as string | number,
+          lesson.id,
+        );
+        if (cancelled) return;
+
+        if (res.active && typeof res.cooldownUntil === 'string') {
+          const date = new Date(res.cooldownUntil);
+          setCooldownUntil(Number.isNaN(date.getTime()) ? null : date);
+          return;
+        }
+
+        setCooldownUntil(null);
+      } catch {
+        if (cancelled) return;
+        resolveLocalCooldown();
+      }
+    };
+
+    void loadCooldown();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    cooldownKey,
+    enrollmentId,
+    hasServerCooldown,
+    lesson.id,
+    moduleId,
+    resolveLocalCooldown,
+  ]);
+
   useEffect(() => {
     if (!cooldownUntil) {
       setTimeLeft(null);
@@ -383,7 +446,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
       
       if (diff <= 0) {
         setCooldownUntil(null);
-        localStorage.removeItem(`quiz-cooldown-${lesson.id}`);
+        localStorage.removeItem(cooldownKey);
         clearInterval(interval);
       } else {
         const minutes = Math.floor(diff / 60000);
@@ -393,7 +456,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [cooldownUntil, lesson.id]);
+  }, [cooldownKey, cooldownUntil]);
 
   const { questions, intro } = useMemo(() => {
     let content = lesson.contenido as any;
@@ -417,11 +480,6 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const allAnswered = questions.every((_, idx) => selectedAnswers[idx] !== undefined);
 
-  // Auto-start si no hay intro
-  useEffect(() => {
-    if (!intro && hasQuestions && !hasStarted) setHasStarted(true);
-  }, [intro, hasQuestions, hasStarted]);
-
   const score = useMemo(() => {
     let correct = 0;
     questions.forEach((q, idx) => {
@@ -441,16 +499,39 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 
   const handleSubmit = () => {
     setIsSubmitted(true);
-    // REGLA: 100% para aprobar
     if (score.percentage === 100) {
       toast.success('¡Felicitaciones! Has aprobado el examen.');
       onComplete?.();
     } else {
-      // Activar cooldown de 2 minutos
-      const now = new Date();
-      const cooldownTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutos
-      setCooldownUntil(cooldownTime);
-      localStorage.setItem(`quiz-cooldown-${lesson.id}`, cooldownTime.toISOString());
+      const applyCooldown = async () => {
+        if (hasServerCooldown) {
+          try {
+            const res = await setQuizCooldown(
+              enrollmentId as string | number,
+              moduleId as string | number,
+              lesson.id,
+              120,
+            );
+            if (res.active && typeof res.cooldownUntil === 'string') {
+              const serverDate = new Date(res.cooldownUntil);
+              if (!Number.isNaN(serverDate.getTime())) {
+                setCooldownUntil(serverDate);
+                return;
+              }
+            }
+          } catch {}
+        }
+
+        const fallbackDate = new Date(Date.now() + 2 * 60 * 1000);
+        setCooldownUntil(fallbackDate);
+        localStorage.setItem(cooldownKey, fallbackDate.toISOString());
+      };
+
+      setHasStarted(false);
+      setIsSubmitted(false);
+      setSelectedAnswers({});
+      setCurrentQuestionIndex(0);
+      void applyCooldown();
       toast.error('No has alcanzado el 100%. Debes esperar para reintentar.');
     }
   };
@@ -471,16 +552,19 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
     );
   }
 
-  // PANTALLA: INTRO (o BLOQUEO COOLDOWN)
-  if ((intro && !hasStarted && !isSubmitted) || (cooldownUntil && !isSubmitted)) {
+  const introText =
+    typeof intro === 'string' && intro.trim().length > 0
+      ? intro
+      : 'Este quiz evalúa los conceptos clave de la lección. Debes obtener 100% para aprobar.';
+
+  if (cooldownUntil || !hasStarted) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50 p-6 md:p-12">
-        <div className="w-full max-w-xl rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-900/5 md:p-12 text-center">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-white p-6 md:p-12">
+        <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-900/5 md:p-12 text-center">
           
           {cooldownUntil ? (
-             // MODO COOLDOWN
             <>
-              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-orange-50 text-orange-600 ring-1 ring-orange-100">
                 <Clock className="h-10 w-10 animate-pulse" />
               </div>
               <h2 className="mb-4 text-3xl font-bold text-slate-900">Tiempo de espera</h2>
@@ -495,15 +579,14 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
               </Button>
             </>
           ) : (
-            // MODO INTRO
             <>
-              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
-                <HelpCircle className="h-10 w-10" />
+              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200">
+                <FileText className="h-10 w-10" />
               </div>
               
-              <h2 className="mb-4 text-3xl font-bold text-slate-900">Evaluación de Conocimientos</h2>
+              <h2 className="mb-4 text-3xl font-bold text-slate-900">Antes de comenzar</h2>
               <div className="mb-8 text-lg text-slate-600 whitespace-pre-wrap leading-relaxed">
-                {intro}
+                {introText}
               </div>
 
               <div className="mb-10 flex flex-wrap justify-center gap-4">
@@ -517,7 +600,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
                 </div>
               </div>
 
-              <Button onClick={() => setHasStarted(true)} size="lg" className="w-full rounded-xl bg-indigo-600 text-lg hover:bg-indigo-700 md:w-auto md:px-12">
+              <Button onClick={() => setHasStarted(true)} size="lg" className="w-full rounded-full bg-slate-900 text-lg hover:bg-slate-800 md:w-auto md:px-12">
                 Comenzar Quiz
               </Button>
             </>
@@ -528,30 +611,30 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col bg-[#F8FAFC]">
-      {/* Header / Progress */}
-      <div className="shrink-0 border-b border-slate-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-3xl">
+    <div className="flex h-full min-h-0 w-full flex-col bg-white">
+      <div className="shrink-0 border-b border-slate-100 bg-white px-6 py-4">
+        <div className="mx-auto max-w-2xl">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-lg font-bold text-slate-900">{lesson.titulo}</h1>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+              <HelpCircle className="h-4 w-4" />
+              <span>Lección de Quiz</span>
+            </div>
             <div className="text-sm font-medium text-slate-500">
               {isSubmitted ? 'Resultados' : `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`}
             </div>
           </div>
           
-          {/* Progress Bar */}
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div 
-              className="h-full bg-indigo-600 transition-all duration-500 ease-out"
+              className="h-full bg-slate-900 transition-all duration-500 ease-out"
               style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="mx-auto flex min-h-full max-w-3xl flex-col">
+        <div className="mx-auto flex min-h-full max-w-2xl flex-col">
           
           {!isSubmitted ? (
             /* MODO: PREGUNTAS */
@@ -572,21 +655,21 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
                       className={cn(
                         "group relative flex w-full items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200",
                         isSelected
-                          ? "border-indigo-600 bg-indigo-50/50 shadow-md"
-                          : "border-transparent bg-white shadow-sm ring-1 ring-slate-200 hover:border-indigo-200 hover:bg-slate-50"
+                          ? "border-slate-900 bg-slate-50 shadow-md"
+                          : "border-transparent bg-white shadow-sm ring-1 ring-slate-200 hover:border-slate-300 hover:bg-slate-50"
                       )}
                     >
                       <div className={cn(
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-colors",
                         isSelected
-                          ? "border-indigo-600 bg-indigo-600 text-white"
-                          : "border-slate-300 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-500"
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-300 text-slate-400 group-hover:border-slate-400 group-hover:text-slate-700"
                       )}>
                         {String.fromCharCode(65 + index)}
                       </div>
                       <span className={cn(
                         "text-lg",
-                        isSelected ? "font-medium text-indigo-900" : "text-slate-700"
+                        isSelected ? "font-medium text-slate-900" : "text-slate-700"
                       )}>
                         {option}
                       </span>
@@ -683,9 +766,8 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
         </div>
       </div>
 
-      {/* Footer Navigation */}
-      <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
+      <div className="shrink-0 border-t border-slate-100 bg-white/80 px-6 py-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
           {!isSubmitted ? (
             <>
               <Button
@@ -702,7 +784,7 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
                 <Button 
                   onClick={handleSubmit} 
                   disabled={!allAnswered}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
+                  className="bg-slate-900 hover:bg-slate-800 text-white min-w-[140px]"
                 >
                   Finalizar
                   <CheckCircle className="ml-2 h-4 w-4" />
@@ -749,14 +831,22 @@ function QuizContent({ lesson, isCompleted = false, onToggleComplete, onComplete
 // COMPONENTE PRINCIPAL: EXPORT
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function LessonContent({ lesson, isCompleted, onToggleComplete, onComplete, onNext }: LessonContentProps) {
+export function LessonContent({
+  lesson,
+  enrollmentId,
+  moduleId,
+  isCompleted,
+  onToggleComplete,
+  onComplete,
+  onNext,
+}: LessonContentProps) {
   switch (lesson.tipo) {
     case 'TEXTO':
       return <TextContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     case 'DOCUMENTO':
       return <DocumentContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     case 'QUIZ':
-      return <QuizContent lesson={lesson} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
+      return <QuizContent lesson={lesson} enrollmentId={enrollmentId} moduleId={moduleId} isCompleted={isCompleted} onToggleComplete={onToggleComplete} onComplete={onComplete} onNext={onNext} />;
     default:
       return (
         <div className="flex h-full items-center justify-center bg-slate-50 p-8 text-center">

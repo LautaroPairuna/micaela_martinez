@@ -48,7 +48,7 @@ function TitleBand({
         </h2>
 
         {/* Linea decorativa pequeña */}
-        <div className="mt-6 mx-auto w-80 h-px bg-[var(--gold)] opacity-60" />
+        <div className="mt-6 mx-auto h-px w-[min(20rem,70vw)] bg-[var(--gold)] opacity-60" />
       </div>
     </div>
   );

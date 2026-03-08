@@ -690,7 +690,7 @@ export function CoursePlayer({
         <div className="flex-1 flex flex-col bg-black min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 bg-black relative overflow-hidden">
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 h-full">
                 {currentLesson.tipo === 'VIDEO' && getRawVideoSrc(currentLesson) ? (
                   <CourseVideoPlayer
                     videoUrl={resolvedVideoUrl}
@@ -702,8 +702,8 @@ export function CoursePlayer({
                     previewUrl={previewUrl}
                   />
                 ) : (
-                  <div className="relative flex-1 flex flex-col min-h-0">
-                    <div className="animate-in fade-in-0 duration-300 flex-1 flex flex-col min-h-0">
+                  <div className="relative h-full flex flex-col min-h-0">
+                    <div className="animate-in fade-in-0 duration-300 h-full flex flex-col min-h-0">
                       {contentError ? (
                         <div className="flex-1 flex items-center justify-center p-6">
                           <div className="max-w-md text-center">
@@ -736,6 +736,8 @@ export function CoursePlayer({
                         <ErrorBoundary onError={(err) => setContentError(err.message)} fallback={null}>
                           <ContentPlayer
                             lesson={currentLesson}
+                            enrollmentId={enrollment.id}
+                            moduleId={currentModule?.id}
                             isCompleted={currentModule && currentLesson ? !!lessonProgress[getLessonProgressKey(currentModule.id, currentLesson.id)] : false}
                             onToggleComplete={() => toggleLessonComplete(currentLesson.id)}
                             onComplete={() => markLessonComplete(currentLesson.id)}

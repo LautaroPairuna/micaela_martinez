@@ -14,7 +14,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   if (isCoursePlayerPage) {
     // Layout limpio para páginas de curso
     return (
-      <div className="min-h-dvh">
+      <div className="min-h-dvh overflow-x-clip">
         <main id="content" className="w-full">
           {children}
         </main>
@@ -25,7 +25,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   // Layout normal para otras páginas
   return (
     // Usá el mismo sistema de tema (var(--bg)/--fg) o ninguna clase aquí si el root ya pinta el fondo
-    <div className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr_auto] overflow-x-clip">
       <div className="sticky top-0 z-50 surface-light text-[var(--fg)]">
         <Header />
       </div>

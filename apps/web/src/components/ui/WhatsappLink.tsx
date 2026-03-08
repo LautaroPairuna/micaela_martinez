@@ -20,7 +20,11 @@ export default function WhatsappLink({
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
       title="Contactar por WhatsApp"
-      className={`fixed bottom-5 right-6 z-50 inline-block rounded-full shadow-sm transition-transform hover:scale-[1.03] active:scale-95 ${className}`}
+      className={`fixed z-50 inline-block rounded-full shadow-sm transition-transform hover:scale-[1.03] active:scale-95 ${className}`}
+      style={{
+        right: 'max(1rem, env(safe-area-inset-right))',
+        bottom: 'max(1rem, env(safe-area-inset-bottom))',
+      }}
     >
       <Image
         src="/images/icons/ico-whatsapp-ventana.svg"

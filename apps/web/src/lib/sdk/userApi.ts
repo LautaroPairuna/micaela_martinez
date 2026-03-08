@@ -734,3 +734,52 @@ export async function updateLessonProgress(
     ...opts,
   });
 }
+
+export type QuizCooldownInfo = {
+  active: boolean;
+  cooldownUntil: string | null;
+  secondsLeft: number;
+};
+
+export async function getQuizCooldown(
+  enrollmentId: string | number,
+  moduleId: string | number,
+  lessonId: string | number,
+  opts?: NextOpts,
+) {
+  const params = new URLSearchParams({
+    enrollmentId: String(Number(enrollmentId)),
+    moduleId: String(Number(moduleId)),
+    lessonId: String(Number(lessonId)),
+  });
+
+  return apiProxy<QuizCooldownInfo>(
+    `/users/me/enrollments/quiz-cooldown?${params.toString()}`,
+    {
+      method: 'GET',
+      ...opts,
+    },
+  );
+}
+
+export async function setQuizCooldown(
+  enrollmentId: string | number,
+  moduleId: string | number,
+  lessonId: string | number,
+  cooldownSeconds = 120,
+  opts?: NextOpts,
+) {
+  const payload = {
+    enrollmentId: Number(enrollmentId),
+    moduleId: Number(moduleId),
+    lessonId: Number(lessonId),
+    cooldownSeconds,
+  };
+
+  return apiProxy<QuizCooldownInfo>('/users/me/enrollments/quiz-cooldown', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    ...opts,
+  });
+}

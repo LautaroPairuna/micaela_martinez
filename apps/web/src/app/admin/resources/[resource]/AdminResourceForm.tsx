@@ -1228,6 +1228,37 @@ export function AdminResourceForm({
           return;
         }
 
+        const requestBody: Record<string, any> = { ...parsed.data };
+        const isCreating = mode === 'create';
+
+        for (const field of formFields) {
+          if (!field.isImage && !field.isFile) continue;
+          if (!field.isRequired || !isCreating) continue;
+
+          const selectedFile = field.isImage
+            ? imageFiles[field.name]
+            : fileFiles[field.name];
+          const existingValue = formValues[field.name];
+          const hasExistingStringValue =
+            typeof existingValue === 'string' && existingValue.trim().length > 0;
+
+          if (!selectedFile && !hasExistingStringValue) {
+            showToast({
+              variant: 'error',
+              title: 'Falta archivo obligatorio',
+              message: `Debes subir un archivo para "${field.label || field.name}"`,
+            });
+            setIsSaving(false);
+            return;
+          }
+
+          if (selectedFile) {
+            requestBody[field.name] = selectedFile.name;
+          } else if (hasExistingStringValue) {
+            requestBody[field.name] = String(existingValue).trim();
+          }
+        }
+
         const baseUrl = `${API_BASE}/admin/resources/${resource}`;
         const url =
           mode === 'edit' && currentRow?.id
@@ -1242,7 +1273,7 @@ export function AdminResourceForm({
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify(parsed.data),
+          body: JSON.stringify(requestBody),
         });
 
         if (!res.ok) {

@@ -112,7 +112,8 @@ h3, h4, h5, h6 {
 .container-fluid{
   width: 100%;
   margin-inline: auto;
-  padding-inline: var(--container-gutter);
+  padding-left: max(var(--container-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--container-gutter), env(safe-area-inset-right));
 }
 
 /* variantes de ancho */
@@ -131,7 +132,8 @@ h3, h4, h5, h6 {
   position: relative; z-index: 1;
   width: 100%;
   margin-inline: auto;
-  padding-inline: var(--container-gutter);
+  padding-left: max(var(--container-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--container-gutter), env(safe-area-inset-right));
 }
 
 /* helpers */

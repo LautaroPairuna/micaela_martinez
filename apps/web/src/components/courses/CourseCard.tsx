@@ -64,14 +64,14 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
 
   return (
     <div
-      className="group block h-full touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/40"
+      className="group block h-full w-full min-w-0 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/40"
       style={{ outlineOffset: 4, WebkitTapHighlightColor: 'transparent' }}
     >
-      <Card className="relative h-full flex flex-col lg:flex-row border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 overflow-hidden rounded-xl">
+      <Card className="relative h-full w-full min-w-0 flex flex-col lg:flex-row border border-[#131313] bg-[#141414] backdrop-blur-sm transition-all duration-300 ease-out hover:border-[var(--gold)] hover:shadow-xl hover:shadow-[var(--gold)]/20 hover:-translate-y-1 overflow-hidden rounded-xl">
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[linear-gradient(120deg,transparent,rgba(197,164,109,0.12),transparent)] bg-[length:200%_200%] animate-shine" />
         <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[var(--gold)]/10" />
         {/* Imagen */}
-        <div className="relative overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-6/12 lg:self-stretch">
+        <div className="relative w-full min-w-0 overflow-hidden rounded-t-xl lg:rounded-l-xl lg:rounded-tr-none lg:w-6/12 lg:self-stretch">
           {/* Fondo borroso (efecto relleno) */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <SafeImage
@@ -122,12 +122,12 @@ export function CourseCard({ c, inscripcion = null }: { c: CourseMinimal; inscri
         </div>
 
         {/* Contenido principal */}
-        <div className="relative flex flex-col gap-3 flex-1 lg:w-6/12 p-4 sm:p-5 lg:p-6">
+        <div className="relative flex min-w-0 flex-col gap-3 flex-1 lg:w-6/12 p-4 sm:p-5 lg:p-6">
               <h3 className="relative font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem] uppercase tracking-wide transition-all duration-300 text-white group-hover:text-[var(--gold)] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--pink-strong)] after:rounded-full group-hover:after:w-3/4">{c.titulo}</h3>
 
               <div className="flex flex-wrap gap-2 text-xs">
                 {(!c.totalLessons && !c.totalDuration) ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-400 italic">
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-gray-700 bg-gray-800/80 px-2 py-1 text-gray-400 italic whitespace-normal break-words">
                     Próximamente: Contenido en preparación
                   </span>
                 ) : (
