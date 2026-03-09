@@ -638,6 +638,16 @@
             "null"
           ]
         },
+        "especificaciones": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
         "descuento": {
           "type": "number",
           "default": 0

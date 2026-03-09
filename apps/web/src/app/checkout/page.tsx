@@ -51,7 +51,7 @@ export default function CheckoutPage() {
 
   if (shouldShowEmptyCart) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] py-8">
+      <div className="min-h-screen bg-[var(--bg)] py-6 sm:py-8">
         <div className="max-w-4xl mx-auto px-4">
           <Card>
             <CardBody className="text-center py-16">
@@ -83,9 +83,9 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] py-8">
+    <div className="min-h-screen bg-[var(--bg)] py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link
             href="/tienda"
             className="inline-flex items-center gap-2 text-[var(--muted)] hover:text-[var(--fg)] transition-colors"
@@ -95,11 +95,11 @@ export default function CheckoutPage() {
           </Link>
         </div>
         
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[var(--fg)] mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--fg)] mb-2">
             Finalizar Compra
           </h1>
-          <p className="text-[var(--muted)]">
+          <p className="text-sm sm:text-base text-[var(--muted)]">
             Completá los siguientes pasos para confirmar tu pedido
           </p>
         </div>

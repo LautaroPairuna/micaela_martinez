@@ -15,6 +15,9 @@ export function CourseDetailStickyShell({
   return (
     <section className="py-8">
       <div className="container mx-auto px-4 max-w-7xl">
+        <div className="lg:hidden mb-8">
+          {childrenRight}
+        </div>
         <div
           ref={boundaryRef}
           className="grid lg:grid-cols-[2fr_1fr] gap-8 relative lg:items-start"

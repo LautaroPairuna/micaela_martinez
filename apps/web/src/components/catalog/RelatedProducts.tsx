@@ -9,12 +9,14 @@ type RelatedProductsProps = {
   categoriaSlug?: string | null;
   currentProductSlug: string;
   title?: string;
+  limit?: number;
 };
 
 export function RelatedProducts({ 
   categoriaSlug, 
   currentProductSlug, 
-  title = "Productos relacionados" 
+  title = "Productos relacionados",
+  limit = 4
 }: RelatedProductsProps) {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,7 @@ export function RelatedProducts({
       try {
         setLoading(true);
         setError(null);
-        const response = await getRelatedProducts(categoriaSlug, currentProductSlug, 6);
+        const response = await getRelatedProducts(categoriaSlug, currentProductSlug, limit);
         setProducts(response.items || []);
       } catch (err) {
         console.error('Error fetching related products:', err);
@@ -41,7 +43,7 @@ export function RelatedProducts({
     }
 
     fetchRelatedProducts();
-  }, [categoriaSlug, currentProductSlug]);
+  }, [categoriaSlug, currentProductSlug, limit]);
 
   if (loading) {
     return (

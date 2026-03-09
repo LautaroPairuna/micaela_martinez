@@ -58,8 +58,8 @@ export function CartStep() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between">
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-white">
                 Revisar carrito
@@ -72,7 +72,7 @@ export function CartStep() {
               variant="outline"
               size="sm"
               onClick={clear}
-              className="text-red-400 border-red-900/30 hover:bg-red-950/30 hover:text-red-300 hover:border-red-900/50"
+              className="w-full sm:w-auto text-red-400 border-red-900/30 hover:bg-red-950/30 hover:text-red-300 hover:border-red-900/50"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Vaciar carrito
@@ -86,7 +86,7 @@ export function CartStep() {
         <div className="p-0">
           <div className="divide-y divide-zinc-800">
             {items.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="p-6">
+              <div key={`${item.type}-${item.id}`} className="p-4 sm:p-6">
                 <div className="flex items-start gap-4">
                   {/* Imagen */}
                   <div className="w-20 h-20 rounded-lg overflow-hidden bg-zinc-950 flex-shrink-0 border border-zinc-800">
@@ -104,7 +104,7 @@ export function CartStep() {
 
                   {/* Información */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex-1">
                         <h3 className="font-medium text-white line-clamp-2">
                           {item.title}
@@ -122,7 +122,7 @@ export function CartStep() {
                       </div>
 
                       {/* Precio */}
-                      <div className="text-right ml-4">
+                      <div className="text-left sm:text-right sm:ml-4">
                         <div className="font-semibold text-white">
                           <Price value={item.price} />
                         </div>
@@ -130,7 +130,7 @@ export function CartStep() {
                     </div>
 
                     {/* Controles de cantidad */}
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center justify-between mt-4 gap-3">
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-zinc-400">
                           Cantidad:
@@ -175,8 +175,8 @@ export function CartStep() {
 
       {/* Resumen y continuar */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between">
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="text-sm text-zinc-400">
                 Subtotal ({count} {count === 1 ? 'producto' : 'productos'})
@@ -196,7 +196,7 @@ export function CartStep() {
                   : "!border-[var(--pink)] !text-[var(--pink)] hover:!bg-[var(--pink)]/10 hover:shadow-[0_0_20px_-5px_var(--pink)] hover:scale-[1.02]"
               )}
             >
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-center sm:items-end">
                 <span className="flex items-center">
                   {hasCourses ? 'Suscribirse ahora' : 'Continuar'}
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />

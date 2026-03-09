@@ -6,10 +6,7 @@ import { ProductGallery } from '@/components/catalog/ProductGallery';
 import { productJsonLd } from '@/lib/seo';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { 
-  ShieldCheck, 
-  RefreshCcw, 
   Check, 
-  Truck, 
   ArrowLeft,
   ShoppingCart
 } from 'lucide-react';
@@ -31,6 +28,7 @@ type Product = {
   slug?: string;
   titulo: string;
   descripcionMD?: string | null;
+  especificaciones?: string[] | string | null;
   imagen?: string | null;
   imagenUrl?: string | null;
   imagenes?: ProductImage[] | null;
@@ -59,6 +57,20 @@ const stripHtmlTags = (value: string) =>
     .replace(/&#39;/gi, "'")
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+const toSpecificationList = (input: string[] | string | null | undefined): string[] => {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return input
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+  return input
+    .split('\n')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
 
 /** Normaliza el slug devuelto por la API (corto o completo) a una ruta canónica usable */
 const canonicalFrom = (slugish?: string | null) => {
@@ -141,6 +153,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   }
 
   const plainDescription = stripHtmlTags(String(product.descripcionMD ?? ''));
+  const specificationList = toSpecificationList(product.especificaciones);
 
   // Unificar imagen principal + galería
   const galleryImages = [];
@@ -198,7 +211,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                   </span>
                 )}
                 {/* Contenedor de galería con estilo flotante (sin bordes/fondo) y tamaño reducido */}
-                <div className="rounded-2xl overflow-hidden max-w-[90%] mx-auto">
+                <div className="rounded-2xl overflow-hidden max-w-[84%] sm:max-w-[90%] mx-auto">
                   <ProductGallery images={galleryImages} />
                 </div>
               </div>
@@ -206,19 +219,27 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
             {/* Columna Derecha: Información */}
             <div className="flex flex-col">
-              {/* Categoría Badge */}
-              {product.categoria?.nombre && (
-                <div className="mb-4">
-                  <span className="inline-block px-3 py-1 rounded-full border border-zinc-700 bg-zinc-800/50 text-xs font-medium text-zinc-300 backdrop-blur-sm">
-                    {product.categoria.nombre}
-                  </span>
-                </div>
-              )}
-
               {/* Título */}
-              <h1 className="text-3xl lg:text-4xl font-serif text-white mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-white mb-4 leading-tight">
                 {product.titulo}
               </h1>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {typeof product.stock === 'number' && (
+                  <span className="inline-flex items-center rounded-full bg-[var(--pink)]/10 border border-[var(--pink)]/25 px-4 py-2 text-xs font-medium text-[var(--pink)] transition-all duration-200 hover:bg-[var(--pink)]/20">
+                    Stock: {Math.max(0, product.stock)}
+                  </span>
+                )}
+                {product.categoria?.nombre && (
+                  <span className="inline-flex items-center rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/30 px-4 py-2 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/25">
+                    Categoría: {product.categoria.nombre}
+                  </span>
+                )}
+                {product.marca?.nombre && (
+                  <span className="inline-flex items-center rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/30 px-4 py-2 text-xs font-medium text-[var(--gold)] transition-all duration-200 hover:bg-[var(--gold)]/25">
+                    Marca: {product.marca.nombre}
+                  </span>
+                )}
+              </div>
 
               {/* Rating */}
               {(product.ratingConteo || 0) > 0 ? (
@@ -260,26 +281,21 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                 )}
               </div>
 
-              {/* Características (Simuladas visualmente como en el diseño) */}
-              <div className="mb-8">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 font-serif">
-                  Características:
-                </h3>
-                <ul className="space-y-3">
-                  {[
-                    'Alta calidad profesional',
-                    'Garantía de satisfacción',
-                    'Envío seguro y rápido',
-                    'Soporte post-venta incluido',
-                    'Devolución fácil y rápida'
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
-                      <Check className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {specificationList.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 font-serif">
+                    Características:
+                  </h3>
+                  <ul className="space-y-3">
+                    {specificationList.map((item, i) => (
+                      <li key={`${item}-${i}`} className="flex items-start gap-3 text-sm text-zinc-300">
+                        <Check className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Acciones de Compra */}
               <div className="mt-auto space-y-6">
@@ -301,27 +317,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                   </AddProductButton>
                 </div>
 
-                {/* Beneficios Footer */}
-                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-zinc-800">
-                  <div className="text-center px-2">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3 text-pink-400">
-                      <Truck className="w-5 h-5" />
-                    </div>
-                    <p className="text-xs font-medium text-zinc-300">Envío gratis +$50</p>
-                  </div>
-                  <div className="text-center px-2 border-l border-zinc-800">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3 text-pink-400">
-                      <ShieldCheck className="w-5 h-5" />
-                    </div>
-                    <p className="text-xs font-medium text-zinc-300">Garantía 30 días</p>
-                  </div>
-                  <div className="text-center px-2 border-l border-zinc-800">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3 text-pink-400">
-                      <RefreshCcw className="w-5 h-5" />
-                    </div>
-                    <p className="text-xs font-medium text-zinc-300">Devolución fácil</p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -341,6 +336,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             <RelatedProducts 
                categoriaSlug={product.categoria?.slug}
                currentProductSlug={product.slug || ''}
+               limit={4}
                title="" // Ya puse el título arriba manualmente para control de estilo
             />
           </div>

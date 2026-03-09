@@ -31,6 +31,7 @@ export type ProductListItem = {
 };
 export type ProductDetail = ProductListItem & {
   descripcionMD?: string | null; destacado?: boolean | null;
+  especificaciones?: string[] | string | null;
   marca?: { nombre?: string | null } | null;
   categoria?: { nombre?: string | null; slug?: string | null; id?: string | number | null } | null;
 };

@@ -33,19 +33,19 @@ export function CourseHeader({
     : (actualVideoDuration || (currentLesson.duracion ? Math.round(currentLesson.duracion * 60) : 0));
   return (
     <header className="bg-[var(--bg)] border-b border-[var(--border)]">
-      <div className="px-4 py-4 lg:px-6 lg:py-5">
+      <div className="px-3 py-2.5 sm:px-4 sm:py-4 lg:px-6 lg:py-5">
         <div className="flex items-center justify-between">
           {/* Lado izquierdo - Navegación y título */}
-          <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             {/* Botón volver */}
             <Link href="/mi-cuenta/mi-aprendizaje">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="flex items-center gap-2 text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-hover)] transition-colors"
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline font-medium">Volver a mis cursos</span>
+                <span className="hidden md:inline font-medium">Volver a mis cursos</span>
               </Button>
             </Link>
 
@@ -62,9 +62,9 @@ export function CourseHeader({
 
             {/* Indicador móvil minimalista */}
             <div className="lg:hidden flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[var(--gold)]"></div>
-                <span className="text-sm font-medium text-[var(--muted)] truncate">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--gold)]"></div>
+                <span className="text-xs sm:text-sm font-medium text-[var(--muted)] truncate">
                   {currentModule.titulo} • Lección {currentLesson.orden}
                 </span>
               </div>

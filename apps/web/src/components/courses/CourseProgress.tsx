@@ -72,10 +72,10 @@ export function CourseProgress({
   const isNearlyCompleted = stats.progressPercentage >= 90;
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-3 sm:gap-6 w-full">
       {/* Progreso circular */}
-      <div className="relative">
-        <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
+      <div className="relative shrink-0">
+        <svg className="w-14 h-14 sm:w-16 sm:h-16 transform -rotate-90" viewBox="0 0 64 64">
           {/* Círculo de fondo */}
           <circle
             cx="32"
@@ -114,18 +114,18 @@ export function CourseProgress({
         <div className="absolute inset-0 flex items-center justify-center">
           {isCompleted ? (
             <div className="flex flex-col items-center">
-              <CheckCircle2 className="h-6 w-6 text-green-500" />
-              <span className="text-xs font-bold text-green-500 mt-0.5">100%</span>
+              <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
+              <span className="text-[10px] sm:text-xs font-bold text-green-500 mt-0.5">100%</span>
             </div>
           ) : isNearlyCompleted ? (
             <div className="flex flex-col items-center">
-              <CheckCircle2 className="h-5 w-5 text-orange-500" />
-              <span className="text-xs font-bold text-orange-500 mt-0.5">
+              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
+              <span className="text-[10px] sm:text-xs font-bold text-orange-500 mt-0.5">
                 {stats.progressPercentage}%
               </span>
             </div>
           ) : (
-            <span className="text-sm font-bold text-[var(--fg)]">
+            <span className="text-xs sm:text-sm font-bold text-[var(--fg)]">
               {stats.progressPercentage}%
             </span>
           )}
@@ -133,20 +133,20 @@ export function CourseProgress({
       </div>
 
       {/* Estadísticas */}
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
         {/* Progreso de lecciones */}
-        <div className="flex items-center justify-between text-sm gap-x-3">
-          <div className="flex items-center gap-2 text-[var(--muted)]">
-            <Target className="h-4 w-4" />
-            <span>Progreso del curso </span>
+        <div className="flex items-center justify-between text-xs sm:text-sm gap-x-2 sm:gap-x-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[var(--muted)] min-w-0">
+            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">Progreso del curso</span>
           </div>
-          <span className="font-semibold text-[var(--fg)]">
+          <span className="font-semibold text-[var(--fg)] whitespace-nowrap">
             {stats.completedLessons} de {stats.totalLessons} lecciones
           </span>
         </div>
 
         {/* Barra de progreso */}
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 sm:h-2 overflow-hidden">
           <div
             className={cn(
               'h-full transition-all duration-700 ease-out',
@@ -161,14 +161,14 @@ export function CourseProgress({
         </div>
 
         {/* Información adicional */}
-        <div className="flex items-center gap-4 text-xs text-[var(--muted)]">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[11px] sm:text-xs text-[var(--muted)]">
+          <div className="flex items-center gap-1 whitespace-nowrap">
             <BookOpen className="h-3 w-3" />
             <span>{stats.totalModules} módulos</span>
           </div>
 
           {stats.totalDuration > 0 && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 whitespace-nowrap">
               <Clock className="h-3 w-3" />
               <span>
                 {formatDuration(stats.totalDuration)}

@@ -30,14 +30,14 @@ export function CheckoutWizard() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Indicador de pasos */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden p-6">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden p-4 sm:p-6">
         <StepIndicator />
       </div>
 
       {/* Contenido del paso actual */}
-      <div className={`grid grid-cols-1 gap-8 ${!isCartStep ? 'lg:grid-cols-3' : ''}`}>
+      <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${!isCartStep ? 'lg:grid-cols-3' : ''}`}>
         {/* Contenido principal */}
         <div className={!isCartStep ? 'lg:col-span-2' : ''}>
           <AnimatePresence mode="wait">

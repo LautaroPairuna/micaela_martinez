@@ -79,10 +79,18 @@ CREATE TABLE `inscripcion` (
     `curso_id` INTEGER NOT NULL,
     `estado` ENUM('activada', 'pausada', 'desactivada') NOT NULL DEFAULT 'activada',
     `progreso` JSON NOT NULL,
+    `subscription_order_id` INTEGER NULL,
+    `subscription_id` VARCHAR(128) NULL,
+    `subscription_end_date` DATETIME(3) NULL,
+    `subscription_active` BOOLEAN NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
 
     INDEX `inscripcion_curso_id_fkey`(`curso_id`),
+    INDEX `inscripcion_subscription_order_id_idx`(`subscription_order_id`),
+    INDEX `inscripcion_subscription_id_idx`(`subscription_id`),
+    INDEX `inscripcion_subscription_end_date_idx`(`subscription_end_date`),
+    INDEX `inscripcion_subscription_active_idx`(`subscription_active`),
     UNIQUE INDEX `inscripcion_usuario_id_curso_id_key`(`usuario_id`, `curso_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -140,6 +148,7 @@ CREATE TABLE `producto` (
     `destacado` BOOLEAN NOT NULL DEFAULT false,
     `imagen_archivo` VARCHAR(255) NULL,
     `descripcion_md` VARCHAR(191) NULL,
+    `especificaciones` JSON NULL,
     `descuento` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `rating_prom` DECIMAL(3, 2) NULL,
     `rating_conteo` INTEGER NOT NULL DEFAULT 0,
@@ -209,20 +218,24 @@ CREATE TABLE `orden` (
     `referencia_pago` VARCHAR(191) NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
+    `tipo` ENUM('one_off', 'subscription') NOT NULL DEFAULT 'one_off',
     `es_suscripcion` BOOLEAN NOT NULL DEFAULT false,
     `suscripcion_activa` BOOLEAN NULL,
-    `suscripcion_id` VARCHAR(191) NULL,
+    `suscripcion_id` VARCHAR(128) NULL,
     `suscripcion_frecuencia` INTEGER NULL,
-    `suscripcion_tipo_frecuencia` VARCHAR(191) NULL,
+    `suscripcion_tipo_frecuencia` VARCHAR(16) NULL,
+    `suscripcion_proximo_pago` DATETIME(3) NULL,
     `metadatos` JSON NULL,
     `direccion_envio_id` INTEGER NULL,
     `direccion_facturacion_id` INTEGER NULL,
 
     UNIQUE INDEX `orden_suscripcion_id_key`(`suscripcion_id`),
     INDEX `orden_usuario_id_estado_creado_en_idx`(`usuario_id`, `estado`, `creado_en`),
+    INDEX `orden_tipo_idx`(`tipo`),
     INDEX `orden_es_suscripcion_idx`(`es_suscripcion`),
     INDEX `orden_suscripcion_activa_idx`(`suscripcion_activa`),
     INDEX `orden_referencia_pago_idx`(`referencia_pago`),
+    INDEX `orden_suscripcion_proximo_pago_idx`(`suscripcion_proximo_pago`),
     INDEX `orden_direccion_envio_id_fkey`(`direccion_envio_id`),
     INDEX `orden_direccion_facturacion_id_fkey`(`direccion_facturacion_id`),
     PRIMARY KEY (`id`)
@@ -237,29 +250,60 @@ CREATE TABLE `item_orden` (
     `titulo` VARCHAR(255) NOT NULL,
     `cantidad` INTEGER NOT NULL DEFAULT 1,
     `precio_unitario` DECIMAL(10, 2) NOT NULL,
+    `curso_id` INTEGER NULL,
+    `producto_id` INTEGER NULL,
 
     INDEX `item_orden_orden_id_idx`(`orden_id`),
     INDEX `item_orden_tipo_ref_id_idx`(`tipo`, `ref_id`),
+    INDEX `item_orden_curso_id_fkey`(`curso_id`),
+    INDEX `item_orden_producto_id_fkey`(`producto_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `pagos_suscripciones` (
+CREATE TABLE `pago` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `provider` ENUM('mercadopago') NOT NULL DEFAULT 'mercadopago',
+    `kind` ENUM('one_off', 'subscription_preapproval', 'subscription_payment', 'refund') NOT NULL,
+    `status` ENUM('pending', 'approved', 'rejected', 'cancelled', 'refunded', 'unknown') NOT NULL DEFAULT 'pending',
+    `status_detail` VARCHAR(128) NULL,
     `orden_id` INTEGER NOT NULL,
     `usuario_id` INTEGER NOT NULL,
-    `referencia_pago` VARCHAR(191) NOT NULL,
+    `mp_id` VARCHAR(128) NOT NULL,
+    `attempt_id` VARCHAR(64) NULL,
+    `idempotency_key` VARCHAR(128) NULL,
     `monto` DECIMAL(10, 2) NOT NULL,
-    `estado` VARCHAR(191) NOT NULL,
+    `moneda` VARCHAR(191) NOT NULL DEFAULT 'ARS',
     `metadatos` JSON NULL,
     `creado_en` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `actualizado_en` DATETIME(3) NOT NULL,
 
-    INDEX `pagos_suscripciones_orden_id_idx`(`orden_id`),
-    INDEX `pagos_suscripciones_usuario_id_idx`(`usuario_id`),
-    INDEX `pagos_suscripciones_estado_idx`(`estado`),
-    INDEX `pagos_suscripciones_creado_en_idx`(`creado_en`),
-    UNIQUE INDEX `pagos_suscripciones_referencia_pago_key`(`referencia_pago`),
+    INDEX `pago_orden_id_idx`(`orden_id`),
+    INDEX `pago_usuario_id_idx`(`usuario_id`),
+    INDEX `pago_status_idx`(`status`),
+    INDEX `pago_creado_en_idx`(`creado_en`),
+    INDEX `pago_orden_id_attempt_id_idx`(`orden_id`, `attempt_id`),
+    UNIQUE INDEX `uniq_pago_provider_kind_mpid`(`provider`, `kind`, `mp_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `webhook_event` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `provider` ENUM('mercadopago') NOT NULL DEFAULT 'mercadopago',
+    `event_type` VARCHAR(64) NOT NULL,
+    `data_id` VARCHAR(128) NOT NULL,
+    `request_id` VARCHAR(128) NULL,
+    `signature` VARCHAR(512) NULL,
+    `ts` VARCHAR(32) NULL,
+    `status` VARCHAR(32) NOT NULL DEFAULT 'RECEIVED',
+    `received_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `processed_at` DATETIME(3) NULL,
+    `payload` JSON NULL,
+
+    INDEX `webhook_event_received_at_idx`(`received_at`),
+    INDEX `webhook_event_status_idx`(`status`),
+    UNIQUE INDEX `uniq_webhook_provider_type_dataid`(`provider`, `event_type`, `data_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -521,10 +565,16 @@ ALTER TABLE `orden` ADD CONSTRAINT `orden_direccion_facturacion_id_fkey` FOREIGN
 ALTER TABLE `item_orden` ADD CONSTRAINT `item_orden_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `item_orden` ADD CONSTRAINT `item_orden_curso_id_fkey` FOREIGN KEY (`curso_id`) REFERENCES `curso`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `pagos_suscripciones` ADD CONSTRAINT `pagos_suscripciones_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `item_orden` ADD CONSTRAINT `item_orden_producto_id_fkey` FOREIGN KEY (`producto_id`) REFERENCES `producto`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `pago` ADD CONSTRAINT `pago_orden_id_fkey` FOREIGN KEY (`orden_id`) REFERENCES `orden`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `pago` ADD CONSTRAINT `pago_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `direccion` ADD CONSTRAINT `direccion_usuario_id_fkey` FOREIGN KEY (`usuario_id`) REFERENCES `usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

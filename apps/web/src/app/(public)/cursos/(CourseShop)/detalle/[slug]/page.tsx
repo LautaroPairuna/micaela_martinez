@@ -221,14 +221,14 @@ export default async function CursoPage({
   return (
     <article className="min-h-screen bg-[var(--bg)]">
       {/* Hero Section - Estilo Udemy Mejorado */}
-      <section className="bg-[var(--bg)] text-[var(--fg)] pt-8 pb-12 border-b border-default relative overflow-hidden">
+      <section className="bg-[var(--bg)] text-[var(--fg)] pt-6 sm:pt-8 pb-10 sm:pb-12 border-b border-default relative overflow-hidden">
         {/* Fondo decorativo sutil */}
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--pink)]/10 to-transparent pointer-events-none" />
         <div className="absolute -top-20 -right-20 w-96 h-96 bg-[var(--pink)]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
           {/* Breadcrumb */}
-          <nav className="mb-6 text-sm">
+          <nav className="mb-5 sm:mb-6 text-xs sm:text-sm">
             <ol className="flex items-center space-x-2 flex-wrap">
               <li>
                 <Link href="/" className="text-[var(--gold)] hover:underline font-medium">
@@ -259,15 +259,15 @@ export default async function CursoPage({
             </ol>
           </nav>
 
-          <div className="grid lg:grid-cols-[2fr_1fr] gap-12 items-start">
+          <div className="grid lg:grid-cols-[2fr_1fr] gap-8 lg:gap-12 items-start">
             {/* Contenido principal Hero */}
-            <div className="space-y-6">
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight font-display text-[var(--fg)] drop-shadow-[0_2px_4px_rgba(255,192,203,0.1)]">
+            <div className="space-y-5 sm:space-y-6">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight font-display text-[var(--fg)] drop-shadow-[0_2px_4px_rgba(255,192,203,0.1)]">
                 {c.titulo}
               </h1>
 
               {/* Badges en una sola fila */}
-              <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                 {/* Rating */}
                 {ratingCount > 0 && (
                   <>
@@ -278,7 +278,7 @@ export default async function CursoPage({
                         ({ratingCount} valoraciones)
                       </span>
                     </div>
-                    <span className="text-muted">•</span>
+                    <span className="hidden md:inline text-muted">•</span>
                   </>
                 )}
 
@@ -288,7 +288,7 @@ export default async function CursoPage({
                   <span>{c.estudiantesCount || 0} estudiantes</span>
                 </div>
 
-                <span className="text-muted">•</span>
+                <span className="hidden md:inline text-muted">•</span>
 
                 {/* Duración */}
                 <div className="flex items-center gap-1 text-[var(--fg)]">
@@ -298,7 +298,7 @@ export default async function CursoPage({
                   </span>
                 </div>
 
-                <span className="text-muted">•</span>
+                <span className="hidden md:inline text-muted">•</span>
 
                 {/* Última actualización */}
                 <div className="flex items-center gap-1 text-[var(--fg)]">
@@ -314,7 +314,7 @@ export default async function CursoPage({
                   </span>
                 </div>
 
-                <span className="text-muted">•</span>
+                <span className="hidden md:inline text-muted">•</span>
 
                 {/* Idioma */}
                 <div className="flex items-center gap-1 text-[var(--fg)]">
@@ -325,7 +325,7 @@ export default async function CursoPage({
 
               {/* Resumen / Descripción corta */}
               {c.resumen && (
-                <p className="text-lg text-[var(--fg-muted)] leading-relaxed max-w-3xl">
+                <p className="text-base sm:text-lg text-[var(--fg-muted)] leading-relaxed max-w-3xl">
                   {c.resumen}
                 </p>
               )}
@@ -366,11 +366,11 @@ export default async function CursoPage({
 
             {/* Contenido del curso */}
             <div>
-              <h2 className="text-2xl font-bold text-[var(--fg)] mb-4 font-display">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[var(--fg)] mb-4 font-display">
                 Contenido del curso
               </h2>
-              <div className="flex items-center gap-2 text-sm text-[var(--fg-muted)] mb-4">
-                <span>{modCount} secciones</span> • <span>{lessonCount} clases</span> •{' '}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--fg-muted)] mb-4">
+                <span>{modCount} secciones</span> <span className="hidden sm:inline">•</span> <span>{lessonCount} clases</span> <span className="hidden sm:inline">•</span>{' '}
                 <span>{formatDuration(c.duracionTotalS || 0)} de duración total</span>
               </div>
 

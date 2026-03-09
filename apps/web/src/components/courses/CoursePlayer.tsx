@@ -763,8 +763,8 @@ export function CoursePlayer({
           </div>
 
           {!isTheaterMode && (
-            <div className="bg-gradient-to-r from-[var(--bg)] to-[var(--bg-subtle)] border-t border-[var(--border)] p-1 md:p-2 shadow-lg flex-shrink-0">
-              <div className="block lg:hidden space-y-2">
+            <div className="bg-gradient-to-r from-[var(--bg)] to-[var(--bg-subtle)] border-t border-[var(--border)] p-1.5 sm:p-2 shadow-lg flex-shrink-0">
+              <div className="block lg:hidden space-y-1.5 sm:space-y-2">
                 <div className="flex justify-center">
                   <CourseProgress
                     enrollment={enrollment}
@@ -774,18 +774,18 @@ export function CoursePlayer({
                     getLessonDuration={getLessonDuration}
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 sm:gap-2">
                   {prevLesson ? (
                     <Button
                       size="lg"
                       onClick={() => navigateToLesson(prevLesson.lesson.id, prevLesson.module.id)}
-                      className="flex-1 flex items-center justify-center gap-2 h-12 min-h-[48px] text-sm font-medium border border-[#af966d] hover:border-[#9a8560] transition-all duration-200 bg-transparent"
+                      className="flex-1 flex items-center justify-center gap-1.5 h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium border border-[#af966d] hover:border-[#9a8560] transition-all duration-200 bg-transparent"
                     >
-                      <ChevronLeft className="h-5 w-5 text-[#af966d]" />
+                      <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-[#af966d]" />
                       <span className="text-[#af966d]">Anterior</span>
                     </Button>
                   ) : (
-                    <div className="flex-1 h-12 flex items-center justify-center text-center text-[var(--muted)] text-sm">
+                    <div className="flex-1 h-10 sm:h-12 flex items-center justify-center text-center text-[var(--muted)] text-xs sm:text-sm">
                       Primera lección
                     </div>
                   )}
@@ -794,20 +794,20 @@ export function CoursePlayer({
                     <Button
                       size="lg"
                       onClick={() => navigateToLesson(nextLesson.lesson.id, nextLesson.module.id)}
-                      className="flex-1 flex items-center justify-center gap-2 h-12 min-h-[48px] text-sm font-medium border border-[#af966d] hover:border-[#9a8560] transition-all duration-200 shadow-md"
+                      className="flex-1 flex items-center justify-center gap-1.5 h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium border border-[#af966d] hover:border-[#9a8560] transition-all duration-200 shadow-md"
                     >
                       <span className="text-[#af966d]">Siguiente</span>
-                      <ChevronRight className="h-5 w-5 text-[#af966d]" />
+                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-[#af966d]" />
                     </Button>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-1 h-auto min-h-[48px]">
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400 leading-none">
+                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-1.5 py-1 h-auto min-h-[40px] sm:min-h-[48px]">
+                      <div className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 leading-none">
                         {isCourseCompleted ? '¡Completado!' : 'Finaliza todas las lecciones'}
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        className={`gap-1.5 h-7 px-2 text-xs border-[#af966d] text-[#af966d] transition-all ${
+                        className={`gap-1.5 h-6 sm:h-7 px-2 text-[11px] sm:text-xs border-[#af966d] text-[#af966d] transition-all ${
                           !isCourseCompleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#af966d]/10 hover:border-[#9a8560]'
                         }`}
                         onClick={handleDownloadCertificate}

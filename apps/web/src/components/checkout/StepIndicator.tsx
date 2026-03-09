@@ -9,21 +9,25 @@ import { motion } from 'framer-motion';
 const stepConfig = {
   cart: {
     label: 'Carrito',
+    mobileLabel: 'Carrito',
     icon: ShoppingCart,
     description: 'Revisar productos'
   },
   address: {
     label: 'Dirección',
+    mobileLabel: 'Direc.',
     icon: MapPin,
     description: 'Dirección de facturación'
   },
   payment: {
     label: 'Pago',
+    mobileLabel: 'Pago',
     icon: CreditCard,
     description: 'Método de pago'
   },
   confirmation: {
     label: 'Confirmación',
+    mobileLabel: 'Conf.',
     icon: CheckCircle,
     description: 'Revisar y confirmar'
   }
@@ -52,7 +56,7 @@ export function StepIndicator() {
          Margen lateral = 100% / (2 * steps)
       */}
       <div 
-        className="absolute top-6 left-0 right-0 h-[2px] bg-zinc-800 -z-0"
+        className="absolute top-5 sm:top-6 left-0 right-0 h-[2px] bg-zinc-800 -z-0"
         style={{ 
           left: `${100 / (totalSteps * 2)}%`, 
           right: `${100 / (totalSteps * 2)}%` 
@@ -82,17 +86,14 @@ export function StepIndicator() {
               <motion.button
                 type="button"
                 className={cn(
-                  'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors duration-300 relative bg-[#09090b]', // Fondo opaco para tapar línea
+                  'w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-colors duration-300 relative bg-[#09090b]',
                   {
-                    'border-[var(--pink)] text-black': isActive, // El icono activo suele tener fondo rosa en el diseño original? 
-                    // Revisando original: 'bg-[var(--pink)] border-[var(--pink)] text-black': isActive
-                    // Si pongo bg-pink, tapa la línea bien.
-                    // Si es inactivo, bg-[#09090b] (zinc-950) tapa la línea.
+                    'border-[var(--pink)] text-black': isActive,
                   },
-                  isActive ? 'bg-[var(--pink)]' : 'bg-[#09090b]', // Fondo dinámico
+                  isActive ? 'bg-[var(--pink)]' : 'bg-[#09090b]',
                   {
-                    'border-[var(--pink)] text-[var(--pink)]': isCompleted && !isActive, // Completado pero no actual
-                    'border-zinc-800 text-zinc-500': !isActive && !isCompleted && !isPast, // Futuro
+                    'border-[var(--pink)] text-[var(--pink)]': isCompleted && !isActive,
+                    'border-zinc-800 text-zinc-500': !isActive && !isCompleted && !isPast,
                     'cursor-pointer': isAccessible,
                     'cursor-default': !isAccessible
                   }
@@ -109,17 +110,17 @@ export function StepIndicator() {
                 }}
               >
                 {isCompleted && !isActive ? (
-                  <CheckCircle className="w-6 h-6" />
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                 ) : (
-                  <Icon className={cn("w-6 h-6", isActive ? "text-black" : "")} />
+                  <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", isActive ? "text-black" : "")} />
                 )}
               </motion.button>
 
               {/* Label */}
-              <div className="mt-3 text-center px-2">
+              <div className="mt-2 sm:mt-3 text-center px-1 sm:px-2">
                 <div
                   className={cn(
-                    'text-sm font-medium transition-colors ease-out',
+                    'text-[11px] sm:text-sm font-medium transition-colors ease-out leading-tight',
                     {
                       'text-white': isActive,
                       'text-[var(--pink)]': isCompleted && !isActive,
@@ -127,7 +128,8 @@ export function StepIndicator() {
                     }
                   )}
                 >
-                  {config.label}
+                  <span className="sm:hidden">{config.mobileLabel}</span>
+                  <span className="hidden sm:inline">{config.label}</span>
                 </div>
                 <div className="text-xs text-zinc-600 mt-1 hidden sm:block">
                   {config.description}

@@ -594,23 +594,23 @@ export function CourseVideoPlayer({
             <div className="absolute inset-0 flex items-center justify-center">
               <Button
                 size="lg"
-                className="w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/50"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/50"
                 onClick={(e) => {
                   e.stopPropagation();
                   togglePlay();
                 }}
               >
-                <Play className="h-8 w-8 text-white ml-1" />
+                <Play className="h-6 w-6 sm:h-8 sm:w-8 text-white ml-0.5 sm:ml-1" />
               </Button>
             </div>
           )}
 
           {/* Controles inferiores */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+          <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 space-y-1.5 sm:space-y-2">
             {/* Progreso */}
               <div 
                 ref={progressBarRef}
-                className="w-full relative group/progress py-3 cursor-pointer touch-none select-none flex items-center"
+                className="w-full relative group/progress py-2 sm:py-3 cursor-pointer touch-none select-none flex items-center"
                 onMouseMove={handleProgressMouseMove}
                 onMouseLeave={handleProgressMouseLeave}
                 onMouseDown={handleSeekStart}
@@ -699,8 +699,8 @@ export function CourseVideoPlayer({
                 />
               </div>
 
-            <div className="flex items-center justify-between text-white">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between text-white gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -708,7 +708,7 @@ export function CourseVideoPlayer({
                     e.stopPropagation();
                     togglePlay();
                   }}
-                  className="text-white hover:bg-white/20"
+                  className="text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0"
                 >
                   {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                 </Button>
@@ -720,7 +720,7 @@ export function CourseVideoPlayer({
                     e.stopPropagation();
                     skip(-10);
                   }}
-                  className="text-white hover:bg-white/20"
+                  className="text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -732,13 +732,13 @@ export function CourseVideoPlayer({
                     e.stopPropagation();
                     skip(10);
                   }}
-                  className="text-white hover:bg-white/20"
+                  className="text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0"
                 >
                   <RotateCw className="h-4 w-4" />
                 </Button>
 
                 {/* Volumen */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -753,7 +753,7 @@ export function CourseVideoPlayer({
                         setIsMuted(true);
                       }
                     }}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0"
                   >
                     {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                   </Button>
@@ -765,7 +765,7 @@ export function CourseVideoPlayer({
                     step={0.01}
                     value={isMuted ? 0 : volume}
                     onChange={handleVolumeChange}
-                    className="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
+                    className="hidden sm:block w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
                     onClick={(e) => e.stopPropagation()}
                     style={{
                       background: `linear-gradient(to right, #af966d 0%, #af966d ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) 100%)`,
@@ -773,12 +773,12 @@ export function CourseVideoPlayer({
                   />
                 </div>
 
-                <span className="text-sm font-mono">
+                <span className="text-xs sm:text-sm font-mono whitespace-nowrap">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 {/* Velocidad */}
                 <div className="relative">
                   <Button
@@ -788,7 +788,7 @@ export function CourseVideoPlayer({
                       e.stopPropagation();
                       setShowSettings(!showSettings);
                     }}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0"
                   >
                     <Settings className="h-4 w-4" />
                   </Button>
@@ -827,7 +827,7 @@ export function CourseVideoPlayer({
                       return nv;
                     });
                   }}
-                  className={cn('text-white hover:bg-white/20', isTheater && 'text-[var(--gold)]')}
+                  className={cn('text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0', isTheater && 'text-[var(--gold)]')}
                   title="Modo teatro (T)"
                 >
                   <RectangleHorizontal className="h-4 w-4" />
@@ -845,7 +845,7 @@ export function CourseVideoPlayer({
                       document.exitFullscreen().catch(() => {});
                     }
                   }}
-                  className="text-white hover:bg-white/20"
+                  className="text-white hover:bg-white/20 h-8 w-8 sm:h-9 sm:w-9 p-0"
                   title="Pantalla completa"
                 >
                   <Maximize className="h-4 w-4" />
@@ -862,8 +862,8 @@ export function CourseVideoPlayer({
                 (controlsVisible && mouseActivity) || !isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
               )}
             >
-              <div className="bg-gradient-to-r from-black/70 to-transparent backdrop-blur-sm rounded p-2 max-w-md">
-                <h3 className="text-white font-medium text-sm mb-0.5 line-clamp-1">{lesson.titulo}</h3>
+              <div className="bg-gradient-to-r from-black/70 to-transparent backdrop-blur-sm rounded px-2 py-1.5 sm:p-2 max-w-[85%] sm:max-w-md">
+                <h3 className="text-white font-medium text-xs sm:text-sm mb-0.5 line-clamp-1">{lesson.titulo}</h3>
                 {lesson.descripcion && (
                   <p className="text-white/70 text-xs line-clamp-2">{lesson.descripcion}</p>
                 )}

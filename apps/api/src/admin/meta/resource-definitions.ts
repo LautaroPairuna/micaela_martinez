@@ -137,6 +137,12 @@ export const RESOURCE_DEFINITIONS: ResourceDefinitions = {
     imagen: { label: 'Imagen Principal' },
     titulo: { label: 'Nombre del Producto' },
     slug: { label: 'Slug (URL)' },
+    especificaciones: {
+      label: 'Especificaciones',
+      help: 'Lista de especificaciones (Enter para agregar).',
+      widget: 'json-list',
+      showInList: false,
+    },
     precio: { label: 'Precio' },
     stock: { label: 'Stock Disponible' },
     marcaId: { label: 'Marca' },

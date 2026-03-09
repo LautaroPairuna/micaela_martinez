@@ -124,6 +124,7 @@ const upsertProductoGetId = async (p: {
   slug: string; titulo: string; precio: number | string; stock: number;
   publicado?: boolean; destacado?: boolean; imagen?: string | null;
   descripcionMD?: string | null; descuento?: number | string | null;
+  especificaciones?: string[] | null;
   marcaSlug?: string | null; categoriaSlug?: string | null;
 }) => {
   const marca = p.marcaSlug
@@ -144,6 +145,7 @@ const upsertProductoGetId = async (p: {
       destacado: p.destacado ?? false,
       imagen: p.imagen ?? null,
       descripcionMD: p.descripcionMD ?? null,
+      especificaciones: p.especificaciones ? json(p.especificaciones) : undefined,
       descuento: new Prisma.Decimal(p.descuento ?? 0) as any,
       marcaId: marca?.id ?? null,
       categoriaId: categoria?.id ?? null,
@@ -157,6 +159,7 @@ const upsertProductoGetId = async (p: {
       destacado: p.destacado ?? false,
       imagen: p.imagen ?? null,
       descripcionMD: p.descripcionMD ?? null,
+      especificaciones: p.especificaciones ? json(p.especificaciones) : undefined,
       descuento: new Prisma.Decimal(p.descuento ?? 0) as any,
       marcaId: marca?.id ?? null,
       categoriaId: categoria?.id ?? null,
@@ -367,6 +370,89 @@ async function main() {
   await upsertMarcaBySlug('exel', 'Exel');
 
   // ───────────────── Productos Reales
+  const buildDefaultSpecifications = (p: {
+    titulo: string;
+    marcaSlug: string;
+    categoriaSlug: string;
+    stock: number;
+  }) => {
+    const title = p.titulo.toLowerCase();
+    const byCategory: Record<string, string[]> = {
+      'pestanas-tecnologicas': [
+        'Fibra sintética ligera para técnica profesional',
+        'Formato mix para mapear longitudes en set completo',
+        'Conservar en estuche cerrado, seco y sin humedad',
+      ],
+      adhesivos: [
+        'Uso técnico profesional en cabina',
+        'Mantener el envase bien cerrado entre usos',
+        'Almacenar lejos de calor, humedad y luz directa',
+      ],
+      'herramientas-pestanas': [
+        'Acero inoxidable de precisión para trabajo técnico',
+        'Desinfectar después de cada servicio',
+        'Guardar con punta protegida para evitar deformaciones',
+      ],
+      'cuidado-facial': [
+        'Uso cosmético profesional en rutina facial',
+        'Aplicar sobre piel limpia con masaje suave',
+        'Conservar en lugar seco y sin exposición solar',
+      ],
+      'cuidado-corporal': [
+        'Uso estético y cosmetológico',
+        'Textura de deslizamiento uniforme para cabina',
+        'Apto para protocolos corporales profesionales',
+      ],
+      'proteccion-solar': [
+        'Protección de amplio espectro UVA/UVB',
+        'Aplicar 15 minutos antes de la exposición solar',
+        'Reaplicar según exposición y sudoración',
+      ],
+    };
+
+    const dynamicSpecs: string[] = [];
+    const mmMatch = title.match(/(\d{1,2}(?:[.,]\d+)?)\s*mm/);
+    if (mmMatch) dynamicSpecs.push(`Longitud de referencia: ${mmMatch[1]} mm`);
+    const thicknessMatch = title.match(/0[.,]\d{2}/);
+    if (thicknessMatch)
+      dynamicSpecs.push(
+        `Grosor técnico: ${thicknessMatch[0].replace(',', '.')} mm`,
+      );
+    const curveMatch = title.match(/\bcurva\s*([a-z])\b|\b«([a-z])»|\b([cdlm])\b/i);
+    const curveValue = curveMatch?.[1] ?? curveMatch?.[2] ?? curveMatch?.[3];
+    if (curveValue && ['c', 'd', 'l', 'm'].includes(curveValue.toLowerCase())) {
+      dynamicSpecs.push(`Curvatura: ${curveValue.toUpperCase()}`);
+    }
+    const mlMatch = title.match(/(\d{1,3})\s*ml/);
+    if (mlMatch) dynamicSpecs.push(`Contenido neto: ${mlMatch[1]} ml`);
+    const gMatch = title.match(/(\d{1,3})\s*g\b/);
+    if (gMatch) dynamicSpecs.push(`Contenido neto: ${gMatch[1]} g`);
+    const fpsMatch = title.match(/fps\s*(\d{1,3})/i);
+    if (fpsMatch) dynamicSpecs.push(`Factor de protección solar: FPS ${fpsMatch[1]}`);
+    if (title.includes('vitamina c')) dynamicSpecs.push('Activo destacado: Vitamina C');
+    if (title.includes('q10')) dynamicSpecs.push('Activo destacado: Coenzima Q10');
+    if (title.includes('adn')) dynamicSpecs.push('Activo destacado: ADN vegetal');
+    if (title.includes('aloe')) dynamicSpecs.push('Activo destacado: Aloe vera');
+
+    const baseSpecs = byCategory[p.categoriaSlug] ?? [
+      'Producto para uso profesional',
+      'Conservar en lugar fresco y seco',
+      'Mantener fuera del alcance de niños',
+    ];
+
+    const stockLabel =
+      p.stock > 20 ? 'Stock alto disponible' : 'Stock limitado disponible';
+
+    return Array.from(
+      new Set([
+        ...dynamicSpecs,
+      ...baseSpecs,
+      `Marca: ${p.marcaSlug.toUpperCase()}`,
+      stockLabel,
+      ]),
+    ).slice(0, 6);
+  };
+
   const productosData = [
     // NAGARAKU - Pestañas
     {
@@ -478,17 +564,17 @@ async function main() {
       descripcion: 'Leche de limpieza suave que elimina maquillaje e impurezas sin resecar. Enriquecida con Vitamina E antioxidante.',
     },
 
-    // EXEL - Corporal y Solar
+    // EXEL 
     {
-      titulo: 'Crema Corporal Reafirmante con Q10',
+      titulo: 'Crema Facial Reafirmante con Q10',
       precio: 28900,
       stock: 8,
       marcaSlug: 'exel',
-      categoriaSlug: 'cuidado-corporal',
-      descripcion: 'Emulsión corporal formulada para mejorar la firmeza y elasticidad de la piel. Coenzima Q10 y Centella Asiática.',
+      categoriaSlug: 'cuidado-facial',
+      descripcion: 'Emulsión Facial formulada para mejorar la firmeza y elasticidad de la piel. Coenzima Q10 y Centella Asiática.',
     },
     {
-      titulo: 'Gel Neutro Conductior 1kg',
+      titulo: 'Gel limpiador 100ml',
       precio: 8500,
       stock: 50,
       marcaSlug: 'exel',
@@ -502,6 +588,12 @@ async function main() {
       marcaSlug: 'exel',
       categoriaSlug: 'proteccion-solar',
       descripcion: 'Pantalla solar de muy alta protección. Filtros UVA/UVB de amplio espectro. Textura no grasa, toque seco. Resistente al agua.',
+      especificaciones: [
+        'FPS 60 de alta protección',
+        'Filtros UVA/UVB de amplio espectro',
+        'Textura no grasa y toque seco',
+        'Resistente al agua',
+      ],
     },
   ];
 
@@ -519,6 +611,7 @@ async function main() {
       publicado: true,
       destacado: Math.random() > 0.7,
       descripcionMD: p.descripcion,
+      especificaciones: p.especificaciones ?? buildDefaultSpecifications(p),
       marcaSlug: p.marcaSlug,
       categoriaSlug: p.categoriaSlug,
       imagen: null, // Sin imagen por ahora
