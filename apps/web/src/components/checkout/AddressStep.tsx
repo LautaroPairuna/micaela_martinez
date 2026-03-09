@@ -237,25 +237,26 @@ export function AddressStep() {
       {/* Navegación */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
         <div className="p-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              className="text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al carrito
-            </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-zinc-400 text-right sm:hidden">
+              Subtotal: {money(subtotal)}
+            </div>
 
-            <div className="text-right w-full sm:w-auto">
-              <div className="text-sm text-zinc-400 mb-2 sm:hidden">
-                Subtotal: {money(subtotal)}
-              </div>
+            <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                className="h-12 w-full px-4 text-sm whitespace-nowrap text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al carrito
+              </Button>
+
               <Button
                 onClick={handleContinue}
                 disabled={!canContinue}
                 variant="ghost"
-                className="w-full sm:w-auto border !border-[var(--pink)] !text-[var(--pink)] font-bold text-base px-8 py-3 rounded-xl hover:!bg-[var(--pink)]/10 hover:!border-[var(--pink)] hover:!text-[var(--pink)] hover:shadow-[0_0_20px_-5px_var(--pink)] hover:scale-[1.02] transition-all duration-300 !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus-visible:!ring-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none disabled:hover:bg-transparent"
+                className="h-12 w-full sm:w-auto border !border-[var(--pink)] !text-[var(--pink)] font-bold text-sm sm:text-base px-4 sm:px-8 rounded-xl hover:!bg-[var(--pink)]/10 hover:!border-[var(--pink)] hover:!text-[var(--pink)] hover:shadow-[0_0_20px_-5px_var(--pink)] hover:scale-[1.02] transition-all duration-300 !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus-visible:!ring-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none disabled:hover:bg-transparent"
               >
                 Continuar al pago
                 <ArrowRight className="h-5 w-5 ml-2" />

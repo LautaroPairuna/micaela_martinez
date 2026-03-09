@@ -384,7 +384,7 @@ export function HeroCarousel({
                     {logoMode === 'per-slide' && (
                       <div className="flex justify-center">
                         {logoSlot ? (
-                          <div className="scale-[1.08] md:scale-[0.8] mb-5">{logoSlot}</div>
+                          <div className="scale-[1.08] md:scale-[0.8] my-10">{logoSlot}</div>
                         ) : (
                           <img
                             src={logoSrc}

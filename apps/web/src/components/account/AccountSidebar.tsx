@@ -357,8 +357,8 @@ export default function AccountSidebar({ me }: { me: Me }) {
                 aria-hidden
                 className="
                   grid h-9 w-9 place-items-center rounded-full
-                  bg-gradient-to-br from-[var(--pink)] to-[var(--pink-strong)]
-                  text-black font-bold text-sm shadow-lg shadow-[var(--pink)]/25
+                  bg-[var(--pink)]/10 text-[var(--pink)] ring-1 ring-[var(--pink)]/40
+                  font-bold text-sm tracking-wide
                 "
               >
                 {initials}

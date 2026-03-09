@@ -11,7 +11,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   
   return (
     // Layout tipo Dashboard: Ocupa toda la pantalla disponible (viewport height)
-    <div className="w-full h-screen lg:flex lg:overflow-hidden bg-black">
+    <div className="w-full h-screen flex flex-col lg:flex-row overflow-hidden bg-black">
       {/* Sidebar - Fijo a la izquierda con fondo distinto al negro puro */}
       <aside className="
         hidden lg:block lg:w-96 lg:flex-shrink-0 
@@ -21,7 +21,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
       </aside>
 
       {/* Sidebar Mobile - Se mantiene flotante/drawer controlado por AccountSidebar */}
-      <div className="lg:hidden">
+      <div className="lg:hidden flex-shrink-0">
         <AccountSidebar me={me} />
       </div>
 

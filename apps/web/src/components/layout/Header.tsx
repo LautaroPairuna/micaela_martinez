@@ -396,6 +396,7 @@ function MobilePanel({
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
   const DURATION = 200;
+  const helpWhatsapp = `https://wa.me/5493875655951?text=${encodeURIComponent('Hola, necesito ayuda con mi cuenta, acceso o pedido en Micaela Pestañas. ¿Podrían asistirme?')}`;
   // Corregido: Verificar correctamente los roles con acceso a administración
   const hasAdminAccess = me?.roles?.includes('ADMIN') || me?.roles?.includes('STAFF'); // Solo roles administrativos
 
@@ -668,8 +669,10 @@ function MobilePanel({
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/ayuda" 
+                <a 
+                  href={helpWhatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={close} 
                   className={[
                     'flex items-center justify-between',
@@ -687,7 +690,7 @@ function MobilePanel({
                     <span className="font-medium text-neutral-800">Ayuda</span>
                   </span>
                   <ChevronRight className="size-4 text-[var(--gold)]/60 group-hover:text-[var(--gold)] transition-colors" />
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

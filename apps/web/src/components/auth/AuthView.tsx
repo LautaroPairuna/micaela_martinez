@@ -13,6 +13,7 @@ import { useCheckout } from '@/store/checkout';
 import { Loader2, Eye, EyeOff, User, Mail, Lock, GraduationCap, UserPlus } from 'lucide-react';
 
 type Tab = 'login' | 'registro';
+const HELP_WHATSAPP_URL = `https://wa.me/5493875655951?text=${encodeURIComponent('Hola, necesito ayuda para recuperar acceso o resolver un problema con mi cuenta en Micaela Pestañas.')}`;
 
 export function AuthView() {
   const search = useSearchParams();
@@ -124,7 +125,7 @@ export function AuthView() {
 
       {/* Footer informativo */}
       <div className="text-center mt-6 text-xs text-muted">
-        <p>¿Necesitás ayuda? <a href="/ayuda" className="text-[var(--gold)] hover:underline">Contactanos</a></p>
+        <p>¿Necesitás ayuda? <a href={HELP_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-[var(--gold)] hover:underline">Contactanos</a></p>
       </div>
     </div>
   );
@@ -281,7 +282,7 @@ function LoginForm({ onSuccess, autoFocus }: { onSuccess: () => void; autoFocus?
       <div className="text-center pt-2">
         <p className="text-sm text-muted">
           ¿Olvidaste tu contraseña?{' '}
-          <a href="/ayuda" className="text-[var(--gold)] hover:underline font-medium transition-colors">
+          <a href={HELP_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-[var(--gold)] hover:underline font-medium transition-colors">
             Recuperar acceso
           </a>
         </p>

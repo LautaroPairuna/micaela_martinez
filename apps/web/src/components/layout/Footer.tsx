@@ -11,6 +11,7 @@ const YEAR = new Date().getFullYear();
 export function Footer() {
   const { me, loading } = useSession();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const helpWhatsapp = `https://wa.me/5493875655951?text=${encodeURIComponent('Hola, necesito ayuda con mi cuenta, acceso o pedido en Micaela Pestañas. ¿Podrían asistirme?')}`;
   const ig = 'https://www.instagram.com/micaela_martinez.pestanas/'
   const fb = 'https://www.facebook.com/profile.php?id=100080133412997'
   const tiktok = 'https://www.tiktok.com/@micaela_martinez.pestana'
@@ -152,7 +153,7 @@ export function Footer() {
               </div>
               <div className="pt-2">
                 <p className="text-xs text-muted">
-                  ¿Tienes preguntas? <Link href="/ayuda" className="text-[var(--pink-dark)] hover:text-[var(--pink-strong)] hover:underline decoration-[var(--pink-strong)] underline-offset-4 transition-colors">Contáctanos</Link>
+                  ¿Tienes preguntas? <a href={helpWhatsapp} target="_blank" rel="noopener noreferrer" className="text-[var(--pink-dark)] hover:text-[var(--pink-strong)] hover:underline decoration-[var(--pink-strong)] underline-offset-4 transition-colors">Contáctanos</a>
                 </p>
               </div>
             </div>
