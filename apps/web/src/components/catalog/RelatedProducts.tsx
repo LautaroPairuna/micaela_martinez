@@ -21,6 +21,17 @@ export function RelatedProducts({
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageVersion, setImageVersion] = useState(() => Date.now().toString());
+
+  useEffect(() => {
+    setImageVersion(Date.now().toString());
+  }, [products]);
+
+  const withImageVersion = (url?: string | null) => {
+    if (!url) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}v=${imageVersion}`;
+  };
 
   useEffect(() => {
     async function fetchRelatedProducts() {
@@ -73,7 +84,17 @@ export function RelatedProducts({
       {title && <h2 className="text-2xl font-bold text-foreground">{title}</h2>}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {products.map((product) => (
-          <ProductCard key={product.id} p={product} />
+          <ProductCard
+            key={`${product.id}-${imageVersion}`}
+            p={{
+              ...product,
+              imagen: withImageVersion(product.imagen),
+              imagenes: product.imagenes?.map((image) => ({
+                ...image,
+                url: withImageVersion(image.url) ?? image.url,
+              })) ?? null,
+            }}
+          />
         ))}
       </div>
     </section>
